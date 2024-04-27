@@ -174,7 +174,7 @@ theme:
 ```
 
 ### Themes
-If you don't want to spend time configuring your own theme, there are [several available themes](preconfigured-themes.md) which you can simply copy the values for.
+If you don't want to spend time configuring your own theme, there are [several available themes](themes.md) which you can simply copy the values for.
 
 ### Properties
 | Name | Type | Required | Default |
