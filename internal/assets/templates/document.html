@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html {{ block "document-root-attrs" . }}{{ end }} lang="en" id="top">
+<head>
+    {{ block "document-head-before" . }}{{ end }}
+    <title>{{ block "document-title" . }}{{ end }}</title>
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="dark">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/static/favicon.png" />
+    <link rel="stylesheet" href="/static/main.css?v={{ .App.Config.Server.StartedAt.Unix }}">
+    <script async src="/static/main.js?v={{ .App.Config.Server.StartedAt.Unix }}"></script>
+    {{ block "document-head-after" . }}{{ end }}
+</head>
+<body>
+{{ template "document-body" . }}
+</body>
+</html>

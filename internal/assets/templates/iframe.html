@@ -1,0 +1,7 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
+
+{{ define "widget-content" }}
+<iframe src="{{ .Source }}" width="100%" height="{{ .Height }}px" frameborder="0"></iframe>
+{{ end }}

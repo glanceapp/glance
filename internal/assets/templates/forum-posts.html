@@ -1,0 +1,22 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<ul class="list list-gap-14 list-collapsible">
+    {{ range $i, $post := .Posts }}
+    <li {{ if shouldCollapse $i $.CollapseAfter }}class="list-collapsible-item" style="--animation-delay: {{ itemAnimationDelay $i $.CollapseAfter }};"{{ end }}>
+        <a href="{{ $post.DiscussionUrl }}" class="size-h3 color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
+        <ul class="list-horizontal-text">
+            <li title="{{ $post.TimePosted | formatTime }}" {{ dynamicRelativeTimeAttrs $post.TimePosted }}>{{ $post.TimePosted | relativeTime }}</li>
+            <li>{{ $post.Score | formatNumber }} points</li>
+            <li>{{ $post.CommentCount | formatNumber }} comments</li>
+            {{ if $post.HasTargetUrl }}
+            <li class="shrink min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ $post.TargetUrlDomain }}</a></li>
+            {{ end }}
+        </ul>
+    </li>
+    {{ end }}
+</ul>
+{{ if gt (len .Posts) $.CollapseAfter }}
+<label class="list-collapsible-label"><input type="checkbox" autocomplete="off" class="list-collapsible-input"></label>
+{{ end }}
+{{ end }}

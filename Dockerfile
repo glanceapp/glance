@@ -1,0 +1,10 @@
+FROM alpine:3.19
+
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /app
+COPY build/glance-$TARGETOS-$TARGETARCH /app/glance
+
+EXPOSE 8080/tcp
+ENTRYPOINT ["/app/glance"]
