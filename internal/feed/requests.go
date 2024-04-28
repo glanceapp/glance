@@ -23,6 +23,16 @@ func addBrowserUserAgentHeader(request *http.Request) {
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0")
 }
 
+func truncateString(s string, maxLen int) string {
+	asRunes := []rune(s)
+
+	if len(asRunes) > maxLen {
+		return string(asRunes[:maxLen])
+	}
+
+	return s
+}
+
 func decodeJsonFromRequest[T any](client RequestDoer, request *http.Request) (T, error) {
 	response, err := client.Do(request)
 	var result T
@@ -40,7 +50,12 @@ func decodeJsonFromRequest[T any](client RequestDoer, request *http.Request) (T,
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return result, fmt.Errorf("unexpected status code %d for %s, response: %s", response.StatusCode, request.URL, string(body))
+		return result, fmt.Errorf(
+			"unexpected status code %d for %s, response: %s",
+			response.StatusCode,
+			request.URL,
+			truncateString(string(body), 128),
+		)
 	}
 
 	err = json.Unmarshal(body, &result)
@@ -76,7 +91,12 @@ func decodeXmlFromRequest[T any](client RequestDoer, request *http.Request) (T, 
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return result, fmt.Errorf("unexpected status code %d for %s, response: %s", response.StatusCode, request.URL, string(body))
+		return result, fmt.Errorf(
+			"unexpected status code %d for %s, response: %s",
+			response.StatusCode,
+			request.URL,
+			truncateString(string(body), 128),
+		)
 	}
 
 	err = xml.Unmarshal(body, &result)
