@@ -65,7 +65,7 @@ func (widget *Monitor) Update(ctx context.Context) {
 	requests := make([]*http.Request, len(widget.Sites))
 
 	for i := range widget.Sites {
-		request, err := http.NewRequest("HEAD", widget.Sites[i].Url, nil)
+		request, err := http.NewRequest("GET", widget.Sites[i].Url, nil)
 
 		if err != nil {
 			message := fmt.Errorf("failed to create http request for %s: %s", widget.Sites[i].Url, err)
