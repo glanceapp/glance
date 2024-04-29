@@ -186,6 +186,7 @@ If you don't want to spend time configuring your own theme, there are [several a
 | negative-color | HSL | no | 0 70 70 |
 | contrast-multiplier | number | no | 1 |
 | text-saturation-multiplier | number | no | 1 |
+| custom-css-file | string | no | |
 
 #### `light`
 Whether the scheme is light or dark. This does not change the background color, it inverts the text colors so that they look appropriately on a light background.
@@ -209,6 +210,23 @@ Used to increase or decrease the contrast (in other words visibility) of the tex
 
 #### `text-saturation-multiplier`
 Used to increase or decrease the saturation of text, useful when using a custom background color with a high amount of saturation and needing the text to have a more neutral color. `0.5` means that the saturation will be 50% lower and `1.5` means that it'll be 50% higher.
+
+#### `custom-css-file`
+Path to a custom CSS file, either external or one from within the server configured assets path. Example:
+
+```yaml
+theme:
+  custom-css-file: /assets/my-style.css
+```
+
+> [!TIP]
+>
+> Because Glance uses a lot of utility classes it might be difficult to target some elements. To make it easier to style specific widgets, each widget has a `widget-type-{name}` class, so for example if you wanted to make the links inside just the RSS widget bigger you could use the following selector:
+>
+> ```css
+> .widget-type-rss a {
+>     font-size: 1.5rem;
+> }
 
 
 ## Pages & Columns

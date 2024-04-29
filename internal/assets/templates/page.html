@@ -11,7 +11,12 @@
 {{ end }}
 
 {{ define "document-root-attrs" }}{{ if .App.Config.Theme.Light }}class="light-scheme"{{ end }}{{ end }}
-{{ define "document-head-after" }}{{ template "page-style-overrides.gotmpl" . }}{{ end }}
+{{ define "document-head-after" }}
+{{ template "page-style-overrides.gotmpl" . }}
+{{ if ne "" .App.Config.Theme.CustomCSSFile }}
+<link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.Config.Server.StartedAt.Unix }}">
+{{ end }}
+{{ end }}
 
 {{ define "navigation-links" }}
 {{ range .App.Config.Pages }}

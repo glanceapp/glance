@@ -34,6 +34,7 @@ type Theme struct {
 	Light                    bool                  `yaml:"light"`
 	ContrastMultiplier       float32               `yaml:"contrast-multiplier"`
 	TextSaturationMultiplier float32               `yaml:"text-saturation-multiplier"`
+	CustomCSSFile            string                `yaml:"custom-css-file"`
 }
 
 type Server struct {
