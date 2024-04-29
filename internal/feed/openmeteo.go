@@ -79,9 +79,15 @@ func barIndexFromHour(h int) int {
 }
 
 // TODO: bunch of spaget, refactor
-// TODO: allow changing between C and F
-func FetchWeatherForPlace(place *PlaceJson) (*Weather, error) {
+func FetchWeatherForPlace(place *PlaceJson, units string) (*Weather, error) {
 	query := url.Values{}
+	var temperatureUnit string
+
+	if units == "imperial" {
+		temperatureUnit = "fahrenheit"
+	} else {
+		temperatureUnit = "celsius"
+	}
 
 	query.Add("latitude", fmt.Sprintf("%f", place.Latitude))
 	query.Add("longitude", fmt.Sprintf("%f", place.Longitude))
@@ -91,6 +97,7 @@ func FetchWeatherForPlace(place *PlaceJson) (*Weather, error) {
 	query.Add("current", "temperature_2m,apparent_temperature,weather_code,wind_speed_10m")
 	query.Add("hourly", "temperature_2m,precipitation_probability")
 	query.Add("daily", "sunrise,sunset")
+	query.Add("temperature_unit", temperatureUnit)
 
 	requestUrl := "https://api.open-meteo.com/v1/forecast?" + query.Encode()
 	request, _ := http.NewRequest("GET", requestUrl, nil)

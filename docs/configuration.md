@@ -502,6 +502,7 @@ Example:
 
 ```yaml
 - type: weather
+  units: metric
   location: London, United Kingdom
 ```
 
@@ -516,10 +517,14 @@ Each bar represents a 2 hour interval. The yellow background represents sunrise 
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | location | string | yes |  |
+| units | string | no | metric |
 | hide-location | boolean | no | false |
 
 ##### `location`
 The name of the city and country to fetch weather information for. Attempting to launch the applcation with an invalid location will result in an error. You can use the [gecoding API page](https://open-meteo.com/en/docs/geocoding-api) to search for your specific location. Glance will use the first result from the list if there are multiple.
+
+##### `units`
+Whether to show the temperature in celsius or fahrenheit, possible values are `metric` or `imperial`.
 
 ##### `hide-location`
 Optionally don't display the location name on the widget.
