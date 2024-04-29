@@ -54,7 +54,7 @@ func decodeJsonFromRequest[T any](client RequestDoer, request *http.Request) (T,
 			"unexpected status code %d for %s, response: %s",
 			response.StatusCode,
 			request.URL,
-			truncateString(string(body), 128),
+			truncateString(string(body), 256),
 		)
 	}
 
@@ -95,7 +95,7 @@ func decodeXmlFromRequest[T any](client RequestDoer, request *http.Request) (T, 
 			"unexpected status code %d for %s, response: %s",
 			response.StatusCode,
 			request.URL,
-			truncateString(string(body), 128),
+			truncateString(string(body), 256),
 		)
 	}
 
