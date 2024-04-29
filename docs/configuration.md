@@ -452,6 +452,10 @@ Preview:
 ### Reddit
 Display a list of posts from a specific subreddit.
 
+> [!WARNING]
+>
+> Reddit does not allow unauthorized API access from VPS IPs, if you're hosting Glance on a VPS you will get a 403 response. As a workaround you can route the traffic from Glance through a VPN.
+
 Example:
 
 ```yaml
