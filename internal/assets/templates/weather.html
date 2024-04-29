@@ -2,7 +2,7 @@
 
 {{ define "widget-content" }}
 <div class="size-h2 color-highlight text-center">{{ .Weather.WeatherCodeAsString }}</div>
-<div class="size-h4 text-center">Feels like {{ .Weather.ApparentTemperature }}°C</div>
+<div class="size-h4 text-center">Feels like {{ .Weather.ApparentTemperature }}{{ .Weather.ApparentTemperatureUnit }}</div>
 
 <div class="weather-columns flex margin-top-15 justify-center">
     {{ range $i, $column := .Weather.Columns }}

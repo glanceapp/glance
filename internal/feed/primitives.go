@@ -29,13 +29,14 @@ type Calendar struct {
 }
 
 type Weather struct {
-	Temperature         int
-	ApparentTemperature int
-	WeatherCode         int
-	CurrentColumn       int
-	SunriseColumn       int
-	SunsetColumn        int
-	Columns             []weatherColumn
+	Temperature             int
+	ApparentTemperature     int
+	ApparentTemperatureUnit string
+	WeatherCode             int
+	CurrentColumn           int
+	SunriseColumn           int
+	SunsetColumn            int
+	Columns                 []weatherColumn
 }
 
 type AppRelease struct {

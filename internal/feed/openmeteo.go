@@ -40,6 +40,9 @@ type WeatherResponseJson struct {
 		ApparentTemperature float64 `json:"apparent_temperature"`
 		WeatherCode         int     `json:"weather_code"`
 	} `json:"current"`
+	CurrentUnits struct {
+		ApparentTemperature string `json:"apparent_temperature"`
+	} `json:"current_units"`
 }
 
 type weatherColumn struct {
@@ -80,7 +83,7 @@ func barIndexFromHour(h int) int {
 
 // TODO: bunch of spaget, refactor
 // TODO: allow changing between C and F
-func FetchWeatherForPlace(place *PlaceJson) (*Weather, error) {
+func FetchWeatherForPlace(place *PlaceJson, temperatureUnit string) (*Weather, error) {
 	query := url.Values{}
 
 	query.Add("latitude", fmt.Sprintf("%f", place.Latitude))
@@ -91,6 +94,7 @@ func FetchWeatherForPlace(place *PlaceJson) (*Weather, error) {
 	query.Add("current", "temperature_2m,apparent_temperature,weather_code,wind_speed_10m")
 	query.Add("hourly", "temperature_2m,precipitation_probability")
 	query.Add("daily", "sunrise,sunset")
+	query.Add("temperature_unit", temperatureUnit)
 
 	requestUrl := "https://api.open-meteo.com/v1/forecast?" + query.Encode()
 	request, _ := http.NewRequest("GET", requestUrl, nil)
@@ -140,12 +144,13 @@ func FetchWeatherForPlace(place *PlaceJson) (*Weather, error) {
 	}
 
 	return &Weather{
-		Temperature:         int(responseJson.Current.Temperature),
-		ApparentTemperature: int(responseJson.Current.ApparentTemperature),
-		WeatherCode:         responseJson.Current.WeatherCode,
-		CurrentColumn:       currentBar,
-		SunriseColumn:       sunriseBar,
-		SunsetColumn:        sunsetBar,
-		Columns:             bars,
+		Temperature:             int(responseJson.Current.Temperature),
+		ApparentTemperature:     int(responseJson.Current.ApparentTemperature),
+		ApparentTemperatureUnit: responseJson.CurrentUnits.ApparentTemperature,
+		WeatherCode:             responseJson.Current.WeatherCode,
+		CurrentColumn:           currentBar,
+		SunriseColumn:           sunriseBar,
+		SunsetColumn:            sunsetBar,
+		Columns:                 bars,
 	}, nil
 }

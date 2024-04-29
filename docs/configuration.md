@@ -513,12 +513,17 @@ Each bar represents a 2 hour interval. The yellow background represents sunrise 
 | ---- | ---- | -------- | ------- |
 | location | string | yes |  |
 | hide-location | boolean | no | false |
+| temperature-unit | string | no | celsius |
 
 ##### `location`
 The name of the city and country to fetch weather information for. Attempting to launch the applcation with an invalid location will result in an error. You can use the [gecoding API page](https://open-meteo.com/en/docs/geocoding-api) to search for your specific location. Glance will use the first result from the list if there are multiple.
 
 ##### `hide-location`
 Optionally don't display the location name on the widget.
+
+##### `temperature-unit`
+
+The unit of temperature to display. Possible values are `celsius` and `fahrenheit`.
 
 ### Monitor
 Display a list of sites and whether they are reachable (online) or not. This is determined by sending a HEAD request to the specified URL, if the response is 200 then the site is OK. The time it took to receive a response is also shown in milliseconds.
