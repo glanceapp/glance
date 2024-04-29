@@ -10,6 +10,7 @@ type stockResponseJson struct {
 	Chart struct {
 		Result []struct {
 			Meta struct {
+				Currency           string  `json:"currency"`
 				Symbol             string  `json:"symbol"`
 				RegularMarketPrice float64 `json:"regularMarketPrice"`
 				ChartPreviousClose float64 `json:"chartPreviousClose"`
@@ -78,10 +79,17 @@ func FetchStocksDataFromYahoo(stockRequests []StockRequest) (Stocks, error) {
 
 		points := SvgPolylineCoordsFromYValues(100, 50, maybeCopySliceWithoutZeroValues(prices))
 
+		currency, exists := currencyToSymbol[response.Chart.Result[0].Meta.Currency]
+
+		if !exists {
+			currency = response.Chart.Result[0].Meta.Currency
+		}
+
 		stocks = append(stocks, Stock{
-			Name:   stockRequests[i].Name,
-			Symbol: response.Chart.Result[0].Meta.Symbol,
-			Price:  response.Chart.Result[0].Meta.RegularMarketPrice,
+			Name:     stockRequests[i].Name,
+			Symbol:   response.Chart.Result[0].Meta.Symbol,
+			Price:    response.Chart.Result[0].Meta.RegularMarketPrice,
+			Currency: currency,
 			PercentChange: percentChange(
 				response.Chart.Result[0].Meta.RegularMarketPrice,
 				previous,
