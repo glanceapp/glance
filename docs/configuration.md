@@ -515,6 +515,7 @@ Example:
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
 | comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
+| request-url-template | string | no |  |
 
 ##### `subreddit`
 The subreddit for which to fetch the posts from.
@@ -567,6 +568,18 @@ r/selfhosted/comments/bsp01i/welcome_to_rselfhosted_please_read_this_first/
 `{POST-ID}` - the ID that comes after `/comments/`
 
 `{SUBREDDIT}` - the subreddit name
+
+##### `request-url-template`
+A custom request url that will be used to fetch the data instead. This is useful when you're hosting Glance on a VPS and Reddit is blocking the requests, and you want to route it through an HTTP proxy.
+
+Placeholders:
+
+`{REQUEST-URL}` - will be templated and replaced with the expanded request URL (i.e. https://www.reddit.com/r/selfhosted/hot.json). Example:
+
+```
+https://proxy/{REQUEST-URL}
+https://your.proxy/?url={REQUEST-URL}
+```
 
 ### Weather
 Display weather information for a specific location. The data is provided by https://open-meteo.com/.
