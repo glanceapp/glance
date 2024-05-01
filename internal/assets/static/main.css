@@ -567,6 +567,21 @@ body {
     -webkit-box-orient: vertical;
 }
 
+.forum-post-list-item {
+    display: flex;
+    gap: 1.2rem;
+}
+
+.forum-post-list-thumbnail {
+    flex-shrink: 0;
+    width: 6rem;
+    height: 4rem;
+    border-radius: var(--border-radius);
+    object-fit: cover;
+    border: 1px solid var(--color-separator);
+    margin-top: 0.2rem;
+}
+
 .bookmarks-group {
     --bookmarks-group-color: var(--color-primary);
 }
@@ -974,6 +989,14 @@ body {
         --widget-content-vertical-padding: 10px;
         --widget-content-horizontal-padding: 10px;
         --content-bounds-padding: 10px;
+    }
+
+    .forum-post-list-item {
+        flex-flow: row-reverse;
+    }
+
+    svg.forum-post-list-thumbnail {
+        display: none
     }
 }
 

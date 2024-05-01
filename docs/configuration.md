@@ -511,6 +511,7 @@ Example:
 | ---- | ---- | -------- | ------- |
 | subreddit | string | yes |  |
 | style | string | no | vertical-list |
+| thumbnails | boolean | no | false |
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
 | comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
@@ -532,6 +533,15 @@ Used to change the appearance of the widget. Possible values are `vertical-list`
 `vertical-cards`
 
 ![](images/reddit-widget-vertical-cards-preview.png)
+
+##### `thumbnails`
+Shows or hides thumbnails next to the post. This only works if the `style` is `vertical-list`. Preview:
+
+![](images/reddit-widget-vertical-list-thumbnails.png)
+
+> [!NOTE]
+>
+> Thumbnails don't work for some subreddits due to Reddit's API not returning the thumbnail URL. No workaround for this yet.
 
 ##### `limit`
 The maximum number of posts to show.

@@ -15,6 +15,7 @@ type HackerNews struct {
 	Limit               int             `yaml:"limit"`
 	CollapseAfter       int             `yaml:"collapse-after"`
 	CommentsUrlTemplate string          `yaml:"comments-url-template"`
+	Thumbnails          bool            `yaml:"-"`
 }
 
 func (widget *HackerNews) Initialize() error {
