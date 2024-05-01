@@ -831,7 +831,7 @@ Preview:
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | stocks | array | yes |
-| sort | string | no |
+| sort-by | string | no |
 
 ##### `stocks`
 An array of stocks for which to display information about.
