@@ -179,7 +179,7 @@ If you don't want to spend time configuring your own theme, there are [several a
 ### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| light | bool | no | false |
+| light | boolean | no | false |
 | background-color | HSL | no | 240 8 9 |
 | primary-color | HSL | no | 43 50 70 |
 | positive-color | HSL | no | same as `primary-color` |
