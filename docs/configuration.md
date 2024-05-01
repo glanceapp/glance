@@ -434,6 +434,7 @@ Preview:
 | ---- | ---- | -------- | ------- |
 | channels | array | yes | |
 | limit | integer | no | 25 |
+| video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
 A list of channel IDs. One way of getting the ID of a channel is going to the channel's page and clicking on its description:
@@ -446,6 +447,17 @@ Then scroll down and click on "Share channel", then "Copy channel ID":
 
 ##### `limit`
 The maximum number of videos to show.
+
+##### `video-url-template`
+Used to replace the default link for videos. Useful when you're running your own YouTube front-end. Example:
+
+```yaml
+video-url-template: https://invidious.your-domain.com/watch?v={VIDEO-ID}
+```
+
+Placeholders:
+
+`{VIDEO-ID}` - the ID of the video
 
 ### Hacker News
 Display a list of posts from [Hacker News](https://news.ycombinator.com/).
@@ -466,6 +478,19 @@ Preview:
 | ---- | ---- | -------- | ------- |
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
+| comments-url-template | string | no | https://news.ycombinator.com/item?id={POST-ID} |
+
+##### `comments-url-template`
+Used to replace the default link for post comments. Useful if you want to use an alternative front-end. Example:
+
+```yaml
+comments-url-template: https://www.hckrnws.com/stories/{POST-PATH}
+```
+
+Placeholders:
+
+`{POST-ID}` - the ID of the post
+
 
 ### Reddit
 Display a list of posts from a specific subreddit.
@@ -488,6 +513,7 @@ Example:
 | style | string | no | vertical-list |
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
+| comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
 
 ##### `subreddit`
 The subreddit for which to fetch the posts from.
@@ -512,6 +538,25 @@ The maximum number of posts to show.
 
 ##### `collapse-after`
 How many posts are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse. Not available when using the `vertical-cards` and `horizontal-cards` styles.
+
+##### `comments-url-template`
+Used to replace the default link for post comments. Useful if you want to use the old Reddit design or any other 3rd party front-end. Example:
+
+```yaml
+comments-url-template: https://old.reddit.com/{POST-PATH}
+```
+
+Placeholders:
+
+`{POST-PATH}` - the full path to the post, such as:
+
+```
+r/selfhosted/comments/bsp01i/welcome_to_rselfhosted_please_read_this_first/
+```
+
+`{POST-ID}` - the ID that comes after `/comments/`
+
+`{SUBREDDIT}` - the subreddit name
 
 ### Weather
 Display weather information for a specific location. The data is provided by https://open-meteo.com/.

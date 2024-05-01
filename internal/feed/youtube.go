@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -38,7 +39,7 @@ func parseYoutubeFeedTime(t string) time.Time {
 	return parsedTime
 }
 
-func FetchYoutubeChannelUploads(channelIds []string) (Videos, error) {
+func FetchYoutubeChannelUploads(channelIds []string, videoUrlTemplate string) (Videos, error) {
 	requests := make([]*http.Request, 0, len(channelIds))
 
 	for i := range channelIds {
@@ -75,10 +76,24 @@ func FetchYoutubeChannelUploads(channelIds []string) (Videos, error) {
 				continue
 			}
 
+			var videoUrl string
+
+			if videoUrlTemplate == "" {
+				videoUrl = video.Link.Href
+			} else {
+				parsedUrl, err := url.Parse(video.Link.Href)
+
+				if err == nil {
+					videoUrl = strings.ReplaceAll(videoUrlTemplate, "{VIDEO-ID}", parsedUrl.Query().Get("v"))
+				} else {
+					videoUrl = "#"
+				}
+			}
+
 			videos = append(videos, Video{
 				ThumbnailUrl: video.Group.Thumbnail.Url,
 				Title:        video.Title,
-				Url:          video.Link.Href,
+				Url:          videoUrl,
 				Author:       response.Channel,
 				AuthorUrl:    response.ChannelLink.Href + "/videos",
 				TimePosted:   parseYoutubeFeedTime(video.Published),

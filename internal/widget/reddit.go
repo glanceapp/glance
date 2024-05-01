@@ -11,12 +11,13 @@ import (
 )
 
 type Reddit struct {
-	widgetBase    `yaml:",inline"`
-	Posts         feed.ForumPosts `yaml:"-"`
-	Subreddit     string          `yaml:"subreddit"`
-	Style         string          `yaml:"style"`
-	Limit         int             `yaml:"limit"`
-	CollapseAfter int             `yaml:"collapse-after"`
+	widgetBase          `yaml:",inline"`
+	Posts               feed.ForumPosts `yaml:"-"`
+	Subreddit           string          `yaml:"subreddit"`
+	Style               string          `yaml:"style"`
+	CommentsUrlTemplate string          `yaml:"comments-url-template"`
+	Limit               int             `yaml:"limit"`
+	CollapseAfter       int             `yaml:"collapse-after"`
 }
 
 func (widget *Reddit) Initialize() error {
@@ -38,7 +39,7 @@ func (widget *Reddit) Initialize() error {
 }
 
 func (widget *Reddit) Update(ctx context.Context) {
-	posts, err := feed.FetchSubredditPosts(widget.Subreddit)
+	posts, err := feed.FetchSubredditPosts(widget.Subreddit, widget.CommentsUrlTemplate)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return

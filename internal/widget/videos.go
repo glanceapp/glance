@@ -10,10 +10,11 @@ import (
 )
 
 type Videos struct {
-	widgetBase `yaml:",inline"`
-	Videos     feed.Videos `yaml:"-"`
-	Channels   []string    `yaml:"channels"`
-	Limit      int         `yaml:"limit"`
+	widgetBase       `yaml:",inline"`
+	Videos           feed.Videos `yaml:"-"`
+	VideoUrlTemplate string      `yaml:"video-url-template"`
+	Channels         []string    `yaml:"channels"`
+	Limit            int         `yaml:"limit"`
 }
 
 func (widget *Videos) Initialize() error {
@@ -27,7 +28,7 @@ func (widget *Videos) Initialize() error {
 }
 
 func (widget *Videos) Update(ctx context.Context) {
-	videos, err := feed.FetchYoutubeChannelUploads(widget.Channels)
+	videos, err := feed.FetchYoutubeChannelUploads(widget.Channels, widget.VideoUrlTemplate)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
