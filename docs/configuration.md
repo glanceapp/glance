@@ -484,7 +484,7 @@ Preview:
 Used to replace the default link for post comments. Useful if you want to use an alternative front-end. Example:
 
 ```yaml
-comments-url-template: https://www.hckrnws.com/stories/{POST-PATH}
+comments-url-template: https://www.hckrnws.com/stories/{POST-ID}
 ```
 
 Placeholders:
