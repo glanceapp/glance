@@ -12,7 +12,7 @@
                 <img class="reddit-card-thumbnail" loading="lazy" src="{{ .ThumbnailUrl }}" alt="">
             </div>
             {{ end }}
-            <div class="padding-widget flex flex-column flex-grow relative">
+            <div class="padding-widget flex flex-column grow relative">
                 {{ if ne "" .TargetUrl }}
                 <a class="color-highlight size-h5 text-truncate visited-indicator" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ .TargetUrlDomain }}</a>
                 {{ else }}

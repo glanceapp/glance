@@ -1011,7 +1011,7 @@ body {
 .justify-center     { justify-content: center; }
 .justify-end        { justify-content: end; }
 .uppercase          { text-transform: uppercase; }
-.flex-grow          { flex-grow: 1; }
+.grow               { flex-grow: 1; }
 .flex-column        { flex-direction: column; }
 .items-center       { align-items: center; }
 .items-start        { align-items: start; }
