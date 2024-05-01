@@ -831,6 +831,7 @@ Preview:
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | stocks | array | yes |
+| sort | string | no |
 
 ##### `stocks`
 An array of stocks for which to display information about.
@@ -848,6 +849,9 @@ The symbol, as seen in Yahoo Finance.
 `name`
 
 The name that will be displayed under the symbol.
+
+##### `sort-by`
+By default the stocks are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
 
 ### Twitch Channels
 Display a list of channels from Twitch.
