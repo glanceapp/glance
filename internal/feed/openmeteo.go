@@ -94,7 +94,7 @@ func FetchWeatherForPlace(place *PlaceJson, units string) (*Weather, error) {
 	query.Add("timeformat", "unixtime")
 	query.Add("timezone", place.Timezone)
 	query.Add("forecast_days", "1")
-	query.Add("current", "temperature_2m,apparent_temperature,weather_code,wind_speed_10m")
+	query.Add("current", "temperature_2m,apparent_temperature,weather_code")
 	query.Add("hourly", "temperature_2m,precipitation_probability")
 	query.Add("daily", "sunrise,sunset")
 	query.Add("temperature_unit", temperatureUnit)
