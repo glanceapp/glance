@@ -15,7 +15,7 @@ type Reddit struct {
 	Posts               feed.ForumPosts `yaml:"-"`
 	Subreddit           string          `yaml:"subreddit"`
 	Style               string          `yaml:"style"`
-	Thumbnails          bool            `yaml:"thumbnails"`
+	ShowThumbnails      bool            `yaml:"show-thumbnails"`
 	CommentsUrlTemplate string          `yaml:"comments-url-template"`
 	Limit               int             `yaml:"limit"`
 	CollapseAfter       int             `yaml:"collapse-after"`

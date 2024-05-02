@@ -5,7 +5,7 @@
     {{ range $i, $post := .Posts }}
     <li {{ if shouldCollapse $i $.CollapseAfter }}class="list-collapsible-item" style="--animation-delay: {{ itemAnimationDelay $i $.CollapseAfter }};"{{ end }}>
         <div class="forum-post-list-item thumbnail-container">
-            {{ if $.Thumbnails }}
+            {{ if $.ShowThumbnails }}
                 {{ if ne $post.ThumbnailUrl "" }}
                 <img class="forum-post-list-thumbnail thumbnail" src="{{ $post.ThumbnailUrl }}" alt="" loading="lazy">
                 {{ else if $post.HasTargetUrl }}
