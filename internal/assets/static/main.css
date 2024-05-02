@@ -995,7 +995,7 @@ body {
         flex-flow: row-reverse;
     }
 
-    svg.forum-post-list-thumbnail {
+    .hide-on-mobile {
         display: none
     }
 }
