@@ -579,6 +579,15 @@ Example:
   location: London, United Kingdom
 ```
 
+> [!NOTE]
+>
+> US cities which have common names can have their state specified as the second parameter like such:
+>
+> * Greenville, North Carolina, United States
+> * Greenville, South Carolina, United States
+> * Greenville, Mississippi, United States
+
+
 Preview:
 
 ![](images/weather-widget-preview.png)
@@ -592,6 +601,7 @@ Each bar represents a 2 hour interval. The yellow background represents sunrise 
 | location | string | yes |  |
 | units | string | no | metric |
 | hide-location | boolean | no | false |
+| show-area-name | boolean | no | false |
 
 ##### `location`
 The name of the city and country to fetch weather information for. Attempting to launch the applcation with an invalid location will result in an error. You can use the [gecoding API page](https://open-meteo.com/en/docs/geocoding-api) to search for your specific location. Glance will use the first result from the list if there are multiple.
@@ -601,6 +611,19 @@ Whether to show the temperature in celsius or fahrenheit, possible values are `m
 
 ##### `hide-location`
 Optionally don't display the location name on the widget.
+
+##### `show-area-name`
+Whether to display the state/administrative area in the location name. If set to `true` the location will be displayed as:
+
+```
+Greenville, North Carolina, United States
+```
+
+Otherwise, if set to `false` (which is the default) it'll be displayed as:
+
+```
+Greenville, United States
+```
 
 ### Monitor
 Display a list of sites and whether they are reachable (online) or not. This is determined by sending a HEAD request to the specified URL, if the response is 200 then the site is OK. The time it took to receive a response is also shown in milliseconds.
