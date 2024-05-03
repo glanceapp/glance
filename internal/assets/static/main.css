@@ -33,6 +33,7 @@
     --color-widget-background: hsl(var(--color-widget-background-hsl-values));
     --color-separator: hsl(var(--bghs), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 4% * var(--cm))));
     --color-widget-content-border: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 4%)));
+    --color-widget-background-highlight: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 4%)));
 
     --ths: var(--bgh), calc(var(--bgs) * var(--tsm));
     --color-text-base: hsl(var(--ths), calc(var(--scheme) var(--cm) * 58%));
@@ -80,7 +81,7 @@
 
 .visited-indicator:not(.text-truncate)::after,
 .visited-indicator.text-truncate::before,
-.bookmarks-link::after {
+.bookmarks-link:not(.bookmarks-link-no-arrow)::after {
     content: '↗';
     margin-left: 0.5em;
     display: inline-block;
@@ -590,8 +591,29 @@ body {
     color: var(--bookmarks-group-color);
 }
 
-.bookmarks-link::after {
+.bookmarks-group .bookmarks-link::after {
     color: var(--bookmarks-group-color);
+}
+
+.bookmarks-icon-container {
+    margin-block: 0.1rem;
+    background-color: var(--color-widget-background-highlight);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+}
+
+.bookmarks-icon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
+}
+
+.simple-icon {
+    opacity: 0.7;
+}
+
+:root:not(.light-scheme) .simple-icon {
+    filter: invert(1);
 }
 
 .calendar-day {

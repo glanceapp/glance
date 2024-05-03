@@ -49,6 +49,7 @@ type Monitor struct {
 		Title       string           `yaml:"title"`
 		Url         string           `yaml:"url"`
 		IconUrl     string           `yaml:"icon"`
+		SameTab     bool             `yaml:"same-tab"`
 		Status      *feed.SiteStatus `yaml:"-"`
 		StatusText  string           `yaml:"-"`
 		StatusStyle string           `yaml:"-"`

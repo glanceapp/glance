@@ -491,7 +491,6 @@ Placeholders:
 
 `{POST-ID}` - the ID of the post
 
-
 ### Reddit
 Display a list of posts from a specific subreddit.
 
@@ -682,11 +681,12 @@ You can hover over the "ERROR" text to view more information.
 
 Properties for each site:
 
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| title | string | yes |
-| url | string | yes |
-| icon | string | no |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| title | string | yes | |
+| url | string | yes | |
+| icon | string | no | |
+| same-tab | boolean | no | false |
 
 `title`
 
@@ -699,6 +699,10 @@ The URL which will be requested and its response will determine the status of th
 `icon`
 
 Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path).
+
+`same-tab`
+
+Whether to open the link in the same or a new tab.
 
 ### Releases
 Display a list of releases for specific repositories on Github. Draft releases and prereleases will not be shown.
@@ -816,14 +820,39 @@ An array of groups which can optionally have a title and a custom color.
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | title | string | no | |
-| color | HSL | no | the primary theme color |
+| color | HSL | no | the primary color of the theme |
 | links | array | yes | |
 
 ###### Properties for each link
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| title | string | yes |
-| url | string | yes |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| title | string | yes | |
+| url | string | yes | |
+| icon | string | no | |
+| same-tab | boolean | no | false |
+| hide-arrow | boolean | no | false |
+
+`icon`
+
+URL pointing to an image. You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix:
+
+```yaml
+icon: si:gmail
+icon: si:youtube
+icon: si:reddit
+```
+
+> [!WARNING]
+>
+> Simple Icons are loaded externally and are hosted on `cdnjs.cloudflare.com`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+
+`same-tab`
+
+Whether to open the link in the same tab or a new one.
+
+`hide-arrow`
+
+Whether to hide the colored arrow on each link.
 
 ### Calendar
 Display a calendar.
