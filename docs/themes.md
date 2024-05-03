@@ -11,8 +11,30 @@ theme:
   contrast-multiplier: 1.1
 ```
 
-### Catppuccin
-![screenshot](images/themes/catppuccin.png)
+### Catppuccin Frappe
+![screenshot](images/themes/catppuccin-frappe.png)
+```yaml
+theme:
+  background-color: 229 19 23
+  contrast-multiplier: 1.2
+  primary-color: 222 74 74
+  positive-color: 96 44 68
+  negative-color: 359 68 71
+```
+
+### Catppuccin Macchiato
+![screenshot](images/themes/catppuccin-macchiato.png)
+```yaml
+theme:
+  background-color: 232 23 18
+  contrast-multiplier: 1.2
+  primary-color: 220 83 75
+  positive-color: 105 48 72
+  negative-color: 351 74 73
+```
+
+### Catppuccin Mocha
+![screenshot](images/themes/catppuccin-mocha.png)
 ```yaml
 theme:
   background-color: 240 21 15
@@ -41,6 +63,18 @@ theme:
 ```
 
 ## Light
+
+### Catppuccin Latte
+![screenshot](images/themes/catppuccin-latte.png)
+```yaml
+theme:
+  light: true
+  background-color: 220 23 95
+  contrast-multiplier: 1.0
+  primary-color: 220 91 54
+  positive-color: 109 58 40
+  negative-color: 347 87 44
+```
 
 ### Peachy
 ![screenshot](images/themes/peachy.png)
