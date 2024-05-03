@@ -30,8 +30,12 @@ type subredditResponseJson struct {
 	} `json:"data"`
 }
 
-func FetchSubredditPosts(subreddit string, commentsUrlTemplate string) (ForumPosts, error) {
-	requestUrl := fmt.Sprintf("https://www.reddit.com/r/%s/hot.json", url.QueryEscape(subreddit))
+func FetchSubredditPosts(subreddit string, commentsUrlTemplate string, requestUrlTemplate string) (ForumPosts, error) {
+	subreddit = url.QueryEscape(subreddit)
+	requestUrl := fmt.Sprintf("https://www.reddit.com/r/%s/hot.json", subreddit)
+	if requestUrlTemplate != "" {
+		requestUrl = strings.ReplaceAll(requestUrlTemplate, "{REQUEST-URL}", requestUrl)
+	}
 	request, err := http.NewRequest("GET", requestUrl, nil)
 
 	if err != nil {

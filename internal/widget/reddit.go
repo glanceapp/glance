@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"html/template"
+	"strings"
 	"time"
 
 	"github.com/glanceapp/glance/internal/assets"
@@ -19,6 +20,7 @@ type Reddit struct {
 	CommentsUrlTemplate string          `yaml:"comments-url-template"`
 	Limit               int             `yaml:"limit"`
 	CollapseAfter       int             `yaml:"collapse-after"`
+	RequestUrlTemplate  string          `yaml:"request-url-template"`
 }
 
 func (widget *Reddit) Initialize() error {
@@ -34,13 +36,19 @@ func (widget *Reddit) Initialize() error {
 		widget.CollapseAfter = 5
 	}
 
+	if widget.RequestUrlTemplate != "" {
+		if !strings.Contains(widget.RequestUrlTemplate, "{REQUEST-URL}") {
+			return errors.New("no `{REQUEST-URL}` placeholder specified")
+		}
+	}
+
 	widget.withTitle("/r/" + widget.Subreddit).withCacheDuration(30 * time.Minute)
 
 	return nil
 }
 
 func (widget *Reddit) Update(ctx context.Context) {
-	posts, err := feed.FetchSubredditPosts(widget.Subreddit, widget.CommentsUrlTemplate)
+	posts, err := feed.FetchSubredditPosts(widget.Subreddit, widget.CommentsUrlTemplate, widget.RequestUrlTemplate)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
