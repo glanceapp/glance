@@ -179,7 +179,7 @@ If you don't want to spend time configuring your own theme, there are [several a
 ### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| light | bool | no | false |
+| light | boolean | no | false |
 | background-color | HSL | no | 240 8 9 |
 | primary-color | HSL | no | 43 50 70 |
 | positive-color | HSL | no | same as `primary-color` |
@@ -434,6 +434,7 @@ Preview:
 | ---- | ---- | -------- | ------- |
 | channels | array | yes | |
 | limit | integer | no | 25 |
+| video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
 A list of channel IDs. One way of getting the ID of a channel is going to the channel's page and clicking on its description:
@@ -446,6 +447,17 @@ Then scroll down and click on "Share channel", then "Copy channel ID":
 
 ##### `limit`
 The maximum number of videos to show.
+
+##### `video-url-template`
+Used to replace the default link for videos. Useful when you're running your own YouTube front-end. Example:
+
+```yaml
+video-url-template: https://invidious.your-domain.com/watch?v={VIDEO-ID}
+```
+
+Placeholders:
+
+`{VIDEO-ID}` - the ID of the video
 
 ### Hacker News
 Display a list of posts from [Hacker News](https://news.ycombinator.com/).
@@ -466,6 +478,18 @@ Preview:
 | ---- | ---- | -------- | ------- |
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
+| comments-url-template | string | no | https://news.ycombinator.com/item?id={POST-ID} |
+
+##### `comments-url-template`
+Used to replace the default link for post comments. Useful if you want to use an alternative front-end. Example:
+
+```yaml
+comments-url-template: https://www.hckrnws.com/stories/{POST-ID}
+```
+
+Placeholders:
+
+`{POST-ID}` - the ID of the post
 
 ### Reddit
 Display a list of posts from a specific subreddit.
@@ -486,8 +510,11 @@ Example:
 | ---- | ---- | -------- | ------- |
 | subreddit | string | yes |  |
 | style | string | no | vertical-list |
+| show-thumbnails | boolean | no | false |
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
+| comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
+| request-url-template | string | no |  |
 
 ##### `subreddit`
 The subreddit for which to fetch the posts from.
@@ -507,11 +534,51 @@ Used to change the appearance of the widget. Possible values are `vertical-list`
 
 ![](images/reddit-widget-vertical-cards-preview.png)
 
+##### `show-thumbnails`
+Shows or hides thumbnails next to the post. This only works if the `style` is `vertical-list`. Preview:
+
+![](images/reddit-widget-vertical-list-thumbnails.png)
+
+> [!NOTE]
+>
+> Thumbnails don't work for some subreddits due to Reddit's API not returning the thumbnail URL. No workaround for this yet.
+
 ##### `limit`
 The maximum number of posts to show.
 
 ##### `collapse-after`
 How many posts are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse. Not available when using the `vertical-cards` and `horizontal-cards` styles.
+
+##### `comments-url-template`
+Used to replace the default link for post comments. Useful if you want to use the old Reddit design or any other 3rd party front-end. Example:
+
+```yaml
+comments-url-template: https://old.reddit.com/{POST-PATH}
+```
+
+Placeholders:
+
+`{POST-PATH}` - the full path to the post, such as:
+
+```
+r/selfhosted/comments/bsp01i/welcome_to_rselfhosted_please_read_this_first/
+```
+
+`{POST-ID}` - the ID that comes after `/comments/`
+
+`{SUBREDDIT}` - the subreddit name
+
+##### `request-url-template`
+A custom request url that will be used to fetch the data instead. This is useful when you're hosting Glance on a VPS and Reddit is blocking the requests, and you want to route it through an HTTP proxy.
+
+Placeholders:
+
+`{REQUEST-URL}` - will be templated and replaced with the expanded request URL (i.e. https://www.reddit.com/r/selfhosted/hot.json). Example:
+
+```
+https://proxy/{REQUEST-URL}
+https://your.proxy/?url={REQUEST-URL}
+```
 
 ### Weather
 Display weather information for a specific location. The data is provided by https://open-meteo.com/.
@@ -523,6 +590,15 @@ Example:
   units: metric
   location: London, United Kingdom
 ```
+
+> [!NOTE]
+>
+> US cities which have common names can have their state specified as the second parameter like such:
+>
+> * Greenville, North Carolina, United States
+> * Greenville, South Carolina, United States
+> * Greenville, Mississippi, United States
+
 
 Preview:
 
@@ -537,6 +613,7 @@ Each bar represents a 2 hour interval. The yellow background represents sunrise 
 | location | string | yes |  |
 | units | string | no | metric |
 | hide-location | boolean | no | false |
+| show-area-name | boolean | no | false |
 
 ##### `location`
 The name of the city and country to fetch weather information for. Attempting to launch the applcation with an invalid location will result in an error. You can use the [gecoding API page](https://open-meteo.com/en/docs/geocoding-api) to search for your specific location. Glance will use the first result from the list if there are multiple.
@@ -546,6 +623,19 @@ Whether to show the temperature in celsius or fahrenheit, possible values are `m
 
 ##### `hide-location`
 Optionally don't display the location name on the widget.
+
+##### `show-area-name`
+Whether to display the state/administrative area in the location name. If set to `true` the location will be displayed as:
+
+```
+Greenville, North Carolina, United States
+```
+
+Otherwise, if set to `false` (which is the default) it'll be displayed as:
+
+```
+Greenville, United States
+```
 
 ### Monitor
 Display a list of sites and whether they are reachable (online) or not. This is determined by sending a HEAD request to the specified URL, if the response is 200 then the site is OK. The time it took to receive a response is also shown in milliseconds.
@@ -591,11 +681,12 @@ You can hover over the "ERROR" text to view more information.
 
 Properties for each site:
 
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| title | string | yes |
-| url | string | yes |
-| icon | string | no |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| title | string | yes | |
+| url | string | yes | |
+| icon | string | no | |
+| same-tab | boolean | no | false |
 
 `title`
 
@@ -608,6 +699,10 @@ The URL which will be requested and its response will determine the status of th
 `icon`
 
 Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path).
+
+`same-tab`
+
+Whether to open the link in the same or a new tab.
 
 ### Releases
 Display a list of releases for specific repositories on Github. Draft releases and prereleases will not be shown.
@@ -725,14 +820,39 @@ An array of groups which can optionally have a title and a custom color.
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | title | string | no | |
-| color | HSL | no | the primary theme color |
+| color | HSL | no | the primary color of the theme |
 | links | array | yes | |
 
 ###### Properties for each link
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| title | string | yes |
-| url | string | yes |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| title | string | yes | |
+| url | string | yes | |
+| icon | string | no | |
+| same-tab | boolean | no | false |
+| hide-arrow | boolean | no | false |
+
+`icon`
+
+URL pointing to an image. You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix:
+
+```yaml
+icon: si:gmail
+icon: si:youtube
+icon: si:reddit
+```
+
+> [!WARNING]
+>
+> Simple Icons are loaded externally and are hosted on `cdnjs.cloudflare.com`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+
+`same-tab`
+
+Whether to open the link in the same tab or a new one.
+
+`hide-arrow`
+
+Whether to hide the colored arrow on each link.
 
 ### Calendar
 Display a calendar.
@@ -786,6 +906,7 @@ Preview:
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | stocks | array | yes |
+| sort-by | string | no |
 
 ##### `stocks`
 An array of stocks for which to display information about.
@@ -803,6 +924,9 @@ The symbol, as seen in Yahoo Finance.
 `name`
 
 The name that will be displayed under the symbol.
+
+##### `sort-by`
+By default the stocks are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
 
 ### Twitch Channels
 Display a list of channels from Twitch.

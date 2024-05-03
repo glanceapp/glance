@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strings"
 	"time"
 
 	_ "time/tzdata"
@@ -17,6 +18,7 @@ type PlacesResponseJson struct {
 
 type PlaceJson struct {
 	Name      string
+	Area      string `json:"admin1"`
 	Latitude  float64
 	Longitude float64
 	Timezone  string
@@ -48,8 +50,41 @@ type weatherColumn struct {
 	HasPrecipitation bool
 }
 
+var commonCountryAbbreviations = map[string]string{
+	"US":  "United States",
+	"USA": "United States",
+	"UK":  "United Kingdom",
+}
+
+func expandCountryAbbreviations(name string) string {
+	if expanded, ok := commonCountryAbbreviations[strings.TrimSpace(name)]; ok {
+		return expanded
+	}
+
+	return name
+}
+
+// Separates the location that Open Meteo accepts from the administrative area
+// which can then be used to filter to the correct place after the list of places
+// has been retrieved. Also expands abbreviations since Open Meteo does not accept
+// country names like "US", "USA" and "UK"
+func parsePlaceName(name string) (string, string) {
+	parts := strings.Split(name, ",")
+
+	if len(parts) == 1 {
+		return name, ""
+	}
+
+	if len(parts) == 2 {
+		return parts[0] + ", " + expandCountryAbbreviations(parts[1]), ""
+	}
+
+	return parts[0] + ", " + expandCountryAbbreviations(parts[2]), strings.TrimSpace(parts[1])
+}
+
 func FetchPlaceFromName(location string) (*PlaceJson, error) {
-	requestUrl := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?name=%s&count=1&language=en&format=json", url.QueryEscape(location))
+	location, area := parsePlaceName(location)
+	requestUrl := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?name=%s&count=10&language=en&format=json", url.QueryEscape(location))
 	request, _ := http.NewRequest("GET", requestUrl, nil)
 	responseJson, err := decodeJsonFromRequest[PlacesResponseJson](defaultClient, request)
 
@@ -61,7 +96,24 @@ func FetchPlaceFromName(location string) (*PlaceJson, error) {
 		return nil, fmt.Errorf("no places found for %s", location)
 	}
 
-	place := &responseJson.Results[0]
+	var place *PlaceJson
+
+	if area != "" {
+		area = strings.ToLower(area)
+
+		for i := range responseJson.Results {
+			if strings.ToLower(responseJson.Results[i].Area) == area {
+				place = &responseJson.Results[i]
+				break
+			}
+		}
+
+		if place == nil {
+			return nil, fmt.Errorf("no place found for %s in %s", location, area)
+		}
+	} else {
+		place = &responseJson.Results[0]
+	}
 
 	loc, err := time.LoadLocation(place.Timezone)
 
@@ -94,7 +146,7 @@ func FetchWeatherForPlace(place *PlaceJson, units string) (*Weather, error) {
 	query.Add("timeformat", "unixtime")
 	query.Add("timezone", place.Timezone)
 	query.Add("forecast_days", "1")
-	query.Add("current", "temperature_2m,apparent_temperature,weather_code,wind_speed_10m")
+	query.Add("current", "temperature_2m,apparent_temperature,weather_code")
 	query.Add("hourly", "temperature_2m,precipitation_probability")
 	query.Add("daily", "sunrise,sunset")
 	query.Add("temperature_unit", temperatureUnit)

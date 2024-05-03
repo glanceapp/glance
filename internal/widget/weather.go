@@ -12,6 +12,7 @@ import (
 type Weather struct {
 	widgetBase   `yaml:",inline"`
 	Location     string          `yaml:"location"`
+	ShowAreaName bool            `yaml:"show-area-name"`
 	HideLocation bool            `yaml:"hide-location"`
 	Units        string          `yaml:"units"`
 	Place        *feed.PlaceJson `yaml:"-"`

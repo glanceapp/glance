@@ -59,9 +59,35 @@ type Video struct {
 
 type Videos []Video
 
+var currencyToSymbol = map[string]string{
+	"USD": "$",
+	"EUR": "€",
+	"JPY": "¥",
+	"CAD": "C$",
+	"AUD": "A$",
+	"GBP": "£",
+	"CHF": "Fr",
+	"NZD": "N$",
+	"INR": "₹",
+	"BRL": "R$",
+	"RUB": "₽",
+	"TRY": "₺",
+	"ZAR": "R",
+	"CNY": "¥",
+	"KRW": "₩",
+	"HKD": "HK$",
+	"SGD": "S$",
+	"SEK": "kr",
+	"NOK": "kr",
+	"DKK": "kr",
+	"PLN": "zł",
+	"PHP": "₱",
+}
+
 type Stock struct {
 	Name           string
 	Symbol         string
+	Currency       string
 	Price          float64
 	PercentChange  float64
 	SvgChartPoints string

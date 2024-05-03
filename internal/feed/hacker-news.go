@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -28,7 +29,7 @@ func getHackerNewsTopPostIds() ([]int, error) {
 	return response, nil
 }
 
-func getHackerNewsPostsFromIds(postIds []int) (ForumPosts, error) {
+func getHackerNewsPostsFromIds(postIds []int, commentsUrlTemplate string) (ForumPosts, error) {
 	requests := make([]*http.Request, len(postIds))
 
 	for i, id := range postIds {
@@ -52,9 +53,17 @@ func getHackerNewsPostsFromIds(postIds []int) (ForumPosts, error) {
 			continue
 		}
 
+		var commentsUrl string
+
+		if commentsUrlTemplate == "" {
+			commentsUrl = "https://news.ycombinator.com/item?id=" + strconv.Itoa(results[i].Id)
+		} else {
+			commentsUrl = strings.ReplaceAll(commentsUrlTemplate, "{POST-ID}", strconv.Itoa(results[i].Id))
+		}
+
 		posts = append(posts, ForumPost{
 			Title:           results[i].Title,
-			DiscussionUrl:   "https://news.ycombinator.com/item?id=" + strconv.Itoa(results[i].Id),
+			DiscussionUrl:   commentsUrl,
 			TargetUrl:       results[i].TargetUrl,
 			TargetUrlDomain: extractDomainFromUrl(results[i].TargetUrl),
 			CommentCount:    results[i].CommentCount,
@@ -74,7 +83,7 @@ func getHackerNewsPostsFromIds(postIds []int) (ForumPosts, error) {
 	return posts, nil
 }
 
-func FetchHackerNewsTopPosts(limit int) (ForumPosts, error) {
+func FetchHackerNewsTopPosts(limit int, commentsUrlTemplate string) (ForumPosts, error) {
 	postIds, err := getHackerNewsTopPostIds()
 
 	if err != nil {
@@ -85,5 +94,5 @@ func FetchHackerNewsTopPosts(limit int) (ForumPosts, error) {
 		postIds = postIds[:limit]
 	}
 
-	return getHackerNewsPostsFromIds(postIds)
+	return getHackerNewsPostsFromIds(postIds, commentsUrlTemplate)
 }

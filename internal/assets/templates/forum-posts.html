@@ -4,15 +4,32 @@
 <ul class="list list-gap-14 list-collapsible">
     {{ range $i, $post := .Posts }}
     <li {{ if shouldCollapse $i $.CollapseAfter }}class="list-collapsible-item" style="--animation-delay: {{ itemAnimationDelay $i $.CollapseAfter }};"{{ end }}>
-        <a href="{{ $post.DiscussionUrl }}" class="size-h3 color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
-        <ul class="list-horizontal-text">
-            <li title="{{ $post.TimePosted | formatTime }}" {{ dynamicRelativeTimeAttrs $post.TimePosted }}>{{ $post.TimePosted | relativeTime }}</li>
-            <li>{{ $post.Score | formatNumber }} points</li>
-            <li>{{ $post.CommentCount | formatNumber }} comments</li>
-            {{ if $post.HasTargetUrl }}
-            <li class="shrink min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ $post.TargetUrlDomain }}</a></li>
+        <div class="forum-post-list-item thumbnail-container">
+            {{ if $.ShowThumbnails }}
+                {{ if ne $post.ThumbnailUrl "" }}
+                <img class="forum-post-list-thumbnail thumbnail" src="{{ $post.ThumbnailUrl }}" alt="" loading="lazy">
+                {{ else if $post.HasTargetUrl }}
+                <svg class="forum-post-list-thumbnail hide-on-mobile" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="-9 -8 40 40" stroke-width="1.5" stroke="var(--color-text-subdue)">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+                </svg>
+                {{ else }}
+                <svg class="forum-post-list-thumbnail hide-on-mobile" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="-9 -8 40 40" stroke-width="1.5" stroke="var(--color-text-subdue)">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
+                </svg>
+                {{ end }}
             {{ end }}
-        </ul>
+            <div class="grow">
+                <a href="{{ $post.DiscussionUrl }}" class="size-h3 color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
+                <ul class="list-horizontal-text">
+                    <li title="{{ $post.TimePosted | formatTime }}" {{ dynamicRelativeTimeAttrs $post.TimePosted }}>{{ $post.TimePosted | relativeTime }}</li>
+                    <li>{{ $post.Score | formatNumber }} points</li>
+                    <li>{{ $post.CommentCount | formatNumber }} comments</li>
+                    {{ if $post.HasTargetUrl }}
+                    <li class="shrink min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ $post.TargetUrlDomain }}</a></li>
+                    {{ end }}
+                </ul>
+            </div>
+        </div>
     </li>
     {{ end }}
 </ul>

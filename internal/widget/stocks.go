@@ -12,6 +12,7 @@ import (
 type Stocks struct {
 	widgetBase `yaml:",inline"`
 	Stocks     feed.Stocks         `yaml:"-"`
+	Sort       string              `yaml:"sort-by"`
 	Tickers    []feed.StockRequest `yaml:"stocks"`
 }
 
@@ -28,7 +29,10 @@ func (widget *Stocks) Update(ctx context.Context) {
 		return
 	}
 
-	stocks.SortByAbsChange()
+	if widget.Sort == "absolute-change" {
+		stocks.SortByAbsChange()
+	}
+
 	widget.Stocks = stocks
 }
 

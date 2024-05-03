@@ -5,6 +5,7 @@ import (
 	"html"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -12,6 +13,7 @@ type subredditResponseJson struct {
 	Data struct {
 		Children []struct {
 			Data struct {
+				Id            string  `json:"id"`
 				Title         string  `json:"title"`
 				Upvotes       int     `json:"ups"`
 				Url           string  `json:"url"`
@@ -28,8 +30,12 @@ type subredditResponseJson struct {
 	} `json:"data"`
 }
 
-func FetchSubredditPosts(subreddit string) (ForumPosts, error) {
-	requestUrl := fmt.Sprintf("https://www.reddit.com/r/%s/hot.json", url.QueryEscape(subreddit))
+func FetchSubredditPosts(subreddit string, commentsUrlTemplate string, requestUrlTemplate string) (ForumPosts, error) {
+	subreddit = url.QueryEscape(subreddit)
+	requestUrl := fmt.Sprintf("https://www.reddit.com/r/%s/hot.json", subreddit)
+	if requestUrlTemplate != "" {
+		requestUrl = strings.ReplaceAll(requestUrlTemplate, "{REQUEST-URL}", requestUrl)
+	}
 	request, err := http.NewRequest("GET", requestUrl, nil)
 
 	if err != nil {
@@ -57,9 +63,19 @@ func FetchSubredditPosts(subreddit string) (ForumPosts, error) {
 			continue
 		}
 
+		var commentsUrl string
+
+		if commentsUrlTemplate == "" {
+			commentsUrl = "https://www.reddit.com" + post.Permalink
+		} else {
+			commentsUrl = strings.ReplaceAll(commentsUrlTemplate, "{SUBREDDIT}", subreddit)
+			commentsUrl = strings.ReplaceAll(commentsUrl, "{POST-ID}", post.Id)
+			commentsUrl = strings.ReplaceAll(commentsUrl, "{POST-PATH}", strings.TrimLeft(post.Permalink, "/"))
+		}
+
 		forumPost := ForumPost{
 			Title:           html.UnescapeString(post.Title),
-			DiscussionUrl:   "https://www.reddit.com" + post.Permalink,
+			DiscussionUrl:   commentsUrl,
 			TargetUrlDomain: post.Domain,
 			CommentCount:    post.CommentsCount,
 			Score:           post.Upvotes,

@@ -8,7 +8,7 @@
         {{ range .Videos }}
         <div class="card widget-content-frame thumbnail-container">
             <img class="video-thumbnail thumbnail" loading="lazy" src="{{ .ThumbnailUrl }}" alt="">
-            <div class="margin-top-10 margin-bottom-widget flex flex-column flex-grow padding-inline-widget">
+            <div class="margin-top-10 margin-bottom-widget flex flex-column grow padding-inline-widget">
                 <a class="video-title color-primary-if-not-visited" href="{{ .Url }}" target="_blank" rel="noreferrer" title="{{ .Title }}">{{ .Title }}</a>
                 <ul class="list-horizontal-text flex-nowrap margin-top-7">
                     <li class="shrink-0" title="{{ .TimePosted | formatTime }}" {{ dynamicRelativeTimeAttrs .TimePosted }}>{{ .TimePosted | relativeTime }}</li>

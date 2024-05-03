@@ -23,7 +23,7 @@
 {{ if not .HideLocation }}
 <div class="flex items-center justify-center margin-top-15 gap-7 size-h5">
     <div class="location-icon"></div>
-    <div class="text-truncate">{{ .Place.Name }}, {{ .Place.Country }}</div>
+    <div class="text-truncate">{{ .Place.Name }},{{ if .ShowAreaName }} {{ .Place.Area }},{{ end }} {{ .Place.Country }}</div>
 </div>
 {{ end }}
 {{ end }}
