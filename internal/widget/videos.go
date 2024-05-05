@@ -12,13 +12,18 @@ import (
 type Videos struct {
 	widgetBase       `yaml:",inline"`
 	Videos           feed.Videos `yaml:"-"`
+	GroupTitle       string      `yaml:"group-title"`
 	VideoUrlTemplate string      `yaml:"video-url-template"`
 	Channels         []string    `yaml:"channels"`
 	Limit            int         `yaml:"limit"`
 }
 
 func (widget *Videos) Initialize() error {
-	widget.withTitle("Videos").withCacheDuration(time.Hour)
+	
+	if widget.GroupTitle == "" {
+		widget.GroupTitle = "VIDEOS"
+	}
+	widget.withTitle(widget.GroupTitle).withCacheDuration(time.Hour)
 
 	if widget.Limit <= 0 {
 		widget.Limit = 25

@@ -434,6 +434,7 @@ Preview:
 | ---- | ---- | -------- | ------- |
 | channels | array | yes | |
 | limit | integer | no | 25 |
+| group-title | string | no | VIDEOS |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
@@ -458,6 +459,13 @@ video-url-template: https://invidious.your-domain.com/watch?v={VIDEO-ID}
 Placeholders:
 
 `{VIDEO-ID}` - the ID of the video
+
+##### `group-title`
+Add a separate title for the group of videos in the widget, defaults to "VIDEOS". Useful when you have to group videos by categories. Example:
+
+```yaml
+group-title: "Reviews"
+```
 
 ### Hacker News
 Display a list of posts from [Hacker News](https://news.ycombinator.com/).
