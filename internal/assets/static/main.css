@@ -102,6 +102,7 @@
 .list        { --list-half-gap: 0rem; }
 .list-gap-2  { --list-half-gap: 0.1rem; }
 .list-gap-4  { --list-half-gap: 0.2rem; }
+.list-gap-10 { --list-half-gap: 0.5rem; }
 .list-gap-14 { --list-half-gap: 0.7rem; }
 .list-gap-20 { --list-half-gap: 1rem; }
 .list-gap-24 { --list-half-gap: 1.2rem; }
@@ -203,6 +204,12 @@
 * {
     padding: 0;
     margin: 0;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background-color: var(--color-separator);
 }
 
 img, svg {
@@ -1041,6 +1048,7 @@ body {
 .text-left          { text-align: left; }
 .text-right         { text-align: right; }
 .text-center        { text-align: center; }
+.text-elevate       { margin-top: -0.2em; }
 .rtl                { direction: rtl; }
 .shrink             { flex-shrink: 1; }
 .shrink-0           { flex-shrink: 0; }
@@ -1069,6 +1077,11 @@ body {
 .margin-top-7       { margin-top: 0.7rem; }
 .margin-top-10      { margin-top: 1rem; }
 .margin-top-15      { margin-top: 1.5rem; }
+.margin-block-3     { margin-block: 0.3rem; }
+.margin-block-5     { margin-block: 0.5rem; }
+.margin-block-7     { margin-block: 0.7rem; }
+.margin-block-10    { margin-block: 1rem; }
+.margin-block-15    { margin-block: 1.5rem; }
 .margin-bottom-3    { margin-bottom: 0.3rem; }
 .margin-bottom-5    { margin-bottom: 0.5rem; }
 .margin-bottom-7    { margin-bottom: 0.7rem; }
