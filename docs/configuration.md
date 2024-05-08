@@ -250,17 +250,25 @@ pages:
 ```
 
 ### Properties
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| title | string | yes |
-| slug | string | no |
-| columns | array | yes |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| title | string | yes | |
+| slug | string | no | |
+| show-mobile-header | boolean | no | false |
+| columns | array | yes | |
 
 #### `title`
 The name of the page which gets shown in the navigation bar.
 
 #### `slug`
 The URL friendly version of the title which is used to access the page. For example if the title of the page is "RSS Feeds" you can make the page accessible via `localhost:8080/feeds` by setting the slug to `feeds`. If not defined, it will automatically be generated from the title.
+
+#### `show-mobile-header`
+Whether to show a header displaying the name of the page on mobile. The header purposefully has a lot of vertical whitespace in order to push the content down and make it easier to reach on tall devices.
+
+Preview:
+
+![](images/mobile-header-preview.png)
 
 ### Columns
 Columns are defined for each page using a `columns` property. There are two types of columns - `full` and `small`, which refers to their width. A small column takes up a fixed amount of width (300px) and a full column takes up the all of the remaining width. You can have up to 3 columns per page and you must have either 1 or 2 full columns. Example:
