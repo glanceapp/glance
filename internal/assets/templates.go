@@ -22,6 +22,7 @@ var (
 	RedditCardsHorizontalTemplate = compileTemplate("reddit-horizontal-cards.html", "widget-base.html")
 	RedditCardsVerticalTemplate   = compileTemplate("reddit-vertical-cards.html", "widget-base.html")
 	ReleasesTemplate              = compileTemplate("releases.html", "widget-base.html")
+	ChangesTemplate				  = compileTemplate("changes.html", "widget-base.html")
 	VideosTemplate                = compileTemplate("videos.html", "widget-base.html")
 	StocksTemplate                = compileTemplate("stocks.html", "widget-base.html")
 	RSSListTemplate               = compileTemplate("rss-list.html", "widget-base.html")
