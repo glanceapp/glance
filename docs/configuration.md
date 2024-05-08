@@ -694,7 +694,7 @@ The title used to indicate the site.
 
 `url`
 
-The URL which will be requested and its response will determine the status of the site.
+The URL which will be requested and its response will determine the status of the site. Optionally, you can specify this using an environment variable with the syntax `${VARIABLE_NAME}`.
 
 `icon`
 
