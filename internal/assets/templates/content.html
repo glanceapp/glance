@@ -1,3 +1,7 @@
+{{ if .Page.ShowMobileHeader }}
+<div class="mobile-reachability-header">{{ .Page.Title }}</div>
+{{ end }}
+
 <div class="page-columns">
 {{ range .Page.Columns }}
     <div class="page-column page-column-{{ .Size }}">

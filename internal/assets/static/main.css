@@ -497,7 +497,7 @@ body {
     animation-delay: 150ms;
 }
 
-.mobile-navigation {
+.mobile-navigation, .mobile-reachability-header {
     display: none;
 }
 
@@ -1026,6 +1026,15 @@ body {
 
     .hide-on-mobile {
         display: none
+    }
+
+    .mobile-reachability-header {
+        display: block;
+        font-size: 3rem;
+        padding: 10vh 1rem;
+        text-align: center;
+        color: var(--color-text-highlight);
+        animation: pageColumnsEntrance .3s cubic-bezier(0.25, 1, 0.5, 1) backwards;
     }
 }
 
