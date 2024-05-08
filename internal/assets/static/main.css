@@ -1022,6 +1022,14 @@ body {
     }
 }
 
+@media (display-mode: standalone) {
+  @supports (-webkit-touch-callout: none) {
+    .mobile-navigation {
+      bottom: 15px;
+    }
+  }
+}
+
 .size-h1   { font-size: var(--font-size-h1); }
 .size-h2   { font-size: var(--font-size-h2); }
 .size-h3   { font-size: var(--font-size-h3); }
