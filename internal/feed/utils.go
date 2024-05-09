@@ -28,7 +28,7 @@ func extractDomainFromUrl(u string) string {
 		return ""
 	}
 
-	return strings.TrimPrefix(parsed.Host, "www.")
+	return strings.TrimPrefix(strings.ToLower(parsed.Host), "www.")
 }
 
 func SvgPolylineCoordsFromYValues(width float64, height float64, values []float64) string {
