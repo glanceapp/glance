@@ -4,7 +4,7 @@
 
 {{ define "widget-content" }}
 <div class="carousel-container">
-    <div class="cards-horizontal carousel-items-container">
+    <div class="cards-horizontal carousel-items-container"{{ if ne 0.0 .ThumbnailHeight }}style="--rss-thumbnail-height: {{ .ThumbnailHeight }}rem;"{{ end }}>
         {{ range .Items }}
         <div class="card widget-content-frame thumbnail-container">
             {{ if ne "" .ImageURL }}

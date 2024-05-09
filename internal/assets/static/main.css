@@ -813,7 +813,7 @@ body {
 }
 
 .rss-card-image {
-    height: 10rem;
+    height: var(--rss-thumbnail-height, 10rem);
     object-fit: cover;
     border-radius: var(--border-radius) var(--border-radius) 0 0;
 }

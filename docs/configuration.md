@@ -392,6 +392,7 @@ Example:
 | ---- | ---- | -------- | ------- |
 | style | string | no | vertical-list |
 | feeds | array | yes |
+| thumbnail-height | float | no | 10 |
 | limit | integer | no | 25 |
 | collapse-after | integer | no | 5 |
 
@@ -405,6 +406,9 @@ Used to change the appearance of the widget. Possible values are `vertical-list`
 `horizontal-cards`
 
 ![preview of horizontal-cards style for RSS widget](images/rss-feed-horizontal-cards-preview.png)
+
+##### `thumbnail-height`
+Used to modify the height of the thumbnails. Works only when the style is set to `horizontal-cards`. The default value is `10` and the units are `rem`, if you want to for example double the height of the thumbnails you can set it to `20`.
 
 ##### `feeds`
 An array of RSS/atom feeds. The title can optionally be changed.

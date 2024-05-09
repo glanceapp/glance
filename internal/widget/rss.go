@@ -10,12 +10,13 @@ import (
 )
 
 type RSS struct {
-	widgetBase    `yaml:",inline"`
-	FeedRequests  []feed.RSSFeedRequest `yaml:"feeds"`
-	Style         string                `yaml:"style"`
-	Items         feed.RSSFeedItems     `yaml:"-"`
-	Limit         int                   `yaml:"limit"`
-	CollapseAfter int                   `yaml:"collapse-after"`
+	widgetBase      `yaml:",inline"`
+	FeedRequests    []feed.RSSFeedRequest `yaml:"feeds"`
+	Style           string                `yaml:"style"`
+	ThumbnailHeight float64               `yaml:"thumbnail-height"`
+	Items           feed.RSSFeedItems     `yaml:"-"`
+	Limit           int                   `yaml:"limit"`
+	CollapseAfter   int                   `yaml:"collapse-after"`
 }
 
 func (widget *RSS) Initialize() error {
@@ -27,6 +28,10 @@ func (widget *RSS) Initialize() error {
 
 	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
 		widget.CollapseAfter = 5
+	}
+
+	if widget.ThumbnailHeight < 0 {
+		widget.ThumbnailHeight = 0
 	}
 
 	return nil
