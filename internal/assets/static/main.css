@@ -352,7 +352,8 @@ body {
 @container widget (max-width: 1100px) { .cards-horizontal { --cards-per-row: 4.5; } }
 @container widget (max-width: 850px) { .cards-horizontal { --cards-per-row: 3.5; } }
 @container widget (max-width: 750px) { .cards-horizontal { --cards-per-row: 3.5; } }
-@container widget (max-width: 650px) { .cards-horizontal { --cards-per-row: 2.2; } }
+@container widget (max-width: 650px) { .cards-horizontal { --cards-per-row: 2.5; } }
+@container widget (max-width: 450px) { .cards-horizontal { --cards-per-row: 2.3; } }
 
 @container widget (max-width: 1300px) { .cards-grid { --cards-per-row: 5; } }
 @container widget (max-width: 1100px) { .cards-grid { --cards-per-row: 4; } }
