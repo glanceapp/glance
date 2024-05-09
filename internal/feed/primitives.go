@@ -50,8 +50,10 @@ type AppReleases []AppRelease
 
 type ChangeWatch struct {
 	Name        string
-	Url         string
+	URL         string
 	LastChanged time.Time
+	DiffURL     string
+	DiffDisplay string
 }
 
 type ChangeWatches []ChangeWatch

@@ -11,11 +11,12 @@ import (
 
 type ChangeDetections struct {
 	widgetBase       `yaml:",inline"`
-	ChangeDetections feed.ChangeWatches  `yaml:"-"`
-	Watches          []string          `yaml:"watches"`
-	Token            OptionalEnvString `yaml:"token"`
-	Limit            int               `yaml:"limit"`
-	CollapseAfter    int               `yaml:"collapse-after"`
+	ChangeDetections feed.ChangeWatches `yaml:"-"`
+	RequestURL       string             `yaml:"request_url"`
+	Watches          []string           `yaml:"watches"`
+	Token            OptionalEnvString  `yaml:"token"`
+	Limit            int                `yaml:"limit"`
+	CollapseAfter    int                `yaml:"collapse-after"`
 }
 
 func (widget *ChangeDetections) Initialize() error {
@@ -33,7 +34,7 @@ func (widget *ChangeDetections) Initialize() error {
 }
 
 func (widget *ChangeDetections) Update(ctx context.Context) {
-	watches, err := feed.FetchLatestDetectedChanges(widget.Watches, string(widget.Token))
+	watches, err := feed.FetchLatestDetectedChanges(widget.RequestURL, widget.Watches, string(widget.Token))
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return

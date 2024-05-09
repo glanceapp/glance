@@ -4,24 +4,28 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 )
 
 type changeDetectionResponseJson struct {
 	Name        string `json:"title"`
-	Url         string `json:"url"`
+	URL         string `json:"url"`
 	LastChanged int    `json:"last_changed"`
+	UUID        string `json:"uuid"`
 }
 
-	
 func parseLastChangeTime(t int) time.Time {
 	parsedTime := time.Unix(int64(t), 0)
 	return parsedTime
 }
 
-
-func FetchLatestDetectedChanges(watches []string, token string) (ChangeWatches, error) {
+func FetchLatestDetectedChanges(request_url string, watches []string, token string) (ChangeWatches, error) {
 	changeWatches := make(ChangeWatches, 0, len(watches))
+
+	if request_url == "" {
+		request_url = "https://www.changedetection.io"
+	}
 
 	if len(watches) == 0 {
 		return changeWatches, nil
@@ -30,7 +34,7 @@ func FetchLatestDetectedChanges(watches []string, token string) (ChangeWatches, 
 	requests := make([]*http.Request, len(watches))
 
 	for i, repository := range watches {
-		request, _ := http.NewRequest("GET", fmt.Sprintf("https://changedetection.knhash.in/api/v1/watch/%s", repository), nil)
+		request, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/watch/%s", request_url, repository), nil)
 
 		if token != "" {
 			request.Header.Add("x-api-key", token)
@@ -60,8 +64,10 @@ func FetchLatestDetectedChanges(watches []string, token string) (ChangeWatches, 
 
 		changeWatches = append(changeWatches, ChangeWatch{
 			Name:        watch.Name,
-			Url:         watch.Url,
+			URL:         watch.URL,
 			LastChanged: parseLastChangeTime(watch.LastChanged),
+			DiffURL:     request_url + "/diff/" + watch.UUID,
+			DiffDisplay: strings.Split(watch.UUID, "-")[len(strings.Split(watch.UUID, "-"))-1],
 		})
 	}
 
