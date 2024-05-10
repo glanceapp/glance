@@ -446,6 +446,7 @@ Preview:
 | ---- | ---- | -------- | ------- |
 | channels | array | yes | |
 | limit | integer | no | 25 |
+| style | string | no | horizontal-cards |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
@@ -459,6 +460,13 @@ Then scroll down and click on "Share channel", then "Copy channel ID":
 
 ##### `limit`
 The maximum number of videos to show.
+
+##### `style`
+Used to change the appearance of the widget. Possible values are `horizontal-cards` and `grid-cards`.
+
+Preview of `grid-cards`:
+
+![](images/videos-widget-grid-cards-preview.png)
 
 ##### `video-url-template`
 Used to replace the default link for videos. Useful when you're running your own YouTube front-end. Example:

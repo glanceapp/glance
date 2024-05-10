@@ -329,14 +329,24 @@ body {
     --cards-per-row: 6.5;
 }
 
-.cards-grid {
-    --cards-per-row: 6;
-}
-
-.cards-horizontal, .cards-vertical, .cards-grid {
+.cards-horizontal, .cards-vertical {
     --cards-gap: calc(var(--widget-content-vertical-padding) * 0.7);
     display: flex;
     gap: var(--cards-gap);
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+}
+
+.cards-horizontal .card {
+    flex-shrink: 0;
+    width: calc(100% / var(--cards-per-row) - var(--cards-gap) * (var(--cards-per-row) - 1) / var(--cards-per-row));
+}
+
+.cards-grid .card {
+    min-width: 0;
 }
 
 .cards-horizontal {
@@ -345,7 +355,10 @@ body {
 }
 
 .cards-grid {
-    flex-wrap: wrap;
+    --cards-per-row: 6;
+    display: grid;
+    grid-template-columns: repeat(var(--cards-per-row), 1fr);
+    gap: calc(var(--widget-content-vertical-padding) * 0.7);
 }
 
 @container widget (max-width: 1300px) { .cards-horizontal { --cards-per-row: 5.5; } }
@@ -361,12 +374,7 @@ body {
 @container widget (max-width: 750px) { .cards-grid { --cards-per-row: 3; } }
 @container widget (max-width: 650px) { .cards-grid { --cards-per-row: 2; } }
 
-.card {
-    flex-shrink: 0;
-    width: calc(100% / var(--cards-per-row) - var(--cards-gap) * (var(--cards-per-row) - 1) / var(--cards-per-row));
-    display: flex;
-    flex-direction: column;
-}
+
 
 .widget-error-header {
     display: flex;
