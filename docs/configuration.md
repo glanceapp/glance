@@ -525,7 +525,7 @@ Display a list of posts from a specific subreddit.
 
 > [!WARNING]
 >
-> Reddit does not allow unauthorized API access from VPS IPs, if you're hosting Glance on a VPS you will get a 403 response. As a workaround you can route the traffic from Glance through a VPN.
+> Reddit does not allow unauthorized API access from VPS IPs, if you're hosting Glance on a VPS you will get a 403 response. As a workaround you can route the traffic from Glance through a VPN or your own HTTP proxy using the `request-url-template` property.
 
 Example:
 
@@ -544,6 +544,10 @@ Example:
 | collapse-after | integer | no | 5 |
 | comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
 | request-url-template | string | no |  |
+| sort-by | string | no | hot |
+| top-period | string | no | day |
+| search | string | no | |
+| extra-sort-by | string | no | |
 
 ##### `subreddit`
 The subreddit for which to fetch the posts from.
@@ -609,6 +613,22 @@ https://proxy/{REQUEST-URL}
 https://your.proxy/?url={REQUEST-URL}
 ```
 
+##### `sort-by`
+Can be used to specify the order in which the posts should get returned. Possible values are `hot`, `new`, `top` and `rising`.
+
+##### `top-perid`
+Available only when `sort-by` is set to `top`. Possible values are `hour`, `day`, `week`, `month`, `year` and `all`.
+
+##### `search`
+Keywords to search for. Searching within specific fields is also possible, **though keep in mind that Reddit may remove the ability to use any of these at any time**:
+
+![](images/reddit-field-search.png)
+
+##### `extra-sort-by`
+Can be used to specify an additional sort which will be applied on top of the already sorted posts. By default does not apply any extra sorting and the only available option is `engagement`.
+
+The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
+
 ### Weather
 Display weather information for a specific location. The data is provided by https://open-meteo.com/.
 
@@ -622,7 +642,7 @@ Example:
 
 > [!NOTE]
 >
-> US cities which have common names can have their state specified as the second parameter like such:
+> US cities which have common names can have their state specified as the second parameter as such:
 >
 > * Greenville, North Carolina, United States
 > * Greenville, South Carolina, United States
