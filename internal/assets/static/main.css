@@ -1040,7 +1040,7 @@ body {
     .mobile-reachability-header {
         display: block;
         font-size: 3rem;
-        padding: 10vh 1rem;
+        padding: 10dvh 1rem;
         text-align: center;
         color: var(--color-text-highlight);
         animation: pageColumnsEntrance .3s cubic-bezier(0.25, 1, 0.5, 1) backwards;
