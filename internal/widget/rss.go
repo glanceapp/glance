@@ -14,6 +14,7 @@ type RSS struct {
 	FeedRequests    []feed.RSSFeedRequest `yaml:"feeds"`
 	Style           string                `yaml:"style"`
 	ThumbnailHeight float64               `yaml:"thumbnail-height"`
+	CardHeight      float64               `yaml:"card-height"`
 	Items           feed.RSSFeedItems     `yaml:"-"`
 	Limit           int                   `yaml:"limit"`
 	CollapseAfter   int                   `yaml:"collapse-after"`
@@ -32,6 +33,10 @@ func (widget *RSS) Initialize() error {
 
 	if widget.ThumbnailHeight < 0 {
 		widget.ThumbnailHeight = 0
+	}
+
+	if widget.CardHeight < 0 {
+		widget.CardHeight = 0
 	}
 
 	return nil
@@ -53,7 +58,11 @@ func (widget *RSS) Update(ctx context.Context) {
 
 func (widget *RSS) Render() template.HTML {
 	if widget.Style == "horizontal-cards" {
-		return widget.render(widget, assets.RSSCardsTemplate)
+		return widget.render(widget, assets.RSSHorizontalCardsTemplate)
+	}
+
+	if widget.Style == "horizontal-cards-2" {
+		return widget.render(widget, assets.RSSHorizontalCards2Template)
 	}
 
 	return widget.render(widget, assets.RSSListTemplate)
