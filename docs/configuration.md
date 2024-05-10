@@ -508,6 +508,8 @@ Preview:
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
 | comments-url-template | string | no | https://news.ycombinator.com/item?id={POST-ID} |
+| sort-by | string | no | top |
+| extra-sort-by | string | no | |
 
 ##### `comments-url-template`
 Used to replace the default link for post comments. Useful if you want to use an alternative front-end. Example:
@@ -519,6 +521,14 @@ comments-url-template: https://www.hckrnws.com/stories/{POST-ID}
 Placeholders:
 
 `{POST-ID}` - the ID of the post
+
+##### `sort-by`
+Used to specify the order in which the posts should get returned. Possible values are `top`, `new`, and `best`.
+
+##### `extra-sort-by`
+Can be used to specify an additional sort which will be applied on top of the already sorted posts. By default does not apply any extra sorting and the only available option is `engagement`.
+
+The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
 
 ### Reddit
 Display a list of posts from a specific subreddit.

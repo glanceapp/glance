@@ -13,6 +13,8 @@ type HackerNews struct {
 	widgetBase          `yaml:",inline"`
 	Posts               feed.ForumPosts `yaml:"-"`
 	Limit               int             `yaml:"limit"`
+	SortBy              string          `yaml:"sort-by"`
+	ExtraSortBy         string          `yaml:"extra-sort-by"`
 	CollapseAfter       int             `yaml:"collapse-after"`
 	CommentsUrlTemplate string          `yaml:"comments-url-template"`
 	ShowThumbnails      bool            `yaml:"-"`
@@ -29,18 +31,24 @@ func (widget *HackerNews) Initialize() error {
 		widget.CollapseAfter = 5
 	}
 
+	if widget.SortBy != "top" && widget.SortBy != "new" && widget.SortBy != "best" {
+		widget.SortBy = "top"
+	}
+
 	return nil
 }
 
 func (widget *HackerNews) Update(ctx context.Context) {
-	posts, err := feed.FetchHackerNewsTopPosts(40, widget.CommentsUrlTemplate)
+	posts, err := feed.FetchHackerNewsPosts(widget.SortBy, 40, widget.CommentsUrlTemplate)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
 
-	posts.CalculateEngagement()
-	posts.SortByEngagement()
+	if widget.ExtraSortBy == "engagement" {
+		posts.CalculateEngagement()
+		posts.SortByEngagement()
+	}
 
 	if widget.Limit < len(posts) {
 		posts = posts[:widget.Limit]
