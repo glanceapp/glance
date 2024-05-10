@@ -14,6 +14,7 @@
   - [Weather](#weather)
   - [Monitor](#monitor)
   - [Releases](#releases)
+  - [Repository Overview](#repository-overview)
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
   - [Stocks](#stocks)
@@ -790,6 +791,43 @@ The maximum number of releases to show.
 
 #### `collapse-after`
 How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+### Repository Overview
+Display general information about a repository as well as a list of the latest open pull requests and issues.
+
+Example:
+
+```yaml
+- type: repository-overview
+  repository: glanceapp/glance
+  pull-requests-limit: 5
+  issues-limit: 3
+```
+
+Preview:
+
+![](images/repository-overview-preview.png)
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| repository | string | yes |  |
+| token | string | no | |
+| pull-requests-limit | integer | no | 3 |
+| issues-limit | integer | no | 3 |
+
+##### `repository`
+The owner and repository name that will have their information displayed.
+
+##### `token`
+Without authentication Github allows for up to 60 requests per hour. You can easily exceed this limit and start seeing errors if your cache time is low or you have many instances of this widget. To circumvent this you can [create a read only token from your Github account](https://github.com/settings/personal-access-tokens/new) and provide it here.
+
+##### `pull-requests-limit`
+The maximum number of latest open pull requests to show. Set to `-1` to not show any.
+
+##### `issues-limit`
+The maximum number of latest open issues to show. Set to `-1` to not show any.
 
 ### Bookmarks
 Display a list of links which can be grouped.

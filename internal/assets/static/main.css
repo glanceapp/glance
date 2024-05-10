@@ -108,7 +108,7 @@
 .list-gap-24 { --list-half-gap: 1.2rem; }
 
 .list > *:not(:first-child) {
-    margin-top: calc(var(--list-half-gap) * 2 + 1px);
+    margin-top: calc(var(--list-half-gap) * 2);
 }
 
 .list-with-separator > *:not(:first-child) {
@@ -1104,6 +1104,7 @@ body {
 .text-right         { text-align: right; }
 .text-center        { text-align: center; }
 .text-elevate       { margin-top: -0.2em; }
+.text-compact       { word-spacing: -0.18em; }
 .rtl                { direction: rtl; }
 .shrink             { flex-shrink: 1; }
 .shrink-0           { flex-shrink: 0; }
