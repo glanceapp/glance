@@ -41,7 +41,7 @@ Checkout the [configuration docs](docs/configuration.md) to learn more. A [preco
 #### Manual
 Checkout the [releases page](https://github.com/glanceapp/glance/releases) for available binaries. You can place the binary inside `/opt/glance/` and have it start with your server via a [systemd service](https://linuxhandbook.com/create-systemd-services/). To specify a different path for the config file use the `--config` option:
 
-```
+```shell
 /opt/glance/glance --config /etc/glance.yml
 ```
 
@@ -50,7 +50,7 @@ Checkout the [releases page](https://github.com/glanceapp/glance/releases) for a
 >
 > Make sure you have a valid `glance.yml` file before running the container.
 
-```console
+```shell
 docker run -d -p 8080:8080 \
   -v ./glance.yml:/app/glance.yml \
   -v /etc/timezone:/etc/timezone:ro \
@@ -79,13 +79,13 @@ Requirements: [Go](https://go.dev/dl/) >= v1.22
 
 To build:
 
-```
+```shell
 go build -o build/glance .
 ```
 
 To run:
 
-```
+```shell
 go run .
 ```
 
@@ -93,7 +93,7 @@ go run .
 
 Build Glance with CGO disabled:
 
-```
+```shell
 CGO_ENABLED=0 go build -o build/glance .
 ```
 
@@ -101,12 +101,12 @@ Build the image:
 
 **Make sure to replace "owner" with your name or organization.**
 
-```
+```shell
 docker build -t owner/glance:latest -f Dockerfile.single-platform .
 ```
 
 Push the image to your registry:
 
-```
+```shell
 docker push owner/glance:latest
 ```
