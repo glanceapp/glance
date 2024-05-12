@@ -333,6 +333,44 @@ body {
     padding: 0 var(--content-bounds-padding);
 }
 
+.dynamic-columns {
+    gap: calc(var(--widget-content-vertical-padding) / 2);
+    display: grid;
+    grid-template-columns: repeat(var(--columns-per-row), 1fr);
+    margin: calc(0px - var(--widget-content-vertical-padding) / 2) calc(0px - var(--widget-content-horizontal-padding) / 2);
+}
+
+.dynamic-columns > * {
+    padding: calc(var(--widget-content-vertical-padding) / 2) calc(var(--widget-content-horizontal-padding) / 1.5);
+    background-color: var(--color-background);
+    border-radius: var(--border-radius);
+}
+
+.dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
+.dynamic-columns:has(> :nth-child(2)) { --columns-per-row: 2; }
+.dynamic-columns:has(> :nth-child(3)) { --columns-per-row: 3; }
+.dynamic-columns:has(> :nth-child(4)) { --columns-per-row: 4; }
+.dynamic-columns:has(> :nth-child(5)) { --columns-per-row: 5; }
+
+@container widget (max-width: 1500px) {
+    .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
+    .dynamic-columns:has(> :nth-child(2)) { --columns-per-row: 2; }
+    .dynamic-columns:has(> :nth-child(3)) { --columns-per-row: 3; }
+    .dynamic-columns:has(> :nth-child(4)) { --columns-per-row: 4; }
+}
+@container widget (max-width: 1250px) {
+    .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
+    .dynamic-columns:has(> :nth-child(2)) { --columns-per-row: 2; }
+    .dynamic-columns:has(> :nth-child(3)) { --columns-per-row: 3; }
+}
+@container widget (max-width: 850px) {
+    .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
+    .dynamic-columns:has(> :nth-child(2)) { --columns-per-row: 2; }
+}
+@container widget (max-width: 550px) {
+    .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
+}
+
 .cards-vertical {
     flex-direction: column;
 }
@@ -820,6 +858,7 @@ body {
 }
 
 .monitor-site-status-icon {
+    flex-shrink: 0;
     margin-left: auto;
     width: 2rem;
     height: 2rem;
@@ -1081,6 +1120,8 @@ body {
         --widget-content-horizontal-padding: 10px;
         --content-bounds-padding: 10px;
     }
+
+    .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
 
     .forum-post-list-item {
         flex-flow: row-reverse;

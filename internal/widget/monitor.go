@@ -54,6 +54,7 @@ type Monitor struct {
 		StatusText  string            `yaml:"-"`
 		StatusStyle string            `yaml:"-"`
 	} `yaml:"sites"`
+	Style string `yaml:"style"`
 }
 
 func (widget *Monitor) Initialize() error {

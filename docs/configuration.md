@@ -734,7 +734,11 @@ You can hover over the "ERROR" text to view more information.
 
 | Name | Type | Required |
 | ---- | ---- | -------- |
-| sites | array | yes |  |
+| sites | array | yes |
+| style | string | no |
+
+##### `style`
+To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ##### `sites`
 
@@ -908,9 +912,13 @@ Preview:
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | groups | array | yes |
+| style | string | no |
 
 ##### `groups`
 An array of groups which can optionally have a title and a custom color.
+
+##### `style`
+To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ###### Properties for each group
 | Name | Type | Required | Default |
@@ -997,12 +1005,16 @@ Preview:
 | ---- | ---- | -------- |
 | stocks | array | yes |
 | sort-by | string | no |
+| style | string | no |
 
 ##### `stocks`
 An array of stocks for which to display information about.
 
 ##### `sort-by`
 By default the stocks are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
+
+##### `style`
+To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ###### Properties for each stock
 | Name | Type | Required |

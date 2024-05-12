@@ -14,6 +14,7 @@ type Stocks struct {
 	widgetBase `yaml:",inline"`
 	Stocks     feed.Stocks `yaml:"stocks"`
 	Sort       string      `yaml:"sort-by"`
+	Style      string      `yaml:"style"`
 }
 
 func (widget *Stocks) Initialize() error {
