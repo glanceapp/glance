@@ -22,7 +22,7 @@ func (widget *Lobsters) Initialize() error {
 	widget.withTitle("Lobsters").withCacheDuration(30 * time.Minute)
 
 	if widget.FeedUrl == "" {
-		widget.FeedUrl = "https://lobste.rs/active.json"
+		widget.FeedUrl = "https://lobste.rs/hottest.json"
 	}
 
 	if widget.Limit <= 0 {
