@@ -9,7 +9,7 @@ import (
 	"github.com/glanceapp/glance/internal/feed"
 )
 
-type RepositoryOverview struct {
+type Repository struct {
 	widgetBase          `yaml:",inline"`
 	RequestedRepository string            `yaml:"repository"`
 	Token               OptionalEnvString `yaml:"token"`
@@ -18,7 +18,7 @@ type RepositoryOverview struct {
 	RepositoryDetails   feed.RepositoryDetails
 }
 
-func (widget *RepositoryOverview) Initialize() error {
+func (widget *Repository) Initialize() error {
 	widget.withTitle("Repository").withCacheDuration(1 * time.Hour)
 
 	if widget.PullRequestsLimit == 0 || widget.PullRequestsLimit < -1 {
@@ -32,7 +32,7 @@ func (widget *RepositoryOverview) Initialize() error {
 	return nil
 }
 
-func (widget *RepositoryOverview) Update(ctx context.Context) {
+func (widget *Repository) Update(ctx context.Context) {
 	details, err := feed.FetchRepositoryDetailsFromGithub(
 		widget.RequestedRepository,
 		string(widget.Token),
@@ -47,6 +47,6 @@ func (widget *RepositoryOverview) Update(ctx context.Context) {
 	widget.RepositoryDetails = details
 }
 
-func (widget *RepositoryOverview) Render() template.HTML {
-	return widget.render(widget, assets.RepositoryOverviewTemplate)
+func (widget *Repository) Render() template.HTML {
+	return widget.render(widget, assets.RepositoryTemplate)
 }

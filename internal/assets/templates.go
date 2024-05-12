@@ -31,7 +31,7 @@ var (
 	MonitorTemplate               = compileTemplate("monitor.html", "widget-base.html")
 	TwitchGamesListTemplate       = compileTemplate("twitch-games-list.html", "widget-base.html")
 	TwitchChannelsTemplate        = compileTemplate("twitch-channels.html", "widget-base.html")
-	RepositoryOverviewTemplate    = compileTemplate("repository-overview.html", "widget-base.html")
+	RepositoryTemplate            = compileTemplate("repository.html", "widget-base.html")
 )
 
 var globalTemplateFunctions = template.FuncMap{

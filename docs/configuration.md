@@ -14,7 +14,7 @@
   - [Weather](#weather)
   - [Monitor](#monitor)
   - [Releases](#releases)
-  - [Repository Overview](#repository-overview)
+  - [Repository](#repository)
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
   - [Stocks](#stocks)
@@ -822,13 +822,13 @@ The maximum number of releases to show.
 #### `collapse-after`
 How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
-### Repository Overview
+### Repository
 Display general information about a repository as well as a list of the latest open pull requests and issues.
 
 Example:
 
 ```yaml
-- type: repository-overview
+- type: repository
   repository: glanceapp/glance
   pull-requests-limit: 5
   issues-limit: 3
@@ -836,7 +836,7 @@ Example:
 
 Preview:
 
-![](images/repository-overview-preview.png)
+![](images/repository-preview.png)
 
 #### Properties
 
