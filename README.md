@@ -80,11 +80,33 @@ Requirements: [Go](https://go.dev/dl/) >= v1.22
 To build:
 
 ```
-go build .
+go build -o build/glance .
 ```
 
 To run:
 
 ```
 go run .
+```
+
+### Building Docker image
+
+Build Glance with CGO disabled:
+
+```
+CGO_ENABLED=0 go build -o build/glance .
+```
+
+Build the image:
+
+**Make sure to replace "owner" with your name or organization.**
+
+```
+docker build -t owner/glance:latest -f Dockerfile.single-platform .
+```
+
+Push the image to your registry:
+
+```
+docker push owner/glance:latest
 ```
