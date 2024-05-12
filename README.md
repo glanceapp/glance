@@ -16,6 +16,7 @@
 * iframe
 * Twitch channels & top games
 * GitHub releases
+* Repository overview
 * Site monitor
 
 #### Themeable
