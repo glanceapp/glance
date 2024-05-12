@@ -55,10 +55,11 @@ type templateData struct {
 }
 
 type Page struct {
-	Title   string   `yaml:"name"`
-	Slug    string   `yaml:"slug"`
-	Columns []Column `yaml:"columns"`
-	mu      sync.Mutex
+	Title            string   `yaml:"name"`
+	Slug             string   `yaml:"slug"`
+	ShowMobileHeader bool     `yaml:"show-mobile-header"`
+	Columns          []Column `yaml:"columns"`
+	mu               sync.Mutex
 }
 
 func (p *Page) UpdateOutdatedWidgets() {

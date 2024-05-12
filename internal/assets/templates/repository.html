@@ -1,0 +1,44 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<a class="size-h4 color-highlight" href="https://github.com/{{ $.RepositoryDetails.Name }}" target="_blank" rel="noreferrer">{{ .RepositoryDetails.Name }}</a>
+<ul class="list-horizontal-text">
+    <li>{{ .RepositoryDetails.Stars | formatNumber }} stars</li>
+    <li>{{ .RepositoryDetails.Forks | formatNumber }} forks</li>
+</ul>
+
+{{ if gt (len .RepositoryDetails.PullRequests) 0 }}
+<hr class="margin-block-10">
+<a class="text-compact" href="https://github.com/{{ $.RepositoryDetails.Name }}/pulls" target="_blank" rel="noreferrer">Open pull requests ({{ .RepositoryDetails.OpenPullRequests | formatNumber }} total)</a>
+<div class="flex gap-7 size-h5 margin-top-3">
+    <ul class="list list-gap-2">
+        {{ range .RepositoryDetails.PullRequests }}
+        <li title="{{ .CreatedAt | formatTime }}" {{ dynamicRelativeTimeAttrs .CreatedAt }}>{{ .CreatedAt | relativeTime }}</li>
+        {{ end }}
+    </ul>
+    <ul class="list list-gap-2 min-width-0">
+        {{ range .RepositoryDetails.PullRequests }}
+        <li><a class="color-primary-if-not-visited text-truncate block" title="{{ .Title }}" target="_blank" rel="noreferrer" href="https://github.com/{{ $.RepositoryDetails.Name }}/pull/{{ .Number }}">{{ .Title }}</a></li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+
+{{ if gt (len .RepositoryDetails.Issues) 0 }}
+<hr class="margin-block-10">
+<a class="text-compact" href="https://github.com/{{ $.RepositoryDetails.Name }}/issues" target="_blank" rel="noreferrer">Open issues ({{ .RepositoryDetails.OpenIssues | formatNumber }} total)</a>
+<div class="flex gap-7 size-h5 margin-top-3">
+    <ul class="list list-gap-2">
+        {{ range .RepositoryDetails.Issues }}
+        <li title="{{ .CreatedAt | formatTime }}" {{ dynamicRelativeTimeAttrs .CreatedAt }}>{{ .CreatedAt | relativeTime }}</li>
+        {{ end }}
+    </ul>
+    <ul class="list list-gap-2 min-width-0">
+        {{ range .RepositoryDetails.Issues }}
+        <li><a class="color-primary-if-not-visited text-truncate block" title="{{ .Title }}" target="_blank" rel="noreferrer" href="https://github.com/{{ $.RepositoryDetails.Name }}/issues/{{ .Number }}">{{ .Title }}</a></li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+
+{{ end }}

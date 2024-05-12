@@ -142,6 +142,33 @@ function setupDynamicRelativeTime() {
     });
 }
 
+function setupLazyImages() {
+    const images = document.querySelectorAll("img[loading=lazy]");
+
+    if (images.length == 0) {
+        return;
+    }
+
+    function imageFinishedTransition(image) {
+        image.classList.add("finished-transition");
+    }
+
+    for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+
+        if (image.complete) {
+            image.classList.add("cached");
+            setTimeout(() => imageFinishedTransition(image), 5);
+        } else {
+            // TODO: also handle error event
+            image.addEventListener("load", () => {
+                image.classList.add("loaded");
+                setTimeout(() => imageFinishedTransition(image), 500);
+            });
+        }
+    }
+}
+
 async function setupPage() {
     const pageElement = document.getElementById("page");
     const pageContents = await fetchPageContents(pageData.slug);
@@ -152,6 +179,7 @@ async function setupPage() {
         document.body.classList.add("animate-element-transition");
     }, 150);
 
+    setTimeout(setupLazyImages, 5);
     setupCarousels();
     setupDynamicRelativeTime();
 }

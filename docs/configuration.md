@@ -14,6 +14,7 @@
   - [Weather](#weather)
   - [Monitor](#monitor)
   - [Releases](#releases)
+  - [Repository](#repository)
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
   - [Stocks](#stocks)
@@ -250,17 +251,25 @@ pages:
 ```
 
 ### Properties
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| title | string | yes |
-| slug | string | no |
-| columns | array | yes |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| title | string | yes | |
+| slug | string | no | |
+| show-mobile-header | boolean | no | false |
+| columns | array | yes | |
 
 #### `title`
 The name of the page which gets shown in the navigation bar.
 
 #### `slug`
 The URL friendly version of the title which is used to access the page. For example if the title of the page is "RSS Feeds" you can make the page accessible via `localhost:8080/feeds` by setting the slug to `feeds`. If not defined, it will automatically be generated from the title.
+
+#### `show-mobile-header`
+Whether to show a header displaying the name of the page on mobile. The header purposefully has a lot of vertical whitespace in order to push the content down and make it easier to reach on tall devices.
+
+Preview:
+
+![](images/mobile-header-preview.png)
 
 ### Columns
 Columns are defined for each page using a `columns` property. There are two types of columns - `full` and `small`, which refers to their width. A small column takes up a fixed amount of width (300px) and a full column takes up the all of the remaining width. You can have up to 3 columns per page and you must have either 1 or 2 full columns. Example:
@@ -384,6 +393,8 @@ Example:
 | ---- | ---- | -------- | ------- |
 | style | string | no | vertical-list |
 | feeds | array | yes |
+| thumbnail-height | float | no | 10 |
+| card-height | float | no | 27 |
 | limit | integer | no | 25 |
 | collapse-after | integer | no | 5 |
 
@@ -397,6 +408,16 @@ Used to change the appearance of the widget. Possible values are `vertical-list`
 `horizontal-cards`
 
 ![preview of horizontal-cards style for RSS widget](images/rss-feed-horizontal-cards-preview.png)
+
+`horizontal-cards-2`
+
+![preview of horizontal-cards-2 style for RSS widget](images/rss-widget-horizontal-cards-2-preview.png)
+
+##### `thumbnail-height`
+Used to modify the height of the thumbnails. Works only when the style is set to `horizontal-cards`. The default value is `10` and the units are `rem`, if you want to for example double the height of the thumbnails you can set it to `20`.
+
+##### `card-height`
+Used to modify the height of cards when using the `horizontal-cards-2` style. The default value is `27` and the units are `rem`.
 
 ##### `feeds`
 An array of RSS/atom feeds. The title can optionally be changed.
@@ -434,6 +455,7 @@ Preview:
 | ---- | ---- | -------- | ------- |
 | channels | array | yes | |
 | limit | integer | no | 25 |
+| style | string | no | horizontal-cards |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
@@ -447,6 +469,13 @@ Then scroll down and click on "Share channel", then "Copy channel ID":
 
 ##### `limit`
 The maximum number of videos to show.
+
+##### `style`
+Used to change the appearance of the widget. Possible values are `horizontal-cards` and `grid-cards`.
+
+Preview of `grid-cards`:
+
+![](images/videos-widget-grid-cards-preview.png)
 
 ##### `video-url-template`
 Used to replace the default link for videos. Useful when you're running your own YouTube front-end. Example:
@@ -479,6 +508,8 @@ Preview:
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
 | comments-url-template | string | no | https://news.ycombinator.com/item?id={POST-ID} |
+| sort-by | string | no | top |
+| extra-sort-by | string | no | |
 
 ##### `comments-url-template`
 Used to replace the default link for post comments. Useful if you want to use an alternative front-end. Example:
@@ -491,12 +522,20 @@ Placeholders:
 
 `{POST-ID}` - the ID of the post
 
+##### `sort-by`
+Used to specify the order in which the posts should get returned. Possible values are `top`, `new`, and `best`.
+
+##### `extra-sort-by`
+Can be used to specify an additional sort which will be applied on top of the already sorted posts. By default does not apply any extra sorting and the only available option is `engagement`.
+
+The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
+
 ### Reddit
 Display a list of posts from a specific subreddit.
 
 > [!WARNING]
 >
-> Reddit does not allow unauthorized API access from VPS IPs, if you're hosting Glance on a VPS you will get a 403 response. As a workaround you can route the traffic from Glance through a VPN.
+> Reddit does not allow unauthorized API access from VPS IPs, if you're hosting Glance on a VPS you will get a 403 response. As a workaround you can route the traffic from Glance through a VPN or your own HTTP proxy using the `request-url-template` property.
 
 Example:
 
@@ -515,6 +554,10 @@ Example:
 | collapse-after | integer | no | 5 |
 | comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
 | request-url-template | string | no |  |
+| sort-by | string | no | hot |
+| top-period | string | no | day |
+| search | string | no | |
+| extra-sort-by | string | no | |
 
 ##### `subreddit`
 The subreddit for which to fetch the posts from.
@@ -580,6 +623,22 @@ https://proxy/{REQUEST-URL}
 https://your.proxy/?url={REQUEST-URL}
 ```
 
+##### `sort-by`
+Can be used to specify the order in which the posts should get returned. Possible values are `hot`, `new`, `top` and `rising`.
+
+##### `top-perid`
+Available only when `sort-by` is set to `top`. Possible values are `hour`, `day`, `week`, `month`, `year` and `all`.
+
+##### `search`
+Keywords to search for. Searching within specific fields is also possible, **though keep in mind that Reddit may remove the ability to use any of these at any time**:
+
+![](images/reddit-field-search.png)
+
+##### `extra-sort-by`
+Can be used to specify an additional sort which will be applied on top of the already sorted posts. By default does not apply any extra sorting and the only available option is `engagement`.
+
+The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
+
 ### Weather
 Display weather information for a specific location. The data is provided by https://open-meteo.com/.
 
@@ -593,7 +652,7 @@ Example:
 
 > [!NOTE]
 >
-> US cities which have common names can have their state specified as the second parameter like such:
+> US cities which have common names can have their state specified as the second parameter as such:
 >
 > * Greenville, North Carolina, United States
 > * Greenville, South Carolina, United States
@@ -675,7 +734,11 @@ You can hover over the "ERROR" text to view more information.
 
 | Name | Type | Required |
 | ---- | ---- | -------- |
-| sites | array | yes |  |
+| sites | array | yes |
+| style | string | no |
+
+##### `style`
+To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ##### `sites`
 
@@ -694,7 +757,7 @@ The title used to indicate the site.
 
 `url`
 
-The URL which will be requested and its response will determine the status of the site.
+The URL which will be requested and its response will determine the status of the site. Optionally, you can specify this using an environment variable with the syntax `${VARIABLE_NAME}`.
 
 `icon`
 
@@ -763,6 +826,43 @@ The maximum number of releases to show.
 #### `collapse-after`
 How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
+### Repository
+Display general information about a repository as well as a list of the latest open pull requests and issues.
+
+Example:
+
+```yaml
+- type: repository
+  repository: glanceapp/glance
+  pull-requests-limit: 5
+  issues-limit: 3
+```
+
+Preview:
+
+![](images/repository-preview.png)
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| repository | string | yes |  |
+| token | string | no | |
+| pull-requests-limit | integer | no | 3 |
+| issues-limit | integer | no | 3 |
+
+##### `repository`
+The owner and repository name that will have their information displayed.
+
+##### `token`
+Without authentication Github allows for up to 60 requests per hour. You can easily exceed this limit and start seeing errors if your cache time is low or you have many instances of this widget. To circumvent this you can [create a read only token from your Github account](https://github.com/settings/personal-access-tokens/new) and provide it here.
+
+##### `pull-requests-limit`
+The maximum number of latest open pull requests to show. Set to `-1` to not show any.
+
+##### `issues-limit`
+The maximum number of latest open issues to show. Set to `-1` to not show any.
+
 ### Bookmarks
 Display a list of links which can be grouped.
 
@@ -812,9 +912,13 @@ Preview:
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | groups | array | yes |
+| style | string | no |
 
 ##### `groups`
 An array of groups which can optionally have a title and a custom color.
+
+##### `style`
+To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ###### Properties for each group
 | Name | Type | Required | Default |
@@ -883,18 +987,12 @@ Example:
       name: S&P 500
     - symbol: BTC-USD
       name: Bitcoin
+      chart-link: https://www.tradingview.com/chart/?symbol=INDEX:BTCUSD
     - symbol: NVDA
       name: NVIDIA
     - symbol: AAPL
+      symbol-link: https://www.google.com/search?tbm=nws&q=apple
       name: Apple
-    - symbol: MSFT
-      name: Microsoft
-    - symbol: GOOGL
-      name: Google
-    - symbol: AMD
-      name: AMD
-    - symbol: RDDT
-      name: Reddit
 ```
 
 Preview:
@@ -907,15 +1005,24 @@ Preview:
 | ---- | ---- | -------- |
 | stocks | array | yes |
 | sort-by | string | no |
+| style | string | no |
 
 ##### `stocks`
 An array of stocks for which to display information about.
+
+##### `sort-by`
+By default the stocks are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
+
+##### `style`
+To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ###### Properties for each stock
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | symbol | string | yes |
 | name | string | no |
+| symbol-link | string | no |
+| chart-link | string | no |
 
 `symbol`
 
@@ -925,8 +1032,11 @@ The symbol, as seen in Yahoo Finance.
 
 The name that will be displayed under the symbol.
 
-##### `sort-by`
-By default the stocks are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
+`symbol-link`
+The link to go to when clicking on the symbol.
+
+`chart-link`
+The link to go to when clicking on the chart.
 
 ### Twitch Channels
 Display a list of channels from Twitch.
