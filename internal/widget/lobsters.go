@@ -11,7 +11,7 @@ import (
 
 type Lobsters struct {
 	widgetBase     `yaml:",inline"`
-	Feed           string          `yaml:"feed"`
+	FeedUrl        string          `yaml:"feed"`
 	Posts          feed.ForumPosts `yaml:"-"`
 	Limit          int             `yaml:"limit"`
 	CollapseAfter  int             `yaml:"collapse-after"`
@@ -21,8 +21,8 @@ type Lobsters struct {
 func (widget *Lobsters) Initialize() error {
 	widget.withTitle("Lobsters").withCacheDuration(30 * time.Minute)
 
-	if widget.Feed == "" {
-		widget.Feed = "https://lobste.rs/rss"
+	if widget.FeedUrl == "" {
+		widget.FeedUrl = "https://lobste.rs/active.json"
 	}
 
 	if widget.Limit <= 0 {
@@ -37,7 +37,7 @@ func (widget *Lobsters) Initialize() error {
 }
 
 func (widget *Lobsters) Update(ctx context.Context) {
-	posts, err := feed.FetchLobstersTopPosts(widget.Feed, widget.Limit)
+	posts, err := feed.FetchLobstersTopPosts(widget.FeedUrl)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
