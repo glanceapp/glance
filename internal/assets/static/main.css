@@ -217,6 +217,18 @@ img, svg {
     max-width: 100%;
 }
 
+img[loading=lazy].loaded:not(.finished-transition) {
+    transition: opacity .4s;
+}
+
+img[loading=lazy].cached:not(.finished-transition) {
+    transition: none;
+}
+
+img[loading=lazy]:not(.loaded, .cached) {
+    opacity: 0;
+}
+
 html {
     scrollbar-color: var(--color-text-subdue) transparent;
     scroll-behavior: smooth;
