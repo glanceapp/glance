@@ -41,7 +41,7 @@ func getLobstersPostsFromFeed(feedUrl string) (ForumPosts, error) {
 	posts := make(ForumPosts, 0, len(feed))
 
 	for i := range feed {
-		tags := strings.Join(feed[i].Tags, ",")
+		tags := strings.Join(feed[i].Tags, ", ")
 
 		if tags != "" {
 			tags = " [" + tags + "]"
