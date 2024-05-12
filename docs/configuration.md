@@ -155,7 +155,7 @@ Say you have a directory `glance-assets` with a file `gitea-icon.png` in it and 
 assets-path: /home/user/glance-assets
 ```
 
-To be able to point to an asset from your assets path, use the the `/assets/` path like such:
+To be able to point to an asset from your assets path, use the `/assets/` path like such:
 
 ```yaml
 icon: /assets/gitea-icon.png
