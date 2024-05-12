@@ -979,18 +979,12 @@ Example:
       name: S&P 500
     - symbol: BTC-USD
       name: Bitcoin
+      chart-link: https://www.tradingview.com/chart/?symbol=INDEX:BTCUSD
     - symbol: NVDA
       name: NVIDIA
     - symbol: AAPL
+      symbol-link: https://www.google.com/search?tbm=nws&q=apple
       name: Apple
-    - symbol: MSFT
-      name: Microsoft
-    - symbol: GOOGL
-      name: Google
-    - symbol: AMD
-      name: AMD
-    - symbol: RDDT
-      name: Reddit
 ```
 
 Preview:
@@ -1007,11 +1001,16 @@ Preview:
 ##### `stocks`
 An array of stocks for which to display information about.
 
+##### `sort-by`
+By default the stocks are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
+
 ###### Properties for each stock
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | symbol | string | yes |
 | name | string | no |
+| symbol-link | string | no |
+| chart-link | string | no |
 
 `symbol`
 
@@ -1021,8 +1020,11 @@ The symbol, as seen in Yahoo Finance.
 
 The name that will be displayed under the symbol.
 
-##### `sort-by`
-By default the stocks are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
+`symbol-link`
+The link to go to when clicking on the symbol.
+
+`chart-link`
+The link to go to when clicking on the chart.
 
 ### Twitch Channels
 Display a list of channels from Twitch.

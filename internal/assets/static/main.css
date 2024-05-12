@@ -545,6 +545,10 @@ body {
     width: 6.5rem;
 }
 
+.stock-chart svg {
+    width: 100%;
+}
+
 .stock-values {
     min-width: 8rem;
 }
