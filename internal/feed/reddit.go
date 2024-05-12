@@ -110,7 +110,5 @@ func FetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate
 		posts = append(posts, forumPost)
 	}
 
-	posts.CalculateEngagement()
-
 	return posts, nil
 }

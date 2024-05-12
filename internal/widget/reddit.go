@@ -95,6 +95,7 @@ func (widget *Reddit) Update(ctx context.Context) {
 	}
 
 	if widget.ExtraSortBy == "engagement" {
+		posts.CalculateEngagement()
 		posts.SortByEngagement()
 	}
 
