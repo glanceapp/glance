@@ -1,0 +1,13 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
+
+{{ define "widget-content" }}
+<div class="cards-grid">
+    {{ range .Videos }}
+    <div class="card widget-content-frame thumbnail-container">
+        {{ template "video-card-contents" . }}
+    </div>
+    {{ end }}
+</div>
+{{ end }}

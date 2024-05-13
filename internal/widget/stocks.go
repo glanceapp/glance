@@ -9,11 +9,12 @@ import (
 	"github.com/glanceapp/glance/internal/feed"
 )
 
+// TODO: rename to Markets at some point
 type Stocks struct {
 	widgetBase `yaml:",inline"`
-	Stocks     feed.Stocks         `yaml:"-"`
-	Sort       string              `yaml:"sort-by"`
-	Tickers    []feed.StockRequest `yaml:"stocks"`
+	Stocks     feed.Stocks `yaml:"stocks"`
+	Sort       string      `yaml:"sort-by"`
+	Style      string      `yaml:"style"`
 }
 
 func (widget *Stocks) Initialize() error {
@@ -23,7 +24,7 @@ func (widget *Stocks) Initialize() error {
 }
 
 func (widget *Stocks) Update(ctx context.Context) {
-	stocks, err := feed.FetchStocksDataFromYahoo(widget.Tickers)
+	stocks, err := feed.FetchStocksDataFromYahoo(widget.Stocks)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return

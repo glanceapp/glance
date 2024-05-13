@@ -18,8 +18,8 @@ type hackerNewsPostResponseJson struct {
 	TimePosted   int64  `json:"time"`
 }
 
-func getHackerNewsTopPostIds() ([]int, error) {
-	request, _ := http.NewRequest("GET", "https://hacker-news.firebaseio.com/v0/topstories.json", nil)
+func getHackerNewsPostIds(sort string) ([]int, error) {
+	request, _ := http.NewRequest("GET", fmt.Sprintf("https://hacker-news.firebaseio.com/v0/%sstories.json", sort), nil)
 	response, err := decodeJsonFromRequest[[]int](defaultClient, request)
 
 	if err != nil {
@@ -83,8 +83,8 @@ func getHackerNewsPostsFromIds(postIds []int, commentsUrlTemplate string) (Forum
 	return posts, nil
 }
 
-func FetchHackerNewsTopPosts(limit int, commentsUrlTemplate string) (ForumPosts, error) {
-	postIds, err := getHackerNewsTopPostIds()
+func FetchHackerNewsPosts(sort string, limit int, commentsUrlTemplate string) (ForumPosts, error) {
+	postIds, err := getHackerNewsPostIds(sort)
 
 	if err != nil {
 		return nil, err

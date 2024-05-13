@@ -45,6 +45,8 @@ func New(widgetType string) (Widget, error) {
 		return &TwitchChannels{}, nil
 	case "changes":
 		return &ChangeDetections{}, nil
+	case "repository":
+		return &Repository{}, nil
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s found", widgetType)
 	}

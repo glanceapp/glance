@@ -67,6 +67,14 @@ var buildTargets = []buildTarget{
 		arch: "arm",
 		armV: 7,
 	},
+	{
+		os:   "openbsd",
+		arch: "amd64",
+	},
+	{
+		os:   "openbsd",
+		arch: "386",
+	},
 }
 
 func main() {
@@ -113,7 +121,7 @@ func main() {
 
 	output, err := exec.Command(
 		"sudo", "docker", "build",
-		"--platform=linux/arm64,linux/amd64",
+		"--platform=linux/amd64,linux/arm64,linux/arm/v7",
 		"-t", versionTag,
 		"-t", latestTag,
 		".",
