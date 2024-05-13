@@ -647,6 +647,7 @@ Example:
 ```yaml
 - type: weather
   units: metric
+  hour-format: 12h
   location: London, United Kingdom
 ```
 
@@ -671,6 +672,7 @@ Each bar represents a 2 hour interval. The yellow background represents sunrise 
 | ---- | ---- | -------- | ------- |
 | location | string | yes |  |
 | units | string | no | metric |
+| hour-format | string | no | 12h |
 | hide-location | boolean | no | false |
 | show-area-name | boolean | no | false |
 
@@ -679,6 +681,9 @@ The name of the city and country to fetch weather information for. Attempting to
 
 ##### `units`
 Whether to show the temperature in celsius or fahrenheit, possible values are `metric` or `imperial`.
+
+#### `hour-format`
+Whether to show the hours of the day in 12-hour format or 24-hour format
 
 ##### `hide-location`
 Optionally don't display the location name on the widget.
