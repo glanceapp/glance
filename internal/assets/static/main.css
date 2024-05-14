@@ -706,7 +706,7 @@ body {
     flex-direction: column;
     width: calc(100% / 12);
     padding-top: 3px;
-    max-width: 3.5rem;
+    max-width: 3rem;
 }
 
 .weather-column-value, .weather-columns:hover .weather-column-value {
