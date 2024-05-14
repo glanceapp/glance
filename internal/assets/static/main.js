@@ -35,6 +35,7 @@ function setupCarousels() {
 
     for (let i = 0; i < carouselElements.length; i++) {
         const carousel = carouselElements[i];
+        carousel.classList.add("show-right-cutoff");
         const itemsContainer = carousel.getElementsByClassName("carousel-items-container")[0];
 
         const determineSideCutoffs = () => {
