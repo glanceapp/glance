@@ -178,7 +178,7 @@ async function setupPage() {
 
     setTimeout(() => {
         document.body.classList.add("animate-element-transition");
-    }, 150);
+    }, 200);
 
     setTimeout(setupLazyImages, 5);
     setupCarousels();
