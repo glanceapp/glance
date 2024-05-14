@@ -1,6 +1,8 @@
 package feed
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -19,6 +21,38 @@ type githubReleaseResponseJson struct {
 	} `json:"reactions"`
 }
 
+type starredRepositoriesResponseJson struct {
+	Errors []struct {
+		Message string `json:"message"`
+	} `json:"errors"`
+	Data struct {
+		Viewer struct {
+			StarredRepositories struct {
+				PageInfo struct {
+					HasNextPage bool   `json:"hasNextPage"`
+					EndCursor   string `json:"endCursor"`
+				} `json:"pageInfo"`
+				Nodes []struct {
+					NameWithOwner string `json:"nameWithOwner"`
+					Releases      struct {
+						Nodes []struct {
+							Name         string `json:"name"`
+							URL          string `json:"url"`
+							IsDraft      bool   `json:"isDraft"`
+							IsPrerelease bool   `json:"isPrerelease"`
+							PublishedAt  string `json:"publishedAt"`
+							TagName      string `json:"tagName"`
+							Reactions    struct {
+								TotalCount int `json:"totalCount"`
+							} `json:"reactions"`
+						} `json:"nodes"`
+					} `json:"releases"`
+				} `json:"nodes"`
+			} `json:"starredRepositories"`
+		} `json:"viewer"`
+	} `json:"data"`
+}
+
 func parseGithubTime(t string) time.Time {
 	parsedTime, err := time.Parse("2006-01-02T15:04:05Z", t)
 
@@ -29,7 +63,117 @@ func parseGithubTime(t string) time.Time {
 	return parsedTime
 }
 
-func FetchLatestReleasesFromGithub(repositories []string, token string) (AppReleases, error) {
+func FetchStarredRepositoriesReleasesFromGithub(token string, maxReleases int) (AppReleases, error) {
+	if token == "" {
+		return nil, fmt.Errorf("%w: no github token provided", ErrNoContent)
+	}
+
+	afterCursor := ""
+
+	releases := make(AppReleases, 0, 10)
+
+	graphqlClient := http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	for true {
+		graphQLQuery := fmt.Sprintf(`query StarredReleases {
+		  viewer {
+		    starredRepositories(first: 50, after: "%s") {
+	    	  pageInfo {
+	    		hasNextPage
+	    		endCursor
+	    	  }
+		      nodes {
+				nameWithOwner
+		        releases(first: %d, orderBy: {field: CREATED_AT, direction: DESC}) {
+		          nodes {
+					name
+		            url
+		            publishedAt
+		            tagName
+		            url
+					isDraft
+		            isPrerelease
+		            reactions {
+		              totalCount
+		            }
+		          }
+		        }
+		      }
+		    }
+		  }
+		}`, afterCursor, maxReleases)
+
+		jsonBody := map[string]string{
+			"query": graphQLQuery,
+		}
+
+		requestBody, err := json.Marshal(jsonBody)
+
+		if err != nil {
+			return nil, fmt.Errorf("%w: could not marshal request body: %s", ErrNoContent, err)
+		}
+
+		request, err := http.NewRequest("POST", "https://api.github.com/graphql", bytes.NewBuffer(requestBody))
+
+		if err != nil {
+			return nil, fmt.Errorf("%w: could not create request", err)
+		}
+
+		request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+
+		response, err := decodeJsonFromRequest[starredRepositoriesResponseJson](&graphqlClient, request)
+
+		if err != nil {
+			return nil, fmt.Errorf("%w: could not get starred releases: %s", ErrNoContent, err)
+		}
+
+		if (response.Errors != nil) && (len(response.Errors) > 0) {
+			return nil, fmt.Errorf("%w: could not get starred releases: %s", ErrNoContent, response.Errors[0].Message)
+		}
+
+		for _, repository := range response.Data.Viewer.StarredRepositories.Nodes {
+			for _, release := range repository.Releases.Nodes {
+				if release.IsDraft || release.IsPrerelease {
+					continue
+				}
+
+				version := release.TagName
+
+				if version[0] != 'v' {
+					version = "v" + version
+				}
+
+				releases = append(releases, AppRelease{
+					Name:         repository.NameWithOwner,
+					Version:      version,
+					NotesUrl:     release.URL,
+					TimeReleased: parseGithubTime(release.PublishedAt),
+					Downvotes:    release.Reactions.TotalCount,
+				})
+
+				break
+			}
+		}
+
+		afterCursor = response.Data.Viewer.StarredRepositories.PageInfo.EndCursor
+
+		if !response.Data.Viewer.StarredRepositories.PageInfo.HasNextPage {
+			break
+		}
+	}
+
+	if len(releases) == 0 {
+		return nil, ErrNoContent
+	}
+
+	releases.SortByNewest()
+
+	return releases, nil
+}
+
+func FetchLatestReleasesFromGithub(repositories []string, token string, maxReleases int) (AppReleases, error) {
 	appReleases := make(AppReleases, 0, len(repositories))
 
 	if len(repositories) == 0 {
@@ -39,7 +183,7 @@ func FetchLatestReleasesFromGithub(repositories []string, token string) (AppRele
 	requests := make([]*http.Request, len(repositories))
 
 	for i, repository := range repositories {
-		request, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/releases?per_page=10", repository), nil)
+		request, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/releases?per_page=%d", repository, maxReleases), nil)
 
 		if token != "" {
 			request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
