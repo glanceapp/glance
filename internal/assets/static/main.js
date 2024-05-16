@@ -197,17 +197,30 @@ function setupCollapsibleLists() {
         button.classList.add("list-collapsible-label");
         button.append(textNode, arrowElement);
         button.addEventListener("click", () => {
+            expanded = !expanded;
+
             if (expanded) {
-                listElement.classList.remove("list-collapsible-expanded");
-                button.classList.remove("list-collapsible-label-expanded");
-                textNode.nodeValue = showMoreText;
-            } else {
                 listElement.classList.add("list-collapsible-expanded");
                 button.classList.add("list-collapsible-label-expanded");
                 textNode.nodeValue = showLessText;
+                return;
             }
 
-            expanded = !expanded;
+            const topBefore = button.getClientRects()[0].top;
+
+            listElement.classList.remove("list-collapsible-expanded");
+            button.classList.remove("list-collapsible-label-expanded");
+            textNode.nodeValue = showMoreText;
+
+            const topAfter = button.getClientRects()[0].top;
+
+            if (topAfter > 0)
+                return;
+
+            window.scrollBy({
+                top: topAfter - topBefore,
+                behavior: "instant"
+            });
         });
 
         listElement.after(button);
