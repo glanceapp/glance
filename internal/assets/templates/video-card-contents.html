@@ -3,7 +3,7 @@
 <div class="margin-top-10 margin-bottom-widget flex flex-column grow padding-inline-widget">
     <a class="video-title color-primary-if-not-visited" href="{{ .Url }}" target="_blank" rel="noreferrer" title="{{ .Title }}">{{ .Title }}</a>
     <ul class="list-horizontal-text flex-nowrap margin-top-7">
-        <li class="shrink-0" title="{{ .TimePosted | formatTime }}" {{ dynamicRelativeTimeAttrs .TimePosted }}>{{ .TimePosted | relativeTime }}</li>
+        <li class="shrink-0" {{ dynamicRelativeTimeAttrs .TimePosted }}></li>
         <li class="shrink min-width-0">
             <a class="block text-truncate" href="{{ .AuthorUrl }}" target="_blank" rel="noreferrer">{{ .Author }}</a>
         </li>

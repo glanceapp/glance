@@ -1,22 +1,21 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
-<ul class="list list-gap-14 list-collapsible">
-    {{ range $i, $category := .Categories }}
-    {{ $shouldCollapseItem := shouldCollapse $i $.CollapseAfter }}
-    <li class="twitch-category thumbnail-container{{ if $shouldCollapseItem }} list-collapsible-item{{ end }}" {{ if $shouldCollapseItem }}style="--animation-delay: {{ itemAnimationDelay $i $.CollapseAfter }};"{{ end }}>
+<ul class="list list-gap-14 list-collapsible" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .Categories }}
+    <li class="twitch-category thumbnail-container">
         <div class="flex gap-10 items-center">
-            <img class="twitch-category-thumbnail thumbnail" loading="lazy" src="{{ $category.AvatarUrl }}" alt="">
+            <img class="twitch-category-thumbnail thumbnail" loading="lazy" src="{{ .AvatarUrl }}" alt="">
             <div class="shrink min-width-0">
-                <a class="size-h3 color-highlight text-truncate block" href="https://www.twitch.tv/directory/category/{{ $category.Slug }}" target="_blank" rel="noreferrer">{{ $category.Name }}</a>
+                <a class="size-h3 color-highlight text-truncate block" href="https://www.twitch.tv/directory/category/{{ .Slug }}" target="_blank" rel="noreferrer">{{ .Name }}</a>
                 <ul class="list-horizontal-text">
-                    <li>{{ $category.ViewersCount | formatViewerCount }} viewers</li>
-                    {{ if $category.IsNew }}
+                    <li>{{ .ViewersCount | formatViewerCount }} viewers</li>
+                    {{ if .IsNew }}
                     <li class="color-primary">NEW</li>
                     {{ end }}
                 </ul>
                 <ul class="list-horizontal-text flex-nowrap">
-                    {{ range $i, $tag := $category.Tags }}
+                    {{ range $i, $tag := .Tags }}
                         {{ if eq $i 0 }}
                         <li class="shrink-0">{{ $tag.Name }}</li>
                         {{ else }}
@@ -29,7 +28,4 @@
     </li>
     {{ end }}
 </ul>
-{{ if gt (len .Categories) $.CollapseAfter }}
-<label class="list-collapsible-label"><input type="checkbox" autocomplete="off" class="list-collapsible-input"></label>
-{{ end }}
 {{ end }}

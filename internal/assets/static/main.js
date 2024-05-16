@@ -21,7 +21,7 @@ function throttledDebounce(callback, maxDebounceTimes, debounceDelay) {
 };
 
 
-async function fetchPageContents (pageSlug) {
+async function fetchPageContent(pageSlug) {
     // TODO: handle non 200 status codes/time outs
     // TODO: add retries
     const response = await fetch(`/api/pages/${pageSlug}/content/`);
@@ -32,6 +32,10 @@ async function fetchPageContents (pageSlug) {
 
 function setupCarousels() {
     const carouselElements = document.getElementsByClassName("carousel-container");
+
+    if (carouselElements.length == 0) {
+        return;
+    }
 
     for (let i = 0; i < carouselElements.length; i++) {
         const carousel = carouselElements[i];
@@ -57,7 +61,7 @@ function setupCarousels() {
         itemsContainer.addEventListener("scroll", determineSideCutoffsRateLimited);
         document.addEventListener("resize", determineSideCutoffsRateLimited);
 
-        determineSideCutoffs();
+        setTimeout(determineSideCutoffs, 1);
     }
 }
 
@@ -108,6 +112,8 @@ function setupDynamicRelativeTime() {
     const updateInterval = 60 * 1000;
     let lastUpdateTime = Date.now();
 
+    updateRelativeTimeForElements(elements);
+
     const updateElementsAndTimestamp = () => {
         updateRelativeTimeForElements(elements);
         lastUpdateTime = Date.now();
@@ -154,35 +160,101 @@ function setupLazyImages() {
         image.classList.add("finished-transition");
     }
 
-    for (let i = 0; i < images.length; i++) {
-        const image = images[i];
+    setTimeout(() => {
+        for (let i = 0; i < images.length; i++) {
+            const image = images[i];
 
-        if (image.complete) {
-            image.classList.add("cached");
-            setTimeout(() => imageFinishedTransition(image), 5);
-        } else {
-            // TODO: also handle error event
-            image.addEventListener("load", () => {
-                image.classList.add("loaded");
-                setTimeout(() => imageFinishedTransition(image), 500);
-            });
+            if (image.complete) {
+                image.classList.add("cached");
+                setTimeout(() => imageFinishedTransition(image), 5);
+            } else {
+                // TODO: also handle error event
+                image.addEventListener("load", () => {
+                    image.classList.add("loaded");
+                    setTimeout(() => imageFinishedTransition(image), 500);
+                });
+            }
+        }
+    }, 5);
+}
+
+function setupCollapsibleLists() {
+    const collapsibleListElements = document.getElementsByClassName("list-collapsible");
+
+    if (collapsibleListElements.length == 0) {
+        return;
+    }
+
+    const showMoreText = "Show more";
+    const showLessText = "Show less";
+
+    const attachExpandToggleButton = (listElement) => {
+        let expanded = false;
+        const button = document.createElement("button");
+        const arrowElement = document.createElement("span");
+        arrowElement.classList.add("list-collapsible-label-icon");
+        const textNode = document.createTextNode(showMoreText);
+        button.classList.add("list-collapsible-label");
+        button.append(textNode, arrowElement);
+        button.addEventListener("click", () => {
+            if (expanded) {
+                listElement.classList.remove("list-collapsible-expanded");
+                button.classList.remove("list-collapsible-label-expanded");
+                textNode.nodeValue = showMoreText;
+            } else {
+                listElement.classList.add("list-collapsible-expanded");
+                button.classList.add("list-collapsible-label-expanded");
+                textNode.nodeValue = showLessText;
+            }
+
+            expanded = !expanded;
+        });
+
+        listElement.after(button);
+    };
+
+    for (let i = 0; i < collapsibleListElements.length; i++) {
+        const listElement = collapsibleListElements[i];
+
+        if (listElement.dataset.collapseAfter === undefined) {
+            continue;
+        }
+
+        const collapseAfter = parseInt(listElement.dataset.collapseAfter);
+
+        if (listElement.children.length <= collapseAfter) {
+            continue;
+        }
+
+        attachExpandToggleButton(listElement);
+
+        for (let c = collapseAfter; c < listElement.children.length; c++) {
+            const child = listElement.children[c];
+            child.classList.add("list-collapsible-item");
+            child.style.animationDelay = ((c - collapseAfter) * 20).toString() + "ms";
         }
     }
 }
 
 async function setupPage() {
     const pageElement = document.getElementById("page");
-    const pageContents = await fetchPageContents(pageData.slug);
+    const pageContentElement = document.getElementById("page-content");
+    const pageContent = await fetchPageContent(pageData.slug);
 
-    pageElement.innerHTML = pageContents;
+    pageContentElement.innerHTML = pageContent;
 
     setTimeout(() => {
         document.body.classList.add("animate-element-transition");
     }, 200);
 
-    setTimeout(setupLazyImages, 5);
-    setupCarousels();
-    setupDynamicRelativeTime();
+    try {
+        setupLazyImages();
+        setupCarousels();
+        setupCollapsibleLists();
+        setupDynamicRelativeTime();
+    } finally {
+        pageElement.classList.add("content-ready");
+    }
 }
 
 if (document.readyState === "loading") {

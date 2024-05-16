@@ -6,7 +6,7 @@
     <li {{ if shouldCollapse $i $.CollapseAfter }}class="list-collapsible-item" style="--animation-delay: {{ itemAnimationDelay $i $.CollapseAfter }};"{{ end }}>
         <a class="size-h4 block text-truncate color-primary-if-not-visited" href="{{ $release.NotesUrl }}" target="_blank" rel="noreferrer">{{ .Name }}</a>
         <ul class="list-horizontal-text">
-            <li title="{{ $release.TimeReleased | formatTime }}" {{ dynamicRelativeTimeAttrs $release.TimeReleased }}>{{ $release.TimeReleased | relativeTime }}</li>
+            <li {{ dynamicRelativeTimeAttrs $release.TimeReleased }}></li>
             <li>{{ $release.Version }}</li>
             {{ if gt $release.Downvotes 3 }}
             <li>{{ $release.Downvotes | formatNumber }} ⚠</li>

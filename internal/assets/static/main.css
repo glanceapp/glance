@@ -57,6 +57,14 @@
     font-size: var(--font-size-h4);
 }
 
+.page-content, .page.content-ready .page-loading-container {
+    display: none;
+}
+
+.page.content-ready > .page-content {
+    display: block;
+}
+
 .page-column-full .size-title-dynamic {
     font-size: var(--font-size-h3);
 }
@@ -117,6 +125,14 @@
     padding-top: var(--list-half-gap);
 }
 
+.list-collapsible:not(.list-collapsible-expanded) > .list-collapsible-item {
+    display: none;
+}
+
+.list-collapsible-item {
+    animation: listItemReveal 0.3s backwards;
+}
+
 @keyframes listItemReveal {
     from {
         opacity: 0;
@@ -124,56 +140,42 @@
     }
 }
 
-.list-collapsible-item {
-    display: none;
-    animation: listItemReveal 0.3s backwards;
-    animation-delay: var(--animation-delay);
-}
-
 .list-collapsible-label {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+    font: inherit;
+    border: 0;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    text-align: left;
+    color: var(--color-text-base);
+    text-transform: uppercase;
+    font-size: var(--font-size-h4);
     padding: var(--widget-content-vertical-padding) 0;
     background: var(--color-widget-background);
 }
 
-.list-collapsible-label:has(.list-collapsible-input:checked) {
+.list-collapsible-label-expanded {
     position: sticky;
     bottom: 0;
 }
 
-.list-collapsible:has(+ .list-collapsible-label > .list-collapsible-input:checked) .list-collapsible-item {
-    display: block;
+.list-collapsible-label-icon {
+    display: inline-block;
+    margin-left: 1rem;
+    position: relative;
+    top: -.2rem;
 }
 
-.list-collapsible-input {
-    display: none;
-}
-
-.list-collapsible-label::before, .list-collapsible-label::after {
-    cursor: pointer;
-    display: block;
-}
-
-.list-collapsible-label::before {
-    content: 'SHOW MORE';
-    font-size: var(--font-size-h4);
-}
-
-.list-collapsible-label:has(.list-collapsible-input:checked)::before {
-    content: 'SHOW LESS';
-}
-
-.list-collapsible-label::after {
+.list-collapsible-label-icon::before {
     content: '';
     font-size: 0.8rem;
     transform: rotate(90deg);
     line-height: 1;
+    display: inline-block;
     transition: transform 0.3s;
 }
 
-.list-collapsible-label:has(.list-collapsible-input:checked)::after {
+.list-collapsible-label-expanded .list-collapsible-label-icon::before {
     transform: rotate(-90deg);
 }
 
@@ -1107,7 +1109,7 @@ body {
         box-shadow: 0 calc(var(--spacing) * -1) 0 0 currentColor, 0 var(--spacing) 0 0 currentColor;
     }
 
-    .list-collapsible-label:has(.list-collapsible-input:checked) {
+    .list-collapsible-label-expanded {
         bottom: var(--mobile-navigation-height);
     }
 }
