@@ -21,6 +21,7 @@
   - [Twitch Channels](#twitch-channels)
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
+  - [Search](#search)
 
 ## Intro
 Configuration is done via a single YAML file and a server restart is required in order for any changes to take effect. Trying to start the server with an invalid config file will result in an error.
@@ -1132,3 +1133,35 @@ The source of the iframe.
 
 ##### `height`
 The height of the iframe. The minimum allowed height is 50.
+
+### Search
+Display a search bar that can be used to search for specific terms on various search engines.
+
+Example:
+
+```yaml
+- type: search
+  search-url: https://www.google.com/search?q=
+  query: This is a default search
+```
+
+Preview:
+
+![](images/search-widget-preview.png)
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| search-url | string | no | https://duckduckgo.com/?q= |
+| query | string | no | |
+
+##### `search-url`
+The URL to use for the search. The query will be appended to the end of the URL. Some common examples:
+- Google: `https://www.google.com/search?q=`
+- DuckDuckGo: `https://duckduckgo.com/?q=`
+- Bing: `https://www.bing.com/search?q=`
+- Perplexity AI: `https://perplexity.ai/search?q=`
+- ChatGPT (requires ChatGPT Plus subscription): `https://chatgpt.com/?model=gpt-4o&oai-dm=1&q=`
+
+##### `query`
+The default query to show in the search bar. If left blank the search bar will be empty.

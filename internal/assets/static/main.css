@@ -1201,3 +1201,59 @@ body {
 .margin-bottom-10   { margin-bottom: 1rem; }
 .margin-bottom-15   { margin-bottom: 1.5rem; }
 .margin-bottom-auto { margin-bottom: auto; }
+
+.search-form {
+    margin: 0;
+    padding: var(--widget-content-padding);
+    background-color: var(--color-background);
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.search-input-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 40px 10px 10px;
+    font-size: var(--font-size-h3);
+    border: 1px solid var(--color-widget-content-border);
+    border-radius: 20px;
+    color: white;
+    background: var(--color-background);
+    transition: border-color 0.15s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.search-button {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.search-button svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+}
+
+.search-button:hover svg {
+    color: var(--color-text-highlight);
+}
