@@ -25,6 +25,7 @@ var (
 	VideosTemplate                = compileTemplate("videos.html", "widget-base.html", "video-card-contents.html")
 	VideosGridTemplate            = compileTemplate("videos-grid.html", "widget-base.html", "video-card-contents.html")
 	StocksTemplate                = compileTemplate("stocks.html", "widget-base.html")
+	CryptoTemplate                = compileTemplate("crypto.html", "widget-base.html")
 	RSSListTemplate               = compileTemplate("rss-list.html", "widget-base.html")
 	RSSHorizontalCardsTemplate    = compileTemplate("rss-horizontal-cards.html", "widget-base.html")
 	RSSHorizontalCards2Template   = compileTemplate("rss-horizontal-cards-2.html", "widget-base.html")
