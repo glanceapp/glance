@@ -13,6 +13,7 @@
 * Latest YouTube videos from specific channels
 * Calendar
 * Stocks
+* Cryptocurrencies
 * iframe
 * Twitch channels & top games
 * GitHub releases
