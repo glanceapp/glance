@@ -62,9 +62,6 @@
     <div>
         <a class="size-h3" href="https://github.com/glanceapp/glance" target="_blank" rel="noreferrer">Glance</a> {{ if ne "dev" .App.Version }}<a class="visited-indicator" title="Release notes" href="https://github.com/glanceapp/glance/releases/tag/{{ .App.Version }}" target="_blank" rel="noreferrer">{{ .App.Version }}</a>{{ else }}({{ .App.Version }}){{ end }}
     </div>
-    <ul class="list-horizontal-text margin-top-5 size-h5 color-primary">
-        <li><a href="https://github.com/glanceapp/glance/issues" target="_blank" rel="noreferrer">Report issue</a></li>
-        <li><a href="https://github.com/glanceapp/glance/discussions" target="_blank" rel="noreferrer">Submit feedback</a></li>
-    </ul>
+    <a class="color-primary block margin-top-5 size-h5" href="https://github.com/glanceapp/glance/issues" target="_blank" rel="noreferrer">Report issue</a>
 </div>
 {{ end }}
