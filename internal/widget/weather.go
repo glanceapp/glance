@@ -31,8 +31,8 @@ func (widget *Weather) Initialize() error {
 		widget.TimeLabels = timeLabels12h
 	} else if widget.HourFormat == "24h" {
 		widget.TimeLabels = timeLabels24h
-	} else if widget.Units != "12h" && widget.Units != "24h" {
-		return fmt.Errorf("invalid hour format '%s' for weather, must be either 12h or 24h", widget.HourFormat)
+	} else {
+		return fmt.Errorf("invalid hour format '%s' for weather widget, must be either 12h or 24h", widget.HourFormat)
 	}
 
 	if widget.Units == "" {
