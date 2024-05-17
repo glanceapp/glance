@@ -1,7 +1,7 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
-<ul class="list list-gap-14 list-collapsible" data-collapse-after="{{ .CollapseAfter }}">
+<ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
     {{ range .Channels }}
     <li>
         <div class="{{ if .IsLive }}twitch-channel-live {{ end }}flex gap-10 items-start thumbnail-container">

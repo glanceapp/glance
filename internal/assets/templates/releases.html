@@ -1,9 +1,9 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
-<ul class="list list-gap-10 list-collapsible">
+<ul class="list list-gap-10 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
     {{ range $i, $release := .Releases }}
-    <li {{ if shouldCollapse $i $.CollapseAfter }}class="list-collapsible-item" style="--animation-delay: {{ itemAnimationDelay $i $.CollapseAfter }};"{{ end }}>
+    <li>
         <a class="size-h4 block text-truncate color-primary-if-not-visited" href="{{ $release.NotesUrl }}" target="_blank" rel="noreferrer">{{ .Name }}</a>
         <ul class="list-horizontal-text">
             <li {{ dynamicRelativeTimeAttrs $release.TimeReleased }}></li>
@@ -15,7 +15,4 @@
     </li>
     {{ end }}
 </ul>
-{{ if gt (len .Releases) $.CollapseAfter }}
-<label class="list-collapsible-label"><input type="checkbox" autocomplete="off" class="list-collapsible-input"></label>
-{{ end }}
 {{ end }}

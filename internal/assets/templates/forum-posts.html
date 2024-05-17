@@ -1,7 +1,7 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
-<ul class="list list-gap-14 list-collapsible" data-collapse-after="{{ .CollapseAfter }}">
+<ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
     {{ range .Posts }}
     <li>
         <div class="forum-post-list-item thumbnail-container">

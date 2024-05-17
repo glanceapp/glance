@@ -125,22 +125,22 @@
     padding-top: var(--list-half-gap);
 }
 
-.list-collapsible:not(.list-collapsible-expanded) > .list-collapsible-item {
+.collapsible-container:not(.container-expanded) > .collapsible-item {
     display: none;
 }
 
-.list-collapsible-item {
-    animation: listItemReveal 0.3s backwards;
+.collapsible-item {
+    animation: collapsibleItemReveal .25s backwards;
 }
 
-@keyframes listItemReveal {
+@keyframes collapsibleItemReveal {
     from {
         opacity: 0;
         transform: translateY(10px);
     }
 }
 
-.list-collapsible-label {
+.expand-toggle-button {
     font: inherit;
     border: 0;
     cursor: pointer;
@@ -154,19 +154,20 @@
     background: var(--color-widget-background);
 }
 
-.list-collapsible-label-expanded {
+.expand-toggle-button.container-expanded {
     position: sticky;
-    bottom: 0;
+    /* -1px to hide 1px gap on chrome */
+    bottom: -1px;
 }
 
-.list-collapsible-label-icon {
+.expand-toggle-button-icon {
     display: inline-block;
     margin-left: 1rem;
     position: relative;
     top: -.2rem;
 }
 
-.list-collapsible-label-icon::before {
+.expand-toggle-button-icon::before {
     content: '';
     font-size: 0.8rem;
     transform: rotate(90deg);
@@ -175,12 +176,23 @@
     transition: transform 0.3s;
 }
 
-.list-collapsible-label-expanded .list-collapsible-label-icon::before {
+.expand-toggle-button.container-expanded .expand-toggle-button-icon::before {
     transform: rotate(-90deg);
 }
 
-.widget-content:has(.list-collapsible-label:last-child) {
+.widget-content:has(.expand-toggle-button:last-child) {
     padding-bottom: 0;
+}
+
+.cards-grid.collapsible-container + .expand-toggle-button {
+    text-align: center;
+    margin-top: 0.5rem;
+    background-color: var(--color-background);
+}
+
+/* required to prevent collapsed lazy images from being loaded while the container is being setup */
+.collapsible-container:not(.ready) img[loading=lazy] {
+    display: none;
 }
 
 ::selection {
@@ -270,6 +282,7 @@ body {
     gap: var(--widget-gap);
     margin: var(--widget-gap) 0;
     animation: pageColumnsEntrance .3s cubic-bezier(0.25, 1, 0.5, 1) backwards;
+    animation-delay: 3ms;
 }
 
 @keyframes pageColumnsEntrance {
@@ -1109,8 +1122,10 @@ body {
         box-shadow: 0 calc(var(--spacing) * -1) 0 0 currentColor, 0 var(--spacing) 0 0 currentColor;
     }
 
-    .list-collapsible-label-expanded {
+    .expand-toggle-button.container-expanded {
         bottom: var(--mobile-navigation-height);
+        /* hides content that peeks through the rounded borders of the mobile navigation */
+        box-shadow: 0 var(--border-radius) 0 0 var(--color-background);
     }
 }
 

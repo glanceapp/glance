@@ -178,74 +178,158 @@ function setupLazyImages() {
     }, 5);
 }
 
-function setupCollapsibleLists() {
-    const collapsibleListElements = document.getElementsByClassName("list-collapsible");
-
-    if (collapsibleListElements.length == 0) {
-        return;
-    }
-
+function attachExpandToggleButton(collapsibleContainer) {
     const showMoreText = "Show more";
     const showLessText = "Show less";
 
-    const attachExpandToggleButton = (listElement) => {
-        let expanded = false;
-        const button = document.createElement("button");
-        const arrowElement = document.createElement("span");
-        arrowElement.classList.add("list-collapsible-label-icon");
-        const textNode = document.createTextNode(showMoreText);
-        button.classList.add("list-collapsible-label");
-        button.append(textNode, arrowElement);
-        button.addEventListener("click", () => {
-            expanded = !expanded;
+    let expanded = false;
+    const button = document.createElement("button");
+    const icon = document.createElement("span");
+    icon.classList.add("expand-toggle-button-icon");
+    const textNode = document.createTextNode(showMoreText);
+    button.classList.add("expand-toggle-button");
+    button.append(textNode, icon);
+    button.addEventListener("click", () => {
+        expanded = !expanded;
 
-            if (expanded) {
-                listElement.classList.add("list-collapsible-expanded");
-                button.classList.add("list-collapsible-label-expanded");
-                textNode.nodeValue = showLessText;
+        if (expanded) {
+            collapsibleContainer.classList.add("container-expanded");
+            button.classList.add("container-expanded");
+            textNode.nodeValue = showLessText;
+            return;
+        }
+
+        const topBefore = button.getClientRects()[0].top;
+
+        collapsibleContainer.classList.remove("container-expanded");
+        button.classList.remove("container-expanded");
+        textNode.nodeValue = showMoreText;
+
+        const topAfter = button.getClientRects()[0].top;
+
+        if (topAfter > 0)
+            return;
+
+        window.scrollBy({
+            top: topAfter - topBefore,
+            behavior: "instant"
+        });
+    });
+
+    collapsibleContainer.after(button);
+
+    return button;
+};
+
+
+function setupCollapsibleLists() {
+    const collapsibleLists = document.querySelectorAll(".list.collapsible-container");
+
+    if (collapsibleLists.length == 0) {
+        return;
+    }
+
+    for (let i = 0; i < collapsibleLists.length; i++) {
+        const list = collapsibleLists[i];
+
+        if (list.dataset.collapseAfter === undefined) {
+            continue;
+        }
+
+        const collapseAfter = parseInt(list.dataset.collapseAfter);
+
+        if (collapseAfter == -1) {
+            continue;
+        }
+
+        if (list.children.length <= collapseAfter) {
+            continue;
+        }
+
+        attachExpandToggleButton(list);
+
+        for (let c = collapseAfter; c < list.children.length; c++) {
+            const child = list.children[c];
+            child.classList.add("collapsible-item");
+            child.style.animationDelay = ((c - collapseAfter) * 20).toString() + "ms";
+        }
+
+        list.classList.add("ready");
+    }
+}
+
+function setupCollapsibleGrids() {
+    const collapsibleGridElements = document.querySelectorAll(".cards-grid.collapsible-container");
+
+    if (collapsibleGridElements.length == 0) {
+        return;
+    }
+
+    for (let i = 0; i < collapsibleGridElements.length; i++) {
+        const gridElement = collapsibleGridElements[i];
+
+        if (gridElement.dataset.collapseAfterRows === undefined) {
+            continue;
+        }
+
+        const collapseAfterRows = parseInt(gridElement.dataset.collapseAfterRows);
+
+        if (collapseAfterRows == -1) {
+            continue;
+        }
+
+        const getCardsPerRow = () => {
+            return parseInt(getComputedStyle(gridElement).getPropertyValue('--cards-per-row'));
+        };
+
+        const button = attachExpandToggleButton(gridElement);
+
+        let cardsPerRow = 2;
+
+        const resolveCollapsibleItems = () => {
+            const hideItemsAfterIndex = cardsPerRow * collapseAfterRows;
+
+            if (hideItemsAfterIndex >= gridElement.children.length) {
+                button.style.display = "none";
+            } else {
+                button.style.removeProperty("display");
+            }
+
+            let row = 0;
+
+            for (let i = 0; i < gridElement.children.length; i++) {
+                const child = gridElement.children[i];
+
+                if (i >= hideItemsAfterIndex) {
+                    child.classList.add("collapsible-item");
+                    child.style.animationDelay = (row * 40).toString() + "ms";
+
+                    if (i % cardsPerRow + 1 == cardsPerRow) {
+                        row++;
+                    }
+                } else {
+                    child.classList.remove("collapsible-item");
+                    child.style.removeProperty("animation-delay");
+                }
+            }
+        };
+
+        setTimeout(() => {
+            cardsPerRow = getCardsPerRow();
+            resolveCollapsibleItems();
+            gridElement.classList.add("ready");
+        }, 1);
+
+        window.addEventListener("resize", () => {
+            const newCardsPerRow = getCardsPerRow();
+
+            if (cardsPerRow == newCardsPerRow) {
                 return;
             }
 
-            const topBefore = button.getClientRects()[0].top;
-
-            listElement.classList.remove("list-collapsible-expanded");
-            button.classList.remove("list-collapsible-label-expanded");
-            textNode.nodeValue = showMoreText;
-
-            const topAfter = button.getClientRects()[0].top;
-
-            if (topAfter > 0)
-                return;
-
-            window.scrollBy({
-                top: topAfter - topBefore,
-                behavior: "instant"
-            });
+            cardsPerRow = newCardsPerRow;
+            resolveCollapsibleItems();
         });
-
-        listElement.after(button);
-    };
-
-    for (let i = 0; i < collapsibleListElements.length; i++) {
-        const listElement = collapsibleListElements[i];
-
-        if (listElement.dataset.collapseAfter === undefined) {
-            continue;
-        }
-
-        const collapseAfter = parseInt(listElement.dataset.collapseAfter);
-
-        if (listElement.children.length <= collapseAfter) {
-            continue;
-        }
-
-        attachExpandToggleButton(listElement);
-
-        for (let c = collapseAfter; c < listElement.children.length; c++) {
-            const child = listElement.children[c];
-            child.classList.add("list-collapsible-item");
-            child.style.animationDelay = ((c - collapseAfter) * 20).toString() + "ms";
-        }
     }
 }
 
@@ -264,6 +348,7 @@ async function setupPage() {
         setupLazyImages();
         setupCarousels();
         setupCollapsibleLists();
+        setupCollapsibleGrids();
         setupDynamicRelativeTime();
     } finally {
         pageElement.classList.add("content-ready");
