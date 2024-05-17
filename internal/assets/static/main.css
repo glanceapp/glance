@@ -881,8 +881,8 @@ body {
 
 .thumbnail {
     filter: grayscale(0.2) contrast(0.9);
-    transition: all 0.2s;
     opacity: 0.8;
+    transition: filter 0.2s, opacity .2s;
 }
 
 .thumbnail-container:hover .thumbnail {
