@@ -1124,6 +1124,9 @@ body {
 
     .expand-toggle-button.container-expanded {
         bottom: var(--mobile-navigation-height);
+    }
+
+    .cards-grid + .expand-toggle-button.container-expanded {
         /* hides content that peeks through the rounded borders of the mobile navigation */
         box-shadow: 0 var(--border-radius) 0 0 var(--color-background);
     }
