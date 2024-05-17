@@ -683,7 +683,7 @@ The name of the city and country to fetch weather information for. Attempting to
 Whether to show the temperature in celsius or fahrenheit, possible values are `metric` or `imperial`.
 
 #### `hour-format`
-Whether to show the hours of the day in 12-hour format or 24-hour format
+Whether to show the hours of the day in 12-hour format or 24-hour format. Possible values are `12h` and `24h`.
 
 ##### `hide-location`
 Optionally don't display the location name on the widget.
