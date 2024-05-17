@@ -38,10 +38,16 @@ type Theme struct {
 }
 
 type Server struct {
-	Host       string    `yaml:"host"`
-	Port       uint16    `yaml:"port"`
-	AssetsPath string    `yaml:"assets-path"`
-	StartedAt  time.Time `yaml:"-"`
+	Host            string    `yaml:"host"`
+	Port            uint16    `yaml:"port"`
+	AssetsPath      string    `yaml:"assets-path"`
+	StartedAt       time.Time `yaml:"-"`
+}
+
+type Branding struct {
+	Show			bool    `yaml:show`
+	Name      string	`yaml:name`
+	ShortName	string	`yaml:"short-name"`
 }
 
 type Column struct {

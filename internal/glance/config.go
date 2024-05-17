@@ -8,9 +8,10 @@ import (
 )
 
 type Config struct {
-	Server Server `yaml:"server"`
-	Theme  Theme  `yaml:"theme"`
-	Pages  []Page `yaml:"pages"`
+	Server 		Server 		`yaml:"server"`
+	Theme  		Theme  		`yaml:"theme"`
+	Pages  		[]Page 		`yaml:"pages"`
+	Branding	Branding	`yaml:"branding"`
 }
 
 func NewConfigFromYml(contents io.Reader) (*Config, error) {
@@ -40,6 +41,9 @@ func NewConfig() *Config {
 
 	config.Server.Host = ""
 	config.Server.Port = 8080
+	config.Branding.Show = true
+	config.Branding.Name = "Glance"
+	config.Branding.ShortName = "G"
 
 	return config
 }

@@ -3,6 +3,7 @@
 - [Intro](#intro)
 - [Preconfigured page](#preconfigured-page)
 - [Server](#server)
+- [Branding](#branding)
 - [Theme](#theme)
   - [Themes](#themes)
 - [Pages & Columns](#pages--columns)
@@ -161,6 +162,33 @@ To be able to point to an asset from your assets path, use the `/assets/` path l
 ```yaml
 icon: /assets/gitea-icon.png
 ```
+
+## Branding
+You can adjust the various parts of the branding through a top level `branding` property. Example:
+
+```yaml
+branding:
+  show: true
+  name: Glance
+  short-name: G
+```
+
+### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| show | bool | no | true |
+| name | string | no | Glance |
+| short-name | string | no | G |
+
+#### `show`
+True will show the glance footer, false will hide it.
+
+#### `name`
+Sets the name presented after the page name in the title.
+
+#### `short-name`
+Sets the name presented before the pages in the header. 
 
 ## Theme
 Theming is done through a top level `theme` property. Values for the colors are in [HSL](https://giggster.com/guide/basics/hue-saturation-lightness/) (hue, saturation, lightness) format. You can use a color picker [like this one](https://hslpicker.com/) to convert colors from other formats to HSL. The values are separated by a space and `%` is not required for any of the numbers.
