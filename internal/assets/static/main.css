@@ -1221,17 +1221,23 @@ body {
 .search-input {
     width: 100%;
     padding: 10px 40px 10px 10px;
-    font-size: var(--font-size-h3);
+    font-size: var(--font-size-h2);
     border: 1px solid var(--color-widget-content-border);
     border-radius: 20px;
     color: white;
     background: var(--color-background);
     transition: border-color 0.15s ease;
+    font-family: 'JetBrains Mono', monospace;
 }
 
 .search-input:focus {
     outline: none;
     border-color: var(--color-primary);
+}
+
+.search-input:placeholder-shown {
+    color: var(--color-text-subdue);
+    font-family: 'JetBrains Mono', monospace;
 }
 
 .search-button {
