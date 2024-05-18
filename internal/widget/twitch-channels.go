@@ -24,7 +24,7 @@ func (widget *TwitchChannels) Initialize() error {
 		widget.CollapseAfter = 5
 	}
 
-	if widget.SortBy != "viewers" && widget.SortBy != "custom" {
+	if widget.SortBy != "viewers" && widget.SortBy != "live" {
 		widget.SortBy = "viewers"
 	}
 
@@ -40,7 +40,7 @@ func (widget *TwitchChannels) Update(ctx context.Context) {
 
 	if widget.SortBy == "viewers" {
 		channels.SortByViewers()
-	} else if widget.SortBy == "custom" {
+	} else if widget.SortBy == "live" {
 		channels.SortByLive()
 	}
 
