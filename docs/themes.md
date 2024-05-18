@@ -53,6 +53,16 @@ theme:
   primary-color: 97 13 80
 ```
 
+### Kanagawa Dark
+![screenshot](images/themes/kanagawa-dark.png)
+```yaml
+theme:
+  background-color: 240 13 14
+  priamry-color: 51 33 68
+  negative-color: 359 52 31
+  contrast-multiplier: 1.2
+```
+
 ### Tucan
 ![screenshot](images/themes/tucan.png)
 ```yaml
