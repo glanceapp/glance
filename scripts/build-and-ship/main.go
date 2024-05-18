@@ -112,9 +112,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(*specificTag)
-	os.Exit(1)
-
 	cwd, err := os.Getwd()
 
 	if err != nil {
