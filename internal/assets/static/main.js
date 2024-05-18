@@ -341,6 +341,20 @@ function afterContentReady(callback) {
     contentReadyCallbacks.push(callback);
 }
 
+function updateClocks(elements, formatter) {
+    const currentDate = new Date();
+    for (const elem of elements) {
+        elem.textContent = formatter.format(currentDate);
+    }
+}
+
+function setupClocks() {
+    const clockFormatter = new Intl.DateTimeFormat(undefined, {minute: "numeric", hour: "numeric"});
+    const elements = document.getElementsByClassName("glance-clock");
+    updateClocks(elements, clockFormatter)
+    setInterval(() => {updateClocks(elements, clockFormatter)}, 1000);
+}
+
 async function setupPage() {
     const pageElement = document.getElementById("page");
     const pageContentElement = document.getElementById("page-content");
@@ -349,6 +363,7 @@ async function setupPage() {
     pageContentElement.innerHTML = pageContent;
 
     try {
+        setupClocks()
         setupCarousels();
         setupCollapsibleLists();
         setupCollapsibleGrids();

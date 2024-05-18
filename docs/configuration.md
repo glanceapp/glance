@@ -17,6 +17,7 @@
   - [Repository](#repository)
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
+  - [Clock](#clock)
   - [Stocks](#stocks)
   - [Twitch Channels](#twitch-channels)
   - [Twitch Top Games](#twitch-top-games)
@@ -34,6 +35,7 @@ pages:
     columns:
       - size: small
         widgets:
+          - type: clock
           - type: calendar
 
           - type: rss
@@ -962,6 +964,19 @@ Whether to open the link in the same tab or a new one.
 `hide-arrow`
 
 Whether to hide the colored arrow on each link.
+
+### Clock
+Display a clock showing the current time.
+
+Example:
+
+```yaml
+- type: clock
+```
+
+Preview:
+
+![](images/clock-widget-preview.png)
 
 ### Calendar
 Display a calendar.
