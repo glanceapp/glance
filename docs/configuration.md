@@ -1068,12 +1068,16 @@ Preview:
 | ---- | ---- | -------- | ------- |
 | channels | array | yes | |
 | collapse-after | integer | no | 5 |
+| sort-by | string | no | viewers |
 
 ##### `channels`
 A list of channels to display.
 
 ##### `collapse-after`
 How many channels are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+##### `sort-by`
+Can be used to specify the order in which the channels are displayed. Possible values are `viewers` and `live`.
 
 ### Twitch top games
 Display a list of games with the most viewers on Twitch.
