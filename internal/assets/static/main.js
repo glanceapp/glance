@@ -61,7 +61,7 @@ function setupCarousels() {
         itemsContainer.addEventListener("scroll", determineSideCutoffsRateLimited);
         document.addEventListener("resize", determineSideCutoffsRateLimited);
 
-        setTimeout(determineSideCutoffs, 1);
+        afterContentReady(determineSideCutoffs);
     }
 }
 
@@ -160,22 +160,22 @@ function setupLazyImages() {
         image.classList.add("finished-transition");
     }
 
-    setTimeout(() => {
+    afterContentReady(() => {
         for (let i = 0; i < images.length; i++) {
             const image = images[i];
 
             if (image.complete) {
                 image.classList.add("cached");
-                setTimeout(() => imageFinishedTransition(image), 5);
+                setTimeout(() => imageFinishedTransition(image), 1);
             } else {
                 // TODO: also handle error event
                 image.addEventListener("load", () => {
                     image.classList.add("loaded");
-                    setTimeout(() => imageFinishedTransition(image), 500);
+                    setTimeout(() => imageFinishedTransition(image), 400);
                 });
             }
         }
-    }, 5);
+    });
 }
 
 function attachExpandToggleButton(collapsibleContainer) {
@@ -314,11 +314,11 @@ function setupCollapsibleGrids() {
             }
         };
 
-        setTimeout(() => {
+        afterContentReady(() => {
             cardsPerRow = getCardsPerRow();
             resolveCollapsibleItems();
             gridElement.classList.add("ready");
-        }, 1);
+        });
 
         window.addEventListener("resize", () => {
             const newCardsPerRow = getCardsPerRow();
@@ -333,16 +333,18 @@ function setupCollapsibleGrids() {
     }
 }
 
+const contentReadyCallbacks = [];
+
+function afterContentReady(callback) {
+    contentReadyCallbacks.push(callback);
+}
+
 async function setupPage() {
     const pageElement = document.getElementById("page");
     const pageContentElement = document.getElementById("page-content");
     const pageContent = await fetchPageContent(pageData.slug);
 
     pageContentElement.innerHTML = pageContent;
-
-    setTimeout(() => {
-        document.body.classList.add("animate-element-transition");
-    }, 200);
 
     try {
         setupLazyImages();
@@ -352,6 +354,14 @@ async function setupPage() {
         setupDynamicRelativeTime();
     } finally {
         pageElement.classList.add("content-ready");
+
+        for (let i = 0; i < contentReadyCallbacks.length; i++) {
+            contentReadyCallbacks[i]();
+        }
+
+        setTimeout(() => {
+            document.body.classList.add("page-columns-transitioned");
+        }, 300);
     }
 }
 

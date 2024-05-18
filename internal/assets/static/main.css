@@ -190,11 +190,6 @@
     background-color: var(--color-background);
 }
 
-/* required to prevent collapsed lazy images from being loaded while the container is being setup */
-.collapsible-container:not(.ready) img[loading=lazy] {
-    display: none;
-}
-
 ::selection {
     background-color: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 20%)));
     color: var(--color-text-highlight);
@@ -282,7 +277,6 @@ body {
     gap: var(--widget-gap);
     margin: var(--widget-gap) 0;
     animation: pageColumnsEntrance .3s cubic-bezier(0.25, 1, 0.5, 1) backwards;
-    animation-delay: 3ms;
 }
 
 @keyframes pageColumnsEntrance {
@@ -1011,10 +1005,10 @@ body {
 
     .page-column {
         display: none;
-        animation: columnEntrance 0s cubic-bezier(0.25, 1, 0.5, 1) backwards;
+        animation: columnEntrance .0s cubic-bezier(0.25, 1, 0.5, 1) backwards;
     }
 
-    .animate-element-transition .page-column {
+    .page-columns-transitioned .page-column {
         animation-duration: .3s;
     }
 
