@@ -161,20 +161,22 @@ function setupLazyImages() {
     }
 
     afterContentReady(() => {
-        for (let i = 0; i < images.length; i++) {
-            const image = images[i];
+        setTimeout(() => {
+            for (let i = 0; i < images.length; i++) {
+                const image = images[i];
 
-            if (image.complete) {
-                image.classList.add("cached");
-                setTimeout(() => imageFinishedTransition(image), 1);
-            } else {
-                // TODO: also handle error event
-                image.addEventListener("load", () => {
-                    image.classList.add("loaded");
-                    setTimeout(() => imageFinishedTransition(image), 400);
-                });
+                if (image.complete) {
+                    image.classList.add("cached");
+                    setTimeout(() => imageFinishedTransition(image), 1);
+                } else {
+                    // TODO: also handle error event
+                    image.addEventListener("load", () => {
+                        image.classList.add("loaded");
+                        setTimeout(() => imageFinishedTransition(image), 400);
+                    });
+                }
             }
-        }
+        }, 1);
     });
 }
 
@@ -347,11 +349,11 @@ async function setupPage() {
     pageContentElement.innerHTML = pageContent;
 
     try {
-        setupLazyImages();
         setupCarousels();
         setupCollapsibleLists();
         setupCollapsibleGrids();
         setupDynamicRelativeTime();
+        setupLazyImages();
     } finally {
         pageElement.classList.add("content-ready");
 
