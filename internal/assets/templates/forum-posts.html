@@ -18,14 +18,15 @@
                 </svg>
                 {{ end }}
             {{ end }}
-            <div class="grow">
+
+            <div class="grow min-width-0">
                 <a href="{{ .DiscussionUrl }}" class="size-h3 color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
                 <ul class="list-horizontal-text">
                     <li {{ dynamicRelativeTimeAttrs .TimePosted }}></li>
                     <li>{{ .Score | formatNumber }} points</li>
                     <li>{{ .CommentCount | formatNumber }} comments</li>
                     {{ if .HasTargetUrl }}
-                    <li class="shrink min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ .TargetUrlDomain }}</a></li>
+                    <li class="min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ .TargetUrlDomain }}</a></li>
                     {{ end }}
                 </ul>
             </div>
