@@ -1166,6 +1166,7 @@ body {
 .shrink             { flex-shrink: 1; }
 .shrink-0           { flex-shrink: 0; }
 .min-width-0        { min-width: 0; }
+.max-width-100      { max-width: 100%; }
 .block              { display: block; }
 .overflow-hidden    { overflow: hidden; }
 .relative           { position: relative; }

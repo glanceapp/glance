@@ -18,7 +18,7 @@
                 </svg>
                 {{ end }}
             {{ end }}
-            <div class="grow">
+            <div class="grow max-width-100">
                 <a href="{{ $post.DiscussionUrl }}" class="size-h3 color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
                 <ul class="list-horizontal-text">
                     <li title="{{ $post.TimePosted | formatTime }}" {{ dynamicRelativeTimeAttrs $post.TimePosted }}>{{ $post.TimePosted | relativeTime }}</li>
