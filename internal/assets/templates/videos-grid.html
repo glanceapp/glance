@@ -3,7 +3,7 @@
 {{ define "widget-content-classes" }}widget-content-frameless{{ end }}
 
 {{ define "widget-content" }}
-<div class="cards-grid">
+<div class="cards-grid collapsible-container" data-collapse-after-rows="{{ .CollapseAfterRows }}">
     {{ range .Videos }}
     <div class="card widget-content-frame thumbnail-container">
         {{ template "video-card-contents" . }}

@@ -21,7 +21,7 @@ function throttledDebounce(callback, maxDebounceTimes, debounceDelay) {
 };
 
 
-async function fetchPageContents (pageSlug) {
+async function fetchPageContent(pageSlug) {
     // TODO: handle non 200 status codes/time outs
     // TODO: add retries
     const response = await fetch(`/api/pages/${pageSlug}/content/`);
@@ -33,8 +33,13 @@ async function fetchPageContents (pageSlug) {
 function setupCarousels() {
     const carouselElements = document.getElementsByClassName("carousel-container");
 
+    if (carouselElements.length == 0) {
+        return;
+    }
+
     for (let i = 0; i < carouselElements.length; i++) {
         const carousel = carouselElements[i];
+        carousel.classList.add("show-right-cutoff");
         const itemsContainer = carousel.getElementsByClassName("carousel-items-container")[0];
 
         const determineSideCutoffs = () => {
@@ -56,7 +61,7 @@ function setupCarousels() {
         itemsContainer.addEventListener("scroll", determineSideCutoffsRateLimited);
         document.addEventListener("resize", determineSideCutoffsRateLimited);
 
-        determineSideCutoffs();
+        afterContentReady(determineSideCutoffs);
     }
 }
 
@@ -107,6 +112,8 @@ function setupDynamicRelativeTime() {
     const updateInterval = 60 * 1000;
     let lastUpdateTime = Date.now();
 
+    updateRelativeTimeForElements(elements);
+
     const updateElementsAndTimestamp = () => {
         updateRelativeTimeForElements(elements);
         lastUpdateTime = Date.now();
@@ -153,35 +160,211 @@ function setupLazyImages() {
         image.classList.add("finished-transition");
     }
 
-    for (let i = 0; i < images.length; i++) {
-        const image = images[i];
+    afterContentReady(() => {
+        setTimeout(() => {
+            for (let i = 0; i < images.length; i++) {
+                const image = images[i];
 
-        if (image.complete) {
-            image.classList.add("cached");
-            setTimeout(() => imageFinishedTransition(image), 5);
-        } else {
-            // TODO: also handle error event
-            image.addEventListener("load", () => {
-                image.classList.add("loaded");
-                setTimeout(() => imageFinishedTransition(image), 500);
-            });
+                if (image.complete) {
+                    image.classList.add("cached");
+                    setTimeout(() => imageFinishedTransition(image), 1);
+                } else {
+                    // TODO: also handle error event
+                    image.addEventListener("load", () => {
+                        image.classList.add("loaded");
+                        setTimeout(() => imageFinishedTransition(image), 400);
+                    });
+                }
+            }
+        }, 1);
+    });
+}
+
+function attachExpandToggleButton(collapsibleContainer) {
+    const showMoreText = "Show more";
+    const showLessText = "Show less";
+
+    let expanded = false;
+    const button = document.createElement("button");
+    const icon = document.createElement("span");
+    icon.classList.add("expand-toggle-button-icon");
+    const textNode = document.createTextNode(showMoreText);
+    button.classList.add("expand-toggle-button");
+    button.append(textNode, icon);
+    button.addEventListener("click", () => {
+        expanded = !expanded;
+
+        if (expanded) {
+            collapsibleContainer.classList.add("container-expanded");
+            button.classList.add("container-expanded");
+            textNode.nodeValue = showLessText;
+            return;
         }
+
+        const topBefore = button.getClientRects()[0].top;
+
+        collapsibleContainer.classList.remove("container-expanded");
+        button.classList.remove("container-expanded");
+        textNode.nodeValue = showMoreText;
+
+        const topAfter = button.getClientRects()[0].top;
+
+        if (topAfter > 0)
+            return;
+
+        window.scrollBy({
+            top: topAfter - topBefore,
+            behavior: "instant"
+        });
+    });
+
+    collapsibleContainer.after(button);
+
+    return button;
+};
+
+
+function setupCollapsibleLists() {
+    const collapsibleLists = document.querySelectorAll(".list.collapsible-container");
+
+    if (collapsibleLists.length == 0) {
+        return;
     }
+
+    for (let i = 0; i < collapsibleLists.length; i++) {
+        const list = collapsibleLists[i];
+
+        if (list.dataset.collapseAfter === undefined) {
+            continue;
+        }
+
+        const collapseAfter = parseInt(list.dataset.collapseAfter);
+
+        if (collapseAfter == -1) {
+            continue;
+        }
+
+        if (list.children.length <= collapseAfter) {
+            continue;
+        }
+
+        attachExpandToggleButton(list);
+
+        for (let c = collapseAfter; c < list.children.length; c++) {
+            const child = list.children[c];
+            child.classList.add("collapsible-item");
+            child.style.animationDelay = ((c - collapseAfter) * 20).toString() + "ms";
+        }
+
+        list.classList.add("ready");
+    }
+}
+
+function setupCollapsibleGrids() {
+    const collapsibleGridElements = document.querySelectorAll(".cards-grid.collapsible-container");
+
+    if (collapsibleGridElements.length == 0) {
+        return;
+    }
+
+    for (let i = 0; i < collapsibleGridElements.length; i++) {
+        const gridElement = collapsibleGridElements[i];
+
+        if (gridElement.dataset.collapseAfterRows === undefined) {
+            continue;
+        }
+
+        const collapseAfterRows = parseInt(gridElement.dataset.collapseAfterRows);
+
+        if (collapseAfterRows == -1) {
+            continue;
+        }
+
+        const getCardsPerRow = () => {
+            return parseInt(getComputedStyle(gridElement).getPropertyValue('--cards-per-row'));
+        };
+
+        const button = attachExpandToggleButton(gridElement);
+
+        let cardsPerRow = 2;
+
+        const resolveCollapsibleItems = () => {
+            const hideItemsAfterIndex = cardsPerRow * collapseAfterRows;
+
+            if (hideItemsAfterIndex >= gridElement.children.length) {
+                button.style.display = "none";
+            } else {
+                button.style.removeProperty("display");
+            }
+
+            let row = 0;
+
+            for (let i = 0; i < gridElement.children.length; i++) {
+                const child = gridElement.children[i];
+
+                if (i >= hideItemsAfterIndex) {
+                    child.classList.add("collapsible-item");
+                    child.style.animationDelay = (row * 40).toString() + "ms";
+
+                    if (i % cardsPerRow + 1 == cardsPerRow) {
+                        row++;
+                    }
+                } else {
+                    child.classList.remove("collapsible-item");
+                    child.style.removeProperty("animation-delay");
+                }
+            }
+        };
+
+        afterContentReady(() => {
+            cardsPerRow = getCardsPerRow();
+            resolveCollapsibleItems();
+            gridElement.classList.add("ready");
+        });
+
+        window.addEventListener("resize", () => {
+            const newCardsPerRow = getCardsPerRow();
+
+            if (cardsPerRow == newCardsPerRow) {
+                return;
+            }
+
+            cardsPerRow = newCardsPerRow;
+            resolveCollapsibleItems();
+        });
+    }
+}
+
+const contentReadyCallbacks = [];
+
+function afterContentReady(callback) {
+    contentReadyCallbacks.push(callback);
 }
 
 async function setupPage() {
     const pageElement = document.getElementById("page");
-    const pageContents = await fetchPageContents(pageData.slug);
+    const pageContentElement = document.getElementById("page-content");
+    const pageContent = await fetchPageContent(pageData.slug);
 
-    pageElement.innerHTML = pageContents;
+    pageContentElement.innerHTML = pageContent;
 
-    setTimeout(() => {
-        document.body.classList.add("animate-element-transition");
-    }, 150);
+    try {
+        setupCarousels();
+        setupCollapsibleLists();
+        setupCollapsibleGrids();
+        setupDynamicRelativeTime();
+        setupLazyImages();
+    } finally {
+        pageElement.classList.add("content-ready");
 
-    setTimeout(setupLazyImages, 5);
-    setupCarousels();
-    setupDynamicRelativeTime();
+        for (let i = 0; i < contentReadyCallbacks.length; i++) {
+            contentReadyCallbacks[i]();
+        }
+
+        setTimeout(() => {
+            document.body.classList.add("page-columns-transitioned");
+        }, 300);
+    }
 }
 
 if (document.readyState === "loading") {

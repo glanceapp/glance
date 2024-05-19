@@ -36,7 +36,7 @@ func Main() int {
 			return 1
 		}
 
-		if app.Serve() != nil {
+		if err := app.Serve(); err != nil {
 			fmt.Printf("http server error: %v\n", err)
 			return 1
 		}

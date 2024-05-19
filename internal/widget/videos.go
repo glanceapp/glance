@@ -10,12 +10,13 @@ import (
 )
 
 type Videos struct {
-	widgetBase       `yaml:",inline"`
-	Videos           feed.Videos `yaml:"-"`
-	VideoUrlTemplate string      `yaml:"video-url-template"`
-	Style            string      `yaml:"style"`
-	Channels         []string    `yaml:"channels"`
-	Limit            int         `yaml:"limit"`
+	widgetBase        `yaml:",inline"`
+	Videos            feed.Videos `yaml:"-"`
+	VideoUrlTemplate  string      `yaml:"video-url-template"`
+	Style             string      `yaml:"style"`
+	CollapseAfterRows int         `yaml:"collapse-after-rows"`
+	Channels          []string    `yaml:"channels"`
+	Limit             int         `yaml:"limit"`
 }
 
 func (widget *Videos) Initialize() error {
@@ -23,6 +24,10 @@ func (widget *Videos) Initialize() error {
 
 	if widget.Limit <= 0 {
 		widget.Limit = 25
+	}
+
+	if widget.CollapseAfterRows == 0 || widget.CollapseAfterRows < -1 {
+		widget.CollapseAfterRows = 4
 	}
 
 	return nil

@@ -20,7 +20,7 @@
                 {{ end }}
                 <a href="{{ .DiscussionUrl }}" title="{{ .Title }}" class="text-truncate-3-lines color-primary-if-not-visited margin-top-7 margin-bottom-auto" target="_blank" rel="noreferrer">{{ .Title }}</a>
                 <ul class="list-horizontal-text margin-top-7">
-                    <li title="{{ .TimePosted | formatTime }}" {{ dynamicRelativeTimeAttrs .TimePosted }}>{{ .TimePosted | relativeTime }}</li>
+                    <li {{ dynamicRelativeTimeAttrs .TimePosted }}></li>
                     <li>{{ .Score | formatNumber }} points</li>
                 </ul>
             </div>

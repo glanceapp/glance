@@ -1,0 +1,13 @@
+{
+    "name": "Glance",
+    "display": "standalone",
+    "scope": "/",
+    "start_url": "/",
+    "icons": [
+        {
+            "src": "/static/app-icon.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
+    ]
+}
