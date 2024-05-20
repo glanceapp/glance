@@ -97,6 +97,10 @@ func titleToSlug(s string) string {
 }
 
 func NewApplication(config *Config) (*Application, error) {
+	// make sure the config is valid
+	if config == nil {
+		return nil, fmt.Errorf("config is nil")
+	}
 	if len(config.Pages) == 0 {
 		return nil, fmt.Errorf("no pages configured")
 	}
@@ -107,17 +111,24 @@ func NewApplication(config *Config) (*Application, error) {
 		slugToPage: make(map[string]*Page),
 	}
 
-	app.slugToPage[""] = &config.Pages[0]
+	app.Reload(config)
+
+	return app, nil
+}
+
+// Reload updates the application with a new config
+func (a *Application) Reload(config *Config) {
+	a.Config = *config
+
+	a.slugToPage[""] = &config.Pages[0]
 
 	for i := range config.Pages {
 		if config.Pages[i].Slug == "" {
 			config.Pages[i].Slug = titleToSlug(config.Pages[i].Title)
 		}
 
-		app.slugToPage[config.Pages[i].Slug] = &config.Pages[i]
+		a.slugToPage[config.Pages[i].Slug] = &config.Pages[i]
 	}
-
-	return app, nil
 }
 
 func (a *Application) HandlePageRequest(w http.ResponseWriter, r *http.Request) {

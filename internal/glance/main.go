@@ -2,7 +2,6 @@ package glance
 
 import (
 	"fmt"
-	"os"
 )
 
 func Main() int {
@@ -13,18 +12,9 @@ func Main() int {
 		return 1
 	}
 
-	configFile, err := os.Open(options.ConfigPath)
-
+	config, err := NewConfigFromFile(options.ConfigPath)
 	if err != nil {
-		fmt.Printf("failed opening config file: %v\n", err)
-		return 1
-	}
-
-	config, err := NewConfigFromYml(configFile)
-	configFile.Close()
-
-	if err != nil {
-		fmt.Printf("failed parsing config file: %v\n", err)
+		fmt.Printf("failed loading config file: %v\n", err)
 		return 1
 	}
 
@@ -35,6 +25,11 @@ func Main() int {
 			fmt.Printf("failed creating application: %v\n", err)
 			return 1
 		}
+
+		watchConfigFile(options.ConfigPath, func(config *Config) error {
+			app.Reload(config)
+			return nil
+		})
 
 		if app.Serve() != nil {
 			fmt.Printf("http server error: %v\n", err)
