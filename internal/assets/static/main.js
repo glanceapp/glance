@@ -255,8 +255,6 @@ function setupCollapsibleLists() {
             child.classList.add("collapsible-item");
             child.style.animationDelay = ((c - collapseAfter) * 20).toString() + "ms";
         }
-
-        list.classList.add("ready");
     }
 }
 
@@ -319,7 +317,6 @@ function setupCollapsibleGrids() {
         afterContentReady(() => {
             cardsPerRow = getCardsPerRow();
             resolveCollapsibleItems();
-            gridElement.classList.add("ready");
         });
 
         window.addEventListener("resize", () => {
