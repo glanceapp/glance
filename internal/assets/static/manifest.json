@@ -1,6 +1,7 @@
 {
     "name": "Glance",
     "display": "standalone",
+    "background_color": "#151519",
     "scope": "/",
     "start_url": "/",
     "icons": [
