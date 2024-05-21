@@ -5,7 +5,7 @@
 {{ define "widget-content" }}
 <div class="cards-grid collapsible-container" data-collapse-after-rows="{{ .CollapseAfterRows }}">
     {{ range .Videos }}
-    <div class="card widget-content-frame thumbnail-container">
+    <div class="card widget-content-frame thumbnail-parent">
         {{ template "video-card-contents" . }}
     </div>
     {{ end }}

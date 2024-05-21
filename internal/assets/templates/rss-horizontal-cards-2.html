@@ -6,7 +6,7 @@
 <div class="carousel-container">
     <div class="cards-horizontal carousel-items-container"{{ if ne 0.0 .CardHeight }} style="--rss-card-height: {{ .CardHeight }}rem;"{{ end }}>
         {{ range .Items }}
-        <div class="card rss-card-2 widget-content-frame thumbnail-container">
+        <div class="card rss-card-2 widget-content-frame thumbnail-parent">
             {{ if ne "" .ImageURL }}
             <img class="rss-card-2-image thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
             {{ else }}

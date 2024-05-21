@@ -77,3 +77,13 @@ func maybeCopySliceWithoutZeroValues[T int | float64](values []T) []T {
 
 	return values
 }
+
+func limitStringLength(s string, max int) (string, bool) {
+	asRunes := []rune(s)
+
+	if len(asRunes) > max {
+		return string(asRunes[:max]), true
+	}
+
+	return s, false
+}

@@ -4,7 +4,7 @@
 <ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
     {{ range .Posts }}
     <li>
-        <div class="forum-post-list-item thumbnail-container">
+        <div class="flex gap-10 row-reverse-on-mobile thumbnail-parent">
             {{ if $.ShowThumbnails }}
                 {{ if ne .ThumbnailUrl "" }}
                 <img class="forum-post-list-thumbnail thumbnail" src="{{ .ThumbnailUrl }}" alt="" loading="lazy">
