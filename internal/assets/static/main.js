@@ -59,7 +59,7 @@ function setupCarousels() {
         const determineSideCutoffsRateLimited = throttledDebounce(determineSideCutoffs, 20, 100);
 
         itemsContainer.addEventListener("scroll", determineSideCutoffsRateLimited);
-        document.addEventListener("resize", determineSideCutoffsRateLimited);
+        window.addEventListener("resize", determineSideCutoffsRateLimited);
 
         afterContentReady(determineSideCutoffs);
     }
