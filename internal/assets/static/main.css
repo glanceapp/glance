@@ -733,7 +733,7 @@ body {
     flex-direction: column;
     width: calc(100% / 12);
     padding-top: 3px;
-    max-width: 3rem;
+    max-width: 30px;
 }
 
 .weather-column-value, .weather-columns:hover .weather-column-value {
@@ -1170,6 +1170,10 @@ body {
     .cards-grid + .expand-toggle-button.container-expanded {
         /* hides content that peeks through the rounded borders of the mobile navigation */
         box-shadow: 0 var(--border-radius) 0 0 var(--color-background);
+    }
+
+    .weather-column-rain::before {
+        background-size: 7px 7px;
     }
 }
 
