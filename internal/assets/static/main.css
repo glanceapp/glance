@@ -1285,6 +1285,10 @@ body {
 .gap-7              { gap: 0.7rem; }
 .gap-10             { gap: 1rem; }
 .gap-15             { gap: 1.5rem; }
+.gap-25             { gap: 2.5rem; }
+.gap-35             { gap: 3.5rem; }
+.gap-45             { gap: 4.5rem; }
+.gap-55             { gap: 5.5rem; }
 .margin-top-3       { margin-top: 0.3rem; }
 .margin-top-5       { margin-top: 0.5rem; }
 .margin-top-7       { margin-top: 0.7rem; }
