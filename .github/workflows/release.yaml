@@ -1,0 +1,59 @@
+name: Create release
+
+permissions:
+  contents: write
+  packages: write
+
+on:
+  # Only run the workflow when a tag that starts with "v" (e.g. "v1.2.3") is pushed.
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the target Git reference
+        # https://github.com/actions/checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Log in to the GitHub Packages registry
+        # https://github.com/docker/login-action
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        env:
+          dockerhub_username: ${{ secrets.DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.DOCKERHUB_TOKEN }}
+        # Skip this step if credentials are not present.
+        if: ${{ env.dockerhub_username && env.dockerhub_token }}
+        # https://github.com/docker/login-action
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Golang
+        # https://github.com/actions/setup-go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Docker buildx
+        # https://github.com/docker/setup-buildx-action
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run GoReleaser
+        # https://github.com/goreleaser/goreleaser-action
+        uses: goreleaser/goreleaser-action@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: release

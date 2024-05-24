@@ -1,0 +1,103 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# .goreleaser.yaml
+# ref: https://goreleaser.com/customization/
+
+project_name: wfg/glance
+
+builds:
+  - binary: glance
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - freebsd
+      - linux
+      - openbsd
+      - windows
+
+archives:
+  # Defaults to .tar.gz; override Windows to .zip.
+  - format_overrides:
+      - goos: windows
+        format: zip
+
+dockers:
+  # Build linux/amd64 image
+  - use: buildx
+    goarch: amd64
+    dockerfile: goreleaser.Dockerfile
+    image_templates:
+      # - "{{ .ProjectName }}:{{ .Version }}-amd64"
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-amd64
+    build_flag_templates:
+      - --platform=linux/amd64
+
+  # Build linux/arm64/v7 image
+  - use: buildx
+    goarch: arm64
+    dockerfile: goreleaser.Dockerfile
+    image_templates:
+      # - "{{ .ProjectName }}:{{ .Version }}-arm64v7"
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-arm64v7
+    build_flag_templates:
+      - --platform=linux/arm64/v7
+
+  # Build linux/arm64 image
+  - use: buildx
+    goarch: arm64
+    dockerfile: goreleaser.Dockerfile
+    image_templates:
+      # - "{{ .ProjectName }}:{{ .Version }}-arm64"
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-arm64
+    build_flag_templates:
+      - --platform=linux/arm64
+
+
+docker_manifests:
+  # Bundle images into a single multi-arch image
+
+  # glanceapp/glance:${tag}
+  # Creates tags for "v1.2.3", "v1.2", "v1", and latest
+  # - name_template: "{{ .ProjectName }}:v{{ .Major }}.{{ .Minor }}.{{ .Patch }}"
+  #   image_templates:
+  #     - "{{ .ProjectName }}:{{ .Version }}-amd64"
+  #     - "{{ .ProjectName }}:{{ .Version }}-arm64v7"
+  #     - "{{ .ProjectName }}:{{ .Version }}-arm64"
+  # - name_template: {{ .ProjectName }}:v{{ .Major }}.{{ .Minor }}
+  #   image_templates:
+  #     - "{{ .ProjectName }}:{{ .Version }}-amd64"
+  #     - "{{ .ProjectName }}:{{ .Version }}-arm64v7"
+  #     - "{{ .ProjectName }}:{{ .Version }}-arm64"
+  # - name_template: {{ .ProjectName }}:v{{ .Major }}
+  #   image_templates:
+  #     - "{{ .ProjectName }}:{{ .Version }}-amd64"
+  #     - "{{ .ProjectName }}:{{ .Version }}-arm64v7"
+  #     - "{{ .ProjectName }}:{{ .Version }}-arm64"
+  # - name_template: {{ .ProjectName }}:latest
+  #   image_templates:
+  #     - "{{ .ProjectName }}:{{ .Version }}-amd64"
+  #     - "{{ .ProjectName }}:{{ .Version }}-arm64v7"
+  #     - "{{ .ProjectName }}:{{ .Version }}-arm64"
+
+  # ghcr.io/glanceapp/glance
+  # Creates tags for "v1.2.3", "v1.2", "v1", and latest
+  - name_template: ghcr.io/{{ .ProjectName }}:v{{ .Major }}.{{ .Minor }}.{{ .Patch }}
+    image_templates:
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-arm64v7
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-arm64
+  - name_template: ghcr.io/{{ .ProjectName }}:v{{ .Major }}.{{ .Minor }}
+    image_templates:
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-arm64v7
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-arm64
+  - name_template: ghcr.io/{{ .ProjectName }}:v{{ .Major }}
+    image_templates:
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-arm64v7
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-arm64
+  - name_template: ghcr.io/{{ .ProjectName }}:latest
+    image_templates:
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-arm64v7
+      - ghcr.io/{{ .ProjectName }}:{{ .Version }}-arm64
