@@ -1,0 +1,31 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<ul class="list list-gap-14 list-collapsible">
+    {{ range $i, $release := .Releases }}
+    <li {{ if shouldCollapse $i $.CollapseAfter }}class="list-collapsible-item" style="--animation-delay: {{ itemAnimationDelay $i $.CollapseAfter }};"{{ end }}>
+        <div class="flex gap-10 items-start thumbnail-container">
+            <div class="anime-release-cover-container">
+                {{ if $release.ImageCoverUrl }}
+                <img class="arr-release-cover thumbnail" src="{{ $release.ImageCoverUrl }}" alt="Cover for {{ $release.Title }}" loading="lazy">
+                {{ else }}
+                <svg class="arr-release-cover thumbnail" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+                {{ end }}
+            </div>
+            <div class="shrink min-width-0">
+                <strong class="size-h3 block text-truncate">{{ $release.Title }} - S{{ $release.SeasonNumber }}E{{ $release.EpisodeNumber }}</strong>
+                <div>Airing on {{ $release.AirDateUtc }} (UTC)</div>
+                {{ if $release.Grabbed }}
+                    <div class="arr-grabbed-label">Grabbed</div>
+                {{ end }}
+            </div>
+        </div>
+    </li>
+    {{ end }}
+</ul>
+{{ if gt (len .Releases) $.CollapseAfter }}
+<label class="list-collapsible-label"><input type="checkbox" autocomplete="off" class="list-collapsible-input"></label>
+{{ end }}
+{{ end }}

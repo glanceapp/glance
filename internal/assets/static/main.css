@@ -980,6 +980,23 @@ body {
     background: linear-gradient(0deg, var(--color-widget-background) 10%, transparent);
 }
 
+.arr-release-cover {
+    border-radius: 0.4em;
+    max-width: 6em;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.arr-grabbed-label {
+    color: green; /* or any other color you prefer */
+    font-weight: bold;
+    padding: 2px 5px;
+    border: 1px solid green;
+    border-radius: 3px;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+
 @media (max-width: 1190px) {
     .header-container {
         display: none;
