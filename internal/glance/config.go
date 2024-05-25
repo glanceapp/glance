@@ -1,8 +1,11 @@
 package glance
 
 import (
+	"errors"
 	"fmt"
+	"github.com/fsnotify/fsnotify"
 	"io"
+	"os"
 
 	"gopkg.in/yaml.v3"
 )
@@ -33,6 +36,19 @@ func NewConfigFromYml(contents io.Reader) (*Config, error) {
 	}
 
 	return config, nil
+}
+
+// NewConfigFromFile reads a yaml file and returns a Config struct
+func NewConfigFromFile(path string) (*Config, error) {
+	configFile, err := os.Open(path)
+
+	if err != nil {
+		return nil, errors.New("failed opening config file: " + err.Error())
+	}
+
+	defer configFile.Close()
+
+	return NewConfigFromYml(configFile)
 }
 
 func NewConfig() *Config {
@@ -76,4 +92,45 @@ func configIsValid(config *Config) error {
 	}
 
 	return nil
+}
+
+func watchConfigFile(configPath string, f func(*Config) error) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		fmt.Printf("failed creating watcher: %v\n", err)
+		return
+	}
+
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					config, err := NewConfigFromFile(configPath)
+					if err != nil {
+						fmt.Printf("failed loading config file: %v\n", err)
+						return
+					}
+					err = f(config)
+					if err != nil {
+						fmt.Printf("failed applying new config: %v\n", err)
+					}
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				_ = watcher.Close()
+				fmt.Printf("watcher error: %v\n", err)
+			}
+		}
+	}()
+
+	err = watcher.Add(configPath)
+	if err != nil {
+		fmt.Printf("failed adding watcher: %v\n", err)
+	}
 }

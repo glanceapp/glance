@@ -1,4 +1,6 @@
 /assets
 /build
 /playground
+.idea
+.vscode
 glance.yml
