@@ -17,6 +17,11 @@ type ArrReleases struct {
 		Endpoint string `yaml:"endpoint"`
 		ApiKey   string `yaml:"apikey"`
 	}
+	Radarr struct {
+		Enable   bool   `yaml:"enable"`
+		Endpoint string `yaml:"endpoint"`
+		ApiKey   string `yaml:"apikey"`
+	}
 	CollapseAfter int           `yaml:"collapse-after"`
 	CacheDuration time.Duration `yaml:"cache-duration"`
 }
@@ -39,7 +44,7 @@ func (widget *ArrReleases) Initialize() error {
 }
 
 func (widget *ArrReleases) Update(ctx context.Context) {
-	releases, err := feed.FetchReleasesFromArrStack(widget.Sonarr)
+	releases, err := feed.FetchReleasesFromArrStack(widget.Sonarr, widget.Radarr)
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
