@@ -21,6 +21,7 @@
   - [Twitch Channels](#twitch-channels)
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
+  - [bilibili](#bilibili)
 
 ## Intro
 Configuration is done via a single YAML file and a server restart is required in order for any changes to take effect. Trying to start the server with an invalid config file will result in an error.
@@ -1132,3 +1133,20 @@ The source of the iframe.
 
 ##### `height`
 The height of the iframe. The minimum allowed height is 50.
+
+## bilibili
+Display a list of the latest videos from specific bilibili channels.
+
+Example:
+
+```yaml
+- type: bilibili
+  uidList:
+    - 50329118 # LOL
+    - 578227337
+```
+
+Preview:
+![](images/videos-widget-preview-bilibili.png)
+
+
