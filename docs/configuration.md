@@ -626,7 +626,7 @@ https://your.proxy/?url={REQUEST-URL}
 ##### `sort-by`
 Can be used to specify the order in which the posts should get returned. Possible values are `hot`, `new`, `top` and `rising`.
 
-##### `top-perid`
+##### `top-period`
 Available only when `sort-by` is set to `top`. Possible values are `hour`, `day`, `week`, `month`, `year` and `all`.
 
 ##### `search`
