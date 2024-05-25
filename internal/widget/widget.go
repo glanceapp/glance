@@ -19,6 +19,8 @@ func New(widgetType string) (Widget, error) {
 	switch widgetType {
 	case "calendar":
 		return &Calendar{}, nil
+	case "clock":
+		return &Clock{}, nil
 	case "weather":
 		return &Weather{}, nil
 	case "bookmarks":

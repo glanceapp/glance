@@ -15,6 +15,7 @@ var (
 	PageTemplate                  = compileTemplate("page.html", "document.html", "page-style-overrides.gotmpl")
 	PageContentTemplate           = compileTemplate("content.html")
 	CalendarTemplate              = compileTemplate("calendar.html", "widget-base.html")
+	ClockTemplate                 = compileTemplate("clock.html", "widget-base.html")
 	BookmarksTemplate             = compileTemplate("bookmarks.html", "widget-base.html")
 	IFrameTemplate                = compileTemplate("iframe.html", "widget-base.html")
 	WeatherTemplate               = compileTemplate("weather.html", "widget-base.html")
