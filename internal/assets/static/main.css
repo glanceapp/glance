@@ -849,6 +849,10 @@ body {
     transform: translate(-50%, -50%);
 }
 
+.clock-time span {
+    color: var(--color-text-highlight);
+}
+
 .monitor-site-icon {
     display: block;
     opacity: 0.8;
