@@ -107,6 +107,103 @@ function updateRelativeTimeForElements(elements)
     }
 }
 
+function setupSearchboxes() {
+    const searchWidgets = document.getElementsByClassName("search");
+
+    if (searchWidgets.length == 0) {
+        return;
+    }
+
+    for (let i = 0; i < searchWidgets.length; i++) {
+        const widget = searchWidgets[i];
+        const defaultSearchUrl = widget.dataset.defaultSearchUrl;
+        const inputElement = widget.getElementsByClassName("search-input")[0];
+        const bangElement = widget.getElementsByClassName("search-bang")[0];
+        const bangs = widget.querySelectorAll(".search-bangs > input");
+        const bangsMap = {};
+        const kbdElement = widget.getElementsByTagName("kbd")[0];
+        let currentBang = null;
+
+        for (let j = 0; j < bangs.length; j++) {
+            const bang = bangs[j];
+            bangsMap[bang.dataset.shortcut] = bang;
+        }
+
+        const handleKeyDown = (event) => {
+            if (event.key == "Escape") {
+                inputElement.blur();
+                return;
+            }
+
+            if (event.key == "Enter") {
+                const input = inputElement.value.trim();
+                let query;
+                let searchUrlTemplate;
+
+                if (currentBang != null) {
+                    query = input.slice(currentBang.dataset.shortcut.length + 1);
+                    searchUrlTemplate = currentBang.dataset.url;
+                } else {
+                    query = input;
+                    searchUrlTemplate = defaultSearchUrl;
+                }
+
+                if (query.length == 0) {
+                    return;
+                }
+
+                const url = searchUrlTemplate.replace("!QUERY!", encodeURIComponent(query));
+
+                if (event.ctrlKey) {
+                    window.open(url, '_blank').focus();
+                } else {
+                    window.location.href = url;
+                }
+
+                return;
+            }
+        };
+
+        const changeCurrentBang = (bang) => {
+            currentBang = bang;
+            bangElement.textContent = bang != null ? bang.dataset.title : "";
+        }
+
+        const handleInput = (event) => {
+            const value = event.target.value.trimStart();
+            const words = value.split(" ");
+
+            if (words.length >= 2 && words[0] in bangsMap) {
+                changeCurrentBang(bangsMap[words[0]]);
+                return;
+            }
+
+            changeCurrentBang(null);
+        };
+
+        inputElement.addEventListener("focus", () => {
+            document.addEventListener("keydown", handleKeyDown);
+            document.addEventListener("input", handleInput);
+        });
+        inputElement.addEventListener("blur", () => {
+            document.removeEventListener("keydown", handleKeyDown);
+            document.removeEventListener("input", handleInput);
+        });
+
+        document.addEventListener("keydown", (event) => {
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+            if (event.key != "s") return;
+
+            inputElement.focus();
+            event.preventDefault();
+        });
+
+        kbdElement.addEventListener("mousedown", () => {
+            requestAnimationFrame(() => inputElement.focus());
+        });
+    }
+}
+
 function setupDynamicRelativeTime() {
     const elements = document.querySelectorAll("[data-dynamic-relative-time]");
     const updateInterval = 60 * 1000;
@@ -454,6 +551,7 @@ async function setupPage() {
     try {
         setupClocks()
         setupCarousels();
+        setupSearchboxes();
         setupCollapsibleLists();
         setupCollapsibleGrids();
         setupDynamicRelativeTime();

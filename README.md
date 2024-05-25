@@ -19,6 +19,7 @@
 * GitHub releases
 * Repository overview
 * Site monitor
+* Search box
 
 #### Themeable
 ![multiple color schemes example](docs/images/themes-example.png)

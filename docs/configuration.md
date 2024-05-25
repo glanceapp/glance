@@ -11,6 +11,7 @@
   - [Videos](#videos)
   - [Hacker News](#hacker-news)
   - [Reddit](#reddit)
+  - [Search](#search-widget)
   - [Weather](#weather)
   - [Monitor](#monitor)
   - [Releases](#releases)
@@ -640,6 +641,80 @@ Keywords to search for. Searching within specific fields is also possible, **tho
 Can be used to specify an additional sort which will be applied on top of the already sorted posts. By default does not apply any extra sorting and the only available option is `engagement`.
 
 The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
+
+### Search Widget
+Display a search bar that can be used to search for specific terms on various search engines.
+
+Example:
+
+```yaml
+- type: search
+  search-engine: duckduckgo
+  bangs:
+    - title: YouTube
+      shortcut: "!yt"
+      url: https://www.youtube.com/results?search_query={QUERY}
+```
+
+Preview:
+
+![](images/search-widget-preview.png)
+
+#### Keyboard shortcuts
+| Keys | Action | Condition |
+| ---- | ------ | --------- |
+| <kbd>S</kbd> | Focus the search bar | Not already focused on another input field |
+| <kbd>Enter</kbd> | Perform search in the same tab | Search input is focused and not empty |
+| <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Perform search in a new tab | Search input is focused and not empty |
+| <kbd>Escape</kbd> | Leave focus | Search input is focused |
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| search-engine | string | no | duckduckgo |
+| bangs | array | no | |
+
+##### `search-engine`
+Either a value from the table below or a URL to a custom search engine. Use `{QUERY}` to indicate where the query value gets placed.
+
+| Name | URL |
+| ---- | --- |
+| duckduckgo | `https://duckduckgo.com/?q={QUERY}` |
+| google | `https://www.google.com/search?q={QUERY}` |
+
+##### `bangs`
+What now? [Bangs](https://duckduckgo.com/bangs). They're shortcuts that allow you to use the same search box for many different sites. Assuming you have it configured, if for example you start your search input with `!yt` you'd be able to perform a search on YouTube:
+
+![](images/search-widget-bangs-preview.png)
+
+##### Properties for each bang
+| Name | Type | Required |
+| ---- | ---- | -------- |
+| title | string | no |
+| shortcut | string | yes |
+| url | string | yes |
+
+###### `title`
+Optional title that will appear on the right side of the search bar when the query starts with the associated shortcut.
+
+###### `shortcut`
+Any value you wish to use as the shortcut for the search engine. It does not have to start with `!`.
+
+> [!IMPORTANT]
+>
+> In YAML some characters have special meaning when placed in the beginning of a value. If your shortcut starts with `!` (and potentially some other special characters) you'll have to wrap the value in quotes:
+> ```yaml
+> shortcut: "!yt"
+>```
+
+###### `url`
+The URL of the search engine. Use `{QUERY}` to indicate where the query value gets placed. Examples:
+
+```yaml
+url: https://www.reddit.com/search?q={QUERY}
+url: https://store.steampowered.com/search/?term={QUERY}
+url: https://www.amazon.com/s?k={QUERY}
+```
 
 ### Weather
 Display weather information for a specific location. The data is provided by https://open-meteo.com/.
