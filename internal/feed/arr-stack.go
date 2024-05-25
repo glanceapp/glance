@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type SonarrConfig struct {
@@ -20,8 +21,8 @@ type ArrRelease struct {
 	Title         string
 	ImageCoverUrl string
 	AirDateUtc    string
-	SeasonNumber  *int
-	EpisodeNumber *int
+	SeasonNumber  *string
+	EpisodeNumber *string
 	Grabbed       bool
 }
 
@@ -98,12 +99,24 @@ func FetchReleasesFromSonarr(SonarrEndpoint string, SonarrApiKey string) (ArrRel
 			}
 		}
 
+		airDate, err := time.Parse(time.RFC3339, release.AirDateUtc)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse air date: %v", err)
+		}
+
+		// Format the date as YYYY-MM-DD HH:MM:SS
+		formattedDate := airDate.Format("2006-01-02 15:04:05")
+
+		// Format SeasonNumber and EpisodeNumber with at least two digits
+		seasonNumber := fmt.Sprintf("%02d", release.SeasonNumber)
+		episodeNumber := fmt.Sprintf("%02d", release.EpisodeNumber)
+
 		releases = append(releases, ArrRelease{
 			Title:         release.Series.Title,
 			ImageCoverUrl: imageCover,
-			AirDateUtc:    release.AirDateUtc,
-			SeasonNumber:  &release.SeasonNumber,
-			EpisodeNumber: &release.EpisodeNumber,
+			AirDateUtc:    formattedDate,
+			SeasonNumber:  &seasonNumber,
+			EpisodeNumber: &episodeNumber,
 			Grabbed:       release.HasFile,
 		})
 	}
