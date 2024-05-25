@@ -1072,6 +1072,7 @@ kbd:active {
 
 .twitch-category-thumbnail {
     width: 5rem;
+    aspect-ratio: 3 / 4;
     border-radius: var(--border-radius);
 }
 
