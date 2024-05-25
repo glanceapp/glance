@@ -11,6 +11,7 @@
 * Weather
 * Bookmarks
 * Latest YouTube videos from specific channels
+* Clock
 * Calendar
 * Stocks
 * iframe

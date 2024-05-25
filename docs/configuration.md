@@ -17,6 +17,7 @@
   - [Repository](#repository)
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
+  - [Clock](#clock)
   - [Stocks](#stocks)
   - [Twitch Channels](#twitch-channels)
   - [Twitch Top Games](#twitch-top-games)
@@ -35,6 +36,7 @@ pages:
     columns:
       - size: small
         widgets:
+          - type: clock
           - type: calendar
 
           - type: rss
@@ -648,6 +650,7 @@ Example:
 ```yaml
 - type: weather
   units: metric
+  hour-format: 12h
   location: London, United Kingdom
 ```
 
@@ -672,6 +675,7 @@ Each bar represents a 2 hour interval. The yellow background represents sunrise 
 | ---- | ---- | -------- | ------- |
 | location | string | yes |  |
 | units | string | no | metric |
+| hour-format | string | no | 12h |
 | hide-location | boolean | no | false |
 | show-area-name | boolean | no | false |
 
@@ -680,6 +684,9 @@ The name of the city and country to fetch weather information for. Attempting to
 
 ##### `units`
 Whether to show the temperature in celsius or fahrenheit, possible values are `metric` or `imperial`.
+
+#### `hour-format`
+Whether to show the hours of the day in 12-hour format or 24-hour format. Possible values are `12h` and `24h`.
 
 ##### `hide-location`
 Optionally don't display the location name on the widget.
@@ -698,7 +705,7 @@ Greenville, United States
 ```
 
 ### Monitor
-Display a list of sites and whether they are reachable (online) or not. This is determined by sending a HEAD request to the specified URL, if the response is 200 then the site is OK. The time it took to receive a response is also shown in milliseconds.
+Display a list of sites and whether they are reachable (online) or not. This is determined by sending a GET request to the specified URL, if the response is 200 then the site is OK. The time it took to receive a response is also shown in milliseconds.
 
 Example:
 
@@ -959,6 +966,51 @@ Whether to open the link in the same tab or a new one.
 
 Whether to hide the colored arrow on each link.
 
+### Clock
+Display a clock showing the current time and date. Optionally, also display the the time in other timezones.
+
+Example:
+
+```yaml
+- type: clock
+  hour-format: 24h
+  timezones:
+    - timezone: Europe/Paris
+      label: Paris
+    - timezone: America/New_York
+      label: New York
+    - timezone: Asia/Tokyo
+      label: Tokyo
+```
+
+Preview:
+
+![](images/clock-widget-preview.png)
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| hour-format | string | no | 24h |
+| timezones | array | no |  |
+
+##### `hour-format`
+Whether to show the time in 12 or 24 hour format. Possible values are `12h` and `24h`.
+
+#### Properties for each timezone
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| timezone | string | yes | |
+| label | string | no | |
+
+##### `timezone`
+A timezone identifier such as `Europe/London`, `America/New_York`, etc. The full list of available identifiers can be found [here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
+
+##### `label`
+Optionally, override the display value for the timezone to something more meaningful such as "Home", "Work" or anything else.
+
+
 ### Calendar
 Display a calendar.
 
@@ -1064,12 +1116,16 @@ Preview:
 | ---- | ---- | -------- | ------- |
 | channels | array | yes | |
 | collapse-after | integer | no | 5 |
+| sort-by | string | no | viewers |
 
 ##### `channels`
 A list of channels to display.
 
 ##### `collapse-after`
 How many channels are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+##### `sort-by`
+Can be used to specify the order in which the channels are displayed. Possible values are `viewers` and `live`.
 
 ### Twitch top games
 Display a list of games with the most viewers on Twitch.
