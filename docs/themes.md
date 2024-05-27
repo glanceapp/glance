@@ -58,7 +58,7 @@ theme:
 ```yaml
 theme:
   background-color: 240 13 14
-  priamry-color: 51 33 68
+  primary-color: 51 33 68
   negative-color: 359 52 31
   contrast-multiplier: 1.2
 ```
