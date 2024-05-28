@@ -1375,6 +1375,7 @@ kbd:active {
 .flex-nowrap        { flex-wrap: nowrap; }
 .justify-between    { justify-content: space-between; }
 .justify-stretch    { justify-content: stretch; }
+.justify-evenly     { justify-content: space-evenly; }
 .justify-center     { justify-content: center; }
 .justify-end        { justify-content: end; }
 .uppercase          { text-transform: uppercase; }
