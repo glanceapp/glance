@@ -198,7 +198,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-left: -0.5rem;
 }
 
 .attachments > * {
