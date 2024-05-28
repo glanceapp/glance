@@ -622,16 +622,16 @@ kbd:active {
     color: var(--color-text-highlight);
 }
 
-.stock-chart {
+.market-chart {
     margin-left: auto;
     width: 6.5rem;
 }
 
-.stock-chart svg {
+.market-chart svg {
     width: 100%;
 }
 
-.stock-values {
+.market-values {
     min-width: 8rem;
 }
 

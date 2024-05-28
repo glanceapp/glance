@@ -33,8 +33,8 @@ func New(widgetType string) (Widget, error) {
 		return &Releases{}, nil
 	case "videos":
 		return &Videos{}, nil
-	case "stocks":
-		return &Stocks{}, nil
+	case "markets", "stocks":
+		return &Markets{}, nil
 	case "reddit":
 		return &Reddit{}, nil
 	case "rss":

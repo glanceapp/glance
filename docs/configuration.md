@@ -20,7 +20,7 @@
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
   - [Clock](#clock)
-  - [Stocks](#stocks)
+  - [Markets](#markets)
   - [Twitch Channels](#twitch-channels)
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
@@ -80,8 +80,8 @@ pages:
           - type: weather
             location: London, United Kingdom
 
-          - type: stocks
-            stocks:
+          - type: markets
+            markets:
               - symbol: SPY
                 name: S&P 500
               - symbol: BTC-USD
@@ -1146,14 +1146,14 @@ Preview:
 >
 > There is currently no customizability available for the calendar. Extra features will be added in the future.
 
-### Stocks
-Display a list of stocks, their current value, change for the day and a small 21d chart. Data is taken from Yahoo Finance.
+### Markets
+Display a list of markets, their current value, change for the day and a small 21d chart. Data is taken from Yahoo Finance.
 
 Example:
 
 ```yaml
-- type: stocks
-  stocks:
+- type: markets
+  markets:
     - symbol: SPY
       name: S&P 500
     - symbol: BTC-USD
@@ -1168,21 +1168,21 @@ Example:
 
 Preview:
 
-![](images/stocks-widget-preview.png)
+![](images/markets-widget-preview.png)
 
 #### Properties
 
 | Name | Type | Required |
 | ---- | ---- | -------- |
-| stocks | array | yes |
+| markets | array | yes |
 | sort-by | string | no |
 | style | string | no |
 
-##### `stocks`
-An array of stocks for which to display information about.
+##### `markets`
+An array of markets for which to display information about.
 
 ##### `sort-by`
-By default the stocks are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
+By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
 
 ##### `style`
 To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
