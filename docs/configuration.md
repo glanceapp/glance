@@ -431,6 +431,10 @@ An array of RSS/atom feeds. The title can optionally be changed.
 | ---- | ---- | -------- | ------- |
 | url | string | yes | |
 | title | string | no | the title provided by the feed |
+| item-link-prefix | string | no |  |
+
+###### `item-link-prefix`
+If an RSS feed isn't returning item links with a base domain and Glance has failed to automatically detect the correct domain you can manually add a prefix to each link with this property.
 
 ##### `limit`
 The maximum number of articles to show.

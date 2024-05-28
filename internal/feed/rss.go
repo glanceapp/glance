@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"log/slog"
+	"net/url"
 	"regexp"
 	"sort"
 	"strings"
@@ -47,6 +48,7 @@ type RSSFeedRequest struct {
 	Title           string `yaml:"title"`
 	HideCategories  bool   `yaml:"hide-categories"`
 	HideDescription bool   `yaml:"hide-description"`
+	ItemLinkPrefix  string `yaml:"item-link-prefix"`
 }
 
 type RSSFeedItems []RSSFeedItem
@@ -79,7 +81,30 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 		rssItem := RSSFeedItem{
 			ChannelURL: feed.Link,
 			Title:      item.Title,
-			Link:       item.Link,
+		}
+
+		if request.ItemLinkPrefix != "" {
+			rssItem.Link = request.ItemLinkPrefix + item.Link
+		} else if strings.HasPrefix(item.Link, "http://") || strings.HasPrefix(item.Link, "https://") {
+			rssItem.Link = item.Link
+		} else {
+			parsedUrl, err := url.Parse(feed.Link)
+
+			if err != nil {
+				parsedUrl, err = url.Parse(request.Url)
+			}
+
+			if err == nil {
+				var link string
+
+				if item.Link[0] == '/' {
+					link = item.Link
+				} else {
+					link = "/" + item.Link
+				}
+
+				rssItem.Link = parsedUrl.Scheme + "://" + parsedUrl.Host + link
+			}
 		}
 
 		if !request.HideDescription && item.Description != "" {
