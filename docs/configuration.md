@@ -409,6 +409,10 @@ Used to change the appearance of the widget. Possible values are `vertical-list`
 
 ![preview of vertical-list style for RSS widget](images/rss-feed-vertical-list-preview.png)
 
+`detailed-list`
+
+![preview of detailed-list style for RSS widget](images/rss-widget-detailed-list-preview.png)
+
 `horizontal-cards`
 
 ![preview of horizontal-cards style for RSS widget](images/rss-feed-horizontal-cards-preview.png)
@@ -427,11 +431,13 @@ Used to modify the height of cards when using the `horizontal-cards-2` style. Th
 An array of RSS/atom feeds. The title can optionally be changed.
 
 ###### Properties for each feed
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| url | string | yes | |
-| title | string | no | the title provided by the feed |
-| item-link-prefix | string | no |  |
+| Name | Type | Required | Default | Notes |
+| ---- | ---- | -------- | ------- | ----- |
+| url | string | yes | | |
+| title | string | no | the title provided by the feed | |
+| hide-categories | boolean | no | false | Only applicable for `detailed-list` style |
+| hide-description | boolean | no | false | Only applicable for `detailed-list` style |
+| item-link-prefix | string | no | | |
 
 ###### `item-link-prefix`
 If an RSS feed isn't returning item links with a base domain and Glance has failed to automatically detect the correct domain you can manually add a prefix to each link with this property.
