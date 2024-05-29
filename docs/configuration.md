@@ -626,7 +626,7 @@ https://your.proxy/?url={REQUEST-URL}
 ##### `sort-by`
 Can be used to specify the order in which the posts should get returned. Possible values are `hot`, `new`, `top` and `rising`.
 
-##### `top-perid`
+##### `top-period`
 Available only when `sort-by` is set to `top`. Possible values are `hour`, `day`, `week`, `month`, `year` and `all`.
 
 ##### `search`
@@ -697,7 +697,7 @@ Greenville, United States
 ```
 
 ### Monitor
-Display a list of sites and whether they are reachable (online) or not. This is determined by sending a HEAD request to the specified URL, if the response is 200 then the site is OK. The time it took to receive a response is also shown in milliseconds.
+Display a list of sites and whether they are reachable (online) or not. This is determined by sending a GET request to the specified URL, if the response is 200 then the site is OK. The time it took to receive a response is also shown in milliseconds.
 
 Example:
 
