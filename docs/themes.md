@@ -59,7 +59,7 @@ theme:
 theme:
   background-color: 240 13 14
   primary-color: 51 33 68
-  negative-color: 359 52 31
+  negative-color: 358 100 68
   contrast-multiplier: 1.2
 ```
 
