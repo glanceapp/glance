@@ -471,6 +471,7 @@ Preview:
 | channels | array | yes | |
 | limit | integer | no | 25 |
 | style | string | no | horizontal-cards |
+| collapse-after-rows | integer | no | 4 |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
@@ -484,6 +485,9 @@ Then scroll down and click on "Share channel", then "Copy channel ID":
 
 ##### `limit`
 The maximum number of videos to show.
+
+##### `collapse-after-rows`
+Specify the number of rows to show when using the `grid-cards` style before the "SHOW MORE" button appears.
 
 ##### `style`
 Used to change the appearance of the widget. Possible values are `horizontal-cards` and `grid-cards`.
