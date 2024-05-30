@@ -898,7 +898,17 @@ The URL which will be requested and its response will determine the status of th
 
 `icon`
 
-Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path).
+Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path). You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix:
+
+```yaml
+icon: si:jellyfin
+icon: si:gitea
+icon: si:adguard
+```
+
+> [!WARNING]
+>
+> Simple Icons are loaded externally and are hosted on `cdnjs.cloudflare.com`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
 
 `allow-insecure`
 
