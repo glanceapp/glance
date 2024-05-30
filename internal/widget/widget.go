@@ -43,12 +43,12 @@ func New(widgetType string) (Widget, error) {
 		return &TwitchGames{}, nil
 	case "twitch-channels":
 		return &TwitchChannels{}, nil
-	case "changes":
-		return &ChangeDetections{}, nil
+	case "change-detection":
+		return &ChangeDetection{}, nil
 	case "repository":
 		return &Repository{}, nil
 	default:
-		return nil, fmt.Errorf("unknown widget type: %s found", widgetType)
+		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}
 }
 

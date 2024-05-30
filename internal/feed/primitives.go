@@ -48,16 +48,6 @@ type AppRelease struct {
 
 type AppReleases []AppRelease
 
-type ChangeWatch struct {
-	Name        string
-	URL         string
-	LastChanged time.Time
-	DiffURL     string
-	DiffDisplay string
-}
-
-type ChangeWatches []ChangeWatch
-
 type Video struct {
 	ThumbnailUrl string
 	Title        string
@@ -207,14 +197,6 @@ func (p ForumPosts) FilterPostedBefore(postedBefore time.Duration) []ForumPost {
 func (r AppReleases) SortByNewest() AppReleases {
 	sort.Slice(r, func(i, j int) bool {
 		return r[i].TimeReleased.After(r[j].TimeReleased)
-	})
-
-	return r
-}
-
-func (r ChangeWatches) SortByNewest() ChangeWatches {
-	sort.Slice(r, func(i, j int) bool {
-		return r[i].LastChanged.After(r[j].LastChanged)
 	})
 
 	return r

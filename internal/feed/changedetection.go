@@ -4,37 +4,70 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 )
 
+type ChangeDetectionWatch struct {
+	Title        string
+	URL          string
+	LastChanged  time.Time
+	DiffURL      string
+	PreviousHash string
+}
+
+type ChangeDetectionWatches []ChangeDetectionWatch
+
+func (r ChangeDetectionWatches) SortByNewest() ChangeDetectionWatches {
+	sort.Slice(r, func(i, j int) bool {
+		return r[i].LastChanged.After(r[j].LastChanged)
+	})
+
+	return r
+}
+
 type changeDetectionResponseJson struct {
-	Name        string `json:"title"`
-	URL         string `json:"url"`
-	LastChanged int    `json:"last_changed"`
-	UUID        string `json:"uuid"`
+	Title        string `json:"title"`
+	URL          string `json:"url"`
+	LastChanged  int64  `json:"last_changed"`
+	DateCreated  int64  `json:"date_created"`
+	PreviousHash string `json:"previous_md5"`
 }
 
-func parseLastChangeTime(t int) time.Time {
-	parsedTime := time.Unix(int64(t), 0)
-	return parsedTime
+func FetchWatchUUIDsFromChangeDetection(instanceURL string, token string) ([]string, error) {
+	request, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/watch", instanceURL), nil)
+
+	if token != "" {
+		request.Header.Add("x-api-key", token)
+	}
+
+	uuidsMap, err := decodeJsonFromRequest[map[string]struct{}](defaultClient, request)
+
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch list of watch UUIDs: %v", err)
+	}
+
+	uuids := make([]string, 0, len(uuidsMap))
+
+	for uuid := range uuidsMap {
+		uuids = append(uuids, uuid)
+	}
+
+	return uuids, nil
 }
 
-func FetchLatestDetectedChanges(request_url string, watches []string, token string) (ChangeWatches, error) {
-	changeWatches := make(ChangeWatches, 0, len(watches))
+func FetchWatchesFromChangeDetection(instanceURL string, requestedWatchIDs []string, token string) (ChangeDetectionWatches, error) {
+	watches := make(ChangeDetectionWatches, 0, len(requestedWatchIDs))
 
-	if request_url == "" {
-		request_url = "https://www.changedetection.io"
+	if len(requestedWatchIDs) == 0 {
+		return watches, nil
 	}
 
-	if len(watches) == 0 {
-		return changeWatches, nil
-	}
+	requests := make([]*http.Request, len(requestedWatchIDs))
 
-	requests := make([]*http.Request, len(watches))
-
-	for i, repository := range watches {
-		request, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/watch/%s", request_url, repository), nil)
+	for i, repository := range requestedWatchIDs {
+		request, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/watch/%s", instanceURL, repository), nil)
 
 		if token != "" {
 			request.Header.Add("x-api-key", token)
@@ -56,30 +89,51 @@ func FetchLatestDetectedChanges(request_url string, watches []string, token stri
 	for i := range responses {
 		if errs[i] != nil {
 			failed++
-			slog.Error("Failed to fetch or parse change detections", "error", errs[i], "url", requests[i].URL)
+			slog.Error("Failed to fetch or parse change detection watch", "error", errs[i], "url", requests[i].URL)
 			continue
 		}
 
-		watch := responses[i]
+		watchJson := responses[i]
 
-		changeWatches = append(changeWatches, ChangeWatch{
-			Name:        watch.Name,
-			URL:         watch.URL,
-			LastChanged: parseLastChangeTime(watch.LastChanged),
-			DiffURL:     request_url + "/diff/" + watch.UUID,
-			DiffDisplay: strings.Split(watch.UUID, "-")[len(strings.Split(watch.UUID, "-"))-1],
-		})
+		watch := ChangeDetectionWatch{
+			URL:     watchJson.URL,
+			DiffURL: fmt.Sprintf("%s/diff/%s?from_version=%d", instanceURL, requestedWatchIDs[i], watchJson.LastChanged-1),
+		}
+
+		if watchJson.LastChanged == 0 {
+			watch.LastChanged = time.Unix(watchJson.DateCreated, 0)
+		} else {
+			watch.LastChanged = time.Unix(watchJson.LastChanged, 0)
+		}
+
+		if watchJson.Title != "" {
+			watch.Title = watchJson.Title
+		} else {
+			watch.Title = strings.TrimPrefix(strings.Trim(stripURLScheme(watchJson.URL), "/"), "www.")
+		}
+
+		if watchJson.PreviousHash != "" {
+			var hashLength = 8
+
+			if len(watchJson.PreviousHash) < hashLength {
+				hashLength = len(watchJson.PreviousHash)
+			}
+
+			watch.PreviousHash = watchJson.PreviousHash[0:hashLength]
+		}
+
+		watches = append(watches, watch)
 	}
 
-	if len(changeWatches) == 0 {
+	if len(watches) == 0 {
 		return nil, ErrNoContent
 	}
 
-	changeWatches.SortByNewest()
+	watches.SortByNewest()
 
 	if failed > 0 {
-		return changeWatches, fmt.Errorf("%w: could not get %d watches", ErrPartialContent, failed)
+		return watches, fmt.Errorf("%w: could not get %d watches", ErrPartialContent, failed)
 	}
 
-	return changeWatches, nil
+	return watches, nil
 }

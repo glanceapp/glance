@@ -9,18 +9,18 @@ import (
 	"github.com/glanceapp/glance/internal/feed"
 )
 
-type ChangeDetections struct {
+type ChangeDetection struct {
 	widgetBase       `yaml:",inline"`
-	ChangeDetections feed.ChangeWatches `yaml:"-"`
-	RequestURL       string             `yaml:"request_url"`
-	Watches          []string           `yaml:"watches"`
-	Token            OptionalEnvString  `yaml:"token"`
-	Limit            int                `yaml:"limit"`
-	CollapseAfter    int                `yaml:"collapse-after"`
+	ChangeDetections feed.ChangeDetectionWatches `yaml:"-"`
+	WatchUUIDs       []string                    `yaml:"watches"`
+	InstanceURL      string                      `yaml:"instance-url"`
+	Token            OptionalEnvString           `yaml:"token"`
+	Limit            int                         `yaml:"limit"`
+	CollapseAfter    int                         `yaml:"collapse-after"`
 }
 
-func (widget *ChangeDetections) Initialize() error {
-	widget.withTitle("Changes").withCacheDuration(2 * time.Hour)
+func (widget *ChangeDetection) Initialize() error {
+	widget.withTitle("Change Detection").withCacheDuration(1 * time.Hour)
 
 	if widget.Limit <= 0 {
 		widget.Limit = 10
@@ -30,11 +30,25 @@ func (widget *ChangeDetections) Initialize() error {
 		widget.CollapseAfter = 5
 	}
 
+	if widget.InstanceURL == "" {
+		widget.InstanceURL = "https://www.changedetection.io"
+	}
+
 	return nil
 }
 
-func (widget *ChangeDetections) Update(ctx context.Context) {
-	watches, err := feed.FetchLatestDetectedChanges(widget.RequestURL, widget.Watches, string(widget.Token))
+func (widget *ChangeDetection) Update(ctx context.Context) {
+	if len(widget.WatchUUIDs) == 0 {
+		uuids, err := feed.FetchWatchUUIDsFromChangeDetection(widget.InstanceURL, string(widget.Token))
+
+		if !widget.canContinueUpdateAfterHandlingErr(err) {
+			return
+		}
+
+		widget.WatchUUIDs = uuids
+	}
+
+	watches, err := feed.FetchWatchesFromChangeDetection(widget.InstanceURL, widget.WatchUUIDs, string(widget.Token))
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
@@ -47,6 +61,6 @@ func (widget *ChangeDetections) Update(ctx context.Context) {
 	widget.ChangeDetections = watches
 }
 
-func (widget *ChangeDetections) Render() template.HTML {
-	return widget.render(widget, assets.ChangesTemplate)
+func (widget *ChangeDetection) Render() template.HTML {
+	return widget.render(widget, assets.ChangeDetectionTemplate)
 }
