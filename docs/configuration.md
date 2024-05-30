@@ -885,6 +885,7 @@ Properties for each site:
 | title | string | yes | |
 | url | string | yes | |
 | icon | string | no | |
+| allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
 
 `title`
@@ -898,6 +899,10 @@ The URL which will be requested and its response will determine the status of th
 `icon`
 
 Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path).
+
+`allow-insecure`
+
+Whether to ignore invalid/self-signed certificates.
 
 `same-tab`
 
