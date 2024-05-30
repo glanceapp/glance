@@ -45,6 +45,8 @@ func New(widgetType string) (Widget, error) {
 		return &TwitchGames{}, nil
 	case "twitch-channels":
 		return &TwitchChannels{}, nil
+	case "change-detection":
+		return &ChangeDetection{}, nil
 	case "repository":
 		return &Repository{}, nil
 	case "search":
