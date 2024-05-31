@@ -13,6 +13,7 @@
   - [Lobsters](#lobsters)
   - [Reddit](#reddit)
   - [Search](#search-widget)
+  - [Extension](#extension)
   - [Weather](#weather)
   - [Monitor](#monitor)
   - [Releases](#releases)
@@ -774,6 +775,37 @@ url: https://www.reddit.com/search?q={QUERY}
 url: https://store.steampowered.com/search/?term={QUERY}
 url: https://www.amazon.com/s?k={QUERY}
 ```
+
+### Extension
+Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
+
+```yaml
+- type: extension
+  url: https://domain.com/widget/display-a-message
+  allow-potentially-dangerous-html: true
+  parameters:
+    message: Hello, world!
+```
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| url | string | yes | |
+| allow-potentially-dangerous-html | boolean | no | false |
+| parameters | key & value | no | |
+
+##### `url`
+The URL of the extension.
+
+##### `allow-potentially-dangerous-html`
+Whether to allow the extension to display HTML.
+
+> [!WARNING]
+>
+> There's a reason this property is scary-sounding. It's intended to be used by developers who are comfortable with developing and using their own extensions. Do not enable it if you have no idea what it means or if you're not **absolutely sure** that the extension URL you're using is safe.
+
+##### `parameters`
+A list of keys and values that will be sent to the extension as query paramters.
 
 ### Weather
 Display weather information for a specific location. The data is provided by https://open-meteo.com/.
