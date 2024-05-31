@@ -36,6 +36,7 @@ var (
 	TwitchChannelsTemplate        = compileTemplate("twitch-channels.html", "widget-base.html")
 	RepositoryTemplate            = compileTemplate("repository.html", "widget-base.html")
 	SearchTemplate                = compileTemplate("search.html", "widget-base.html")
+	ExtensionTemplate             = compileTemplate("extension.html", "widget-base.html")
 )
 
 var globalTemplateFunctions = template.FuncMap{
