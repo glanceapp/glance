@@ -285,6 +285,20 @@ body {
     font-size: 2rem;
 }
 
+.page-404-container {
+    margin: 50px auto;
+    width: fit-content;
+    font-size: 2rem;
+    text-align: center;
+}
+
+.logo-404 {
+    height: 100%;
+    line-height: var(--header-height);
+    font-size: 2rem;
+    color: var(--color-text-highlight);
+}
+
 @keyframes loadingContainerEntrance {
     from {
         opacity: 0;

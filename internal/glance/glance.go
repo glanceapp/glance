@@ -174,9 +174,18 @@ func (a *Application) HandlePageContentRequest(w http.ResponseWriter, r *http.Re
 }
 
 func (a *Application) HandleNotFound(w http.ResponseWriter, r *http.Request) {
-	// TODO: add proper not found page
-	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte("Page not found"))
+	pageData := templateData{
+		App: a,
+		Page: &Page{
+			Title: "Page Not Found",
+			Slug:  "404",
+		},
+	}
+
+	var responseBytes bytes.Buffer
+	assets.Page404Template.Execute(&responseBytes, pageData)
+
+	w.Write(responseBytes.Bytes())
 }
 
 func FileServerWithCache(fs http.FileSystem, cacheDuration time.Duration) http.Handler {
