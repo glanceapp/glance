@@ -775,6 +775,10 @@ kbd:active {
     margin-top: 0.1rem;
 }
 
+.forum-post-tags-container {
+    transform: translateY(-0.15rem);
+}
+
 .bookmarks-group {
     --bookmarks-group-color: var(--color-primary);
 }
@@ -1367,6 +1371,7 @@ kbd:active {
 .min-width-0        { min-width: 0; }
 .max-width-100      { max-width: 100%; }
 .block              { display: block; }
+.inline-block       { display: inline-block; }
 .overflow-hidden    { overflow: hidden; }
 .relative           { position: relative; }
 .flex               { display: flex; }
