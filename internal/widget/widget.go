@@ -19,6 +19,8 @@ func New(widgetType string) (Widget, error) {
 	switch widgetType {
 	case "calendar":
 		return &Calendar{}, nil
+	case "clock":
+		return &Clock{}, nil
 	case "weather":
 		return &Weather{}, nil
 	case "bookmarks":
@@ -45,8 +47,12 @@ func New(widgetType string) (Widget, error) {
 		return &TwitchChannels{}, nil
 	case "lobsters":
 		return &Lobsters{}, nil
+	case "change-detection":
+		return &ChangeDetection{}, nil
 	case "repository":
 		return &Repository{}, nil
+	case "search":
+		return &Search{}, nil
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}

@@ -5,7 +5,15 @@
     <title>{{ block "document-title" . }}{{ end }}</title>
     <meta charset="UTF-8">
     <meta name="color-scheme" content="dark">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Glance">
+    <meta name="theme-color" content="{{ if ne nil .App.Config.Theme.BackgroundColor }}{{ .App.Config.Theme.BackgroundColor }}{{ else }}hsl(240, 8%, 9%){{ end }}">
+    <link rel="apple-touch-icon" sizes="512x512" href="/static/app-icon.png">
+    <link rel="icon" type="image/png" sizes="50x50" href="/static/favicon.png">
+    <link rel="manifest" href="/static/manifest.json">
     <link rel="icon" type="image/png" href="/static/favicon.png" />
     <link rel="stylesheet" href="/static/main.css?v={{ .App.Config.Server.StartedAt.Unix }}">
     <script async src="/static/main.js?v={{ .App.Config.Server.StartedAt.Unix }}"></script>

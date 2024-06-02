@@ -12,12 +12,14 @@
   - [Hacker News](#hacker-news)
   - [Lobsters](#lobsters)
   - [Reddit](#reddit)
+  - [Search](#search-widget)
   - [Weather](#weather)
   - [Monitor](#monitor)
   - [Releases](#releases)
   - [Repository](#repository)
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
+  - [Clock](#clock)
   - [Stocks](#stocks)
   - [Twitch Channels](#twitch-channels)
   - [Twitch Top Games](#twitch-top-games)
@@ -35,6 +37,7 @@ pages:
     columns:
       - size: small
         widgets:
+          - type: clock
           - type: calendar
 
           - type: rss
@@ -683,6 +686,80 @@ Can be used to specify an additional sort which will be applied on top of the al
 
 The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
 
+### Search Widget
+Display a search bar that can be used to search for specific terms on various search engines.
+
+Example:
+
+```yaml
+- type: search
+  search-engine: duckduckgo
+  bangs:
+    - title: YouTube
+      shortcut: "!yt"
+      url: https://www.youtube.com/results?search_query={QUERY}
+```
+
+Preview:
+
+![](images/search-widget-preview.png)
+
+#### Keyboard shortcuts
+| Keys | Action | Condition |
+| ---- | ------ | --------- |
+| <kbd>S</kbd> | Focus the search bar | Not already focused on another input field |
+| <kbd>Enter</kbd> | Perform search in the same tab | Search input is focused and not empty |
+| <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Perform search in a new tab | Search input is focused and not empty |
+| <kbd>Escape</kbd> | Leave focus | Search input is focused |
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| search-engine | string | no | duckduckgo |
+| bangs | array | no | |
+
+##### `search-engine`
+Either a value from the table below or a URL to a custom search engine. Use `{QUERY}` to indicate where the query value gets placed.
+
+| Name | URL |
+| ---- | --- |
+| duckduckgo | `https://duckduckgo.com/?q={QUERY}` |
+| google | `https://www.google.com/search?q={QUERY}` |
+
+##### `bangs`
+What now? [Bangs](https://duckduckgo.com/bangs). They're shortcuts that allow you to use the same search box for many different sites. Assuming you have it configured, if for example you start your search input with `!yt` you'd be able to perform a search on YouTube:
+
+![](images/search-widget-bangs-preview.png)
+
+##### Properties for each bang
+| Name | Type | Required |
+| ---- | ---- | -------- |
+| title | string | no |
+| shortcut | string | yes |
+| url | string | yes |
+
+###### `title`
+Optional title that will appear on the right side of the search bar when the query starts with the associated shortcut.
+
+###### `shortcut`
+Any value you wish to use as the shortcut for the search engine. It does not have to start with `!`.
+
+> [!IMPORTANT]
+>
+> In YAML some characters have special meaning when placed in the beginning of a value. If your shortcut starts with `!` (and potentially some other special characters) you'll have to wrap the value in quotes:
+> ```yaml
+> shortcut: "!yt"
+>```
+
+###### `url`
+The URL of the search engine. Use `{QUERY}` to indicate where the query value gets placed. Examples:
+
+```yaml
+url: https://www.reddit.com/search?q={QUERY}
+url: https://store.steampowered.com/search/?term={QUERY}
+url: https://www.amazon.com/s?k={QUERY}
+```
+
 ### Weather
 Display weather information for a specific location. The data is provided by https://open-meteo.com/.
 
@@ -691,6 +768,7 @@ Example:
 ```yaml
 - type: weather
   units: metric
+  hour-format: 12h
   location: London, United Kingdom
 ```
 
@@ -715,6 +793,7 @@ Each bar represents a 2 hour interval. The yellow background represents sunrise 
 | ---- | ---- | -------- | ------- |
 | location | string | yes |  |
 | units | string | no | metric |
+| hour-format | string | no | 12h |
 | hide-location | boolean | no | false |
 | show-area-name | boolean | no | false |
 
@@ -723,6 +802,9 @@ The name of the city and country to fetch weather information for. Attempting to
 
 ##### `units`
 Whether to show the temperature in celsius or fahrenheit, possible values are `metric` or `imperial`.
+
+#### `hour-format`
+Whether to show the hours of the day in 12-hour format or 24-hour format. Possible values are `12h` and `24h`.
 
 ##### `hide-location`
 Optionally don't display the location name on the widget.
@@ -1002,6 +1084,51 @@ Whether to open the link in the same tab or a new one.
 
 Whether to hide the colored arrow on each link.
 
+### Clock
+Display a clock showing the current time and date. Optionally, also display the the time in other timezones.
+
+Example:
+
+```yaml
+- type: clock
+  hour-format: 24h
+  timezones:
+    - timezone: Europe/Paris
+      label: Paris
+    - timezone: America/New_York
+      label: New York
+    - timezone: Asia/Tokyo
+      label: Tokyo
+```
+
+Preview:
+
+![](images/clock-widget-preview.png)
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| hour-format | string | no | 24h |
+| timezones | array | no |  |
+
+##### `hour-format`
+Whether to show the time in 12 or 24 hour format. Possible values are `12h` and `24h`.
+
+#### Properties for each timezone
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| timezone | string | yes | |
+| label | string | no | |
+
+##### `timezone`
+A timezone identifier such as `Europe/London`, `America/New_York`, etc. The full list of available identifiers can be found [here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
+
+##### `label`
+Optionally, override the display value for the timezone to something more meaningful such as "Home", "Work" or anything else.
+
+
 ### Calendar
 Display a calendar.
 
@@ -1107,12 +1234,16 @@ Preview:
 | ---- | ---- | -------- | ------- |
 | channels | array | yes | |
 | collapse-after | integer | no | 5 |
+| sort-by | string | no | viewers |
 
 ##### `channels`
 A list of channels to display.
 
 ##### `collapse-after`
 How many channels are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+##### `sort-by`
+Can be used to specify the order in which the channels are displayed. Possible values are `viewers` and `live`.
 
 ### Twitch top games
 Display a list of games with the most viewers on Twitch.
