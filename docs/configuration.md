@@ -26,6 +26,7 @@
   - [Twitch Channels](#twitch-channels)
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
+  - [HTML](#html)
 
 ## Intro
 Configuration is done via a single YAML file and a server restart is required in order for any changes to take effect. Trying to start the server with an invalid config file will result in an error.
@@ -1412,3 +1413,16 @@ The source of the iframe.
 
 ##### `height`
 The height of the iframe. The minimum allowed height is 50.
+
+### HTML
+Embed any HTML.
+
+Example:
+
+```yaml
+- type: html
+  source: |
+    <p>Hello, <span class="color-primary">World</span>!</p>
+```
+
+Note the use of `|` after `source:`, this allows you to insert a multi-line string.

@@ -27,6 +27,8 @@ func New(widgetType string) (Widget, error) {
 		return &Bookmarks{}, nil
 	case "iframe":
 		return &IFrame{}, nil
+	case "html":
+		return &HTML{}, nil
 	case "hacker-news":
 		return &HackerNews{}, nil
 	case "releases":
