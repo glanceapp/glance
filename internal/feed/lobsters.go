@@ -7,20 +7,13 @@ import (
 )
 
 type lobstersPostResponseJson struct {
-	ShortID          string   `json:"short_id"`
-	ShortIDURL       string   `json:"short_id_url"`
-	CreatedAt        string   `json:"created_at"`
-	Title            string   `json:"title"`
-	URL              string   `json:"url"`
-	Score            int      `json:"score"`
-	Flags            int      `json:"flags"`
-	CommentCount     int      `json:"comment_count"`
-	Description      string   `json:"description"`
-	DescriptionPlain string   `json:"description_plain"`
-	CommentsURL      string   `json:"comments_url"`
-	SubmitterUser    string   `json:"submitter_user"`
-	UserIsAuthor     bool     `json:"user_is_author"`
-	Tags             []string `json:"tags"`
+	CreatedAt    string   `json:"created_at"`
+	Title        string   `json:"title"`
+	URL          string   `json:"url"`
+	Score        int      `json:"score"`
+	CommentCount int      `json:"comment_count"`
+	CommentsURL  string   `json:"comments_url"`
+	Tags         []string `json:"tags"`
 }
 
 type lobstersFeedResponseJson []lobstersPostResponseJson
