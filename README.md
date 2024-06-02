@@ -94,12 +94,6 @@ go run .
 
 ### Building Docker image
 
-Build Glance with CGO disabled:
-
-```bash
-CGO_ENABLED=0 go build -o build/glance .
-```
-
 Build the image:
 
 **Make sure to replace "owner" with your name or organization.**

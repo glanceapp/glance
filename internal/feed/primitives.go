@@ -16,6 +16,7 @@ type ForumPost struct {
 	Score           int
 	Engagement      float64
 	TimePosted      time.Time
+	Tags            []string
 }
 
 type ForumPosts []ForumPost
