@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+type SiteStatusRequest struct {
+	URL           string `yaml:"url"`
+	AllowInsecure bool   `yaml:"allow-insecure"`
+}
+
 type SiteStatus struct {
 	Code         int
 	TimedOut     bool
@@ -14,14 +19,28 @@ type SiteStatus struct {
 	Error        error
 }
 
-func getSiteStatusTask(request *http.Request) (SiteStatus, error) {
+func getSiteStatusTask(statusRequest *SiteStatusRequest) (SiteStatus, error) {
+	request, err := http.NewRequest(http.MethodGet, statusRequest.URL, nil)
+
+	if err != nil {
+		return SiteStatus{
+			Error: err,
+		}, nil
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 	request = request.WithContext(ctx)
-	start := time.Now()
-	response, err := http.DefaultClient.Do(request)
-	took := time.Since(start)
-	status := SiteStatus{ResponseTime: took}
+	requestSentAt := time.Now()
+	var response *http.Response
+
+	if !statusRequest.AllowInsecure {
+		response, err = defaultClient.Do(request)
+	} else {
+		response, err = defaultInsecureClient.Do(request)
+	}
+
+	status := SiteStatus{ResponseTime: time.Since(requestSentAt)}
 
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
@@ -29,7 +48,7 @@ func getSiteStatusTask(request *http.Request) (SiteStatus, error) {
 		}
 
 		status.Error = err
-		return status, err
+		return status, nil
 	}
 
 	defer response.Body.Close()
@@ -39,7 +58,7 @@ func getSiteStatusTask(request *http.Request) (SiteStatus, error) {
 	return status, nil
 }
 
-func FetchStatusesForRequests(requests []*http.Request) ([]SiteStatus, error) {
+func FetchStatusForSites(requests []*SiteStatusRequest) ([]SiteStatus, error) {
 	job := newJob(getSiteStatusTask, requests).withWorkers(20)
 	results, _, err := workerPoolDo(job)
 

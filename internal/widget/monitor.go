@@ -2,9 +2,7 @@ package widget
 
 import (
 	"context"
-	"fmt"
 	"html/template"
-	"net/http"
 	"strconv"
 	"time"
 
@@ -37,22 +35,23 @@ func statusCodeToText(status int) string {
 
 func statusCodeToStyle(status int) string {
 	if status == 200 {
-		return "good"
+		return "ok"
 	}
 
-	return "bad"
+	return "error"
 }
 
 type Monitor struct {
 	widgetBase `yaml:",inline"`
 	Sites      []struct {
-		Title       string            `yaml:"title"`
-		Url         OptionalEnvString `yaml:"url"`
-		IconUrl     string            `yaml:"icon"`
-		SameTab     bool              `yaml:"same-tab"`
-		Status      *feed.SiteStatus  `yaml:"-"`
-		StatusText  string            `yaml:"-"`
-		StatusStyle string            `yaml:"-"`
+		*feed.SiteStatusRequest `yaml:",inline"`
+		Status                  *feed.SiteStatus `yaml:"-"`
+		Title                   string           `yaml:"title"`
+		IconUrl                 string           `yaml:"icon"`
+		IsSimpleIcon            bool             `yaml:"-"`
+		SameTab                 bool             `yaml:"same-tab"`
+		StatusText              string           `yaml:"-"`
+		StatusStyle             string           `yaml:"-"`
 	} `yaml:"sites"`
 	Style string `yaml:"style"`
 }
@@ -60,25 +59,21 @@ type Monitor struct {
 func (widget *Monitor) Initialize() error {
 	widget.withTitle("Monitor").withCacheDuration(5 * time.Minute)
 
+	for i := range widget.Sites {
+		widget.Sites[i].IconUrl, widget.Sites[i].IsSimpleIcon = toSimpleIconIfPrefixed(widget.Sites[i].IconUrl)
+	}
+
 	return nil
 }
 
 func (widget *Monitor) Update(ctx context.Context) {
-	requests := make([]*http.Request, len(widget.Sites))
+	requests := make([]*feed.SiteStatusRequest, len(widget.Sites))
 
 	for i := range widget.Sites {
-		request, err := http.NewRequest("GET", string(widget.Sites[i].Url), nil)
-
-		if err != nil {
-			message := fmt.Errorf("failed to create http request for %s: %s", widget.Sites[i].Url, err)
-			widget.withNotice(message)
-			continue
-		}
-
-		requests[i] = request
+		requests[i] = widget.Sites[i].SiteStatusRequest
 	}
 
-	statuses, err := feed.FetchStatusesForRequests(requests)
+	statuses, err := feed.FetchStatusForSites(requests)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return

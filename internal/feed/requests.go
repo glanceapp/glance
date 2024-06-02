@@ -2,6 +2,7 @@ package feed
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -11,8 +12,19 @@ import (
 	"time"
 )
 
+const defaultClientTimeout = 5 * time.Second
+
 var defaultClient = &http.Client{
-	Timeout: 5 * time.Second,
+	Timeout: defaultClientTimeout,
+}
+
+var insecureClientTransport = &http.Transport{
+	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+}
+
+var defaultInsecureClient = &http.Client{
+	Timeout:   defaultClientTimeout,
+	Transport: insecureClientTransport,
 }
 
 type RequestDoer interface {

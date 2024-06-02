@@ -1,0 +1,30 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<div class="clock" data-hour-format="{{ .HourFormat }}">
+    <div class="flex justify-between items-center" data-local-time>
+        <div>
+            <div class="color-highlight size-h1" data-date></div>
+            <div data-year></div>
+        </div>
+        <div class="text-right">
+            <div class="clock-time size-h1" data-time></div>
+            <div data-weekday></div>
+        </div>
+    </div>
+    {{ if gt (len .Timezones) 0 }}
+    <hr class="margin-block-10">
+    <ul class="list list-gap-4">
+        {{ range .Timezones }}
+        <li class="flex items-center gap-15" data-time-in-zone="{{ .Timezone }}">
+            <div class="grow min-width-0">
+                <div class="text-truncate">{{ if ne .Label "" }}{{ .Label }}{{ else }}{{ .Timezone }}{{ end }}</div>
+            </div>
+            <div class="color-subdue" data-time-diff></div>
+            <div class="size-h4 clock-time shrink-0 text-right" data-time></div>
+        </li>
+        {{ end }}
+    </ul>
+    {{ end }}
+</div>
+{{ end }}
