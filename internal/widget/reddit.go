@@ -17,6 +17,10 @@ type Reddit struct {
 	Subreddit           string          `yaml:"subreddit"`
 	Style               string          `yaml:"style"`
 	ShowThumbnails      bool            `yaml:"show-thumbnails"`
+	SortBy              string          `yaml:"sort-by"`
+	TopPeriod           string          `yaml:"top-period"`
+	Search              string          `yaml:"search"`
+	ExtraSortBy         string          `yaml:"extra-sort-by"`
 	CommentsUrlTemplate string          `yaml:"comments-url-template"`
 	Limit               int             `yaml:"limit"`
 	CollapseAfter       int             `yaml:"collapse-after"`
@@ -36,6 +40,14 @@ func (widget *Reddit) Initialize() error {
 		widget.CollapseAfter = 5
 	}
 
+	if !isValidRedditSortType(widget.SortBy) {
+		widget.SortBy = "hot"
+	}
+
+	if !isValidRedditTopPeriod(widget.TopPeriod) {
+		widget.TopPeriod = "day"
+	}
+
 	if widget.RequestUrlTemplate != "" {
 		if !strings.Contains(widget.RequestUrlTemplate, "{REQUEST-URL}") {
 			return errors.New("no `{REQUEST-URL}` placeholder specified")
@@ -47,8 +59,32 @@ func (widget *Reddit) Initialize() error {
 	return nil
 }
 
+func isValidRedditSortType(sortBy string) bool {
+	return sortBy == "hot" ||
+		sortBy == "new" ||
+		sortBy == "top" ||
+		sortBy == "rising"
+}
+
+func isValidRedditTopPeriod(period string) bool {
+	return period == "hour" ||
+		period == "day" ||
+		period == "week" ||
+		period == "month" ||
+		period == "year" ||
+		period == "all"
+}
+
 func (widget *Reddit) Update(ctx context.Context) {
-	posts, err := feed.FetchSubredditPosts(widget.Subreddit, widget.CommentsUrlTemplate, widget.RequestUrlTemplate)
+	// TODO: refactor, use a struct to pass all of these
+	posts, err := feed.FetchSubredditPosts(
+		widget.Subreddit,
+		widget.SortBy,
+		widget.TopPeriod,
+		widget.Search,
+		widget.CommentsUrlTemplate,
+		widget.RequestUrlTemplate,
+	)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
@@ -58,7 +94,11 @@ func (widget *Reddit) Update(ctx context.Context) {
 		posts = posts[:widget.Limit]
 	}
 
-	posts.SortByEngagement()
+	if widget.ExtraSortBy == "engagement" {
+		posts.CalculateEngagement()
+		posts.SortByEngagement()
+	}
+
 	widget.Posts = posts
 }
 

@@ -24,15 +24,10 @@ type stockResponseJson struct {
 	} `json:"chart"`
 }
 
-type StockRequest struct {
-	Symbol string
-	Name   string
-}
-
 // TODO: allow changing chart time frame
 const stockChartDays = 21
 
-func FetchStocksDataFromYahoo(stockRequests []StockRequest) (Stocks, error) {
+func FetchStocksDataFromYahoo(stockRequests Stocks) (Stocks, error) {
 	requests := make([]*http.Request, 0, len(stockRequests))
 
 	for i := range stockRequests {
@@ -86,10 +81,12 @@ func FetchStocksDataFromYahoo(stockRequests []StockRequest) (Stocks, error) {
 		}
 
 		stocks = append(stocks, Stock{
-			Name:     stockRequests[i].Name,
-			Symbol:   response.Chart.Result[0].Meta.Symbol,
-			Price:    response.Chart.Result[0].Meta.RegularMarketPrice,
-			Currency: currency,
+			Name:       stockRequests[i].Name,
+			Symbol:     response.Chart.Result[0].Meta.Symbol,
+			SymbolLink: stockRequests[i].SymbolLink,
+			ChartLink:  stockRequests[i].ChartLink,
+			Price:      response.Chart.Result[0].Meta.RegularMarketPrice,
+			Currency:   currency,
 			PercentChange: percentChange(
 				response.Chart.Result[0].Meta.RegularMarketPrice,
 				previous,

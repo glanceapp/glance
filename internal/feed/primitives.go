@@ -86,12 +86,14 @@ var currencyToSymbol = map[string]string{
 }
 
 type Stock struct {
-	Name           string
-	Symbol         string
-	Currency       string
-	Price          float64
-	PercentChange  float64
-	SvgChartPoints string
+	Name           string  `yaml:"name"`
+	Symbol         string  `yaml:"symbol"`
+	ChartLink      string  `yaml:"chart-link"`
+	SymbolLink     string  `yaml:"symbol-link"`
+	Currency       string  `yaml:"-"`
+	Price          float64 `yaml:"-"`
+	PercentChange  float64 `yaml:"-"`
+	SvgChartPoints string  `yaml:"-"`
 }
 
 type Stocks []Stock

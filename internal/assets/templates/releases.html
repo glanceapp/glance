@@ -1,7 +1,7 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
-<ul class="list list-gap-14 list-collapsible">
+<ul class="list list-gap-10 list-collapsible">
     {{ range $i, $release := .Releases }}
     <li {{ if shouldCollapse $i $.CollapseAfter }}class="list-collapsible-item" style="--animation-delay: {{ itemAnimationDelay $i $.CollapseAfter }};"{{ end }}>
         <a class="size-h4 block text-truncate color-primary-if-not-visited" href="{{ $release.NotesUrl }}" target="_blank" rel="noreferrer">{{ .Name }}</a>

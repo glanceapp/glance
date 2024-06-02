@@ -22,13 +22,16 @@ var (
 	RedditCardsHorizontalTemplate = compileTemplate("reddit-horizontal-cards.html", "widget-base.html")
 	RedditCardsVerticalTemplate   = compileTemplate("reddit-vertical-cards.html", "widget-base.html")
 	ReleasesTemplate              = compileTemplate("releases.html", "widget-base.html")
-	VideosTemplate                = compileTemplate("videos.html", "widget-base.html")
+	VideosTemplate                = compileTemplate("videos.html", "widget-base.html", "video-card-contents.html")
+	VideosGridTemplate            = compileTemplate("videos-grid.html", "widget-base.html", "video-card-contents.html")
 	StocksTemplate                = compileTemplate("stocks.html", "widget-base.html")
 	RSSListTemplate               = compileTemplate("rss-list.html", "widget-base.html")
-	RSSCardsTemplate              = compileTemplate("rss-cards.html", "widget-base.html")
+	RSSHorizontalCardsTemplate    = compileTemplate("rss-horizontal-cards.html", "widget-base.html")
+	RSSHorizontalCards2Template   = compileTemplate("rss-horizontal-cards-2.html", "widget-base.html")
 	MonitorTemplate               = compileTemplate("monitor.html", "widget-base.html")
 	TwitchGamesListTemplate       = compileTemplate("twitch-games-list.html", "widget-base.html")
 	TwitchChannelsTemplate        = compileTemplate("twitch-channels.html", "widget-base.html")
+	RepositoryTemplate            = compileTemplate("repository.html", "widget-base.html")
 )
 
 var globalTemplateFunctions = template.FuncMap{

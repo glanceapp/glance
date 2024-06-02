@@ -13,6 +13,7 @@ type Videos struct {
 	widgetBase       `yaml:",inline"`
 	Videos           feed.Videos `yaml:"-"`
 	VideoUrlTemplate string      `yaml:"video-url-template"`
+	Style            string      `yaml:"style"`
 	Channels         []string    `yaml:"channels"`
 	Limit            int         `yaml:"limit"`
 }
@@ -42,5 +43,9 @@ func (widget *Videos) Update(ctx context.Context) {
 }
 
 func (widget *Videos) Render() template.HTML {
+	if widget.Style == "grid-cards" {
+		return widget.render(widget, assets.VideosGridTemplate)
+	}
+
 	return widget.render(widget, assets.VideosTemplate)
 }

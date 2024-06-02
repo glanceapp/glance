@@ -1,0 +1,14 @@
+FROM golang:1.22.3-alpine3.19 AS builder
+
+WORKDIR /app
+COPY . /app
+RUN CGO_ENABLED=0 go build .
+
+
+FROM alpine:3.19
+
+WORKDIR /app
+COPY --from=builder /app/glance .
+
+EXPOSE 8080/tcp
+ENTRYPOINT ["/app/glance"]

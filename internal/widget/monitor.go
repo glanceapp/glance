@@ -46,14 +46,15 @@ func statusCodeToStyle(status int) string {
 type Monitor struct {
 	widgetBase `yaml:",inline"`
 	Sites      []struct {
-		Title       string           `yaml:"title"`
-		Url         string           `yaml:"url"`
-		IconUrl     string           `yaml:"icon"`
-		SameTab     bool             `yaml:"same-tab"`
-		Status      *feed.SiteStatus `yaml:"-"`
-		StatusText  string           `yaml:"-"`
-		StatusStyle string           `yaml:"-"`
+		Title       string            `yaml:"title"`
+		Url         OptionalEnvString `yaml:"url"`
+		IconUrl     string            `yaml:"icon"`
+		SameTab     bool              `yaml:"same-tab"`
+		Status      *feed.SiteStatus  `yaml:"-"`
+		StatusText  string            `yaml:"-"`
+		StatusStyle string            `yaml:"-"`
 	} `yaml:"sites"`
+	Style string `yaml:"style"`
 }
 
 func (widget *Monitor) Initialize() error {
@@ -66,7 +67,7 @@ func (widget *Monitor) Update(ctx context.Context) {
 	requests := make([]*http.Request, len(widget.Sites))
 
 	for i := range widget.Sites {
-		request, err := http.NewRequest("GET", widget.Sites[i].Url, nil)
+		request, err := http.NewRequest("GET", string(widget.Sites[i].Url), nil)
 
 		if err != nil {
 			message := fmt.Errorf("failed to create http request for %s: %s", widget.Sites[i].Url, err)
