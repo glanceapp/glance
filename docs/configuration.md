@@ -566,12 +566,8 @@ Example:
   collapse-after: 5
 ```
 
-<!--
-TODO: add preview
-
 Preview:
 ![](images/lobsters-widget-preview.png)
- -->
 
 #### Properties
 | Name | Type | Required | Default |
