@@ -2,7 +2,6 @@ package feed
 
 import (
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -34,22 +33,17 @@ func getLobstersPostsFromFeed(feedUrl string) (ForumPosts, error) {
 	posts := make(ForumPosts, 0, len(feed))
 
 	for i := range feed {
-		tags := strings.Join(feed[i].Tags, ", ")
-
-		if tags != "" {
-			tags = " [" + tags + "]"
-		}
-
 		createdAt, _ := time.Parse(time.RFC3339, feed[i].CreatedAt)
 
 		posts = append(posts, ForumPost{
-			Title:           feed[i].Title + tags,
+			Title:           feed[i].Title,
 			DiscussionUrl:   feed[i].CommentsURL,
 			TargetUrl:       feed[i].URL,
 			TargetUrlDomain: extractDomainFromUrl(feed[i].URL),
 			CommentCount:    feed[i].CommentCount,
 			Score:           feed[i].Score,
 			TimePosted:      createdAt,
+			Tags:            feed[i].Tags,
 		})
 	}
 
