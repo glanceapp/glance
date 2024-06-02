@@ -20,7 +20,7 @@ type Lobsters struct {
 }
 
 func (widget *Lobsters) Initialize() error {
-	widget.withTitle("Lobsters").withCacheDuration(30 * time.Minute)
+	widget.withTitle("Lobsters").withCacheDuration(time.Hour)
 
 	if widget.SortBy == "" || (widget.SortBy != "hot" && widget.SortBy != "new") {
 		widget.SortBy = "hot"
