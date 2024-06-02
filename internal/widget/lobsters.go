@@ -11,18 +11,19 @@ import (
 
 type Lobsters struct {
 	widgetBase     `yaml:",inline"`
-	FeedUrl        string          `yaml:"feed"`
 	Posts          feed.ForumPosts `yaml:"-"`
 	Limit          int             `yaml:"limit"`
 	CollapseAfter  int             `yaml:"collapse-after"`
+	SortBy         string          `yaml:"sort-by"`
+	Tags           []string        `yaml:"tags"`
 	ShowThumbnails bool            `yaml:"-"`
 }
 
 func (widget *Lobsters) Initialize() error {
 	widget.withTitle("Lobsters").withCacheDuration(30 * time.Minute)
 
-	if widget.FeedUrl == "" {
-		widget.FeedUrl = "https://lobste.rs/hottest.json"
+	if widget.SortBy == "" || (widget.SortBy != "hot" && widget.SortBy != "new") {
+		widget.SortBy = "hot"
 	}
 
 	if widget.Limit <= 0 {
@@ -37,7 +38,7 @@ func (widget *Lobsters) Initialize() error {
 }
 
 func (widget *Lobsters) Update(ctx context.Context) {
-	posts, err := feed.FetchLobstersTopPosts(widget.FeedUrl)
+	posts, err := feed.FetchLobstersPosts(widget.SortBy, widget.Tags)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
