@@ -10,6 +10,8 @@
 * Subreddit posts
 * Weather
 * Bookmarks
+* Hacker News
+* Lobsters
 * Latest YouTube videos from specific channels
 * Clock
 * Calendar
