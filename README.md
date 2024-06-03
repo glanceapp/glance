@@ -10,7 +10,10 @@
 * Subreddit posts
 * Weather
 * Bookmarks
+* Hacker News
+* Lobsters
 * Latest YouTube videos from specific channels
+* Clock
 * Calendar
 * Stocks
 * iframe
@@ -18,6 +21,7 @@
 * GitHub releases
 * Repository overview
 * Site monitor
+* Search box
 
 #### Themeable
 ![multiple color schemes example](docs/images/themes-example.png)

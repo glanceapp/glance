@@ -1,14 +1,14 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
-<ul class="list list-gap-14 list-collapsible">
-    {{ range $i, $post := .Posts }}
-    <li {{ if shouldCollapse $i $.CollapseAfter }}class="list-collapsible-item" style="--animation-delay: {{ itemAnimationDelay $i $.CollapseAfter }};"{{ end }}>
-        <div class="forum-post-list-item thumbnail-container">
+<ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .Posts }}
+    <li>
+        <div class="flex gap-10 row-reverse-on-mobile thumbnail-parent">
             {{ if $.ShowThumbnails }}
-                {{ if ne $post.ThumbnailUrl "" }}
-                <img class="forum-post-list-thumbnail thumbnail" src="{{ $post.ThumbnailUrl }}" alt="" loading="lazy">
-                {{ else if $post.HasTargetUrl }}
+                {{ if ne .ThumbnailUrl "" }}
+                <img class="forum-post-list-thumbnail thumbnail" src="{{ .ThumbnailUrl }}" alt="" loading="lazy">
+                {{ else if .HasTargetUrl }}
                 <svg class="forum-post-list-thumbnail hide-on-mobile" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="-9 -8 40 40" stroke-width="1.5" stroke="var(--color-text-subdue)">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
                 </svg>
@@ -18,14 +18,23 @@
                 </svg>
                 {{ end }}
             {{ end }}
-            <div class="grow">
-                <a href="{{ $post.DiscussionUrl }}" class="size-h3 color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
+            <div class="grow min-width-0">
+                <a href="{{ .DiscussionUrl }}" class="size-h3 color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
+                {{ if gt (len .Tags) 0 }}
+                <div class="inline-block forum-post-tags-container">
+                    <ul class="attachments">
+                    {{ range .Tags }}
+                        <li>{{ . }}</li>
+                    {{ end }}
+                    </ul>
+                </div>
+                {{ end }}
                 <ul class="list-horizontal-text">
-                    <li title="{{ $post.TimePosted | formatTime }}" {{ dynamicRelativeTimeAttrs $post.TimePosted }}>{{ $post.TimePosted | relativeTime }}</li>
-                    <li>{{ $post.Score | formatNumber }} points</li>
-                    <li>{{ $post.CommentCount | formatNumber }} comments</li>
-                    {{ if $post.HasTargetUrl }}
-                    <li class="shrink min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ $post.TargetUrlDomain }}</a></li>
+                    <li {{ dynamicRelativeTimeAttrs .TimePosted }}></li>
+                    <li>{{ .Score | formatNumber }} points</li>
+                    <li>{{ .CommentCount | formatNumber }} comments</li>
+                    {{ if .HasTargetUrl }}
+                    <li class="min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ .TargetUrlDomain }}</a></li>
                     {{ end }}
                 </ul>
             </div>
@@ -33,7 +42,4 @@
     </li>
     {{ end }}
 </ul>
-{{ if gt (len .Posts) $.CollapseAfter }}
-<label class="list-collapsible-label"><input type="checkbox" autocomplete="off" class="list-collapsible-input"></label>
-{{ end }}
 {{ end }}

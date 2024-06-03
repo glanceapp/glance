@@ -19,20 +19,24 @@ func New(widgetType string) (Widget, error) {
 	switch widgetType {
 	case "calendar":
 		return &Calendar{}, nil
+	case "clock":
+		return &Clock{}, nil
 	case "weather":
 		return &Weather{}, nil
 	case "bookmarks":
 		return &Bookmarks{}, nil
 	case "iframe":
 		return &IFrame{}, nil
+	case "html":
+		return &HTML{}, nil
 	case "hacker-news":
 		return &HackerNews{}, nil
 	case "releases":
 		return &Releases{}, nil
 	case "videos":
 		return &Videos{}, nil
-	case "stocks":
-		return &Stocks{}, nil
+	case "markets", "stocks":
+		return &Markets{}, nil
 	case "reddit":
 		return &Reddit{}, nil
 	case "rss":
@@ -43,8 +47,16 @@ func New(widgetType string) (Widget, error) {
 		return &TwitchGames{}, nil
 	case "twitch-channels":
 		return &TwitchChannels{}, nil
+	case "lobsters":
+		return &Lobsters{}, nil
+	case "change-detection":
+		return &ChangeDetection{}, nil
 	case "repository":
 		return &Repository{}, nil
+	case "search":
+		return &Search{}, nil
+	case "extension":
+		return &Extension{}, nil
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}

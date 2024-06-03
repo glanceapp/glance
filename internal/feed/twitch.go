@@ -44,6 +44,12 @@ func (channels TwitchChannels) SortByViewers() {
 	})
 }
 
+func (channels TwitchChannels) SortByLive() {
+	sort.SliceStable(channels, func(i, j int) bool {
+		return channels[i].IsLive && !channels[j].IsLive
+	})
+}
+
 type twitchOperationResponse struct {
 	Data       json.RawMessage
 	Extensions struct {
