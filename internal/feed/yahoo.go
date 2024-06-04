@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-type stockResponseJson struct {
+type marketResponseJson struct {
 	Chart struct {
 		Result []struct {
 			Meta struct {
@@ -25,30 +25,30 @@ type stockResponseJson struct {
 }
 
 // TODO: allow changing chart time frame
-const stockChartDays = 21
+const marketChartDays = 21
 
-func FetchStocksDataFromYahoo(stockRequests Stocks) (Stocks, error) {
-	requests := make([]*http.Request, 0, len(stockRequests))
+func FetchMarketsDataFromYahoo(marketRequests []MarketRequest) (Markets, error) {
+	requests := make([]*http.Request, 0, len(marketRequests))
 
-	for i := range stockRequests {
-		request, _ := http.NewRequest("GET", fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=1mo&interval=1d", stockRequests[i].Symbol), nil)
+	for i := range marketRequests {
+		request, _ := http.NewRequest("GET", fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=1mo&interval=1d", marketRequests[i].Symbol), nil)
 		requests = append(requests, request)
 	}
 
-	job := newJob(decodeJsonFromRequestTask[stockResponseJson](defaultClient), requests)
+	job := newJob(decodeJsonFromRequestTask[marketResponseJson](defaultClient), requests)
 	responses, errs, err := workerPoolDo(job)
 
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrNoContent, err)
 	}
 
-	stocks := make(Stocks, 0, len(responses))
+	markets := make(Markets, 0, len(responses))
 	var failed int
 
 	for i := range responses {
 		if errs[i] != nil {
 			failed++
-			slog.Error("Failed to fetch stock data", "symbol", stockRequests[i].Symbol, "error", errs[i])
+			slog.Error("Failed to fetch market data", "symbol", marketRequests[i].Symbol, "error", errs[i])
 			continue
 		}
 
@@ -56,14 +56,14 @@ func FetchStocksDataFromYahoo(stockRequests Stocks) (Stocks, error) {
 
 		if len(response.Chart.Result) == 0 {
 			failed++
-			slog.Error("Stock response contains no data", "symbol", stockRequests[i].Symbol)
+			slog.Error("Market response contains no data", "symbol", marketRequests[i].Symbol)
 			continue
 		}
 
 		prices := response.Chart.Result[0].Indicators.Quote[0].Close
 
-		if len(prices) > stockChartDays {
-			prices = prices[len(prices)-stockChartDays:]
+		if len(prices) > marketChartDays {
+			prices = prices[len(prices)-marketChartDays:]
 		}
 
 		previous := response.Chart.Result[0].Meta.RegularMarketPrice
@@ -80,13 +80,10 @@ func FetchStocksDataFromYahoo(stockRequests Stocks) (Stocks, error) {
 			currency = response.Chart.Result[0].Meta.Currency
 		}
 
-		stocks = append(stocks, Stock{
-			Name:       stockRequests[i].Name,
-			Symbol:     response.Chart.Result[0].Meta.Symbol,
-			SymbolLink: stockRequests[i].SymbolLink,
-			ChartLink:  stockRequests[i].ChartLink,
-			Price:      response.Chart.Result[0].Meta.RegularMarketPrice,
-			Currency:   currency,
+		markets = append(markets, Market{
+			MarketRequest: marketRequests[i],
+			Price:         response.Chart.Result[0].Meta.RegularMarketPrice,
+			Currency:      currency,
 			PercentChange: percentChange(
 				response.Chart.Result[0].Meta.RegularMarketPrice,
 				previous,
@@ -95,13 +92,13 @@ func FetchStocksDataFromYahoo(stockRequests Stocks) (Stocks, error) {
 		})
 	}
 
-	if len(stocks) == 0 {
+	if len(markets) == 0 {
 		return nil, ErrNoContent
 	}
 
 	if failed > 0 {
-		return stocks, fmt.Errorf("%w: could not fetch data for %d stock(s)", ErrPartialContent, failed)
+		return markets, fmt.Errorf("%w: could not fetch data for %d market(s)", ErrPartialContent, failed)
 	}
 
-	return stocks, nil
+	return markets, nil
 }

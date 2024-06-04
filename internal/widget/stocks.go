@@ -9,34 +9,39 @@ import (
 	"github.com/glanceapp/glance/internal/feed"
 )
 
-// TODO: rename to Markets at some point
-type Stocks struct {
-	widgetBase `yaml:",inline"`
-	Stocks     feed.Stocks `yaml:"stocks"`
-	Sort       string      `yaml:"sort-by"`
-	Style      string      `yaml:"style"`
+type Markets struct {
+	widgetBase     `yaml:",inline"`
+	StocksRequests []feed.MarketRequest `yaml:"stocks"`
+	MarketRequests []feed.MarketRequest `yaml:"markets"`
+	Sort           string               `yaml:"sort-by"`
+	Style          string               `yaml:"style"`
+	Markets        feed.Markets         `yaml:"-"`
 }
 
-func (widget *Stocks) Initialize() error {
-	widget.withTitle("Stocks").withCacheDuration(time.Hour)
+func (widget *Markets) Initialize() error {
+	widget.withTitle("Markets").withCacheDuration(time.Hour)
+
+	if len(widget.MarketRequests) == 0 {
+		widget.MarketRequests = widget.StocksRequests
+	}
 
 	return nil
 }
 
-func (widget *Stocks) Update(ctx context.Context) {
-	stocks, err := feed.FetchStocksDataFromYahoo(widget.Stocks)
+func (widget *Markets) Update(ctx context.Context) {
+	markets, err := feed.FetchMarketsDataFromYahoo(widget.MarketRequests)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
 
 	if widget.Sort == "absolute-change" {
-		stocks.SortByAbsChange()
+		markets.SortByAbsChange()
 	}
 
-	widget.Stocks = stocks
+	widget.Markets = markets
 }
 
-func (widget *Stocks) Render() template.HTML {
-	return widget.render(widget, assets.StocksTemplate)
+func (widget *Markets) Render() template.HTML {
+	return widget.render(widget, assets.MarketsTemplate)
 }

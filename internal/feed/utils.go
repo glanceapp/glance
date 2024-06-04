@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
 	"slices"
 	"strings"
 )
@@ -149,4 +150,20 @@ func currencyCodeToSymbol(code string) string {
 		symbol = strings.ToUpper(code) + " "
 	}
 	return symbol
+}
+
+var urlSchemePattern = regexp.MustCompile(`^[a-z]+:\/\/`)
+
+func stripURLScheme(url string) string {
+	return urlSchemePattern.ReplaceAllString(url, "")
+}
+
+func limitStringLength(s string, max int) (string, bool) {
+	asRunes := []rune(s)
+
+	if len(asRunes) > max {
+		return string(asRunes[:max]), true
+	}
+
+	return s, false
 }

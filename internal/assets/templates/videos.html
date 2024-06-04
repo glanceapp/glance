@@ -6,7 +6,7 @@
 <div class="carousel-container">
     <div class="cards-horizontal carousel-items-container">
         {{ range .Videos }}
-        <div class="card widget-content-frame thumbnail-container">
+        <div class="card widget-content-frame thumbnail-parent">
             {{ template "video-card-contents" . }}
         </div>
         {{ end }}

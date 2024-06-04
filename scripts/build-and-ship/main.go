@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -77,7 +78,40 @@ var buildTargets = []buildTarget{
 	},
 }
 
+func hasUncommitedChanges() (bool, error) {
+	output, err := exec.Command("git", "status", "--porcelain").CombinedOutput()
+
+	if err != nil {
+		return false, err
+	}
+
+	return len(output) > 0, nil
+}
+
 func main() {
+	flags := flag.NewFlagSet("", flag.ExitOnError)
+
+	specificTag := flags.String("tag", "", "Which tagged version to build")
+
+	err := flags.Parse(os.Args[1:])
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	uncommitedChanges, err := hasUncommitedChanges()
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	if uncommitedChanges {
+		fmt.Println("There are uncommited changes - commit, stash or discard them first")
+		os.Exit(1)
+	}
+
 	cwd, err := os.Getwd()
 
 	if err != nil {
@@ -95,10 +129,24 @@ func main() {
 	os.Mkdir(buildPath, 0755)
 	os.Mkdir(archivesPath, 0755)
 
-	version, err := getVersionFromGit()
+	var version string
+
+	if *specificTag == "" {
+		version, err := getVersionFromGit()
+
+		if err != nil {
+			fmt.Println(version, err)
+			os.Exit(1)
+		}
+	} else {
+		version = *specificTag
+	}
+
+	output, err := exec.Command("git", "checkout", "tags/"+version).CombinedOutput()
 
 	if err != nil {
-		fmt.Println(version, err)
+		fmt.Println(string(output))
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
@@ -119,13 +167,19 @@ func main() {
 
 	fmt.Println("Building docker image")
 
-	output, err := exec.Command(
-		"sudo", "docker", "build",
+	var dockerBuildOptions = []string{
+		"docker", "build",
 		"--platform=linux/amd64,linux/arm64,linux/arm/v7",
 		"-t", versionTag,
-		"-t", latestTag,
-		".",
-	).CombinedOutput()
+	}
+
+	if !strings.Contains(version, "beta") {
+		dockerBuildOptions = append(dockerBuildOptions, "-t", latestTag)
+	}
+
+	dockerBuildOptions = append(dockerBuildOptions, ".")
+
+	output, err = exec.Command("sudo", dockerBuildOptions...).CombinedOutput()
 
 	if err != nil {
 		fmt.Println(string(output))
@@ -150,6 +204,10 @@ func main() {
 		fmt.Println(string(output))
 		fmt.Println(err)
 		os.Exit(1)
+	}
+
+	if strings.Contains(version, "beta") {
+		return
 	}
 
 	output, err = exec.Command(
