@@ -1,10 +1,15 @@
 package feed
 
 import (
+	"bytes"
 	"context"
+	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"html"
+	"io"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"regexp"
 	"sort"
@@ -23,6 +28,29 @@ type RSSFeedItem struct {
 	Categories  []string
 	Description string
 	PublishedAt time.Time
+}
+
+type FreshRssFeedsGroups struct {
+	Group_id int
+	Feed_ids string
+}
+
+type FreshRssFeed struct {
+	Id                   int
+	Favicon_id           int
+	Title                string
+	Url                  string
+	Site_url             string
+	Is_spark             int
+	Last_updated_on_time int
+}
+
+type FreshRSSFeedsAPI struct {
+	Api_version            uint
+	Auth                   uint
+	Last_refreshed_on_time int
+	Feeds                  []FreshRssFeed
+	Feeds_groups           []FreshRssFeedsGroups
 }
 
 // doesn't cover all cases but works the vast majority of the time
@@ -194,4 +222,54 @@ func GetItemsFromRSSFeeds(requests []RSSFeedRequest) (RSSFeedItems, error) {
 	}
 
 	return entries, nil
+}
+
+func GetItemsFromFreshRssFeeds(freshrssUrl string, freshrssUser string, freshrsspass string) (RSSFeedItems, error) {
+	var p FreshRSSFeedsAPI
+	var feedReqs []RSSFeedRequest
+	var param = url.Values{}
+
+	user_credentials := []byte(fmt.Sprintf("%v:%v", freshrssUser, freshrsspass))
+	api_key := fmt.Sprintf("%x", md5.Sum(user_credentials))
+
+	param.Set("api_key", api_key)
+	param.Set("feeds", "")
+	var payload = bytes.NewBufferString(param.Encode())
+
+	requestURL := fmt.Sprintf("%v/api/fever.php?api", freshrssUrl)
+	req, err := http.NewRequest(http.MethodPost, requestURL, payload)
+
+	if err != nil {
+		return nil, fmt.Errorf("could not create freshRss request: %v ", err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	res, err := client.Do(req)
+	if err != nil || res.StatusCode != 200 {
+		return nil, fmt.Errorf("could not connect to freshRss instance: %v", err)
+	}
+
+	resBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("could not read freshRss response body: %v", err)
+	}
+
+	errr := json.Unmarshal(resBody, &p)
+	if errr != nil {
+		return nil, fmt.Errorf("could not unmarshal freshrss response body: %v", errr)
+	}
+
+	for i := range p.Feeds {
+		var feedReq RSSFeedRequest
+		feedReq.Url = p.Feeds[i].Url
+		feedReq.Title = p.Feeds[i].Title
+		feedReqs = append(feedReqs, feedReq)
+	}
+
+	return GetItemsFromRSSFeeds(feedReqs)
 }

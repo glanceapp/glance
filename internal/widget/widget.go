@@ -41,6 +41,8 @@ func New(widgetType string) (Widget, error) {
 		return &Reddit{}, nil
 	case "rss":
 		return &RSS{}, nil
+	case "freshrss":
+		return &FreshRSS{}, nil
 	case "monitor":
 		return &Monitor{}, nil
 	case "twitch-top-games":
