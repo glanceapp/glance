@@ -370,6 +370,10 @@ kbd:active {
     box-shadow: 0 0 0 0 var(--color-widget-background-highlight);
 }
 
+new-tab {
+    display: none;
+}
+
 .content-bounds {
     max-width: 1600px;
     margin-inline: auto;

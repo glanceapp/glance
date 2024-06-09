@@ -120,6 +120,7 @@ function setupSearchboxes() {
         const inputElement = widget.getElementsByClassName("search-input")[0];
         const bangElement = widget.getElementsByClassName("search-bang")[0];
         const bangs = widget.querySelectorAll(".search-bangs > input");
+        const newTab = widget.getElementsByTagName("new-tab")[0].innerHTML === "true";
         const bangsMap = {};
         const kbdElement = widget.getElementsByTagName("kbd")[0];
         let currentBang = null;
@@ -154,7 +155,7 @@ function setupSearchboxes() {
 
                 const url = searchUrlTemplate.replace("!QUERY!", encodeURIComponent(query));
 
-                if (event.ctrlKey) {
+                if (newTab && !event.ctrlKey || !newTab && event.ctrlKey) {
                     window.open(url, '_blank').focus();
                 } else {
                     window.location.href = url;

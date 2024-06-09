@@ -725,10 +725,13 @@ Preview:
 | <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Perform search in a new tab | Search input is focused and not empty |
 | <kbd>Escape</kbd> | Leave focus | Search input is focused |
 
+If property `new-tab` is set to `true`, keys <kbd>Enter</kbd> and <kbd>Ctrl</kbd> + <kbd>Enter</kbd> will be switched.
+
 #### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | search-engine | string | no | duckduckgo |
+| new-tab | boolean | no | false |
 | bangs | array | no | |
 
 ##### `search-engine`
