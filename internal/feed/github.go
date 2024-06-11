@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -21,7 +22,6 @@ type githubReleaseResponseJson struct {
 
 func parseGithubTime(t string) time.Time {
 	parsedTime, err := time.Parse("2006-01-02T15:04:05Z", t)
-
 	if err != nil {
 		return time.Now()
 	}
@@ -51,7 +51,6 @@ func FetchLatestReleasesFromGithub(repositories []string, token string) (AppRele
 	task := decodeJsonFromRequestTask[[]githubReleaseResponseJson](defaultClient)
 	job := newJob(task, requests).withWorkers(15)
 	responses, errs, err := workerPoolDo(job)
-
 	if err != nil {
 		return nil, err
 	}
@@ -131,6 +130,8 @@ type RepositoryDetails struct {
 	PullRequests     []GithubTicket
 	OpenIssues       int
 	Issues           []GithubTicket
+	LastCommits      int
+	Commits          []CommitsDetails
 }
 
 type githubRepositoryDetailsResponseJson struct {
@@ -148,21 +149,46 @@ type githubTicketResponseJson struct {
 	} `json:"items"`
 }
 
-func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs int, maxIssues int) (RepositoryDetails, error) {
-	repositoryRequest, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s", repository), nil)
+type CommitsDetails struct {
+	Sha     string
+	Author  string
+	Email   string
+	Date    time.Time
+	Message string
+}
 
+type Author struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Date  string `json:"date"`
+}
+
+type Commit struct {
+	Sha    string `json:"sha"`
+	Commit struct {
+		Author  Author `json:"author"`
+		Message string `json:"message"`
+	} `json:"commit"`
+}
+
+type githubCommitsResponseJson []Commit
+
+func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs int, maxIssues int, maxCommits int) (RepositoryDetails, error) {
+	repositoryRequest, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s", repository), nil)
 	if err != nil {
 		return RepositoryDetails{}, fmt.Errorf("%w: could not create request with repository: %v", ErrNoContent, err)
 	}
 
 	PRsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=is:pr+is:open+repo:%s&per_page=%d", repository, maxPRs), nil)
 	issuesRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=is:issue+is:open+repo:%s&per_page=%d", repository, maxIssues), nil)
+	CommitsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/commits?per_page=%d", repository, maxCommits), nil)
 
 	if token != "" {
 		token = fmt.Sprintf("Bearer %s", token)
 		repositoryRequest.Header.Add("Authorization", token)
 		PRsRequest.Header.Add("Authorization", token)
 		issuesRequest.Header.Add("Authorization", token)
+		CommitsRequest.Header.Add("Authorization", token)
 	}
 
 	var detailsResponse githubRepositoryDetailsResponseJson
@@ -171,6 +197,8 @@ func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs in
 	var PRsErr error
 	var issuesResponse githubTicketResponseJson
 	var issuesErr error
+	var CommitsResponse githubCommitsResponseJson
+	var CommitsErr error
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -195,6 +223,13 @@ func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs in
 		})()
 	}
 
+	if maxCommits > 0 {
+		wg.Add(1)
+		go (func() {
+			defer wg.Done()
+			CommitsResponse, CommitsErr = decodeJsonFromRequest[githubCommitsResponseJson](defaultClient, CommitsRequest)
+		})()
+	}
 	wg.Wait()
 
 	if detailsErr != nil {
@@ -207,6 +242,7 @@ func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs in
 		Forks:        detailsResponse.Forks,
 		PullRequests: make([]GithubTicket, 0, len(PRsResponse.Tickets)),
 		Issues:       make([]GithubTicket, 0, len(issuesResponse.Tickets)),
+		Commits:      make([]CommitsDetails, 0, len(CommitsResponse)),
 	}
 
 	err = nil
@@ -244,5 +280,21 @@ func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs in
 		}
 	}
 
+	if maxCommits > 0 {
+		if CommitsErr != nil {
+			err = fmt.Errorf("%w: could not get issues: %s", ErrPartialContent, CommitsErr)
+		} else {
+			for _, commit := range CommitsResponse {
+				details.LastCommits++
+				details.Commits = append(details.Commits, CommitsDetails{
+					Sha:     commit.Sha,
+					Author:  commit.Commit.Author.Name,
+					Email:   commit.Commit.Author.Email,
+					Date:    parseGithubTime(commit.Commit.Author.Date),
+					Message: strings.SplitN(commit.Commit.Message, "\n\n", 2)[0],
+				})
+			}
+		}
+	}
 	return details, err
 }
