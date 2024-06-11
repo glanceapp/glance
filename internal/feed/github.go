@@ -8,12 +8,10 @@ import (
 	"time"
 )
 
-type githubReleaseResponseJson struct {
+type githubReleaseLatestResponseJson struct {
 	TagName     string `json:"tag_name"`
 	PublishedAt string `json:"published_at"`
 	HtmlUrl     string `json:"html_url"`
-	Draft       bool   `json:"draft"`
-	PreRelease  bool   `json:"prerelease"`
 	Reactions   struct {
 		Downvotes int `json:"-1"`
 	} `json:"reactions"`
@@ -39,7 +37,7 @@ func FetchLatestReleasesFromGithub(repositories []string, token string) (AppRele
 	requests := make([]*http.Request, len(repositories))
 
 	for i, repository := range repositories {
-		request, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/releases?per_page=10", repository), nil)
+		request, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", repository), nil)
 
 		if token != "" {
 			request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
@@ -48,7 +46,7 @@ func FetchLatestReleasesFromGithub(repositories []string, token string) (AppRele
 		requests[i] = request
 	}
 
-	task := decodeJsonFromRequestTask[[]githubReleaseResponseJson](defaultClient)
+	task := decodeJsonFromRequestTask[githubReleaseLatestResponseJson](defaultClient)
 	job := newJob(task, requests).withWorkers(15)
 	responses, errs, err := workerPoolDo(job)
 
@@ -65,24 +63,7 @@ func FetchLatestReleasesFromGithub(repositories []string, token string) (AppRele
 			continue
 		}
 
-		releases := responses[i]
-
-		if len(releases) < 1 {
-			failed++
-			slog.Error("No releases found", "repository", repositories[i], "url", requests[i].URL)
-			continue
-		}
-
-		var liveRelease *githubReleaseResponseJson
-
-		for i := range releases {
-			release := &releases[i]
-
-			if !release.Draft && !release.PreRelease {
-				liveRelease = release
-				break
-			}
-		}
+		liveRelease := &responses[i]
 
 		if liveRelease == nil {
 			slog.Error("No live release found", "repository", repositories[i], "url", requests[i].URL)
