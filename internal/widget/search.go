@@ -19,6 +19,7 @@ type Search struct {
 	cachedHTML   template.HTML `yaml:"-"`
 	SearchEngine string        `yaml:"search-engine"`
 	Bangs        []SearchBang  `yaml:"bangs"`
+	NewTab       bool          `yaml:"new-tab"`
 }
 
 func convertSearchUrl(url string) string {

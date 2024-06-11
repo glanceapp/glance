@@ -107,7 +107,7 @@ function updateRelativeTimeForElements(elements)
     }
 }
 
-function setupSearchboxes() {
+function setupSearchBoxes() {
     const searchWidgets = document.getElementsByClassName("search");
 
     if (searchWidgets.length == 0) {
@@ -117,6 +117,7 @@ function setupSearchboxes() {
     for (let i = 0; i < searchWidgets.length; i++) {
         const widget = searchWidgets[i];
         const defaultSearchUrl = widget.dataset.defaultSearchUrl;
+        const newTab = widget.dataset.newTab === "true";
         const inputElement = widget.getElementsByClassName("search-input")[0];
         const bangElement = widget.getElementsByClassName("search-bang")[0];
         const bangs = widget.querySelectorAll(".search-bangs > input");
@@ -154,7 +155,7 @@ function setupSearchboxes() {
 
                 const url = searchUrlTemplate.replace("!QUERY!", encodeURIComponent(query));
 
-                if (event.ctrlKey) {
+                if (newTab && !event.ctrlKey || !newTab && event.ctrlKey) {
                     window.open(url, '_blank').focus();
                 } else {
                     window.location.href = url;
@@ -551,7 +552,7 @@ async function setupPage() {
     try {
         setupClocks()
         setupCarousels();
-        setupSearchboxes();
+        setupSearchBoxes();
         setupCollapsibleLists();
         setupCollapsibleGrids();
         setupDynamicRelativeTime();
