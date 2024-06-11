@@ -38,10 +38,10 @@ type Theme struct {
 }
 
 type Server struct {
-	Host       string    `yaml:"host"`
-	Port       uint16    `yaml:"port"`
-	AssetsPath string    `yaml:"assets-path"`
-	StartedAt  time.Time `yaml:"-"`
+	Host       string `yaml:"host"`
+	Port       uint16 `yaml:"port"`
+	AssetsPath string `yaml:"assets-path"`
+	AssetsHash string `yaml:"-"`
 }
 
 type Column struct {
@@ -189,7 +189,13 @@ func FileServerWithCache(fs http.FileSystem, cacheDuration time.Duration) http.H
 	})
 }
 
+func (a *Application) AssetPath(asset string) string {
+	return "/static/" + a.Config.Server.AssetsHash + "/" + asset
+}
+
 func (a *Application) Serve() error {
+	a.Config.Server.AssetsHash = assets.PublicFSHash
+
 	// TODO: add gzip support, static files must have their gzipped contents cached
 	// TODO: add HTTPS support
 	mux := http.NewServeMux()
@@ -197,7 +203,10 @@ func (a *Application) Serve() error {
 	mux.HandleFunc("GET /{$}", a.HandlePageRequest)
 	mux.HandleFunc("GET /{page}", a.HandlePageRequest)
 	mux.HandleFunc("GET /api/pages/{page}/content/{$}", a.HandlePageContentRequest)
-	mux.Handle("GET /static/{path...}", http.StripPrefix("/static/", FileServerWithCache(http.FS(assets.PublicFS), 2*time.Hour)))
+	mux.Handle(
+		fmt.Sprintf("GET /static/%s/{path...}", a.Config.Server.AssetsHash),
+		http.StripPrefix("/static/"+a.Config.Server.AssetsHash, FileServerWithCache(http.FS(assets.PublicFS), 8*time.Hour)),
+	)
 
 	if a.Config.Server.AssetsPath != "" {
 		absAssetsPath, err := filepath.Abs(a.Config.Server.AssetsPath)
@@ -215,8 +224,6 @@ func (a *Application) Serve() error {
 		Addr:    fmt.Sprintf("%s:%d", a.Config.Server.Host, a.Config.Server.Port),
 		Handler: mux,
 	}
-
-	a.Config.Server.StartedAt = time.Now()
 
 	slog.Info("Starting server", "host", a.Config.Server.Host, "port", a.Config.Server.Port)
 	return server.ListenAndServe()
