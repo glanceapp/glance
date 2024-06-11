@@ -570,8 +570,4 @@ async function setupPage() {
     }
 }
 
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", setupPage);
-} else {
-    setupPage();
-}
+setupPage();
