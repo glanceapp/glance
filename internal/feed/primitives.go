@@ -214,3 +214,23 @@ func (v Videos) SortByNewest() Videos {
 
 	return v
 }
+
+type Cryptocurrency struct {
+	Name           string  `yaml:"name"`
+	ID             string  `yaml:"id"`          // see https://api.coingecko.com/api/v3/coins/list for a list of ids
+	Currency       string  `yaml:"currency"`    // Currency is the currency to convert the price to
+	Days           int     `yaml:"days"`        // Days is the number of days to fetch the price for. If 0, use the stock's default of 21 days
+	SymbolLink     string  `yaml:"symbol-link"` // SymbolLink is the link to the symbol. Defaults to CoinGecko
+	Symbol         string  `yaml:"symbol"`      // Symbol is for display
+	Price          float64 `yaml:"-"`
+	PercentChange  float64 `yaml:"-"`
+	SvgChartPoints string  `yaml:"-"`
+}
+
+type Cryptocurrencies []Cryptocurrency
+
+func (t Cryptocurrencies) SortByPercentChange() {
+	sort.Slice(t, func(i, j int) bool {
+		return t[i].PercentChange > t[j].PercentChange
+	})
+}
