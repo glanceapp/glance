@@ -263,6 +263,7 @@ html {
 a {
     text-decoration: none;
     color: inherit;
+    overflow-wrap: break-word;
 }
 
 ul {
