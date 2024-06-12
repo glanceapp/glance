@@ -49,6 +49,7 @@ type RSSFeedRequest struct {
 	HideCategories  bool   `yaml:"hide-categories"`
 	HideDescription bool   `yaml:"hide-description"`
 	ItemLinkPrefix  string `yaml:"item-link-prefix"`
+	IsDetailed      bool
 }
 
 type RSSFeedItems []RSSFeedItem
@@ -107,34 +108,36 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 			}
 		}
 
-		if !request.HideDescription && item.Description != "" {
-			description, _ := limitStringLength(item.Description, 1000)
-			description = sanitizeFeedDescription(description)
-			description, limited := limitStringLength(description, 200)
+		if request.IsDetailed {
+			if !request.HideDescription && item.Description != "" {
+				description, _ := limitStringLength(item.Description, 1000)
+				description = sanitizeFeedDescription(description)
+				description, limited := limitStringLength(description, 200)
 
-			if limited {
-				description += "…"
-			}
-
-			rssItem.Description = description
-		}
-
-		if !request.HideCategories {
-			var categories = make([]string, 0, 6)
-
-			for _, category := range item.Categories {
-				if len(categories) == 6 {
-					break
+				if limited {
+					description += "…"
 				}
 
-				if len(category) == 0 || len(category) > 30 {
-					continue
-				}
-
-				categories = append(categories, category)
+				rssItem.Description = description
 			}
 
-			rssItem.Categories = categories
+			if !request.HideCategories {
+				var categories = make([]string, 0, 6)
+
+				for _, category := range item.Categories {
+					if len(categories) == 6 {
+						break
+					}
+
+					if len(category) == 0 || len(category) > 30 {
+						continue
+					}
+
+					categories = append(categories, category)
+				}
+
+				rssItem.Categories = categories
+			}
 		}
 
 		if request.Title != "" {
