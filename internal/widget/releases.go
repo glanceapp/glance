@@ -10,12 +10,14 @@ import (
 )
 
 type Releases struct {
-	widgetBase    `yaml:",inline"`
-	Releases      feed.AppReleases  `yaml:"-"`
-	Repositories  []string          `yaml:"repositories"`
-	Token         OptionalEnvString `yaml:"token"`
-	Limit         int               `yaml:"limit"`
-	CollapseAfter int               `yaml:"collapse-after"`
+	widgetBase          `yaml:",inline"`
+	Releases            feed.AppReleases  `yaml:"-"`
+	Repositories        []string          `yaml:"repositories"`
+	Token               OptionalEnvString `yaml:"token"`
+	Limit               int               `yaml:"limit"`
+	CollapseAfter       int               `yaml:"collapse-after"`
+	ReleasesSearchLimit int               `yaml:"releases-search-limit"`
+	Starred             bool              `yaml:"starred"`
 }
 
 func (widget *Releases) Initialize() error {
@@ -33,7 +35,18 @@ func (widget *Releases) Initialize() error {
 }
 
 func (widget *Releases) Update(ctx context.Context) {
-	releases, err := feed.FetchLatestReleasesFromGithub(widget.Repositories, string(widget.Token))
+	var err error
+	var releases []feed.AppRelease
+
+	if widget.ReleasesSearchLimit <= 0 {
+		widget.ReleasesSearchLimit = 10
+	}
+
+	if widget.Starred {
+		releases, err = feed.FetchStarredRepositoriesReleasesFromGithub(string(widget.Token), widget.ReleasesSearchLimit)
+	} else {
+		releases, err = feed.FetchLatestReleasesFromGithub(widget.Repositories, string(widget.Token), widget.ReleasesSearchLimit)
+	}
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return

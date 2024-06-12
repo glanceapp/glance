@@ -952,17 +952,23 @@ Whether to ignore invalid/self-signed certificates.
 Whether to open the link in the same or a new tab.
 
 ### Releases
-Display a list of releases for specific repositories on Github. Draft releases and prereleases will not be shown.
+Display a list of releases for specific repositories or for your starred repositories on GitHub. Draft releases and prereleases will not be shown.
 
 Example:
 
 ```yaml
+# You can specify a list of repositories
 - type: releases
   repositories:
     - immich-app/immich
     - go-gitea/gitea
     - dani-garcia/vaultwarden
     - jellyfin/jellyfin
+
+# Or you can use your starred repositories
+- type: releases
+  starred: true
+  token: your-github-token
 ```
 
 Preview:
@@ -973,13 +979,19 @@ Preview:
 
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| repositories | array | yes |  |
+| repositories | array | no | [] |
+| starred | bool | no | false |
 | token | string | no | |
 | limit | integer | no | 10 |
 | collapse-after | integer | no | 5 |
+| releases-search-limit | integer | no | 10 |
 
 ##### `repositories`
 A list of repositores for which to fetch the latest release for. Only the name/repo is required, not the full URL.
+
+##### `starred`
+When set to `true` it will fetch the latest releases from all of your starred repositories. Depending on the number of repositories you have starred, this can have an effect on the loading time.
+When set to true, you must also set the `token` property, as the starred repositories list is personalized to the user.
 
 ##### `token`
 Without authentication Github allows for up to 60 requests per hour. You can easily exceed this limit and start seeing errors if you're tracking lots of repositories or your cache time is low. To circumvent this you can [create a read only token from your Github account](https://github.com/settings/personal-access-tokens/new) and provide it here.
@@ -1007,8 +1019,12 @@ This way you can safely check your `glance.yml` in version control without expos
 ##### `limit`
 The maximum number of releases to show.
 
-#### `collapse-after`
+##### `collapse-after`
 How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+ 
+##### `releases-search-limit`
+This is the number of releases Glance will fetch for each repository until it finds the first release that is not a draft or prerelease.
+You may decrease this value, to improve performance, at the risk of missing some releases.
 
 ### Repository
 Display general information about a repository as well as a list of the latest open pull requests and issues.
