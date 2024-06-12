@@ -43,6 +43,18 @@ func sanitizeFeedDescription(description string) string {
 	return description
 }
 
+func shortenFeedDescriptionLen(description string, maxLen int) string {
+	description, _ = limitStringLength(description, 1000)
+	description = sanitizeFeedDescription(description)
+	description, limited := limitStringLength(description, maxLen)
+
+	if limited {
+		description += "…"
+	}
+
+	return description
+}
+
 type RSSFeedRequest struct {
 	Url             string `yaml:"url"`
 	Title           string `yaml:"title"`
@@ -110,15 +122,7 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 
 		if request.IsDetailed {
 			if !request.HideDescription && item.Description != "" {
-				description, _ := limitStringLength(item.Description, 1000)
-				description = sanitizeFeedDescription(description)
-				description, limited := limitStringLength(description, 200)
-
-				if limited {
-					description += "…"
-				}
-
-				rssItem.Description = description
+				rssItem.Description = shortenFeedDescriptionLen(item.Description, 200)
 			}
 
 			if !request.HideCategories {
@@ -137,6 +141,10 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 				}
 
 				rssItem.Categories = categories
+			}
+		} else {
+			if item.Title == "" {
+				rssItem.Title = shortenFeedDescriptionLen(item.Description, 100)
 			}
 		}
 
