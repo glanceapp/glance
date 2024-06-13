@@ -93,7 +93,6 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 
 		rssItem := RSSFeedItem{
 			ChannelURL: feed.Link,
-			Title:      item.Title,
 		}
 
 		if request.ItemLinkPrefix != "" {
@@ -120,8 +119,14 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 			}
 		}
 
+		if item.Title != "" {
+			rssItem.Title = item.Title
+		} else {
+			rssItem.Title = shortenFeedDescriptionLen(item.Description, 100)
+		}
+
 		if request.IsDetailed {
-			if !request.HideDescription && item.Description != "" {
+			if !request.HideDescription && item.Description != "" && item.Title != "" {
 				rssItem.Description = shortenFeedDescriptionLen(item.Description, 200)
 			}
 
@@ -141,10 +146,6 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 				}
 
 				rssItem.Categories = categories
-			}
-		} else {
-			if item.Title == "" {
-				rssItem.Title = shortenFeedDescriptionLen(item.Description, 100)
 			}
 		}
 
