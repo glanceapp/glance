@@ -54,7 +54,10 @@ func (widget *Reddit) Initialize() error {
 		}
 	}
 
-	widget.withTitle("/r/" + widget.Subreddit).withCacheDuration(30 * time.Minute)
+	widget.
+		withTitle("/r/" + widget.Subreddit).
+		withTitleURL("https://www.reddit.com/r/" + widget.Subreddit + "/").
+		withCacheDuration(30 * time.Minute)
 
 	return nil
 }

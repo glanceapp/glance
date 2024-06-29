@@ -24,6 +24,12 @@ type Lobsters struct {
 func (widget *Lobsters) Initialize() error {
 	widget.withTitle("Lobsters").withCacheDuration(time.Hour)
 
+	if widget.InstanceURL == "" {
+		widget.withTitleURL("https://lobste.rs")
+	} else {
+		widget.withTitleURL(widget.InstanceURL)
+	}
+
 	if widget.SortBy == "" || (widget.SortBy != "hot" && widget.SortBy != "new") {
 		widget.SortBy = "hot"
 	}
