@@ -235,6 +235,8 @@ theme:
 > .widget-type-rss a {
 >     font-size: 1.5rem;
 > }
+>
+> In addition, you can also use the `css-class` property which is available on every widget to set custom class names for individual widgets.
 
 
 ## Pages & Columns
@@ -356,6 +358,7 @@ pages:
 | type | string | yes |
 | title | string | no |
 | cache | string | no |
+| css-class | string | no |
 
 #### `type`
 Used to specify the widget.
@@ -376,6 +379,9 @@ cache: 1d  # 1 day
 > [!NOTE]
 >
 > Not all widgets can have their cache duration modified. The calendar and weather widgets update on the hour and this cannot be changed.
+
+#### `css-class`
+Set custom CSS classes for the specific widget instance.
 
 ### RSS
 Display a list of articles from multiple RSS feeds.

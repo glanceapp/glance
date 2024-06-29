@@ -119,6 +119,7 @@ const (
 type widgetBase struct {
 	Type                string        `yaml:"type"`
 	Title               string        `yaml:"title"`
+	CSSClass            string        `yaml:"css-class"`
 	CustomCacheDuration DurationField `yaml:"cache"`
 	ContentAvailable    bool          `yaml:"-"`
 	Error               error         `yaml:"-"`

@@ -1,4 +1,4 @@
-<div class="widget widget-type-{{ .GetType }}">
+<div class="widget widget-type-{{ .GetType }}{{ if ne "" .CSSClass }} {{ .CSSClass }}{{ end }}">
     <div class="widget-header">
         <div class="uppercase">{{ .Title }}</div>
         {{ if and .Error .ContentAvailable }}
@@ -7,7 +7,7 @@
         <div class="notice-icon notice-icon-minor" title="{{ .Notice }}"></div>
         {{ end }}
     </div>
-    <div class="widget-content {{ if .ContentAvailable }}{{ block "widget-content-classes" . }}{{ end }}{{ end }}">
+    <div class="widget-content{{ if .ContentAvailable }} {{ block "widget-content-classes" . }}{{ end }}{{ end }}">
         {{ if .ContentAvailable }}
             {{ block "widget-content" . }}{{ end }}
         {{ else }}
