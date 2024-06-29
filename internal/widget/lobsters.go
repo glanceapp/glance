@@ -12,6 +12,8 @@ import (
 type Lobsters struct {
 	widgetBase     `yaml:",inline"`
 	Posts          feed.ForumPosts `yaml:"-"`
+	InstanceURL    string          `yaml:"instance-url"`
+	CustomURL      string          `yaml:"custom-url"`
 	Limit          int             `yaml:"limit"`
 	CollapseAfter  int             `yaml:"collapse-after"`
 	SortBy         string          `yaml:"sort-by"`
@@ -38,7 +40,7 @@ func (widget *Lobsters) Initialize() error {
 }
 
 func (widget *Lobsters) Update(ctx context.Context) {
-	posts, err := feed.FetchLobstersPosts(widget.SortBy, widget.Tags)
+	posts, err := feed.FetchLobstersPosts(widget.CustomURL, widget.InstanceURL, widget.SortBy, widget.Tags)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return

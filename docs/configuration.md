@@ -573,10 +573,22 @@ Preview:
 #### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
+| instance-url | string | no | https://lobste.rs/ |
+| custom-url | string | no | |
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
 | sort-by | string | no | hot |
 | tags | array | no | |
+
+##### `instance-url`
+The base URL for a lobsters instance hosted somewhere other than on lobste.rs. Example:
+
+```yaml
+instance-url: https://www.journalduhacker.net/
+```
+
+##### `custom-url`
+A custom URL to retrieve lobsters posts from. If this is specified, the `instance-url`, `sort-by` and `tags` properties are ignored.
 
 ##### `limit`
 The maximum number of posts to show.
