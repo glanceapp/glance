@@ -147,8 +147,7 @@ function setupSearchboxes() {
                     query = input;
                     searchUrlTemplate = defaultSearchUrl;
                 }
-
-                if (query.length == 0) {
+                if (query.length == 0 && currentBang == null) {
                     return;
                 }
 
@@ -170,9 +169,13 @@ function setupSearchboxes() {
         }
 
         const handleInput = (event) => {
-            const value = event.target.value.trimStart();
-            const words = value.split(" ");
+            const value = event.target.value.trim();
+            if (value in bangsMap) {
+                changeCurrentBang(bangsMap[value]);
+                return;
+            }
 
+            const words = value.split(" ");
             if (words.length >= 2 && words[0] in bangsMap) {
                 changeCurrentBang(bangsMap[words[0]]);
                 return;
