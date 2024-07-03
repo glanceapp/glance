@@ -61,7 +61,7 @@ type RSSFeedRequest struct {
 	HideCategories  bool   `yaml:"hide-categories"`
 	HideDescription bool   `yaml:"hide-description"`
 	ItemLinkPrefix  string `yaml:"item-link-prefix"`
-	IsDetailed      bool
+	IsDetailed      bool   `yaml:"-"`
 }
 
 type RSSFeedItems []RSSFeedItem
