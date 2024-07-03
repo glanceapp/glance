@@ -44,12 +44,25 @@ func sanitizeFeedDescription(description string) string {
 	return description
 }
 
+func shortenFeedDescriptionLen(description string, maxLen int) string {
+	description, _ = limitStringLength(description, 1000)
+	description = sanitizeFeedDescription(description)
+	description, limited := limitStringLength(description, maxLen)
+
+	if limited {
+		description += "…"
+	}
+
+	return description
+}
+
 type RSSFeedRequest struct {
 	Url             string `yaml:"url"`
 	Title           string `yaml:"title"`
 	HideCategories  bool   `yaml:"hide-categories"`
 	HideDescription bool   `yaml:"hide-description"`
 	ItemLinkPrefix  string `yaml:"item-link-prefix"`
+	IsDetailed      bool   `yaml:"-"`
 }
 
 type RSSFeedItems []RSSFeedItem
@@ -81,7 +94,6 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 
 		rssItem := RSSFeedItem{
 			ChannelURL: feed.Link,
-			Title:      item.Title,
 		}
 
 		if request.ItemLinkPrefix != "" {
@@ -108,34 +120,34 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 			}
 		}
 
-		if !request.HideDescription && item.Description != "" {
-			description, _ := limitStringLength(item.Description, 1000)
-			description = sanitizeFeedDescription(description)
-			description, limited := limitStringLength(description, 200)
-
-			if limited {
-				description += "…"
-			}
-
-			rssItem.Description = description
+		if item.Title != "" {
+			rssItem.Title = item.Title
+		} else {
+			rssItem.Title = shortenFeedDescriptionLen(item.Description, 100)
 		}
 
-		if !request.HideCategories {
-			var categories = make([]string, 0, 6)
-
-			for _, category := range item.Categories {
-				if len(categories) == 6 {
-					break
-				}
-
-				if len(category) == 0 || len(category) > 30 {
-					continue
-				}
-
-				categories = append(categories, category)
+		if request.IsDetailed {
+			if !request.HideDescription && item.Description != "" && item.Title != "" {
+				rssItem.Description = shortenFeedDescriptionLen(item.Description, 200)
 			}
 
-			rssItem.Categories = categories
+			if !request.HideCategories {
+				var categories = make([]string, 0, 6)
+
+				for _, category := range item.Categories {
+					if len(categories) == 6 {
+						break
+					}
+
+					if len(category) == 0 || len(category) > 30 {
+						continue
+					}
+
+					categories = append(categories, category)
+				}
+
+				rssItem.Categories = categories
+			}
 		}
 
 		if request.Title != "" {

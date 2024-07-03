@@ -39,10 +39,9 @@ func (widget *RSS) Initialize() error {
 		widget.CardHeight = 0
 	}
 
-	if widget.Style != "detailed-list" {
+	if widget.Style == "detailed-list" {
 		for i := range widget.FeedRequests {
-			widget.FeedRequests[i].HideCategories = true
-			widget.FeedRequests[i].HideDescription = true
+			widget.FeedRequests[i].IsDetailed = true
 		}
 	}
 
