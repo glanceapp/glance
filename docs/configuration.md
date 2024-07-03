@@ -1008,6 +1008,7 @@ Preview:
 | token | string | no | |
 | limit | integer | no | 10 |
 | collapse-after | integer | no | 5 |
+| source | string | no | github |
 
 ##### `repositories`
 A list of repositores for which to fetch the latest release for. Only the name/repo is required, not the full URL.
@@ -1039,7 +1040,10 @@ This way you can safely check your `glance.yml` in version control without expos
 The maximum number of releases to show.
 
 #### `collapse-after`
-How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+how many releases are visible before the "show more" button appears. set to `-1` to never collapse.
+
+#### `source`
+Either `github` or `gitlab`. Wether to retrieve the releases from github repositories or gitlab repositories.
 
 ### Repository
 Display general information about a repository as well as a list of the latest open pull requests and issues.
