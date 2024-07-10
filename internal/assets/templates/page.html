@@ -6,6 +6,7 @@
 <script>
     const pageData = {
         slug: "{{ .Page.Slug }}",
+        baseUrl: "{{ .App.Config.Server.BaseUrl }}",
     };
 </script>
 {{ end }}
@@ -14,13 +15,13 @@
 {{ define "document-head-after" }}
 {{ template "page-style-overrides.gotmpl" . }}
 {{ if ne "" .App.Config.Theme.CustomCSSFile }}
-<link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.Config.Server.StartedAt.Unix }}">
+<link rel="stylesheet" href="{{ .App.Config.Server.BaseUrl }}{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.Config.Server.StartedAt.Unix }}">
 {{ end }}
 {{ end }}
 
 {{ define "navigation-links" }}
 {{ range .App.Config.Pages }}
-<a href="/{{ .Slug }}" class="nav-item{{ if eq .Slug $.Page.Slug }} nav-item-current{{ end }}">{{ .Title }}</a>
+<a href="{{ $.App.Config.Server.BaseUrl }}/{{ .Slug }}" class="nav-item{{ if eq .Slug $.Page.Slug }} nav-item-current{{ end }}">{{ .Title }}</a>
 {{ end }}
 {{ end }}
 
