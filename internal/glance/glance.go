@@ -41,6 +41,7 @@ type Server struct {
 	Host       string    `yaml:"host"`
 	Port       uint16    `yaml:"port"`
 	AssetsPath string    `yaml:"assets-path"`
+	BaseUrl	   string    `yaml:"base-url"`
 	StartedAt  time.Time `yaml:"-"`
 }
 
@@ -194,10 +195,10 @@ func (a *Application) Serve() error {
 	// TODO: add HTTPS support
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET /{$}", a.HandlePageRequest)
-	mux.HandleFunc("GET /{page}", a.HandlePageRequest)
-	mux.HandleFunc("GET /api/pages/{page}/content/{$}", a.HandlePageContentRequest)
-	mux.Handle("GET /static/{path...}", http.StripPrefix("/static/", FileServerWithCache(http.FS(assets.PublicFS), 2*time.Hour)))
+	mux.HandleFunc(fmt.Sprintf("GET %s/{$}", a.Config.Server.BaseUrl), a.HandlePageRequest)
+	mux.HandleFunc(fmt.Sprintf("GET %s/{page}", a.Config.Server.BaseUrl), a.HandlePageRequest)
+	mux.HandleFunc(fmt.Sprintf("GET %s/api/pages/{page}/content/{$}", a.Config.Server.BaseUrl), a.HandlePageContentRequest)
+	mux.Handle(fmt.Sprintf("GET %s/static/{path...}", a.Config.Server.BaseUrl), http.StripPrefix(fmt.Sprintf("%s/static/", a.Config.Server.BaseUrl), FileServerWithCache(http.FS(assets.PublicFS), 2*time.Hour)))
 
 	if a.Config.Server.AssetsPath != "" {
 		absAssetsPath, err := filepath.Abs(a.Config.Server.AssetsPath)
@@ -208,7 +209,7 @@ func (a *Application) Serve() error {
 
 		slog.Info("Serving assets", "path", absAssetsPath)
 		assetsFS := FileServerWithCache(http.Dir(a.Config.Server.AssetsPath), 2*time.Hour)
-		mux.Handle("/assets/{path...}", http.StripPrefix("/assets/", assetsFS))
+		mux.Handle(fmt.Sprintf("%s/assets/{path...}", a.Config.Server.BaseUrl), http.StripPrefix("/assets/", assetsFS))
 	}
 
 	server := http.Server{
