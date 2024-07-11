@@ -82,7 +82,7 @@ pages:
           - type: weather
             location: London, United Kingdom
 
-          - type: markets
+          - type: stocks
             markets:
               - symbol: SPY
                 name: S&P 500
