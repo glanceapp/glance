@@ -40,7 +40,6 @@ pages:
     columns:
       - size: small
         widgets:
-          - type: clock
           - type: calendar
 
           - type: rss
