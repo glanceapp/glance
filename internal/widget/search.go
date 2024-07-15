@@ -20,6 +20,7 @@ type Search struct {
 	SearchEngine string        `yaml:"search-engine"`
 	Bangs        []SearchBang  `yaml:"bangs"`
 	NewTab       bool          `yaml:"new-tab"`
+	Autofocus    bool          `yaml:"autofocus"`
 }
 
 func convertSearchUrl(url string) string {

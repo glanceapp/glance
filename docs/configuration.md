@@ -755,6 +755,7 @@ Preview:
 | ---- | ---- | -------- | ------- |
 | search-engine | string | no | duckduckgo |
 | new-tab | boolean | no | false |
+| autofocus | boolean | no | false |
 | bangs | array | no | |
 
 ##### `search-engine`
@@ -767,6 +768,9 @@ Either a value from the table below or a URL to a custom search engine. Use `{QU
 
 ##### `new-tab`
 When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
+
+##### `new-tab`
+When set to `true`, automatically focuses the search input on page load.
 
 ##### `bangs`
 What now? [Bangs](https://duckduckgo.com/bangs). They're shortcuts that allow you to use the same search box for many different sites. Assuming you have it configured, if for example you start your search input with `!yt` you'd be able to perform a search on YouTube:
