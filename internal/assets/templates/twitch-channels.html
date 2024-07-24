@@ -20,7 +20,9 @@
                 <a href="https://twitch.tv/{{ .Login }}" class="size-h3{{ if .IsLive }} color-highlight{{ end }} block text-truncate" target="_blank" rel="noreferrer">{{ .Name }}</a>
                 {{ if .Exists }}
                     {{ if .IsLive }}
-                    <a class="text-truncate block" href="https://www.twitch.tv/directory/category/{{ .CategorySlug }}" target="_blank" rel="noreferrer">{{ .Category }}</a>
+                        {{ if .Category }}
+                            <a class="text-truncate block" href="https://www.twitch.tv/directory/category/{{ .CategorySlug }}" target="_blank" rel="noreferrer">{{ .Category }}</a>
+                        {{ end }}
                     <ul class="list-horizontal-text">
                         <li {{ dynamicRelativeTimeAttrs .LiveSince }}></li>
                         <li>{{ .ViewersCount | formatViewerCount }} viewers</li>
