@@ -38,10 +38,11 @@ type Theme struct {
 }
 
 type Server struct {
-	Host       string `yaml:"host"`
-	Port       uint16 `yaml:"port"`
-	AssetsPath string `yaml:"assets-path"`
-	AssetsHash string `yaml:"-"`
+	Host       string    `yaml:"host"`
+	Port       uint16    `yaml:"port"`
+	AssetsPath string    `yaml:"assets-path"`
+	AssetsHash string    `yaml:"-"`
+	StartedAt  time.Time `yaml:"-"` // used in custom css file
 }
 
 type Column struct {
@@ -225,6 +226,7 @@ func (a *Application) Serve() error {
 		Handler: mux,
 	}
 
+	a.Config.Server.StartedAt = time.Now()
 	slog.Info("Starting server", "host", a.Config.Server.Host, "port", a.Config.Server.Port)
 	return server.ListenAndServe()
 }
