@@ -12,6 +12,7 @@ import (
 type Calendar struct {
 	widgetBase `yaml:",inline"`
 	Calendar   *feed.Calendar
+	Icsurl     string `yaml:"icsurl"`
 }
 
 func (widget *Calendar) Initialize() error {
@@ -21,7 +22,7 @@ func (widget *Calendar) Initialize() error {
 }
 
 func (widget *Calendar) Update(ctx context.Context) {
-	widget.Calendar = feed.NewCalendar(time.Now())
+	widget.Calendar = feed.NewCalendar(time.Now(), widget.Icsurl)
 	widget.withError(nil).scheduleNextUpdate()
 }
 

@@ -813,15 +813,61 @@ kbd:active {
 }
 
 .calendar-day {
-    width: calc(100% / 7);
-    text-align: center;
-    padding: 0.6rem 0;
+  width: calc(100% / 7);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.6rem 0;
 }
 
 .calendar-day-today {
-    border-radius: var(--border-radius);
-    background-color: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) (var(--bgl)) + 6%)));
-    color: var(--color-text-highlight);
+  border-radius: var(--border-radius);
+  background-color: hsl(
+    var(--bghs),
+    calc(var(--scheme) (var(--scheme) (var(--bgl)) + 6%))
+  );
+  color: var(--color-text-highlight);
+}
+
+.calendar-isevent {
+  color: var(--color-primary);
+  cursor: pointer;
+}
+.tooltip {
+  position: relative;
+  display: inline-block;
+  width: 0;
+  height: 0;
+}
+.tooltiptext {
+  transition: 0.5s;
+}
+/* Tooltip text */
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 150px;
+  background-color: hsl(
+    var(--bghs),
+    calc(var(--scheme) (var(--scheme) (var(--bgl)) + 6%))
+  );
+  color: var(--color-text-highlight);
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  opacity: 0;
+
+  position: absolute;
+  z-index: 1;
+  bottom: 100%;
+  left: 50%;
+  margin-bottom: 5px;
+  margin-left: -75px;
+}
+
+.calendar-day:hover .tooltiptext {
+  visibility: visible;
+  opacity: 0.8;
 }
 
 .weather-column {

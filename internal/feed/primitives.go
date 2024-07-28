@@ -21,12 +21,21 @@ type ForumPost struct {
 
 type ForumPosts []ForumPost
 
+type CalendarEvent struct {
+	StartedDay time.Time
+	EventHover string
+}
+type CalendayDay struct {
+	Day     int
+	IsEvent bool
+	Event   CalendarEvent
+}
 type Calendar struct {
 	CurrentDay        int
 	CurrentWeekNumber int
 	CurrentMonthName  string
 	CurrentYear       int
-	Days              []int
+	Days              []CalendayDay
 }
 
 type Weather struct {
