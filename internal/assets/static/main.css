@@ -184,6 +184,57 @@
     transform: rotate(-90deg);
 }
 
+.widget-group-header {
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.widget-group-title {
+    background: none;
+    font: inherit;
+    border: none;
+    color: inherit;
+    text-transform: uppercase;
+    border-bottom: 1px solid transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding-bottom: 0.1rem;
+    transition: color .3s, border-color .3s;
+}
+
+.widget-group-title:hover:not(.widget-group-title-current) {
+    border-bottom-color: var(--color-text-subdue);
+    color: var(--color-text-highlight);
+}
+
+.widget-group-title-current {
+    border-bottom-color: var(--color-primary);
+    color: var(--color-text-highlight);
+}
+
+.widget-group-content {
+    animation: widgetGroupContentEntrance .3s cubic-bezier(0.25, 1, 0.5, 1) backwards;
+}
+
+.widget-group-content[data-direction="right"] {
+    --direction: 5px;
+}
+
+.widget-group-content[data-direction="left"] {
+    --direction: -5px;
+}
+
+@keyframes widgetGroupContentEntrance {
+    from {
+        opacity: 0;
+        transform: translateX(var(--direction));
+    }
+}
+
+.widget-group-content:not(.widget-group-content-current) {
+    display: none;
+}
+
 .widget-content:has(.expand-toggle-button:last-child) {
     padding-bottom: 0;
 }
@@ -1393,6 +1444,7 @@ kbd:active {
 .gap-7              { gap: 0.7rem; }
 .gap-10             { gap: 1rem; }
 .gap-15             { gap: 1.5rem; }
+.gap-20             { gap: 2rem; }
 .gap-25             { gap: 2.5rem; }
 .gap-35             { gap: 3.5rem; }
 .gap-45             { gap: 4.5rem; }

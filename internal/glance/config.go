@@ -32,6 +32,16 @@ func NewConfigFromYml(contents io.Reader) (*Config, error) {
 		return nil, err
 	}
 
+	for p := range config.Pages {
+		for c := range config.Pages[p].Columns {
+			for w := range config.Pages[p].Columns[c].Widgets {
+				if err := config.Pages[p].Columns[c].Widgets[w].Initialize(); err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
 	return config, nil
 }
 

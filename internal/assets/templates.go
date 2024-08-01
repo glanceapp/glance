@@ -37,6 +37,7 @@ var (
 	RepositoryTemplate            = compileTemplate("repository.html", "widget-base.html")
 	SearchTemplate                = compileTemplate("search.html", "widget-base.html")
 	ExtensionTemplate             = compileTemplate("extension.html", "widget-base.html")
+	GroupTemplate                 = compileTemplate("group.html", "widget-base.html")
 )
 
 var globalTemplateFunctions = template.FuncMap{

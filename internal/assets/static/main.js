@@ -250,6 +250,46 @@ function setupDynamicRelativeTime() {
     });
 }
 
+function setupGroups() {
+    const groups = document.getElementsByClassName("widget-type-group");
+
+    if (groups.length == 0) {
+        return;
+    }
+
+    for (let g = 0; g < groups.length; g++) {
+        const group = groups[g];
+        const titles = group.getElementsByClassName("widget-header")[0].children;
+        const tabs = group.getElementsByClassName("widget-group-contents")[0].children;
+        let current = 0;
+
+        for (let t = 0; t < titles.length; t++) {
+            const title = titles[t];
+            title.addEventListener("click", () => {
+                if (t == current) {
+                    return;
+                }
+
+                for (let i = 0; i < titles.length; i++) {
+                    titles[i].classList.remove("widget-group-title-current");
+                    tabs[i].classList.remove("widget-group-content-current");
+                }
+
+                if (current < t) {
+                    tabs[t].dataset.direction = "right";
+                } else {
+                    tabs[t].dataset.direction = "left";
+                }
+
+                current = t;
+
+                title.classList.add("widget-group-title-current");
+                tabs[t].classList.add("widget-group-content-current");
+            });
+        }
+    }
+}
+
 function setupLazyImages() {
     const images = document.querySelectorAll("img[loading=lazy]");
 
@@ -558,6 +598,7 @@ async function setupPage() {
         setupSearchBoxes();
         setupCollapsibleLists();
         setupCollapsibleGrids();
+        setupGroups();
         setupDynamicRelativeTime();
         setupLazyImages();
     } finally {

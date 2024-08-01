@@ -63,6 +63,8 @@ func New(widgetType string) (Widget, error) {
 		widget = &Search{}
 	case "extension":
 		widget = &Extension{}
+	case "group":
+		widget = &Group{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}
@@ -100,10 +102,6 @@ func (w *Widgets) UnmarshalYAML(node *yaml.Node) error {
 			return err
 		}
 
-		if err := widget.Initialize(); err != nil {
-			return err
-		}
-
 		*w = append(*w, widget)
 	}
 
@@ -119,6 +117,7 @@ type Widget interface {
 	GetID() uint64
 	SetID(uint64)
 	HandleRequest(w http.ResponseWriter, r *http.Request)
+	SetHideHeader(bool)
 }
 
 type cacheType int
@@ -144,6 +143,7 @@ type widgetBase struct {
 	cacheType           cacheType     `yaml:"-"`
 	nextUpdate          time.Time     `yaml:"-"`
 	updateRetriedTimes  int           `yaml:"-"`
+	HideHeader          bool          `yaml:"-"`
 }
 
 func (w *widgetBase) RequiresUpdate(now *time.Time) bool {
@@ -168,6 +168,10 @@ func (w *widgetBase) GetID() uint64 {
 
 func (w *widgetBase) SetID(id uint64) {
 	w.ID = id
+}
+
+func (w *widgetBase) SetHideHeader(value bool) {
+	w.HideHeader = value
 }
 
 func (widget *widgetBase) HandleRequest(w http.ResponseWriter, r *http.Request) {

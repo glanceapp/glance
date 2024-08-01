@@ -13,6 +13,7 @@
   - [Lobsters](#lobsters)
   - [Reddit](#reddit)
   - [Search](#search-widget)
+  - [Group](#group)
   - [Extension](#extension)
   - [Weather](#weather)
   - [Monitor](#monitor)
@@ -804,6 +805,50 @@ The URL of the search engine. Use `{QUERY}` to indicate where the query value ge
 url: https://www.reddit.com/search?q={QUERY}
 url: https://store.steampowered.com/search/?term={QUERY}
 url: https://www.amazon.com/s?k={QUERY}
+```
+
+### Group
+Group multiple widgets into one using tabs. Widgets are defined using a `widgets` property exactly as you would on a page column. The only limitation is that you cannot place a group widget within a group widget.
+
+Example:
+
+```yaml
+- type: group
+  widgets:
+    - type: reddit
+      subreddit: gamingnews
+      show-thumbnails: true
+      collapse-after: 6
+    - type: reddit
+      subreddit: games
+    - type: reddit
+      subreddit: pcgaming
+      show-thumbnails: true
+```
+
+Preview:
+
+![](images/group-widget-preview.png)
+
+#### Sharing properties
+
+To avoid repetition you can use [YAML anchors](https://support.atlassian.com/bitbucket-cloud/docs/yaml-anchors/) and share properties between widgets.
+
+Example:
+
+```yaml
+- type: group
+  define: &shared-properties
+      type: reddit
+      show-thumbnails: true
+      collapse-after: 6
+  widgets:
+    - subreddit: gamingnews
+      <<: *shared-properties
+    - subreddit: games
+      <<: *shared-properties
+    - subreddit: pcgaming
+      <<: *shared-properties
 ```
 
 ### Extension
