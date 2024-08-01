@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -24,6 +25,7 @@ type Application struct {
 	Version    string
 	Config     Config
 	slugToPage map[string]*Page
+	widgetByID map[uint64]widget.Widget
 }
 
 type Theme struct {
@@ -106,16 +108,24 @@ func NewApplication(config *Config) (*Application, error) {
 		Version:    buildVersion,
 		Config:     *config,
 		slugToPage: make(map[string]*Page),
+		widgetByID: make(map[uint64]widget.Widget),
 	}
 
 	app.slugToPage[""] = &config.Pages[0]
 
-	for i := range config.Pages {
-		if config.Pages[i].Slug == "" {
-			config.Pages[i].Slug = titleToSlug(config.Pages[i].Title)
+	for p := range config.Pages {
+		if config.Pages[p].Slug == "" {
+			config.Pages[p].Slug = titleToSlug(config.Pages[p].Title)
 		}
 
-		app.slugToPage[config.Pages[i].Slug] = &config.Pages[i]
+		app.slugToPage[config.Pages[p].Slug] = &config.Pages[p]
+
+		for c := range config.Pages[p].Columns {
+			for w := range config.Pages[p].Columns[c].Widgets {
+				widget := config.Pages[p].Columns[c].Widgets[w]
+				app.widgetByID[widget.GetID()] = widget
+			}
+		}
 	}
 
 	return app, nil
@@ -190,6 +200,26 @@ func FileServerWithCache(fs http.FileSystem, cacheDuration time.Duration) http.H
 	})
 }
 
+func (a *Application) HandleWidgetRequest(w http.ResponseWriter, r *http.Request) {
+	widgetValue := r.PathValue("widget")
+
+	widgetID, err := strconv.ParseUint(widgetValue, 10, 64)
+
+	if err != nil {
+		a.HandleNotFound(w, r)
+		return
+	}
+
+	widget, exists := a.widgetByID[widgetID]
+
+	if !exists {
+		a.HandleNotFound(w, r)
+		return
+	}
+
+	widget.HandleRequest(w, r)
+}
+
 func (a *Application) AssetPath(asset string) string {
 	return "/static/" + a.Config.Server.AssetsHash + "/" + asset
 }
@@ -203,7 +233,10 @@ func (a *Application) Serve() error {
 
 	mux.HandleFunc("GET /{$}", a.HandlePageRequest)
 	mux.HandleFunc("GET /{page}", a.HandlePageRequest)
+
 	mux.HandleFunc("GET /api/pages/{page}/content/{$}", a.HandlePageContentRequest)
+	mux.HandleFunc("/api/widgets/{widget}/{path...}", a.HandleWidgetRequest)
+
 	mux.Handle(
 		fmt.Sprintf("GET /static/%s/{path...}", a.Config.Server.AssetsHash),
 		http.StripPrefix("/static/"+a.Config.Server.AssetsHash, FileServerWithCache(http.FS(assets.PublicFS), 8*time.Hour)),

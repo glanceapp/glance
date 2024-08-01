@@ -8,6 +8,8 @@ import (
 	"html/template"
 	"log/slog"
 	"math"
+	"net/http"
+	"sync/atomic"
 	"time"
 
 	"github.com/glanceapp/glance/internal/feed"
@@ -15,51 +17,59 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var uniqueID atomic.Uint64
+
 func New(widgetType string) (Widget, error) {
+	var widget Widget
+
 	switch widgetType {
 	case "calendar":
-		return &Calendar{}, nil
+		widget = &Calendar{}
 	case "clock":
-		return &Clock{}, nil
+		widget = &Clock{}
 	case "weather":
-		return &Weather{}, nil
+		widget = &Weather{}
 	case "bookmarks":
-		return &Bookmarks{}, nil
+		widget = &Bookmarks{}
 	case "iframe":
-		return &IFrame{}, nil
+		widget = &IFrame{}
 	case "html":
-		return &HTML{}, nil
+		widget = &HTML{}
 	case "hacker-news":
-		return &HackerNews{}, nil
+		widget = &HackerNews{}
 	case "releases":
-		return &Releases{}, nil
+		widget = &Releases{}
 	case "videos":
-		return &Videos{}, nil
+		widget = &Videos{}
 	case "markets", "stocks":
-		return &Markets{}, nil
+		widget = &Markets{}
 	case "reddit":
-		return &Reddit{}, nil
+		widget = &Reddit{}
 	case "rss":
-		return &RSS{}, nil
+		widget = &RSS{}
 	case "monitor":
-		return &Monitor{}, nil
+		widget = &Monitor{}
 	case "twitch-top-games":
-		return &TwitchGames{}, nil
+		widget = &TwitchGames{}
 	case "twitch-channels":
-		return &TwitchChannels{}, nil
+		widget = &TwitchChannels{}
 	case "lobsters":
-		return &Lobsters{}, nil
+		widget = &Lobsters{}
 	case "change-detection":
-		return &ChangeDetection{}, nil
+		widget = &ChangeDetection{}
 	case "repository":
-		return &Repository{}, nil
+		widget = &Repository{}
 	case "search":
-		return &Search{}, nil
+		widget = &Search{}
 	case "extension":
-		return &Extension{}, nil
+		widget = &Extension{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}
+
+	widget.SetID(uniqueID.Add(1))
+
+	return widget, nil
 }
 
 type Widgets []Widget
@@ -90,7 +100,7 @@ func (w *Widgets) UnmarshalYAML(node *yaml.Node) error {
 			return err
 		}
 
-		if err = widget.Initialize(); err != nil {
+		if err := widget.Initialize(); err != nil {
 			return err
 		}
 
@@ -106,6 +116,9 @@ type Widget interface {
 	Update(context.Context)
 	Render() template.HTML
 	GetType() string
+	GetID() uint64
+	SetID(uint64)
+	HandleRequest(w http.ResponseWriter, r *http.Request)
 }
 
 type cacheType int
@@ -117,6 +130,7 @@ const (
 )
 
 type widgetBase struct {
+	ID                  uint64        `yaml:"-"`
 	Type                string        `yaml:"type"`
 	Title               string        `yaml:"title"`
 	TitleURL            string        `yaml:"title-url"`
@@ -146,6 +160,18 @@ func (w *widgetBase) RequiresUpdate(now *time.Time) bool {
 
 func (w *widgetBase) Update(ctx context.Context) {
 
+}
+
+func (w *widgetBase) GetID() uint64 {
+	return w.ID
+}
+
+func (w *widgetBase) SetID(id uint64) {
+	w.ID = id
+}
+
+func (widget *widgetBase) HandleRequest(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "not implemented", http.StatusNotImplemented)
 }
 
 func (w *widgetBase) GetType() string {
