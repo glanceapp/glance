@@ -1,23 +1,40 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
+{{ if ne .Style "dynamic-columns-experimental" }}
 <ul class="list list-gap-10 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
-    {{ range .Releases }}
-    <li>
-        <div class="flex items-center gap-10">
-            <a class="size-h4 block text-truncate color-primary-if-not-visited" href="{{ .NotesUrl }}" target="_blank" rel="noreferrer">{{ .Name }}</a>
-            {{ if $.ShowSourceIcon }}
-            <img class="simple-icon release-source-icon" src="{{ .SourceIconURL }}" alt="" loading="lazy">
-            {{ end }}
-        </div>
-        <ul class="list-horizontal-text">
-            <li {{ dynamicRelativeTimeAttrs .TimeReleased }}></li>
-            <li>{{ .Version }}</li>
-            {{ if gt .Downvotes 3 }}
-            <li>{{ .Downvotes | formatNumber }} ⚠</li>
-            {{ end }}
-        </ul>
-    </li>
-    {{ end }}
+  {{ range .Releases }}
+  <li>
+    {{ template "release" (params . $.ShowSourceIcon) }}
+  </li>
+  {{ end }}
+</ul>
+{{ else }}
+<ul class="dynamic-columns collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
+  {{ range .Releases }}
+  <li class="flex flex-column gap-5">
+    {{ template "release" (params . $.ShowSourceIcon) }}
+  </li>
+  {{ end }}
+</ul>
+{{ end }}
+{{ end }}
+
+
+{{ define "release" }}
+{{ $rel := index . 0 }}
+{{ $showSourceIcon := index . 1 }}
+<div class="flex items-center gap-10">
+  <a class="size-h4 block text-truncate color-primary-if-not-visited" href="{{ $rel.NotesUrl }}" target="_blank" rel="noreferrer">{{ $rel.Name }}</a>
+  {{ if $showSourceIcon }}
+  <img class="simple-icon release-source-icon" src="{{ $rel.SourceIconURL }}" alt="" loading="lazy">
+  {{ end }}
+</div>
+<ul class="list-horizontal-text">
+  <li {{ dynamicRelativeTimeAttrs $rel.TimeReleased }}></li>
+  <li>{{ $rel.Version }}</li>
+  {{ if gt $rel.Downvotes 3 }}
+  <li>{{ $rel.Downvotes | formatNumber }} ⚠</li>
+  {{ end }}
 </ul>
 {{ end }}

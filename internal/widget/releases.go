@@ -21,6 +21,7 @@ type Releases struct {
 	Limit           int                    `yaml:"limit"`
 	CollapseAfter   int                    `yaml:"collapse-after"`
 	ShowSourceIcon  bool                   `yaml:"show-source-icon"`
+	Style           string                 `yaml:"style"`
 }
 
 func (widget *Releases) Initialize() error {

@@ -66,6 +66,9 @@ var globalTemplateFunctions = template.FuncMap{
 	"dynamicRelativeTimeAttrs": func(t time.Time) template.HTMLAttr {
 		return template.HTMLAttr(fmt.Sprintf(`data-dynamic-relative-time="%d"`, t.Unix()))
 	},
+	"params": func(p ...any) []any {
+		return p
+	},
 }
 
 func compileTemplate(primary string, dependencies ...string) *template.Template {
