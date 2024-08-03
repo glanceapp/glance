@@ -21,7 +21,13 @@ type SiteStatus struct {
 }
 
 func getSiteStatusTask(statusRequest *SiteStatusRequest) (SiteStatus, error) {
-	request, err := http.NewRequest(http.MethodGet, statusRequest.CheckURL, nil)
+	var url string
+	if statusRequest.CheckURL != "" {
+		url = statusRequest.CheckURL
+	} else {
+		url = statusRequest.URL
+	}
+	request, err := http.NewRequest(http.MethodGet, url, nil)
 
 	if err != nil {
 		return SiteStatus{
