@@ -484,6 +484,7 @@ Preview:
 | limit | integer | no | 25 |
 | style | string | no | horizontal-cards |
 | collapse-after-rows | integer | no | 4 |
+| include-shorts | boolean | no | false |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
