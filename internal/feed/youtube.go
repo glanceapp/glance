@@ -39,12 +39,12 @@ func parseYoutubeFeedTime(t string) time.Time {
 	return parsedTime
 }
 
-func FetchYoutubeChannelUploads(channelIds []string, videoUrlTemplate string, noShorts bool) (Videos, error) {
+func FetchYoutubeChannelUploads(channelIds []string, videoUrlTemplate string, includeShorts bool) (Videos, error) {
 	requests := make([]*http.Request, 0, len(channelIds))
 
 	for i := range channelIds {
 		var feedUrl string
-		if noShorts && strings.HasPrefix(channelIds[i], "UC") {
+		if !includeShorts && strings.HasPrefix(channelIds[i], "UC") {
 			playlistId := strings.Replace(channelIds[i], "UC", "UULF", 1)
 			feedUrl = "https://www.youtube.com/feeds/videos.xml?playlist_id=" + playlistId
 		} else {

@@ -17,7 +17,7 @@ type Videos struct {
 	CollapseAfterRows int         `yaml:"collapse-after-rows"`
 	Channels          []string    `yaml:"channels"`
 	Limit             int         `yaml:"limit"`
-	NoShorts          bool        `yaml:"no_shorts"`
+	IncludeShorts     bool        `yaml:"include-shorts"`
 }
 
 func (widget *Videos) Initialize() error {
@@ -35,7 +35,7 @@ func (widget *Videos) Initialize() error {
 }
 
 func (widget *Videos) Update(ctx context.Context) {
-	videos, err := feed.FetchYoutubeChannelUploads(widget.Channels, widget.VideoUrlTemplate, widget.NoShorts)
+	videos, err := feed.FetchYoutubeChannelUploads(widget.Channels, widget.VideoUrlTemplate, widget.IncludeShorts)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
