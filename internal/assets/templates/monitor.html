@@ -2,7 +2,7 @@
 
 {{ define "widget-content" }}
 {{ if ne .Style "dynamic-columns-experimental" }}
-<ul class="list list-gap-20 list-with-separator">
+<ul class="list list-gap-20 list-with-separator" data-collapse-after="{{ .CollapseAfter }}">
     {{ range .Sites }}
     <li class="monitor-site flex items-center gap-15">
         {{ template "site" . }}
@@ -10,7 +10,7 @@
     {{ end }}
 </ul>
 {{ else }}
-<ul class="dynamic-columns">
+<ul class="dynamic-columns collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
     {{ range .Sites }}
     <div class="flex items-center gap-15">
         {{ template "site" . }}

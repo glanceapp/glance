@@ -10,7 +10,7 @@
   {{ end }}
 </ul>
 {{ else }}
-<ul class="dynamic-columns">
+<ul class="dynamic-columns collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
     {{ range .Channels }}
     <li class="flex flex-column gap-5">
         {{ template "twitch-channel" . }}
