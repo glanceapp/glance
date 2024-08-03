@@ -15,6 +15,7 @@ type TwitchChannels struct {
 	Channels        []feed.TwitchChannel `yaml:"-"`
 	CollapseAfter   int                  `yaml:"collapse-after"`
 	SortBy          string               `yaml:"sort-by"`
+	Style           string               `yaml:"style"`
 }
 
 func (widget *TwitchChannels) Initialize() error {
