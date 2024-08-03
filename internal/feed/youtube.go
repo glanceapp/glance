@@ -10,7 +10,7 @@ import (
 )
 
 type youtubeFeedResponseXml struct {
-	Channel     string `xml:"title"`
+	Channel     string `xml:"author>name"`
 	ChannelLink struct {
 		Href string `xml:"href,attr"`
 	} `xml:"link"`
