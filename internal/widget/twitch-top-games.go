@@ -15,6 +15,7 @@ type TwitchGames struct {
 	Exclude       []string              `yaml:"exclude"`
 	Limit         int                   `yaml:"limit"`
 	CollapseAfter int                   `yaml:"collapse-after"`
+	Style         string                `yaml:"style"`
 }
 
 func (widget *TwitchGames) Initialize() error {
