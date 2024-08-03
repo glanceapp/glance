@@ -78,12 +78,6 @@ func FetchYoutubeChannelUploads(channelIds []string, videoUrlTemplate string, no
 
 		for j := range response.Videos {
 			video := &response.Videos[j]
-
-			// TODO: figure out a better way of skipping shorts
-			if strings.Contains(video.Title, "#shorts") {
-				continue
-			}
-
 			var videoUrl string
 
 			if videoUrlTemplate == "" {
