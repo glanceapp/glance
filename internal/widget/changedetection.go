@@ -17,6 +17,7 @@ type ChangeDetection struct {
 	Token            OptionalEnvString           `yaml:"token"`
 	Limit            int                         `yaml:"limit"`
 	CollapseAfter    int                         `yaml:"collapse-after"`
+	Style            string                      `yaml:"style"`
 }
 
 func (widget *ChangeDetection) Initialize() error {
