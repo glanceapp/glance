@@ -53,11 +53,16 @@ type Monitor struct {
 		StatusText              string           `yaml:"-"`
 		StatusStyle             string           `yaml:"-"`
 	} `yaml:"sites"`
-	Style string `yaml:"style"`
+	Style         string `yaml:"style"`
+	CollapseAfter int    `yaml:"collapse-after"`
 }
 
 func (widget *Monitor) Initialize() error {
 	widget.withTitle("Monitor").withCacheDuration(5 * time.Minute)
+
+	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
+		widget.CollapseAfter = 5
+	}
 
 	for i := range widget.Sites {
 		widget.Sites[i].IconUrl, widget.Sites[i].IsSimpleIcon = toSimpleIconIfPrefixed(widget.Sites[i].IconUrl)
