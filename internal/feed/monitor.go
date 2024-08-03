@@ -9,6 +9,7 @@ import (
 
 type SiteStatusRequest struct {
 	URL           string `yaml:"url"`
+	CheckURL      string `yaml:"check_url"`
 	AllowInsecure bool   `yaml:"allow-insecure"`
 }
 
@@ -20,7 +21,7 @@ type SiteStatus struct {
 }
 
 func getSiteStatusTask(statusRequest *SiteStatusRequest) (SiteStatus, error) {
-	request, err := http.NewRequest(http.MethodGet, statusRequest.URL, nil)
+	request, err := http.NewRequest(http.MethodGet, statusRequest.CheckURL, nil)
 
 	if err != nil {
 		return SiteStatus{
