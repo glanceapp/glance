@@ -997,6 +997,7 @@ Properties for each site:
 | ---- | ---- | -------- | ------- |
 | title | string | yes | |
 | url | string | yes | |
+| check_url | string | no | |
 | icon | string | no | |
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
@@ -1007,7 +1008,11 @@ The title used to indicate the site.
 
 `url`
 
-The URL which will be requested and its response will determine the status of the site. Optionally, you can specify this using an environment variable with the syntax `${VARIABLE_NAME}`.
+The public facing URL of a monitored service, the user will be redirected here. If `check_url` is not specified, this is used as the status check.
+
+`check_url`
+
+The URL which will be requested and its response will determine the status of the site. If not specified, the `url` property is used.
 
 `icon`
 
