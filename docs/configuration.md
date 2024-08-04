@@ -264,6 +264,7 @@ pages:
 | ---- | ---- | -------- | ------- |
 | title | string | yes | |
 | slug | string | no | |
+| width | string | no | |
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
 
@@ -272,6 +273,18 @@ The name of the page which gets shown in the navigation bar.
 
 #### `slug`
 The URL friendly version of the title which is used to access the page. For example if the title of the page is "RSS Feeds" you can make the page accessible via `localhost:8080/feeds` by setting the slug to `feeds`. If not defined, it will automatically be generated from the title.
+
+#### `width`
+The maximum width of the page on desktop. Possible values are `slim` and `wide`.
+
+* default: `1600px`
+* slim: `1100px`
+* wide: `1920px`
+
+> [!NOTE]
+>
+> When using `slim`, the maximum number of columns allowed for that page is `2`.
+
 
 #### `show-mobile-header`
 Whether to show a header displaying the name of the page on mobile. The header purposefully has a lot of vertical whitespace in order to push the content down and make it easier to reach on tall devices.

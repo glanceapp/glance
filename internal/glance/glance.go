@@ -60,6 +60,7 @@ type templateData struct {
 type Page struct {
 	Title            string   `yaml:"name"`
 	Slug             string   `yaml:"slug"`
+	Width            string   `yaml:"width"`
 	ShowMobileHeader bool     `yaml:"show-mobile-header"`
 	Columns          []Column `yaml:"columns"`
 	mu               sync.Mutex

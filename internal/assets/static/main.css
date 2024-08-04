@@ -428,6 +428,14 @@ kbd:active {
     padding: 0 var(--content-bounds-padding);
 }
 
+.page-width-wide .content-bounds {
+    max-width: 1920px;
+}
+
+.page-width-slim .content-bounds {
+    max-width: 1100px;
+}
+
 .dynamic-columns {
     gap: calc(var(--widget-content-vertical-padding) / 2);
     display: grid;

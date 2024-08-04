@@ -10,7 +10,7 @@
 </script>
 {{ end }}
 
-{{ define "document-root-attrs" }}{{ if .App.Config.Theme.Light }}class="light-scheme"{{ end }}{{ end }}
+{{ define "document-root-attrs" }}class="{{ if .App.Config.Theme.Light }}light-scheme {{ end }}{{ if ne "" .Page.Width }}page-width-{{ .Page.Width }}{{ end }}"{{ end }}
 {{ define "document-head-after" }}
 {{ template "page-style-overrides.gotmpl" . }}
 {{ if ne "" .App.Config.Theme.CustomCSSFile }}
