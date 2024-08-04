@@ -397,12 +397,17 @@ body {
     border-radius: 50%;
 }
 
-.notice-icon-major {
+.notice-icon-major,
+.notice-icon-critical {
     background: var(--color-negative);
 }
 
 .notice-icon-minor {
     border: 1px solid var(--color-negative);
+}
+
+.notice-icon-none {
+    border: 1px solid var(--color-positive);
 }
 
 kbd {
@@ -1427,6 +1432,7 @@ kbd:active {
 .inline-block       { display: inline-block; }
 .overflow-hidden    { overflow: hidden; }
 .relative           { position: relative; }
+.hidden             { display: none; }
 .flex               { display: flex; }
 .flex-wrap          { flex-wrap: wrap; }
 .flex-nowrap        { flex-wrap: nowrap; }
