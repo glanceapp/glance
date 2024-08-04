@@ -1192,13 +1192,15 @@ To make the widget scale appropriately in a `full` size column, set the style to
 | links | array | yes | |
 
 ###### Properties for each link
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| title | string | yes | |
-| url | string | yes | |
-| icon | string | no | |
-| same-tab | boolean | no | false |
-| hide-arrow | boolean | no | false |
+| Name            | Type    | Required | Default |
+|-----------------|---------| -------- |---------|
+| title           | string  | yes |         |
+| url             | string  | yes |         |
+| icon            | string  | no |         |
+| same-tab        | boolean | no | false   |
+| hide-arrow      | boolean | no | false   |
+| status-page.url | string  | no |         |
+| status-page.show-if-operational | boolean | no | false |
 
 `icon`
 
@@ -1221,6 +1223,41 @@ Whether to open the link in the same tab or a new one.
 `hide-arrow`
 
 Whether to hide the colored arrow on each link.
+
+`status-page`
+
+Display a status indicator for the link. The status is determined by the response of the status page API.
+
+```yaml
+- type: bookmarks
+  groups:
+    - links:
+      - title: Github
+        url: https://github.com/
+        status-page:
+          url: https://www.githubstatus.com/
+          show-if-operational: true
+      - title: Reddit
+        url: https://www.reddit.com/
+        status-page:
+          url: https://www.redditstatus.com/
+          show-if-operational: false
+```
+
+![](images/bookmarks-statuspages.png)
+
+> [!NOTE]
+> 
+> From the screenshot above, Github results operational and indicator is marked to be visibile, Reddit is operational but the indicator is hidden.
+> Site 1 has major issues and is marked Site 2 has minor issues.
+
+`status-page.url`
+
+URL pointing to a status page for the link. Supported status page is [Statuspage](https://www.statuspage.io/).
+
+`status-page.show-if-operational`
+
+Whether to show the indicator if the API reports that the site is operational. If set to `false` the indicator will be hidden if the service is operational.
 
 ### ChangeDetection.io
 Display a list watches from changedetection.io.
