@@ -9,7 +9,7 @@ import (
 
 type SiteStatusRequest struct {
 	URL           string `yaml:"url"`
-	CheckURL      string `yaml:"check_url"`
+	CheckURL      string `yaml:"check-url"`
 	AllowInsecure bool   `yaml:"allow-insecure"`
 }
 

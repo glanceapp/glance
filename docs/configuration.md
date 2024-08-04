@@ -997,7 +997,7 @@ Properties for each site:
 | ---- | ---- | -------- | ------- |
 | title | string | yes | |
 | url | string | yes | |
-| check_url | string | no | |
+| check-url | string | no | |
 | icon | string | no | |
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
@@ -1008,9 +1008,9 @@ The title used to indicate the site.
 
 `url`
 
-The public facing URL of a monitored service, the user will be redirected here. If `check_url` is not specified, this is used as the status check.
+The public facing URL of a monitored service, the user will be redirected here. If `check-url` is not specified, this is used as the status check.
 
-`check_url`
+`check-url`
 
 The URL which will be requested and its response will determine the status of the site. If not specified, the `url` property is used.
 
