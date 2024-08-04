@@ -981,13 +981,18 @@ You can hover over the "ERROR" text to view more information.
 
 #### Properties
 
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| sites | array | yes |
-| style | string | no |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- |---------|
+| sites | array | yes | |
+| collapse-after | integer | no | 5 |
+| style | string | no | |
 
 ##### `style`
 To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
+
+##### `collapse-after`
+
+How many sites are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
 ##### `sites`
 
@@ -1057,6 +1062,7 @@ Preview:
 | token | string | no | |
 | limit | integer | no | 10 |
 | collapse-after | integer | no | 5 |
+| style | string | no | |
 
 ##### `repositories`
 A list of repositores for which to fetch the latest release for. Only the name/repo is required, not the full URL.
@@ -1089,6 +1095,9 @@ The maximum number of releases to show.
 
 #### `collapse-after`
 How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+##### `style`
+To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ### Repository
 Display general information about a repository as well as a list of the latest open pull requests and issues.
@@ -1246,6 +1255,7 @@ Preview:
 | limit | integer | no | 10 |
 | collapse-after | integer | no | 5 |
 | watches | array of strings | no |  |
+| style | string | no |  |
 
 ##### `instance-url`
 The URL pointing to your instance of `changedetection.io`.
@@ -1268,6 +1278,9 @@ By default all of the configured watches will be shown. Optionally, you can spec
       - 1abca041-6d4f-4554-aa19-809147f538d3
       - 705ed3e4-ea86-4d25-a064-822a6425be2c
 ```
+
+##### `style`
+To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ### Clock
 Display a clock showing the current time and date. Optionally, also display the the time in other timezones.
@@ -1420,6 +1433,7 @@ Preview:
 | channels | array | yes | |
 | collapse-after | integer | no | 5 |
 | sort-by | string | no | viewers |
+| style | string | no | |
 
 ##### `channels`
 A list of channels to display.
@@ -1429,6 +1443,9 @@ How many channels are visible before the "SHOW MORE" button appears. Set to `-1`
 
 ##### `sort-by`
 Can be used to specify the order in which the channels are displayed. Possible values are `viewers` and `live`.
+
+##### `style`
+To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ### Twitch top games
 Display a list of games with the most viewers on Twitch.
@@ -1455,6 +1472,7 @@ Preview:
 | exclude | array | no | |
 | limit | integer | no | 10 |
 | collapse-after | integer | no | 5 |
+| style | string | no | |
 
 ##### `exclude`
 A list of categories that will never be shown. You must provide the slug found by clicking on the category and looking at the URL:
@@ -1469,6 +1487,9 @@ The maximum number of games to show.
 
 ##### `collapse-after`
 How many games are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+##### `style`
+To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ### iframe
 Embed an iframe as a widget.
