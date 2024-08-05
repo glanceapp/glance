@@ -26,6 +26,7 @@
 
 {{ define "document-body" }}
 <div class="flex flex-column height-100">
+    {{ if not .Page.HideDesktopNavigation }}
     <div class="header-container content-bounds">
         <div class="header flex padding-inline-widget widget-content-frame">
             <!-- TODO: Replace G with actual logo, first need an actual logo -->
@@ -35,6 +36,7 @@
             </div>
         </div>
     </div>
+    {{ end }}
 
     <div class="mobile-navigation">
         <div class="mobile-navigation-icons">

@@ -58,12 +58,13 @@ type templateData struct {
 }
 
 type Page struct {
-	Title            string   `yaml:"name"`
-	Slug             string   `yaml:"slug"`
-	Width            string   `yaml:"width"`
-	ShowMobileHeader bool     `yaml:"show-mobile-header"`
-	Columns          []Column `yaml:"columns"`
-	mu               sync.Mutex
+	Title                 string   `yaml:"name"`
+	Slug                  string   `yaml:"slug"`
+	Width                 string   `yaml:"width"`
+	ShowMobileHeader      bool     `yaml:"show-mobile-header"`
+	HideDesktopNavigation bool     `yaml:"hide-desktop-navigation"`
+	Columns               []Column `yaml:"columns"`
+	mu                    sync.Mutex
 }
 
 func (p *Page) UpdateOutdatedWidgets() {
