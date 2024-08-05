@@ -6,11 +6,13 @@
 <script>
     const pageData = {
         slug: "{{ .Page.Slug }}",
+        baseURL: "{{ .App.Config.Server.BaseURL }}",
     };
 </script>
 {{ end }}
 
 {{ define "document-root-attrs" }}class="{{ if .App.Config.Theme.Light }}light-scheme {{ end }}{{ if ne "" .Page.Width }}page-width-{{ .Page.Width }}{{ end }}"{{ end }}
+
 {{ define "document-head-after" }}
 {{ template "page-style-overrides.gotmpl" . }}
 {{ if ne "" .App.Config.Theme.CustomCSSFile }}
@@ -20,7 +22,7 @@
 
 {{ define "navigation-links" }}
 {{ range .App.Config.Pages }}
-<a href="/{{ .Slug }}" class="nav-item{{ if eq .Slug $.Page.Slug }} nav-item-current{{ end }}">{{ .Title }}</a>
+<a href="{{ $.App.Config.Server.BaseURL }}/{{ .Slug }}" class="nav-item{{ if eq .Slug $.Page.Slug }} nav-item-current{{ end }}">{{ .Title }}</a>
 {{ end }}
 {{ end }}
 

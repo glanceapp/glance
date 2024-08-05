@@ -21,10 +21,10 @@ function throttledDebounce(callback, maxDebounceTimes, debounceDelay) {
 };
 
 
-async function fetchPageContent(pageSlug) {
+async function fetchPageContent(pageData) {
     // TODO: handle non 200 status codes/time outs
     // TODO: add retries
-    const response = await fetch(`/api/pages/${pageSlug}/content/`);
+    const response = await fetch(`${pageData.baseURL}/api/pages/${pageData.slug}/content/`);
     const content = await response.text();
 
     return content;
@@ -588,7 +588,7 @@ function setupClocks() {
 async function setupPage() {
     const pageElement = document.getElementById("page");
     const pageContentElement = document.getElementById("page-content");
-    const pageContent = await fetchPageContent(pageData.slug);
+    const pageContent = await fetchPageContent(pageData);
 
     pageContentElement.innerHTML = pageContent;
 

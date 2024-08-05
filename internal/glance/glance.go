@@ -43,6 +43,7 @@ type Server struct {
 	Host       string    `yaml:"host"`
 	Port       uint16    `yaml:"port"`
 	AssetsPath string    `yaml:"assets-path"`
+	BaseURL    string    `yaml:"base-url"`
 	AssetsHash string    `yaml:"-"`
 	StartedAt  time.Time `yaml:"-"` // used in custom css file
 }
@@ -128,6 +129,16 @@ func NewApplication(config *Config) (*Application, error) {
 				app.widgetByID[widget.GetID()] = widget
 			}
 		}
+	}
+
+	config = &app.Config
+
+	config.Server.BaseURL = strings.TrimRight(config.Server.BaseURL, "/")
+
+	if config.Server.BaseURL != "" &&
+		config.Theme.CustomCSSFile != "" &&
+		strings.HasPrefix(config.Theme.CustomCSSFile, "/assets/") {
+		config.Theme.CustomCSSFile = config.Server.BaseURL + config.Theme.CustomCSSFile
 	}
 
 	return app, nil
@@ -223,7 +234,7 @@ func (a *Application) HandleWidgetRequest(w http.ResponseWriter, r *http.Request
 }
 
 func (a *Application) AssetPath(asset string) string {
-	return "/static/" + a.Config.Server.AssetsHash + "/" + asset
+	return a.Config.Server.BaseURL + "/static/" + a.Config.Server.AssetsHash + "/" + asset
 }
 
 func (a *Application) Serve() error {
@@ -262,6 +273,7 @@ func (a *Application) Serve() error {
 	}
 
 	a.Config.Server.StartedAt = time.Now()
-	slog.Info("Starting server", "host", a.Config.Server.Host, "port", a.Config.Server.Port)
+	slog.Info("Starting server", "host", a.Config.Server.Host, "port", a.Config.Server.Port, "base-url", a.Config.Server.BaseURL)
+
 	return server.ListenAndServe()
 }
