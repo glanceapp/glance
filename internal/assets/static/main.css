@@ -1261,7 +1261,7 @@ kbd:active {
         padding: 15px var(--content-bounds-padding);
         display: flex;
         align-items: center;
-        overflow-x: scroll;
+        overflow-x: auto;
         gap: 2.5rem;
     }
 
