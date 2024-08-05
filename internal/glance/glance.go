@@ -133,6 +133,8 @@ func NewApplication(config *Config) (*Application, error) {
 
 	config = &app.Config
 
+	config.Server.BaseURL = strings.TrimRight(config.Server.BaseURL, "/")
+
 	if config.Server.BaseURL != "" &&
 		config.Theme.CustomCSSFile != "" &&
 		strings.HasPrefix(config.Theme.CustomCSSFile, "/assets/") {
