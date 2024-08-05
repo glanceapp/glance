@@ -49,7 +49,7 @@
         </div>
     </div>
 
-    <div class="content-bounds">
+    <div class="content-bounds grow">
         <div class="page" id="page">
             <div class="page-content" id="page-content"></div>
             <div class="page-loading-container">
@@ -59,7 +59,7 @@
         </div>
     </div>
 
-    <div class="footer flex items-center flex-column margin-top-auto">
+    <div class="footer flex items-center flex-column">
         <div>
             <a class="size-h3" href="https://github.com/glanceapp/glance" target="_blank" rel="noreferrer">Glance</a> {{ if ne "dev" .App.Version }}<a class="visited-indicator" title="Release notes" href="https://github.com/glanceapp/glance/releases/tag/{{ .App.Version }}" target="_blank" rel="noreferrer">{{ .App.Version }}</a>{{ else }}({{ .App.Version }}){{ end }}
         </div>

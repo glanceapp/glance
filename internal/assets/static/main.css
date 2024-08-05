@@ -58,6 +58,10 @@
     font-size: var(--font-size-h4);
 }
 
+.page {
+    height: 100%;
+}
+
 .page-content, .page.content-ready .page-loading-container {
     display: none;
 }
@@ -360,8 +364,11 @@ body {
 }
 
 .page-loading-container {
-    margin: 50px auto;
-    width: fit-content;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(-5rem);
     animation: loadingContainerEntrance 200ms backwards;
     animation-delay: 150ms;
     font-size: 2rem;
