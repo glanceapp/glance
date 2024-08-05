@@ -368,10 +368,13 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    transform: translateY(-5rem);
     animation: loadingContainerEntrance 200ms backwards;
     animation-delay: 150ms;
     font-size: 2rem;
+}
+
+.page-loading-container > .loading-icon {
+    translate: 0 -250%;
 }
 
 @keyframes loadingContainerEntrance {
