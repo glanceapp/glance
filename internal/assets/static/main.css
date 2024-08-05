@@ -344,7 +344,7 @@ body {
 .page-columns {
     display: flex;
     gap: var(--widget-gap);
-    margin: var(--widget-gap) 0;
+    margin-top: var(--widget-gap) 0;
     animation: pageColumnsEntrance .3s cubic-bezier(0.25, 1, 0.5, 1) backwards;
 }
 
