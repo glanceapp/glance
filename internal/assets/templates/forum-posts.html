@@ -4,7 +4,7 @@
 <ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
     {{ range .Posts }}
     <li>
-        <div class="forum-post-list-item thumbnail-container">
+        <div class="flex gap-10 row-reverse-on-mobile thumbnail-parent">
             {{ if $.ShowThumbnails }}
                 {{ if ne .ThumbnailUrl "" }}
                 <img class="forum-post-list-thumbnail thumbnail" src="{{ .ThumbnailUrl }}" alt="" loading="lazy">
@@ -18,14 +18,23 @@
                 </svg>
                 {{ end }}
             {{ end }}
-            <div class="grow">
+            <div class="grow min-width-0">
                 <a href="{{ .DiscussionUrl }}" class="size-h3 color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
+                {{ if gt (len .Tags) 0 }}
+                <div class="inline-block forum-post-tags-container">
+                    <ul class="attachments">
+                    {{ range .Tags }}
+                        <li>{{ . }}</li>
+                    {{ end }}
+                    </ul>
+                </div>
+                {{ end }}
                 <ul class="list-horizontal-text">
                     <li {{ dynamicRelativeTimeAttrs .TimePosted }}></li>
                     <li>{{ .Score | formatNumber }} points</li>
                     <li>{{ .CommentCount | formatNumber }} comments</li>
                     {{ if .HasTargetUrl }}
-                    <li class="shrink min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ .TargetUrlDomain }}</a></li>
+                    <li class="min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ .TargetUrlDomain }}</a></li>
                     {{ end }}
                 </ul>
             </div>

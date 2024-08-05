@@ -32,6 +32,16 @@ func NewConfigFromYml(contents io.Reader) (*Config, error) {
 		return nil, err
 	}
 
+	for p := range config.Pages {
+		for c := range config.Pages[p].Columns {
+			for w := range config.Pages[p].Columns[c].Widgets {
+				if err := config.Pages[p].Columns[c].Widgets[w].Initialize(); err != nil {
+					return nil, err
+				}
+			}
+		}
+	}
+
 	return config, nil
 }
 
@@ -50,12 +60,22 @@ func configIsValid(config *Config) error {
 			return fmt.Errorf("Page %d has no title", i+1)
 		}
 
+		if config.Pages[i].Width != "" && (config.Pages[i].Width != "wide" && config.Pages[i].Width != "slim") {
+			return fmt.Errorf("Page %d: width can only be either wide or slim", i+1)
+		}
+
 		if len(config.Pages[i].Columns) == 0 {
 			return fmt.Errorf("Page %d has no columns", i+1)
 		}
 
-		if len(config.Pages[i].Columns) > 3 {
-			return fmt.Errorf("Page %d has more than 3 columns: %d", i+1, len(config.Pages[i].Columns))
+		if config.Pages[i].Width == "slim" {
+			if len(config.Pages[i].Columns) > 2 {
+				return fmt.Errorf("Page %d is slim and cannot have more than 2 columns", i+1)
+			}
+		} else {
+			if len(config.Pages[i].Columns) > 3 {
+				return fmt.Errorf("Page %d has more than 3 columns: %d", i+1, len(config.Pages[i].Columns))
+			}
 		}
 
 		columnSizesCount := make(map[string]int)

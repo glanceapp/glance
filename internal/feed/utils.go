@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
 	"slices"
 	"strings"
 )
@@ -76,4 +77,21 @@ func maybeCopySliceWithoutZeroValues[T int | float64](values []T) []T {
 	}
 
 	return values
+}
+
+
+var urlSchemePattern = regexp.MustCompile(`^[a-z]+:\/\/`)
+
+func stripURLScheme(url string) string {
+	return urlSchemePattern.ReplaceAllString(url, "")
+}
+
+func limitStringLength(s string, max int) (string, bool) {
+	asRunes := []rune(s)
+
+	if len(asRunes) > max {
+		return string(asRunes[:max]), true
+	}
+
+	return s, false
 }

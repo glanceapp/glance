@@ -27,6 +27,10 @@ var timeLabels24h = [12]string{"02:00", "04:00", "06:00", "08:00", "10:00", "12:
 func (widget *Weather) Initialize() error {
 	widget.withTitle("Weather").withCacheOnTheHour()
 
+	if widget.Location == "" {
+		return fmt.Errorf("location must be specified for weather widget")
+	}
+
 	if widget.HourFormat == "" || widget.HourFormat == "12h" {
 		widget.TimeLabels = timeLabels12h
 	} else if widget.HourFormat == "24h" {
@@ -41,18 +45,21 @@ func (widget *Weather) Initialize() error {
 		return fmt.Errorf("invalid units '%s' for weather, must be either metric or imperial", widget.Units)
 	}
 
-	place, err := feed.FetchPlaceFromName(widget.Location)
-
-	if err != nil {
-		return fmt.Errorf("failed fetching data for %s: %v", widget.Location, err)
-	}
-
-	widget.Place = place
-
 	return nil
 }
 
 func (widget *Weather) Update(ctx context.Context) {
+	if widget.Place == nil {
+		place, err := feed.FetchPlaceFromName(widget.Location)
+
+		if err != nil {
+			widget.withError(err).scheduleEarlyUpdate()
+			return
+		}
+
+		widget.Place = place
+	}
+
 	weather, err := feed.FetchWeatherForPlace(widget.Place, widget.Units)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {

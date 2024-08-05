@@ -10,17 +10,24 @@
   - [RSS](#rss)
   - [Videos](#videos)
   - [Hacker News](#hacker-news)
+  - [Lobsters](#lobsters)
   - [Reddit](#reddit)
+  - [Search](#search-widget)
+  - [Group](#group)
+  - [Extension](#extension)
   - [Weather](#weather)
   - [Monitor](#monitor)
   - [Releases](#releases)
   - [Repository](#repository)
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
-  - [Stocks](#stocks)
+  - [ChangeDetection.io](#changedetectionio)
+  - [Clock](#clock)
+  - [Markets](#markets)
   - [Twitch Channels](#twitch-channels)
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
+  - [HTML](#html)
 
 ## Intro
 Configuration is done via a single YAML file and a server restart is required in order for any changes to take effect. Trying to start the server with an invalid config file will result in an error.
@@ -76,8 +83,8 @@ pages:
           - type: weather
             location: London, United Kingdom
 
-          - type: stocks
-            stocks:
+          - type: markets
+            markets:
               - symbol: SPY
                 name: S&P 500
               - symbol: BTC-USD
@@ -228,6 +235,8 @@ theme:
 > .widget-type-rss a {
 >     font-size: 1.5rem;
 > }
+>
+> In addition, you can also use the `css-class` property which is available on every widget to set custom class names for individual widgets.
 
 
 ## Pages & Columns
@@ -255,6 +264,8 @@ pages:
 | ---- | ---- | -------- | ------- |
 | title | string | yes | |
 | slug | string | no | |
+| width | string | no | |
+| hide-desktop-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
 
@@ -263,6 +274,21 @@ The name of the page which gets shown in the navigation bar.
 
 #### `slug`
 The URL friendly version of the title which is used to access the page. For example if the title of the page is "RSS Feeds" you can make the page accessible via `localhost:8080/feeds` by setting the slug to `feeds`. If not defined, it will automatically be generated from the title.
+
+#### `width`
+The maximum width of the page on desktop. Possible values are `slim` and `wide`.
+
+* default: `1600px`
+* slim: `1100px`
+* wide: `1920px`
+
+> [!NOTE]
+>
+> When using `slim`, the maximum number of columns allowed for that page is `2`.
+
+
+#### `hide-desktop-navigation`
+Whether to show the navigation links at the top of the page on desktop.
 
 #### `show-mobile-header`
 Whether to show a header displaying the name of the page on mobile. The header purposefully has a lot of vertical whitespace in order to push the content down and make it easier to reach on tall devices.
@@ -348,13 +374,18 @@ pages:
 | ---- | ---- | -------- |
 | type | string | yes |
 | title | string | no |
+| title-url | string | no |
 | cache | string | no |
+| css-class | string | no |
 
 #### `type`
 Used to specify the widget.
 
 #### `title`
 The title of the widget. If left blank it will be defined by the widget.
+
+#### `title-url`
+The URL to go to when clicking on the widget's title. If left blank it will be defined by the widget (if available).
 
 #### `cache`
 How long to keep the fetched data in memory. The value is a string and must be a number followed by one of s, m, h, d. Examples:
@@ -369,6 +400,9 @@ cache: 1d  # 1 day
 > [!NOTE]
 >
 > Not all widgets can have their cache duration modified. The calendar and weather widgets update on the hour and this cannot be changed.
+
+#### `css-class`
+Set custom CSS classes for the specific widget instance.
 
 ### RSS
 Display a list of articles from multiple RSS feeds.
@@ -405,6 +439,10 @@ Used to change the appearance of the widget. Possible values are `vertical-list`
 
 ![preview of vertical-list style for RSS widget](images/rss-feed-vertical-list-preview.png)
 
+`detailed-list`
+
+![preview of detailed-list style for RSS widget](images/rss-widget-detailed-list-preview.png)
+
 `horizontal-cards`
 
 ![preview of horizontal-cards style for RSS widget](images/rss-feed-horizontal-cards-preview.png)
@@ -423,10 +461,16 @@ Used to modify the height of cards when using the `horizontal-cards-2` style. Th
 An array of RSS/atom feeds. The title can optionally be changed.
 
 ###### Properties for each feed
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| url | string | yes | |
-| title | string | no | the title provided by the feed |
+| Name | Type | Required | Default | Notes |
+| ---- | ---- | -------- | ------- | ----- |
+| url | string | yes | | |
+| title | string | no | the title provided by the feed | |
+| hide-categories | boolean | no | false | Only applicable for `detailed-list` style |
+| hide-description | boolean | no | false | Only applicable for `detailed-list` style |
+| item-link-prefix | string | no | | |
+
+###### `item-link-prefix`
+If an RSS feed isn't returning item links with a base domain and Glance has failed to automatically detect the correct domain you can manually add a prefix to each link with this property.
 
 ##### `limit`
 The maximum number of articles to show.
@@ -456,6 +500,8 @@ Preview:
 | channels | array | yes | |
 | limit | integer | no | 25 |
 | style | string | no | horizontal-cards |
+| collapse-after-rows | integer | no | 4 |
+| include-shorts | boolean | no | false |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
@@ -469,6 +515,9 @@ Then scroll down and click on "Share channel", then "Copy channel ID":
 
 ##### `limit`
 The maximum number of videos to show.
+
+##### `collapse-after-rows`
+Specify the number of rows to show when using the `grid-cards` style before the "SHOW MORE" button appears.
 
 ##### `style`
 Used to change the appearance of the widget. Possible values are `horizontal-cards` and `grid-cards`.
@@ -529,6 +578,57 @@ Used to specify the order in which the posts should get returned. Possible value
 Can be used to specify an additional sort which will be applied on top of the already sorted posts. By default does not apply any extra sorting and the only available option is `engagement`.
 
 The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
+
+### Lobsters
+Display a list of posts from [Lobsters](https://lobste.rs).
+
+Example:
+
+```yaml
+- type: lobsters
+  sort-by: hot
+  tags:
+    - go
+    - security
+    - linux
+  limit: 15
+  collapse-after: 5
+```
+
+Preview:
+![](images/lobsters-widget-preview.png)
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| instance-url | string | no | https://lobste.rs/ |
+| custom-url | string | no | |
+| limit | integer | no | 15 |
+| collapse-after | integer | no | 5 |
+| sort-by | string | no | hot |
+| tags | array | no | |
+
+##### `instance-url`
+The base URL for a lobsters instance hosted somewhere other than on lobste.rs. Example:
+
+```yaml
+instance-url: https://www.journalduhacker.net/
+```
+
+##### `custom-url`
+A custom URL to retrieve lobsters posts from. If this is specified, the `instance-url`, `sort-by` and `tags` properties are ignored.
+
+##### `limit`
+The maximum number of posts to show.
+
+##### `collapse-after`
+How many posts are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+##### `sort-by`
+The sort order in which posts are returned. Possible options are `hot` and `new`.
+
+##### `tags`
+Limit to posts containing one of the given tags. **You cannot specify a sort order when filtering by tags, it will default to `hot`.**
 
 ### Reddit
 Display a list of posts from a specific subreddit.
@@ -626,7 +726,7 @@ https://your.proxy/?url={REQUEST-URL}
 ##### `sort-by`
 Can be used to specify the order in which the posts should get returned. Possible values are `hot`, `new`, `top` and `rising`.
 
-##### `top-perid`
+##### `top-period`
 Available only when `sort-by` is set to `top`. Possible values are `hour`, `day`, `week`, `month`, `year` and `all`.
 
 ##### `search`
@@ -638,6 +738,167 @@ Keywords to search for. Searching within specific fields is also possible, **tho
 Can be used to specify an additional sort which will be applied on top of the already sorted posts. By default does not apply any extra sorting and the only available option is `engagement`.
 
 The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
+
+### Search Widget
+Display a search bar that can be used to search for specific terms on various search engines.
+
+Example:
+
+```yaml
+- type: search
+  search-engine: duckduckgo
+  bangs:
+    - title: YouTube
+      shortcut: "!yt"
+      url: https://www.youtube.com/results?search_query={QUERY}
+```
+
+Preview:
+
+![](images/search-widget-preview.png)
+
+#### Keyboard shortcuts
+| Keys | Action | Condition |
+| ---- | ------ | --------- |
+| <kbd>S</kbd> | Focus the search bar | Not already focused on another input field |
+| <kbd>Enter</kbd> | Perform search in the same tab | Search input is focused and not empty |
+| <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Perform search in a new tab | Search input is focused and not empty |
+| <kbd>Escape</kbd> | Leave focus | Search input is focused |
+
+> [!TIP]
+>
+> You can use the property `new-tab` with a value of `true` if you want to show search results in a new tab by default. <kbd>Ctrl</kbd> + <kbd>Enter</kbd> will then show results in the same tab.
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| search-engine | string | no | duckduckgo |
+| new-tab | boolean | no | false |
+| autofocus | boolean | no | false |
+| bangs | array | no | |
+
+##### `search-engine`
+Either a value from the table below or a URL to a custom search engine. Use `{QUERY}` to indicate where the query value gets placed.
+
+| Name | URL |
+| ---- | --- |
+| duckduckgo | `https://duckduckgo.com/?q={QUERY}` |
+| google | `https://www.google.com/search?q={QUERY}` |
+
+##### `new-tab`
+When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
+
+##### `new-tab`
+When set to `true`, automatically focuses the search input on page load.
+
+##### `bangs`
+What now? [Bangs](https://duckduckgo.com/bangs). They're shortcuts that allow you to use the same search box for many different sites. Assuming you have it configured, if for example you start your search input with `!yt` you'd be able to perform a search on YouTube:
+
+![](images/search-widget-bangs-preview.png)
+
+##### Properties for each bang
+| Name | Type | Required |
+| ---- | ---- | -------- |
+| title | string | no |
+| shortcut | string | yes |
+| url | string | yes |
+
+###### `title`
+Optional title that will appear on the right side of the search bar when the query starts with the associated shortcut.
+
+###### `shortcut`
+Any value you wish to use as the shortcut for the search engine. It does not have to start with `!`.
+
+> [!IMPORTANT]
+>
+> In YAML some characters have special meaning when placed in the beginning of a value. If your shortcut starts with `!` (and potentially some other special characters) you'll have to wrap the value in quotes:
+> ```yaml
+> shortcut: "!yt"
+>```
+
+###### `url`
+The URL of the search engine. Use `{QUERY}` to indicate where the query value gets placed. Examples:
+
+```yaml
+url: https://www.reddit.com/search?q={QUERY}
+url: https://store.steampowered.com/search/?term={QUERY}
+url: https://www.amazon.com/s?k={QUERY}
+```
+
+### Group
+Group multiple widgets into one using tabs. Widgets are defined using a `widgets` property exactly as you would on a page column. The only limitation is that you cannot place a group widget within a group widget.
+
+Example:
+
+```yaml
+- type: group
+  widgets:
+    - type: reddit
+      subreddit: gamingnews
+      show-thumbnails: true
+      collapse-after: 6
+    - type: reddit
+      subreddit: games
+    - type: reddit
+      subreddit: pcgaming
+      show-thumbnails: true
+```
+
+Preview:
+
+![](images/group-widget-preview.png)
+
+#### Sharing properties
+
+To avoid repetition you can use [YAML anchors](https://support.atlassian.com/bitbucket-cloud/docs/yaml-anchors/) and share properties between widgets.
+
+Example:
+
+```yaml
+- type: group
+  define: &shared-properties
+      type: reddit
+      show-thumbnails: true
+      collapse-after: 6
+  widgets:
+    - subreddit: gamingnews
+      <<: *shared-properties
+    - subreddit: games
+      <<: *shared-properties
+    - subreddit: pcgaming
+      <<: *shared-properties
+```
+
+### Extension
+Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
+
+```yaml
+- type: extension
+  url: https://domain.com/widget/display-a-message
+  allow-potentially-dangerous-html: true
+  parameters:
+    message: Hello, world!
+```
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| url | string | yes | |
+| allow-potentially-dangerous-html | boolean | no | false |
+| parameters | key & value | no | |
+
+##### `url`
+The URL of the extension.
+
+##### `allow-potentially-dangerous-html`
+Whether to allow the extension to display HTML.
+
+> [!WARNING]
+>
+> There's a reason this property is scary-sounding. It's intended to be used by developers who are comfortable with developing and using their own extensions. Do not enable it if you have no idea what it means or if you're not **absolutely sure** that the extension URL you're using is safe.
+
+##### `parameters`
+A list of keys and values that will be sent to the extension as query paramters.
 
 ### Weather
 Display weather information for a specific location. The data is provided by https://open-meteo.com/.
@@ -702,7 +963,7 @@ Greenville, United States
 ```
 
 ### Monitor
-Display a list of sites and whether they are reachable (online) or not. This is determined by sending a HEAD request to the specified URL, if the response is 200 then the site is OK. The time it took to receive a response is also shown in milliseconds.
+Display a list of sites and whether they are reachable (online) or not. This is determined by sending a GET request to the specified URL, if the response is 200 then the site is OK. The time it took to receive a response is also shown in milliseconds.
 
 Example:
 
@@ -753,7 +1014,9 @@ Properties for each site:
 | ---- | ---- | -------- | ------- |
 | title | string | yes | |
 | url | string | yes | |
+| check-url | string | no | |
 | icon | string | no | |
+| allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
 
 `title`
@@ -762,11 +1025,29 @@ The title used to indicate the site.
 
 `url`
 
-The URL which will be requested and its response will determine the status of the site. Optionally, you can specify this using an environment variable with the syntax `${VARIABLE_NAME}`.
+The public facing URL of a monitored service, the user will be redirected here. If `check-url` is not specified, this is used as the status check.
+
+`check-url`
+
+The URL which will be requested and its response will determine the status of the site. If not specified, the `url` property is used.
 
 `icon`
 
-Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path).
+Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path). You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix:
+
+```yaml
+icon: si:jellyfin
+icon: si:gitea
+icon: si:adguard
+```
+
+> [!WARNING]
+>
+> Simple Icons are loaded externally and are hosted on `cdnjs.cloudflare.com`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+
+`allow-insecure`
+
+Whether to ignore invalid/self-signed certificates.
 
 `same-tab`
 
@@ -963,6 +1244,98 @@ Whether to open the link in the same tab or a new one.
 
 Whether to hide the colored arrow on each link.
 
+### ChangeDetection.io
+Display a list watches from changedetection.io.
+
+Example
+
+```yaml
+- type: change-detection
+  instance-url: https://changedetection.mydomain.com/
+  token: ${CHANGE_DETECTION_TOKEN}
+```
+
+Preview:
+
+![](images/change-detection-widget-preview.png)
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| instance-url | string | no | `https://www.changedetection.io` |
+| token | string | no |  |
+| limit | integer | no | 10 |
+| collapse-after | integer | no | 5 |
+| watches | array of strings | no |  |
+
+##### `instance-url`
+The URL pointing to your instance of `changedetection.io`.
+
+##### `token`
+The API access token which can be found in `SETTINGS > API`. Optionally, you can specify this using an environment variable with the syntax `${VARIABLE_NAME}`.
+
+##### `limit`
+The maximum number of watches to show.
+
+##### `collapse-after`
+How many watches are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+##### `watches`
+By default all of the configured watches will be shown. Optionally, you can specify a list of UUIDs for the specific watches you want to have listed:
+
+```yaml
+  - type: change-detection
+    watches:
+      - 1abca041-6d4f-4554-aa19-809147f538d3
+      - 705ed3e4-ea86-4d25-a064-822a6425be2c
+```
+
+### Clock
+Display a clock showing the current time and date. Optionally, also display the the time in other timezones.
+
+Example:
+
+```yaml
+- type: clock
+  hour-format: 24h
+  timezones:
+    - timezone: Europe/Paris
+      label: Paris
+    - timezone: America/New_York
+      label: New York
+    - timezone: Asia/Tokyo
+      label: Tokyo
+```
+
+Preview:
+
+![](images/clock-widget-preview.png)
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| hour-format | string | no | 24h |
+| timezones | array | no |  |
+
+##### `hour-format`
+Whether to show the time in 12 or 24 hour format. Possible values are `12h` and `24h`.
+
+#### Properties for each timezone
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| timezone | string | yes | |
+| label | string | no | |
+
+##### `timezone`
+A timezone identifier such as `Europe/London`, `America/New_York`, etc. The full list of available identifiers can be found [here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
+
+##### `label`
+Optionally, override the display value for the timezone to something more meaningful such as "Home", "Work" or anything else.
+
+
 ### Calendar
 Display a calendar.
 
@@ -980,14 +1353,14 @@ Preview:
 >
 > There is currently no customizability available for the calendar. Extra features will be added in the future.
 
-### Stocks
-Display a list of stocks, their current value, change for the day and a small 21d chart. Data is taken from Yahoo Finance.
+### Markets
+Display a list of markets, their current value, change for the day and a small 21d chart. Data is taken from Yahoo Finance.
 
 Example:
 
 ```yaml
-- type: stocks
-  stocks:
+- type: markets
+  markets:
     - symbol: SPY
       name: S&P 500
     - symbol: BTC-USD
@@ -1002,21 +1375,21 @@ Example:
 
 Preview:
 
-![](images/stocks-widget-preview.png)
+![](images/markets-widget-preview.png)
 
 #### Properties
 
 | Name | Type | Required |
 | ---- | ---- | -------- |
-| stocks | array | yes |
+| markets | array | yes |
 | sort-by | string | no |
 | style | string | no |
 
-##### `stocks`
-An array of stocks for which to display information about.
+##### `markets`
+An array of markets for which to display information about.
 
 ##### `sort-by`
-By default the stocks are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
+By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
 
 ##### `style`
 To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
@@ -1141,3 +1514,16 @@ The source of the iframe.
 
 ##### `height`
 The height of the iframe. The minimum allowed height is 50.
+
+### HTML
+Embed any HTML.
+
+Example:
+
+```yaml
+- type: html
+  source: |
+    <p>Hello, <span class="color-primary">World</span>!</p>
+```
+
+Note the use of `|` after `source:`, this allows you to insert a multi-line string.

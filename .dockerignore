@@ -1,0 +1,10 @@
+# https://docs.docker.com/build/building/context/#dockerignore-files
+# Ignore all files by default
+*
+
+# Only add necessary files to the Docker build context (Dockerfiles are always included implicitly)
+!/build/
+!/internal/
+!/go.mod
+!/go.sum
+!main.go

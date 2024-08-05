@@ -39,6 +39,12 @@ func (widget *RSS) Initialize() error {
 		widget.CardHeight = 0
 	}
 
+	if widget.Style == "detailed-list" {
+		for i := range widget.FeedRequests {
+			widget.FeedRequests[i].IsDetailed = true
+		}
+	}
+
 	return nil
 }
 
@@ -63,6 +69,10 @@ func (widget *RSS) Render() template.HTML {
 
 	if widget.Style == "horizontal-cards-2" {
 		return widget.render(widget, assets.RSSHorizontalCards2Template)
+	}
+
+	if widget.Style == "detailed-list" {
+		return widget.render(widget, assets.RSSDetailedListTemplate)
 	}
 
 	return widget.render(widget, assets.RSSListTemplate)

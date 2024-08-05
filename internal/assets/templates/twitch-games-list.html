@@ -3,10 +3,10 @@
 {{ define "widget-content" }}
 <ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
     {{ range .Categories }}
-    <li class="twitch-category thumbnail-container">
-        <div class="flex gap-10 items-center">
+    <li class="twitch-category thumbnail-parent">
+        <div class="flex gap-10 items-start">
             <img class="twitch-category-thumbnail thumbnail" loading="lazy" src="{{ .AvatarUrl }}" alt="">
-            <div class="shrink min-width-0">
+            <div class="min-width-0">
                 <a class="size-h3 color-highlight text-truncate block" href="https://www.twitch.tv/directory/category/{{ .Slug }}" target="_blank" rel="noreferrer">{{ .Name }}</a>
                 <ul class="list-horizontal-text">
                     <li>{{ .ViewersCount | formatViewerCount }} viewers</li>
@@ -19,7 +19,7 @@
                         {{ if eq $i 0 }}
                         <li class="shrink-0">{{ $tag.Name }}</li>
                         {{ else }}
-                        <li class="text-truncate shrink min-width-0">{{ $tag.Name }}</li>
+                        <li class="text-truncate min-width-0">{{ $tag.Name }}</li>
                         {{ end }}
                     {{ end }}
                 </ul>

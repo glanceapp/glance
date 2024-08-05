@@ -6,7 +6,7 @@
 <div class="carousel-container">
     <div class="cards-horizontal carousel-items-container"{{ if ne 0.0 .ThumbnailHeight }} style="--rss-thumbnail-height: {{ .ThumbnailHeight }}rem;"{{ end }}>
         {{ range .Items }}
-        <div class="card widget-content-frame thumbnail-container">
+        <div class="card widget-content-frame thumbnail-parent">
             {{ if ne "" .ImageURL }}
             <img class="rss-card-image thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
             {{ else }}
@@ -18,7 +18,7 @@
                 <a href="{{ .Link }}" title="{{ .Title }}" class="text-truncate-3-lines color-primary-if-not-visited margin-top-10 margin-bottom-auto" target="_blank" rel="noreferrer">{{ .Title }}</a>
                 <ul class="list-horizontal-text flex-nowrap margin-top-7">
                     <li class="shrink-0" {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
-                    <li class="shrink min-width-0 text-truncate">{{ .ChannelName }}</li>
+                    <li class="min-width-0 text-truncate">{{ .ChannelName }}</li>
                 </ul>
             </div>
         </div>
