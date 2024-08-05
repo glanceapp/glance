@@ -24,7 +24,7 @@ function throttledDebounce(callback, maxDebounceTimes, debounceDelay) {
 async function fetchPageContent(pageData) {
     // TODO: handle non 200 status codes/time outs
     // TODO: add retries
-    const response = await fetch(`${pageData.baseUrl}/api/pages/${pageData.slug}/content/`);
+    const response = await fetch(`${pageData.baseURL}/api/pages/${pageData.slug}/content/`);
     const content = await response.text();
 
     return content;
