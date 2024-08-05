@@ -60,6 +60,7 @@
 
 .page {
     height: 100%;
+    padding-block: var(--widget-gap);
 }
 
 .page-content, .page.content-ready .page-loading-container {
@@ -352,7 +353,6 @@ body {
 .page-columns {
     display: flex;
     gap: var(--widget-gap);
-    margin-top: var(--widget-gap);
     animation: pageColumnsEntrance .3s cubic-bezier(0.25, 1, 0.5, 1) backwards;
 }
 
@@ -666,7 +666,8 @@ kbd:active {
 }
 
 .footer {
-    padding-block: calc(var(--widget-gap) * 1.5);
+    padding-bottom: calc(var(--widget-gap) * 1.5);
+    padding-top: calc(var(--widget-gap) / 2);
     animation: loadingContainerEntrance 200ms backwards;
     animation-delay: 150ms;
 }
