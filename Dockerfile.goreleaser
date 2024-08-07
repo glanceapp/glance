@@ -1,0 +1,8 @@
+FROM alpine:3.20
+
+WORKDIR /app
+COPY glance .
+
+EXPOSE 8080/tcp
+
+ENTRYPOINT ["/app/glance"]
