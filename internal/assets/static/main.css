@@ -1245,12 +1245,7 @@ kbd:active {
 
     .mobile-navigation-offset {
         height: var(--mobile-navigation-height);
-        margin-top: var(--widget-gap);
         flex-shrink: 0;
-    }
-
-    .footer + .mobile-navigation-offset {
-        margin-top: 0;
     }
 
     .mobile-navigation {
