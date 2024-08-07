@@ -101,7 +101,7 @@ Build the image:
 **Make sure to replace "owner" with your name or organization.**
 
 ```bash
-docker build -t owner/glance:latest -f Dockerfile.single-platform .
+docker build -t owner/glance:latest .
 ```
 
 Push the image to your registry:
