@@ -1,6 +1,6 @@
 {{ template "document.html" . }}
 
-{{ define "document-title" }}{{ .Page.Title }} - Glance{{ end }}
+{{ define "document-title" }}{{ .Page.Title }} - {{ .App.Config.Branding.Name }}{{ end }}
 
 {{ define "document-head-before" }}
 <script>
@@ -28,7 +28,7 @@
 <div class="header-container content-bounds">
     <div class="header flex padding-inline-widget widget-content-frame">
         <!-- TODO: Replace G with actual logo, first need an actual logo -->
-        <div class="logo">G</div>
+        <div class="logo">{{ .App.Config.Branding.ShortName }}</div>
         <div class="nav flex grow">
             {{ template "navigation-links" . }}
         </div>
@@ -58,10 +58,12 @@
     </div>
 </div>
 
+{{  if .App.Config.Branding.Show }}
 <div class="footer flex items-center flex-column">
     <div>
         <a class="size-h3" href="https://github.com/glanceapp/glance" target="_blank" rel="noreferrer">Glance</a> {{ if ne "dev" .App.Version }}<a class="visited-indicator" title="Release notes" href="https://github.com/glanceapp/glance/releases/tag/{{ .App.Version }}" target="_blank" rel="noreferrer">{{ .App.Version }}</a>{{ else }}({{ .App.Version }}){{ end }}
     </div>
     <a class="color-primary block margin-top-5 size-h5" href="https://github.com/glanceapp/glance/issues" target="_blank" rel="noreferrer">Report issue</a>
 </div>
+{{ end }}
 {{ end }}
