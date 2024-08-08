@@ -54,10 +54,6 @@
     --scheme: 100% -;
 }
 
-.size-title-dynamic {
-    font-size: var(--font-size-h4);
-}
-
 .page {
     height: 100%;
     padding-block: var(--widget-gap);
@@ -69,6 +65,10 @@
 
 .page.content-ready > .page-content {
     display: block;
+}
+
+.page-column-small .size-title-dynamic {
+    font-size: var(--font-size-h4);
 }
 
 .page-column-full .size-title-dynamic {
@@ -1219,7 +1219,7 @@ kbd:active {
         display: none;
     }
 
-    .page-column-full .size-title-dynamic {
+    .page-column-small .size-title-dynamic {
         font-size: var(--font-size-h3);
     }
 
