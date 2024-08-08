@@ -16,6 +16,7 @@ type Releases struct {
 	Token         OptionalEnvString `yaml:"token"`
 	Limit         int               `yaml:"limit"`
 	CollapseAfter int               `yaml:"collapse-after"`
+	Source        string            `yaml:"source"`
 }
 
 func (widget *Releases) Initialize() error {
@@ -29,11 +30,15 @@ func (widget *Releases) Initialize() error {
 		widget.CollapseAfter = 5
 	}
 
+	if widget.Source == "" {
+		widget.Source = "github"
+	}
+
 	return nil
 }
 
 func (widget *Releases) Update(ctx context.Context) {
-	releases, err := feed.FetchLatestReleasesFromGithub(widget.Repositories, string(widget.Token))
+	releases, err := feed.FetchLatestReleasesFromGitForge(widget.Repositories, string(widget.Token), widget.Source)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
