@@ -519,6 +519,7 @@ kbd:active {
 
 .cards-horizontal {
     overflow-x: auto;
+    scrollbar-width: thin;
     padding-bottom: 1rem;
 }
 
@@ -1279,6 +1280,7 @@ kbd:active {
         display: flex;
         align-items: center;
         overflow-x: auto;
+        scrollbar-width: thin;
         gap: 2.5rem;
     }
 
