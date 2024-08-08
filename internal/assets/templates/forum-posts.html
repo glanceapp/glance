@@ -19,7 +19,7 @@
                 {{ end }}
             {{ end }}
             <div class="grow min-width-0">
-                <a href="{{ .DiscussionUrl }}" class="size-h3 color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
+                <a href="{{ .DiscussionUrl }}" class="size-title-dynamic color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
                 {{ if gt (len .Tags) 0 }}
                 <div class="inline-block forum-post-tags-container">
                     <ul class="attachments">
