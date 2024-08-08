@@ -13,6 +13,7 @@ import (
 
 var (
 	PageTemplate                  = compileTemplate("page.html", "document.html", "page-style-overrides.gotmpl")
+	Page404Template               = compileTemplate("404.html", "document.html", "page-style-overrides.gotmpl")
 	PageContentTemplate           = compileTemplate("content.html")
 	CalendarTemplate              = compileTemplate("calendar.html", "widget-base.html")
 	ClockTemplate                 = compileTemplate("clock.html", "widget-base.html")
