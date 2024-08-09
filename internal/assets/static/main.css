@@ -731,6 +731,7 @@ kbd:active {
     height: 6rem;
     font: inherit;
     outline: none;
+    color: var(--color-text-highlight);
 }
 
 .search-input::placeholder {
