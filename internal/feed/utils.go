@@ -79,6 +79,78 @@ func maybeCopySliceWithoutZeroValues[T int | float64](values []T) []T {
 	return values
 }
 
+func currencyCodeToSymbol(code string) string {
+	currencySymbols := map[string]string{
+		"btc":  "₿",
+		"eth":  "Ξ",
+		"ltc":  "Ł",
+		"bch":  "₡",
+		"bnb":  "Ƀ",
+		"eos":  "", // no symbol
+		"xrp":  "", // no symbol
+		"xlm":  "", // no symbol
+		"link": "", // no symbol
+		"dot":  "", // no symbol
+		"yfi":  "", // no symbol
+		"usd":  "$",
+		"aed":  "د.إ",
+		"ars":  "$",
+		"aud":  "AU$",
+		"bdt":  "৳",
+		"bhd":  ".د.ب",
+		"bmd":  "$",
+		"brl":  "R$",
+		"cad":  "CA$",
+		"chf":  "CHF",
+		"clp":  "$",
+		"cny":  "¥",
+		"czk":  "Kč",
+		"dkk":  "kr",
+		"eur":  "€",
+		"gbp":  "£",
+		"gel":  "ლ",
+		"hkd":  "HK$",
+		"huf":  "Ft",
+		"idr":  "Rp",
+		"ils":  "₪",
+		"inr":  "₹",
+		"jpy":  "¥",
+		"krw":  "₩",
+		"kwd":  "د.ك",
+		"lkr":  "Rs",
+		"mmk":  "K",
+		"mxn":  "$",
+		"myr":  "RM",
+		"ngn":  "₦",
+		"nok":  "kr",
+		"nzd":  "NZ$",
+		"php":  "₱",
+		"pkr":  "Rs",
+		"pln":  "zł",
+		"rub":  "₽",
+		"sar":  "ر.س",
+		"sek":  "kr",
+		"sgd":  "SGD",
+		"thb":  "฿",
+		"try":  "₺",
+		"twd":  "NT$",
+		"uah":  "₴",
+		"vef":  "Bs",
+		"vnd":  "₫",
+		"zar":  "R",
+		"xdr":  "", // no symbol
+		"xag":  "", // no symbol
+		"xau":  "", // no symbol
+		"bits": "", // no symbol
+		"sats": "", // no symbol
+	}
+
+	symbol, ok := currencySymbols[code]
+	if !ok {
+		symbol = strings.ToUpper(code) + " "
+	}
+	return symbol
+}
 
 var urlSchemePattern = regexp.MustCompile(`^[a-z]+:\/\/`)
 
