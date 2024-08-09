@@ -452,16 +452,22 @@ kbd:active {
 }
 
 .dynamic-columns {
-    gap: calc(var(--widget-content-vertical-padding) / 2);
+    gap: var(--widget-content-vertical-padding) var(--widget-content-horizontal-padding);
     display: grid;
     grid-template-columns: repeat(var(--columns-per-row), 1fr);
-    margin: calc(0px - var(--widget-content-vertical-padding) / 2) calc(0px - var(--widget-content-horizontal-padding) / 2);
 }
 
 .dynamic-columns > * {
-    padding: calc(var(--widget-content-vertical-padding) / 2) calc(var(--widget-content-horizontal-padding) / 1.5);
-    background-color: var(--color-background);
-    border-radius: var(--border-radius);
+    padding-left: var(--widget-content-horizontal-padding);
+    border-top: 1px solid var(--color-separator);
+    border-left: 1px solid var(--color-separator);
+    min-width: 0;
+}
+
+.dynamic-columns > *:first-child {
+    padding-top: 0;
+    border-top: none;
+    border-left: none;
 }
 
 .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
@@ -470,23 +476,45 @@ kbd:active {
 .dynamic-columns:has(> :nth-child(4)) { --columns-per-row: 4; }
 .dynamic-columns:has(> :nth-child(5)) { --columns-per-row: 5; }
 
-@container widget (max-width: 1500px) {
+@container widget (max-width: 449px) {
     .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
+    .dynamic-columns > * {
+        border-left: none;
+        padding-left: 0;
+        padding-top: var(--widget-content-vertical-padding);
+    }
+}
+@container widget (min-width: 450px) and (max-width: 850px) {
     .dynamic-columns:has(> :nth-child(2)) { --columns-per-row: 2; }
+    .dynamic-columns > * { border-top: none; }
+    .dynamic-columns > :nth-child(2n-1) {
+        border-left: none;
+        padding-left: 0;
+    }
+}
+@container widget (min-width: 849px) and (max-width: 1250px) {
     .dynamic-columns:has(> :nth-child(3)) { --columns-per-row: 3; }
+    .dynamic-columns > * { border-top: none; }
+    .dynamic-columns > :nth-child(3n+1) {
+        border-left: none;
+        padding-left: 0;
+    }
+}
+@container widget (min-width: 1249px) and (max-width: 1499px) {
     .dynamic-columns:has(> :nth-child(4)) { --columns-per-row: 4; }
+    .dynamic-columns > * { border-top: none; }
+    .dynamic-columns > :nth-child(4n+1) {
+        border-left: none;
+        padding-left: 0;
+    }
 }
-@container widget (max-width: 1250px) {
-    .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
-    .dynamic-columns:has(> :nth-child(2)) { --columns-per-row: 2; }
-    .dynamic-columns:has(> :nth-child(3)) { --columns-per-row: 3; }
-}
-@container widget (max-width: 850px) {
-    .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
-    .dynamic-columns:has(> :nth-child(2)) { --columns-per-row: 2; }
-}
-@container widget (max-width: 550px) {
-    .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
+@container widget (min-width: 1500px) {
+    .dynamic-columns:has(> :nth-child(5)) { --columns-per-row: 5; }
+    .dynamic-columns > * { border-top: none; }
+    .dynamic-columns > :nth-child(5n+1) {
+        border-left: none;
+        padding-left: 0;
+    }
 }
 
 .cards-vertical {
@@ -701,6 +729,7 @@ kbd:active {
 .market-chart {
     margin-left: auto;
     width: 6.5rem;
+    flex-shrink: 0;
 }
 
 .market-chart svg {
@@ -1395,8 +1424,6 @@ kbd:active {
         --widget-content-horizontal-padding: 10px;
         --content-bounds-padding: 10px;
     }
-
-    .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
 
     .row-reverse-on-mobile {
         flex-direction: row-reverse;

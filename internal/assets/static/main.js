@@ -365,8 +365,8 @@ function attachExpandToggleButton(collapsibleContainer) {
 };
 
 
-function setupCollapsibleLists() {
-    const collapsibleLists = document.querySelectorAll(".list.collapsible-container");
+function setupCollapsibleLists(selector) {
+    const collapsibleLists = document.querySelectorAll(selector);
 
     if (collapsibleLists.length == 0) {
         return;
@@ -596,7 +596,8 @@ async function setupPage() {
         setupClocks()
         setupCarousels();
         setupSearchBoxes();
-        setupCollapsibleLists();
+        setupCollapsibleLists(".list.collapsible-container");
+        setupCollapsibleLists(".dynamic-columns.collapsible-container");
         setupCollapsibleGrids();
         setupGroups();
         setupDynamicRelativeTime();
