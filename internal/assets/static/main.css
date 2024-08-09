@@ -614,7 +614,7 @@ kbd:active {
 .widget-header {
     padding: 0 calc(var(--widget-content-horizontal-padding) + 1px);
     font-size: var(--font-size-h4);
-    margin-bottom: 1rem;
+    margin-bottom: 0.9rem;
     display: flex;
     align-items: center;
     gap: 1rem;
