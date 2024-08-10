@@ -228,7 +228,7 @@ func GetItemsFromRSSFeeds(requests []RSSFeedRequest) (RSSFeedItems, error) {
 		entries = append(entries, feeds[i]...)
 	}
 
-	if len(entries) == 0 {
+	if failed == len(requests) {
 		return nil, ErrNoContent
 	}
 

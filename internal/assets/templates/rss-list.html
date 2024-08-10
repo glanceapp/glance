@@ -12,6 +12,8 @@
             </li>
         </ul>
     </li>
+    {{ else }}
+    <li>{{ .NoItemsMessage }}</li>
     {{ end }}
 </ul>
 {{ end }}

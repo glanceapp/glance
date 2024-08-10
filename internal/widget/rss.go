@@ -18,6 +18,7 @@ type RSS struct {
 	Items           feed.RSSFeedItems     `yaml:"-"`
 	Limit           int                   `yaml:"limit"`
 	CollapseAfter   int                   `yaml:"collapse-after"`
+	NoItemsMessage  string                `yaml:"-"`
 }
 
 func (widget *RSS) Initialize() error {
@@ -44,6 +45,8 @@ func (widget *RSS) Initialize() error {
 			widget.FeedRequests[i].IsDetailed = true
 		}
 	}
+
+	widget.NoItemsMessage = "No items were returned from the feeds."
 
 	return nil
 }
