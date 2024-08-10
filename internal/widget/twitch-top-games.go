@@ -18,7 +18,10 @@ type TwitchGames struct {
 }
 
 func (widget *TwitchGames) Initialize() error {
-	widget.withTitle("Top games on Twitch").withCacheDuration(time.Minute * 10)
+	widget.
+		withTitle("Top games on Twitch").
+		withTitleURL("https://www.twitch.tv/directory?sort=VIEWER_COUNT").
+		withCacheDuration(time.Minute * 10)
 
 	if widget.Limit <= 0 {
 		widget.Limit = 10
