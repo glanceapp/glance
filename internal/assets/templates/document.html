@@ -12,9 +12,8 @@
     <meta name="apple-mobile-web-app-title" content="Glance">
     <meta name="theme-color" content="{{ if ne nil .App.Config.Theme.BackgroundColor }}{{ .App.Config.Theme.BackgroundColor }}{{ else }}hsl(240, 8%, 9%){{ end }}">
     <link rel="apple-touch-icon" sizes="512x512" href="{{ .App.AssetPath "app-icon.png" }}">
-    <link rel="icon" type="image/png" sizes="50x50" href="{{ .App.AssetPath "favicon.png" }}">
     <link rel="manifest" href="{{ .App.AssetPath "manifest.json" }}">
-    <link rel="icon" type="image/png" href="{{ .App.AssetPath "favicon.png" }}" />
+    <link rel="icon" type="image/png" href="{{ .App.Config.Branding.FaviconURL }}" />
     <link rel="stylesheet" href="{{ .App.AssetPath "main.css" }}">
     <script type="module" src="{{ .App.AssetPath "main.js" }}"></script>
     {{ block "document-head-after" . }}{{ end }}

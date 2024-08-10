@@ -49,9 +49,10 @@ type Server struct {
 }
 
 type Branding struct {
-	Show			bool    `yaml:show`
-	Name      string	`yaml:name`
-	ShortName	string	`yaml:"short-name"`
+	HideFooter bool   `yaml:"hide-footer"`
+	LogoText   string `yaml:"logo-text"`
+	LogoURL    string `yaml:"logo-url"`
+	FaviconURL string `yaml:"favicon-url"`
 }
 
 type Column struct {
@@ -108,6 +109,14 @@ func titleToSlug(s string) string {
 	return s
 }
 
+func (a *Application) TransformUserDefinedAssetPath(path string) string {
+	if strings.HasPrefix(path, "/assets/") {
+		return a.Config.Server.BaseURL + path
+	}
+
+	return path
+}
+
 func NewApplication(config *Config) (*Application, error) {
 	if len(config.Pages) == 0 {
 		return nil, fmt.Errorf("no pages configured")
@@ -120,6 +129,7 @@ func NewApplication(config *Config) (*Application, error) {
 		widgetByID: make(map[uint64]widget.Widget),
 	}
 
+	app.Config.Server.AssetsHash = assets.PublicFSHash
 	app.slugToPage[""] = &config.Pages[0]
 
 	for p := range config.Pages {
@@ -140,12 +150,15 @@ func NewApplication(config *Config) (*Application, error) {
 	config = &app.Config
 
 	config.Server.BaseURL = strings.TrimRight(config.Server.BaseURL, "/")
+	config.Theme.CustomCSSFile = app.TransformUserDefinedAssetPath(config.Theme.CustomCSSFile)
 
-	if config.Server.BaseURL != "" &&
-		config.Theme.CustomCSSFile != "" &&
-		strings.HasPrefix(config.Theme.CustomCSSFile, "/assets/") {
-		config.Theme.CustomCSSFile = config.Server.BaseURL + config.Theme.CustomCSSFile
+	if config.Branding.FaviconURL == "" {
+		config.Branding.FaviconURL = app.AssetPath("favicon.png")
+	} else {
+		config.Branding.FaviconURL = app.TransformUserDefinedAssetPath(config.Branding.FaviconURL)
 	}
+
+	config.Branding.LogoURL = app.TransformUserDefinedAssetPath(config.Branding.LogoURL)
 
 	return app, nil
 }
@@ -244,8 +257,6 @@ func (a *Application) AssetPath(asset string) string {
 }
 
 func (a *Application) Serve() error {
-	a.Config.Server.AssetsHash = assets.PublicFSHash
-
 	// TODO: add gzip support, static files must have their gzipped contents cached
 	// TODO: add HTTPS support
 	mux := http.NewServeMux()
