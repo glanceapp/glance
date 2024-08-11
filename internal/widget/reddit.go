@@ -17,6 +17,7 @@ type Reddit struct {
 	Subreddit           string          `yaml:"subreddit"`
 	Style               string          `yaml:"style"`
 	ShowThumbnails      bool            `yaml:"show-thumbnails"`
+	ShowFlairs          bool            `yaml:"show-flairs"`
 	SortBy              string          `yaml:"sort-by"`
 	TopPeriod           string          `yaml:"top-period"`
 	Search              string          `yaml:"search"`
@@ -87,6 +88,7 @@ func (widget *Reddit) Update(ctx context.Context) {
 		widget.Search,
 		widget.CommentsUrlTemplate,
 		widget.RequestUrlTemplate,
+		widget.ShowFlairs,
 	)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {

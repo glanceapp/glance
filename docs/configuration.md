@@ -654,6 +654,7 @@ Example:
 | subreddit | string | yes |  |
 | style | string | no | vertical-list |
 | show-thumbnails | boolean | no | false |
+| show-flairs | boolean | no | false |
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
 | comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
@@ -689,6 +690,9 @@ Shows or hides thumbnails next to the post. This only works if the `style` is `v
 > [!NOTE]
 >
 > Thumbnails don't work for some subreddits due to Reddit's API not returning the thumbnail URL. No workaround for this yet.
+
+##### `show-flairs`
+Shows post flairs when set to `true`.
 
 ##### `limit`
 The maximum number of posts to show.

@@ -17,6 +17,7 @@ type ForumPost struct {
 	Engagement      float64
 	TimePosted      time.Time
 	Tags            []string
+	IsCrosspost     bool
 }
 
 type ForumPosts []ForumPost
