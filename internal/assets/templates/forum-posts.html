@@ -7,7 +7,7 @@
         <div class="flex gap-10 row-reverse-on-mobile thumbnail-parent">
             {{ if $.ShowThumbnails }}
                 {{ if .IsCrosspost }}
-                <svg title="Crosspost" class="forum-post-list-thumbnail hide-on-mobile" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="-9 -8 40 40" stroke-width="1.5" stroke="var(--color-text-subdue)">
+                <svg class="forum-post-list-thumbnail hide-on-mobile" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="-9 -8 40 40" stroke-width="1.5" stroke="var(--color-text-subdue)">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
                 </svg>
                 {{ else if ne .ThumbnailUrl "" }}

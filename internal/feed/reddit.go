@@ -36,7 +36,7 @@ type subredditResponseJson struct {
 	} `json:"data"`
 }
 
-func templateRedditCommentsUrl(template, subreddit, postId, postPath string) string {
+func templateRedditCommentsURL(template, subreddit, postId, postPath string) string {
 	template = strings.ReplaceAll(template, "{SUBREDDIT}", subreddit)
 	template = strings.ReplaceAll(template, "{POST-ID}", postId)
 	template = strings.ReplaceAll(template, "{POST-PATH}", strings.TrimLeft(postPath, "/"))
@@ -99,7 +99,7 @@ func FetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate
 		if commentsUrlTemplate == "" {
 			commentsUrl = "https://www.reddit.com" + post.Permalink
 		} else {
-			commentsUrl = templateRedditCommentsUrl(commentsUrlTemplate, subreddit, post.Id, post.Permalink)
+			commentsUrl = templateRedditCommentsURL(commentsUrlTemplate, subreddit, post.Id, post.Permalink)
 		}
 
 		forumPost := ForumPost{
@@ -126,10 +126,16 @@ func FetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate
 		if len(post.ParentList) > 0 {
 			forumPost.IsCrosspost = true
 			forumPost.TargetUrlDomain = "r/" + post.ParentList[0].Subreddit
+
 			if commentsUrlTemplate == "" {
 				forumPost.TargetUrl = "https://www.reddit.com" + post.ParentList[0].Permalink
 			} else {
-				forumPost.TargetUrl = templateRedditCommentsUrl(commentsUrlTemplate, post.ParentList[0].Subreddit, post.ParentList[0].Id, post.ParentList[0].Permalink)
+				forumPost.TargetUrl = templateRedditCommentsURL(
+					commentsUrlTemplate,
+					post.ParentList[0].Subreddit,
+					post.ParentList[0].Id,
+					post.ParentList[0].Permalink,
+				)
 			}
 		}
 
