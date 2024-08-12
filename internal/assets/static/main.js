@@ -143,9 +143,9 @@ function setupSearchBoxes() {
 
                 if (currentBang != null) {
                     let shortcut = currentBang.dataset.shortcut
-                    let regex = new RegExp(`^(?:${shortcut}\\s*)|(?:\\s*${shortcut})$`);
+                    let regex = new RegExp(`^(${shortcut})|${shortcut}$`);
 
-                    query = input.replace(regex, '');
+                    query = input.replace(regex, "").trim();
                     searchUrlTemplate = currentBang.dataset.url;
                 } else {
                     query = input;
@@ -174,17 +174,15 @@ function setupSearchBoxes() {
 
         const handleInput = (event) => {
             let value = event.target.value.trim();
-            let words = value.split(" ");
-
-            let firstWord = words[0];
-            let lastWord = words[words.length - 1];
-
             let bang = null;
-    
-            if (words.length >= 2 && bangsMap[value]) {
-              bang = bangsMap[value];
-            } else if (bangsMap[firstWord] || bangsMap[lastWord]) {
-              bang = bangsMap[firstWord] || bangsMap[lastWord];
+
+            if (value.length >= 2) {
+                let words = value.split(" ");
+
+                let firstWord = bangsMap[words[0]];
+                let lastWord = bangsMap[words[words.length - 1]];
+
+                if (firstWord || lastWord) bang = firstWord || lastWord;
             }
 
             changeCurrentBang(bang);
