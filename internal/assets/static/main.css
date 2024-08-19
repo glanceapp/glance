@@ -482,6 +482,50 @@ kbd:active {
     }
 }
 
+.summary {
+    width: 100%;
+    cursor: pointer;
+    word-spacing: -0.18em;
+    user-select: none;
+    list-style: none;
+    position: relative;
+    display: flex;
+}
+
+.details[open] .summary {
+    margin-bottom: .8rem;
+}
+
+.summary::before {
+    content: "";
+    position: absolute;
+    inset: -.3rem -.8rem;
+    border-radius: var(--border-radius);
+    background-color: var(--color-widget-background-highlight);
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: -1;
+}
+
+.details[open] .summary::before, .summary:hover::before {
+    opacity: 1;
+}
+
+.summary::after {
+    content: "◀";
+    font-size: 1.2em;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    line-height: 1.3em;
+    right: 0;
+    transition: rotate .5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+details[open] .summary::after {
+    rotate: -90deg;
+}
+
 .content-bounds {
     max-width: 1600px;
     width: 100%;
