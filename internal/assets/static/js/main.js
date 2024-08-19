@@ -1,3 +1,5 @@
+import { setupPopovers } from './popover.js';
+
 function throttledDebounce(callback, maxDebounceTimes, debounceDelay) {
     let debounceTimeout;
     let timesDebounced = 0;
@@ -593,6 +595,7 @@ async function setupPage() {
     pageContentElement.innerHTML = pageContent;
 
     try {
+        setupPopovers();
         setupClocks()
         setupCarousels();
         setupSearchBoxes();
