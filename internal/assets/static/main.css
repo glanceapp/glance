@@ -34,8 +34,8 @@
     --color-separator: hsl(var(--bghs), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 4% * var(--cm))));
     --color-widget-content-border: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 4%)));
     --color-widget-background-highlight: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 4%)));
-    --color-popover-background: hsl(var(--bgh), calc(var(--bgs) + 3%), calc(var(--bgl) + 2%));
-    --color-popover-border: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 7%)));
+    --color-popover-background: hsl(var(--bgh), calc(var(--bgs) + 3%), calc(var(--bgl) + 3%));
+    --color-popover-border: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 10%)));
 
     --ths: var(--bgh), calc(var(--bgs) * var(--tsm));
     --color-text-base: hsl(var(--ths), calc(var(--scheme) var(--cm) * 58%));
@@ -439,20 +439,32 @@ kbd:active {
 .popover-container {
     --triangle-size: 10px;
     --triangle-offset: 50%;
+    --triangle-margin: calc(var(--triangle-size) + 3px);
+    --entrance-y-offset: 8px;
+    --entrance-direction: calc(var(--entrance-y-offset) * -1);
+
     z-index: 20;
     position: absolute;
-    padding-top: calc(var(--triangle-size) + 3px);
+    padding-top: var(--triangle-margin);
     padding-inline: var(--content-bounds-padding);
 }
 
+.popover-container.position-above {
+    --entrance-direction: var(--entrance-y-offset);
+    padding-top: 0;
+    padding-bottom: var(--triangle-margin);
+}
+
 .popover-frame {
+    --shadow-properties: 0 15px 20px -10px;
+    --shadow-color: hsla(var(--bghs), calc(var(--bgl) * 0.2), 0.5);
     position: relative;
     padding: 10px;
     background: var(--color-popover-background);
     border: 1px solid var(--color-popover-border);
     border-radius: 5px;
     animation: popoverFrameEntrance 0.3s backwards cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 15px 30px -5px hsla(var(--bghs), calc(var(--bgl) * 0.2), 0.5);
+    box-shadow: var(--shadow-properties) var(--shadow-color);
 }
 
 .popover-frame::before {
@@ -462,17 +474,27 @@ kbd:active {
     height: var(--triangle-size);
     transform: rotate(45deg);
     background-color: var(--color-popover-background);
-    border-top-left-radius: 4px;
+    border-top-left-radius: 2px;
     border-left: 1px solid var(--color-popover-border);
     border-top: 1px solid var(--color-popover-border);
     left: calc(var(--triangle-offset) - (var(--triangle-size) / 2));
     top: calc(var(--triangle-size) / 2 * -1 - 1px);
 }
 
+.popover-container.position-above .popover-frame::before {
+    transform: rotate(-135deg);
+    top: auto;
+    bottom: calc(var(--triangle-size) / 2 * -1 - 1px);
+}
+
+.popover-container.position-above .popover-frame {
+    --shadow-properties: 0 10px 20px -10px;
+}
+
 @keyframes popoverFrameEntrance {
     from {
         opacity: 0;
-        transform: translateY(-8px);
+        transform: translateY(var(--entrance-direction));
     }
 }
 

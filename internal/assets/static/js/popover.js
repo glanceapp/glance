@@ -36,7 +36,7 @@ function handleMouseEnter(event) {
     if (activeTarget !== null) {
         if (activeTarget !== target) {
             hidePopover();
-            setTimeout(showPopover, 5);
+            requestAnimationFrame(showPopover);
         }
 
         return;
@@ -96,28 +96,45 @@ function showPopover() {
 }
 
 function repositionContainer() {
-    const activeTargetBounds = activeTarget.getBoundingClientRect();
+    const targetBounds = activeTarget.getBoundingClientRect();
     const containerBounds = containerElement.getBoundingClientRect();
     const containerInlinePadding = parseInt(containerComputedStyle.getPropertyValue("padding-inline"));
-    const activeTargetBoundsWidthOffset = activeTargetBounds.width * (activeTarget.dataset.popoverOffset || 0.5);
-    const left = activeTargetBounds.left + activeTargetBoundsWidthOffset - (containerBounds.width / 2);
+    const activeTargetBoundsWidthOffset = targetBounds.width * (activeTarget.dataset.popoverOffset || 0.5);
+    const position = activeTarget.dataset.popoverPosition || "below";
+    const left = targetBounds.left + activeTargetBoundsWidthOffset - (containerBounds.width / 2) + 1;
 
     if (left < 0) {
         containerElement.style.left = 0;
         containerElement.style.removeProperty("right");
-        containerElement.style.setProperty("--triangle-offset", activeTargetBounds.left - containerInlinePadding + activeTargetBoundsWidthOffset + "px");
+        containerElement.style.setProperty("--triangle-offset", targetBounds.left - containerInlinePadding + activeTargetBoundsWidthOffset + "px");
     } else if (left + containerBounds.width > window.innerWidth) {
         containerElement.style.removeProperty("left");
         containerElement.style.right = 0;
-        containerElement.style.setProperty("--triangle-offset", containerBounds.width - containerInlinePadding - (window.innerWidth - activeTargetBounds.left - activeTargetBoundsWidthOffset) + "px");
+        containerElement.style.setProperty("--triangle-offset", containerBounds.width - containerInlinePadding - (window.innerWidth - targetBounds.left - activeTargetBoundsWidthOffset) + "px");
     } else {
         containerElement.style.removeProperty("right");
         containerElement.style.left = left + "px";
         containerElement.style.removeProperty("--triangle-offset");
     }
 
-    frameElement.style.marginTop = activeTarget.dataset.popoverMargin || defaultDistanceFromTarget;
-    containerElement.style.top = activeTargetBounds.top + window.scrollY + activeTargetBounds.height + "px";
+    const distanceFromTarget = activeTarget.dataset.popoverMargin || defaultDistanceFromTarget;
+    const topWhenAbove = targetBounds.top + window.scrollY - containerBounds.height;
+    const topWhenBelow = targetBounds.top + window.scrollY + targetBounds.height;
+
+    if (
+        position === "above" && topWhenAbove > window.scrollY ||
+        (position === "below" && topWhenBelow + containerBounds.height > window.scrollY + window.innerHeight)
+    ) {
+        containerElement.classList.add("position-above");
+        frameElement.style.removeProperty("margin-top");
+        frameElement.style.marginBottom = distanceFromTarget;
+        containerElement.style.top = topWhenAbove + "px";
+    } else {
+        containerElement.classList.remove("position-above");
+        frameElement.style.removeProperty("margin-bottom");
+        frameElement.style.marginTop = distanceFromTarget;
+        containerElement.style.top = topWhenBelow + "px";
+    }
 }
 
 function hidePopover() {
