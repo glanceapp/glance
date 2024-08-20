@@ -96,21 +96,24 @@ function showPopover() {
 }
 
 function repositionContainer() {
-    const targetBounds = activeTarget.getBoundingClientRect();
+    const targetBounds = activeTarget.dataset.popoverAnchor !== undefined
+        ? activeTarget.querySelector(activeTarget.dataset.popoverAnchor).getBoundingClientRect()
+        : activeTarget.getBoundingClientRect();
+
     const containerBounds = containerElement.getBoundingClientRect();
     const containerInlinePadding = parseInt(containerComputedStyle.getPropertyValue("padding-inline"));
-    const activeTargetBoundsWidthOffset = targetBounds.width * (activeTarget.dataset.popoverOffset || 0.5);
+    const targetBoundsWidthOffset = targetBounds.width * (activeTarget.dataset.popoverOffset || 0.5);
     const position = activeTarget.dataset.popoverPosition || "below";
-    const left = targetBounds.left + activeTargetBoundsWidthOffset - (containerBounds.width / 2) + 1;
+    const left = Math.round(targetBounds.left + targetBoundsWidthOffset - (containerBounds.width / 2));
 
     if (left < 0) {
         containerElement.style.left = 0;
         containerElement.style.removeProperty("right");
-        containerElement.style.setProperty("--triangle-offset", targetBounds.left - containerInlinePadding + activeTargetBoundsWidthOffset + "px");
+        containerElement.style.setProperty("--triangle-offset", targetBounds.left - containerInlinePadding + targetBoundsWidthOffset + "px");
     } else if (left + containerBounds.width > window.innerWidth) {
         containerElement.style.removeProperty("left");
         containerElement.style.right = 0;
-        containerElement.style.setProperty("--triangle-offset", containerBounds.width - containerInlinePadding - (window.innerWidth - targetBounds.left - activeTargetBoundsWidthOffset) + "px");
+        containerElement.style.setProperty("--triangle-offset", containerBounds.width - containerInlinePadding - (window.innerWidth - targetBounds.left - targetBoundsWidthOffset) + "px");
     } else {
         containerElement.style.removeProperty("right");
         containerElement.style.left = left + "px";
