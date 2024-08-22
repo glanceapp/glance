@@ -98,7 +98,7 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 			if err == nil {
 				var link string
 
-				if item.Link[0] == '/' {
+				if len(item.Link) > 0 && item.Link[0] == '/' {
 					link = item.Link
 				} else {
 					link = "/" + item.Link
