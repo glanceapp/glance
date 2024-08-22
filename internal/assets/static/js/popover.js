@@ -60,7 +60,6 @@ function showPopover() {
     pendingTarget = null;
 
     const popoverType = activeTarget.dataset.popoverType;
-    const contentMaxWidth = activeTarget.dataset.popoverMaxWidth || defaultMaxWidth;
 
     if (popoverType === "text") {
         const text = activeTarget.dataset.popoverText;
@@ -85,6 +84,14 @@ function showPopover() {
         };
     } else {
         return;
+    }
+
+    const contentMaxWidth = activeTarget.dataset.popoverMaxWidth || defaultMaxWidth;
+
+    if (activeTarget.dataset.popoverTextAlign !== undefined) {
+        contentElement.style.textAlign = activeTarget.dataset.popoverTextAlign;
+    } else {
+        contentElement.style.removeProperty("text-align");
     }
 
     contentElement.style.maxWidth = contentMaxWidth;
