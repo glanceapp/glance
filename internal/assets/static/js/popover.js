@@ -36,7 +36,7 @@ function handleMouseEnter(event) {
     if (activeTarget !== null) {
         if (activeTarget !== target) {
             hidePopover();
-            requestAnimationFrame(showPopover);
+            requestAnimationFrame(() => requestAnimationFrame(showPopover));
         }
 
         return;
