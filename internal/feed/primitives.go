@@ -86,6 +86,28 @@ var currencyToSymbol = map[string]string{
 	"PHP": "₱",
 }
 
+type DNSStats struct {
+	TotalQueries      int
+	BlockedQueries    int
+	BlockedPercent    int
+	ResponseTime      int
+	DomainsBlocked    int
+	Series            [8]DNSStatsSeries
+	TopBlockedDomains []DNSStatsBlockedDomain
+}
+
+type DNSStatsSeries struct {
+	Queries        int
+	Blocked        int
+	PercentTotal   int
+	PercentBlocked int
+}
+
+type DNSStatsBlockedDomain struct {
+	Domain         string
+	PercentBlocked int
+}
+
 type MarketRequest struct {
 	Name       string `yaml:"name"`
 	Symbol     string `yaml:"symbol"`

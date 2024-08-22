@@ -65,6 +65,8 @@ func New(widgetType string) (Widget, error) {
 		widget = &Extension{}
 	case "group":
 		widget = &Group{}
+	case "dns-stats":
+		widget = &DNSStats{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}

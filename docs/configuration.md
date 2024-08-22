@@ -18,6 +18,7 @@
   - [Weather](#weather)
   - [Monitor](#monitor)
   - [Releases](#releases)
+  - [DNS Stats](#dns-stats)
   - [Repository](#repository)
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
@@ -1119,6 +1120,56 @@ The maximum number of releases to show.
 
 #### `collapse-after`
 How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+### DNS Stats
+Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home or Pi-hole.
+
+Example:
+
+```yaml
+- type: dns-stats
+  service: adguard
+  url: https://adguard.domain.com/
+  username: admin
+  password: ${ADGUARD_PASSWORD}
+```
+
+Preview:
+
+![](images/dns-stats-widget-preview.png)
+
+> [!NOTE]
+>
+> When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole it will be the total number of blocked domains from all adlists.
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| service | string | no | pihole |
+| url | string | yes |  |
+| username | string | when service is `adguard` |  |
+| password | string | when service is `adguard` |  |
+| token | string | when service is `pihole` |  |
+| hour-format | string | no | 12h |
+
+##### `service`
+Either `adguard` or `pihole`.
+
+##### `url`
+The base URL of the service. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+
+##### `username`
+Only required when using AdGuard Home. The username used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+
+##### `password`
+Only required when using AdGuard Home. The password used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+
+##### `token`
+Only required when using Pi-hole. The API token which can be found in `Settings -> API -> Show API token`. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+
+##### `hour-format`
+Whether to display the relative time in the graph in `12h` or `24h` format.
 
 ### Repository
 Display general information about a repository as well as a list of the latest open pull requests and issues.
