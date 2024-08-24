@@ -1,0 +1,52 @@
+{{ template "document.html" . }}
+
+{{ define "document-title" }}{{ .Page.Title }} - Glance{{ end }}
+
+{{ define "document-head-before" }}
+<script>
+    const pageData = {
+        slug: "{{ .Page.Slug }}",
+    };
+</script>
+{{ end }}
+
+{{ define "document-root-attrs" }}{{ if .App.Config.Theme.Light }}class="light-scheme"{{ end }}{{ end }}
+{{ define "document-head-after" }}
+{{ template "page-style-overrides.gotmpl" . }}
+{{ if ne "" .App.Config.Theme.CustomCSSFile }}
+<link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.Config.Server.StartedAt.Unix }}">
+{{ end }}
+{{ end }}
+
+{{ define "navigation-links" }}
+{{ range .App.Config.Pages }}
+<a href="/{{ .Slug }}" class="nav-item{{ if eq .Slug $.Page.Slug }} nav-item-current{{ end }}">{{ .Title }}</a>
+{{ end }}
+{{ end }}
+
+{{ define "document-body" }}
+<div class="content-bounds">
+    <div class="page">
+        <div class="page-404-container">
+            <!-- TODO: Replace G with actual logo, first need an actual logo -->
+            <div class="logo-404">G</div>
+            <div class="margin-top-15">
+                <span>Page Not Found</span>
+                <div class="margin-top-5 size-h5 color-primary">
+                    <a href="/home" rel="noreferrer">Go back to home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="footer flex items-center flex-column">
+    <div>
+        <span class="size-h3">Glance</span> ({{ .App.Version }})
+    </div>
+    <ul class="list-horizontal-text margin-top-5 size-h5 color-primary">
+        <li><a href="https://github.com/glanceapp/glance/issues" target="_blank" rel="noreferrer">Report issue</a></li>
+        <li><a href="https://github.com/glanceapp/glance/discussions" target="_blank" rel="noreferrer">Submit feedback</a></li>
+    </ul>
+</div>
+{{ end }}
