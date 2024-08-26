@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"html/template"
 	"log/slog"
 	"net/http"
 	"path/filepath"
@@ -49,10 +50,11 @@ type Server struct {
 }
 
 type Branding struct {
-	HideFooter bool   `yaml:"hide-footer"`
-	LogoText   string `yaml:"logo-text"`
-	LogoURL    string `yaml:"logo-url"`
-	FaviconURL string `yaml:"favicon-url"`
+	HideFooter   bool          `yaml:"hide-footer"`
+	CustomFooter template.HTML `yaml:"custom-footer"`
+	LogoText     string        `yaml:"logo-text"`
+	LogoURL      string        `yaml:"logo-url"`
+	FaviconURL   string        `yaml:"favicon-url"`
 }
 
 type Column struct {
