@@ -8,9 +8,10 @@ import (
 )
 
 type Config struct {
-	Server Server `yaml:"server"`
-	Theme  Theme  `yaml:"theme"`
-	Pages  []Page `yaml:"pages"`
+	Server   Server   `yaml:"server"`
+	Theme    Theme    `yaml:"theme"`
+	Branding Branding `yaml:"branding"`
+	Pages    []Page   `yaml:"pages"`
 }
 
 func NewConfigFromYml(contents io.Reader) (*Config, error) {

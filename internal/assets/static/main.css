@@ -660,6 +660,15 @@ kbd:active {
     padding-right: var(--widget-content-horizontal-padding);
 }
 
+.logo:has(img) {
+    display: flex;
+    align-items: center;
+}
+
+.logo img {
+    max-height: 2.7rem;
+}
+
 .nav {
     height: 100%;
     gap: var(--header-items-gap);

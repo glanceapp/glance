@@ -3,6 +3,7 @@
 - [Intro](#intro)
 - [Preconfigured page](#preconfigured-page)
 - [Server](#server)
+- [Branding](#branding)
 - [Theme](#theme)
   - [Themes](#themes)
 - [Pages & Columns](#pages--columns)
@@ -172,6 +173,42 @@ To be able to point to an asset from your assets path, use the `/assets/` path l
 ```yaml
 icon: /assets/gitea-icon.png
 ```
+
+## Branding
+You can adjust the various parts of the branding through a top level `branding` property. Example:
+
+```yaml
+branding:
+  custom-footer: |
+    <p>Powered by <a href="https://github.com/glanceapp/glance">Glance</a></p>
+  logo-url: /assets/logo.png
+  favicon-url: /assets/logo.png
+```
+
+### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| hide-footer | bool | no | false |
+| custom-footer | string | no |  |
+| logo-text | string | no | G |
+| logo-url | string | no | |
+| favicon-url | string | no | |
+
+#### `hide-footer`
+Hides the footer when set to `true`.
+
+#### `custom-footer`
+Specify custom HTML to use for the footer.
+
+#### `logo-text`
+Specify custom text to use instead of the "G" found in the navigation.
+
+#### `logo-url`
+Specify a URL to a custom image to use instead of the "G" found in the navigation. If both `logo-text` and `logo-url` are set, only `logo-url` will be used.
+
+#### `favicon-url`
+Specify a URL to a custom image to use for the favicon.
 
 ## Theme
 Theming is done through a top level `theme` property. Values for the colors are in [HSL](https://giggster.com/guide/basics/hue-saturation-lightness/) (hue, saturation, lightness) format. You can use a color picker [like this one](https://hslpicker.com/) to convert colors from other formats to HSL. The values are separated by a space and `%` is not required for any of the numbers.
