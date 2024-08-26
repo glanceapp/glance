@@ -51,7 +51,6 @@ func NewConfig() *Config {
 
 	config.Server.Host = ""
 	config.Server.Port = 8080
-	config.Branding.LogoText = "G"
 
 	return config
 }

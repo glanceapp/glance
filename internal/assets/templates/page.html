@@ -32,7 +32,7 @@
     <div class="header-container content-bounds">
         <div class="header flex padding-inline-widget widget-content-frame">
             <!-- TODO: Replace G with actual logo, first need an actual logo -->
-            <div class="logo">{{ if ne "" .App.Config.Branding.LogoURL }}<img src="{{ .App.Config.Branding.LogoURL }}" alt="">{{ else if ne "" .App.Config.Branding.LogoText }}{{ .App.Config.Branding.LogoText }}{{ else }}{{ end }}</div>
+            <div class="logo">{{ if ne "" .App.Config.Branding.LogoURL }}<img src="{{ .App.Config.Branding.LogoURL }}" alt="">{{ else if ne "" .App.Config.Branding.LogoText }}{{ .App.Config.Branding.LogoText }}{{ else }}G{{ end }}</div>
             <div class="nav flex grow">
                 {{ template "navigation-links" . }}
             </div>
