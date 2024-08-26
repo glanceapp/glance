@@ -161,7 +161,11 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 		} else if url := findThumbnailInItemExtensions(item); url != "" {
 			rssItem.ImageURL = url
 		} else if feed.Image != nil {
-			rssItem.ImageURL = feed.Image.URL
+			if len(feed.Image.URL) > 0 && feed.Image.URL[0] == '/' {
+				rssItem.ImageURL = strings.TrimRight(feed.Link, "/") + feed.Image.URL
+			} else {
+				rssItem.ImageURL = feed.Image.URL
+			}
 		}
 
 		if item.PublishedParsed != nil {
