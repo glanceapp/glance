@@ -666,8 +666,7 @@ kbd:active {
 }
 
 .logo img {
-    aspect-ratio: 1;
-    max-width: 2.7rem;
+    max-height: 2.7rem;
 }
 
 .nav {
