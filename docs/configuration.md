@@ -179,27 +179,36 @@ You can adjust the various parts of the branding through a top level `branding` 
 
 ```yaml
 branding:
-  show: true
-  name: Glance
-  short-name: G
+  custom-footer: |
+    <p>Powered by <a href="https://github.com/glanceapp/glance">Glance</a></p>
+  logo-url: /assets/logo.png
+  favicon-url: /assets/logo.png
 ```
 
 ### Properties
 
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| show | bool | no | true |
-| name | string | no | Glance |
-| short-name | string | no | G |
+| hide-footer | bool | no | false |
+| custom-footer | string | no |  |
+| logo-text | string | no | G |
+| logo-url | string | no | |
+| favicon-url | string | no | |
 
-#### `show`
-True will show the glance footer, false will hide it.
+#### `hide-footer`
+Hides the footer when set to `true`.
 
-#### `name`
-Sets the name presented after the page name in the title.
+#### `custom-footer`
+Specify custom HTML to use for the footer.
 
-#### `short-name`
-Sets the name presented before the pages in the header. 
+#### `logo-text`
+Specify custom text to use instead of the "G" found in the navigation.
+
+#### `logo-url`
+Specify a URL to a custom image to use instead of the "G" found in the navigation. If both `logo-text` and `logo-url` are set, only `logo-url` will be used.
+
+#### `favicon-url`
+Specify a URL to a custom image to use for the favicon.
 
 ## Theme
 Theming is done through a top level `theme` property. Values for the colors are in [HSL](https://giggster.com/guide/basics/hue-saturation-lightness/) (hue, saturation, lightness) format. You can use a color picker [like this one](https://hslpicker.com/) to convert colors from other formats to HSL. The values are separated by a space and `%` is not required for any of the numbers.
