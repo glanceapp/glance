@@ -1099,7 +1099,7 @@ Whether to ignore invalid/self-signed certificates.
 Whether to open the link in the same or a new tab.
 
 ### Releases
-Display a list of releases for specific repositories on Github. Draft releases and prereleases will not be shown.
+Display a list of latest releases for specific repositories on Github, GitLab or Docker Hub.
 
 Example:
 
@@ -1137,6 +1137,24 @@ repositories:
   - gitlab:inkscape/inkscape
   - dockerhub:glanceapp/glance
 ```
+
+Official images on Docker Hub can be specified by ommiting the owner:
+
+```yaml
+repositories:
+  - dockerhub:nginx
+  - dockerhub:node
+  - dockerhub:alpine
+```
+
+You can also specify specific tags for Docker Hub images:
+
+```yaml
+repositories:
+  - dockerhub:nginx:latest
+  - dockerhub:nginx:stable-alpine
+```
+
 
 ##### `show-source-icon`
 Shows an icon of the source (GitHub/GitLab/Docker Hub) next to the repository name when set to `true`.

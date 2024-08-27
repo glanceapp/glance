@@ -38,7 +38,7 @@ func (widget *Releases) Initialize() error {
 	var gitLabTokenAsString = widget.GitLabToken.String()
 
 	for _, repository := range widget.Repositories {
-		parts := strings.Split(repository, ":")
+		parts := strings.SplitN(repository, ":", 2)
 		var request *feed.ReleaseRequest
 
 		if len(parts) == 1 {

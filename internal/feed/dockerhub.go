@@ -7,26 +7,40 @@ import (
 )
 
 type dockerHubRepositoryTagsResponse struct {
-	Results []struct {
-		Name       string `json:"name"`
-		LastPushed string `json:"tag_last_pushed"`
-	} `json:"results"`
+	Results []dockerHubRepositoryTagResponse `json:"results"`
 }
 
-const dockerHubReleaseNotesURLFormat = "https://hub.docker.com/r/%s/tags?name=%s"
+type dockerHubRepositoryTagResponse struct {
+	Name       string `json:"name"`
+	LastPushed string `json:"tag_last_pushed"`
+}
+
+const dockerHubOfficialRepoTagURLFormat = "https://hub.docker.com/_/%s/tags?name=%s"
+const dockerHubRepoTagURLFormat = "https://hub.docker.com/r/%s/tags?name=%s"
+const dockerHubTagsURLFormat = "https://hub.docker.com/v2/namespaces/%s/repositories/%s/tags"
+const dockerHubSpecificTagURLFormat = "https://hub.docker.com/v2/namespaces/%s/repositories/%s/tags/%s"
 
 func fetchLatestDockerHubRelease(request *ReleaseRequest) (*AppRelease, error) {
-	parts := strings.Split(request.Repository, "/")
 
-	if len(parts) != 2 {
+	nameParts := strings.Split(request.Repository, "/")
+
+	if len(nameParts) > 2 {
 		return nil, fmt.Errorf("invalid repository name: %s", request.Repository)
+	} else if len(nameParts) == 1 {
+		nameParts = []string{"library", nameParts[0]}
 	}
 
-	httpRequest, err := http.NewRequest(
-		"GET",
-		fmt.Sprintf("https://hub.docker.com/v2/namespaces/%s/repositories/%s/tags", parts[0], parts[1]),
-		nil,
-	)
+	tagParts := strings.SplitN(nameParts[1], ":", 2)
+
+	var requestURL string
+
+	if len(tagParts) == 2 {
+		requestURL = fmt.Sprintf(dockerHubSpecificTagURLFormat, nameParts[0], tagParts[0], tagParts[1])
+	} else {
+		requestURL = fmt.Sprintf(dockerHubTagsURLFormat, nameParts[0], nameParts[1])
+	}
+
+	httpRequest, err := http.NewRequest("GET", requestURL, nil)
 
 	if err != nil {
 		return nil, err
@@ -36,22 +50,52 @@ func fetchLatestDockerHubRelease(request *ReleaseRequest) (*AppRelease, error) {
 		httpRequest.Header.Add("Authorization", "Bearer "+(*request.Token))
 	}
 
-	response, err := decodeJsonFromRequest[dockerHubRepositoryTagsResponse](defaultClient, httpRequest)
+	var tag *dockerHubRepositoryTagResponse
 
-	if err != nil {
-		return nil, err
+	if len(tagParts) == 1 {
+		response, err := decodeJsonFromRequest[dockerHubRepositoryTagsResponse](defaultClient, httpRequest)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if len(response.Results) == 0 {
+			return nil, fmt.Errorf("no tags found for repository: %s", request.Repository)
+		}
+
+		tag = &response.Results[0]
+	} else {
+		response, err := decodeJsonFromRequest[dockerHubRepositoryTagResponse](defaultClient, httpRequest)
+
+		if err != nil {
+			return nil, err
+		}
+
+		tag = &response
 	}
 
-	if len(response.Results) == 0 {
-		return nil, fmt.Errorf("no tags found for repository: %s", request.Repository)
+	var repo string
+	var displayName string
+	var notesURL string
+
+	if len(tagParts) == 1 {
+		repo = nameParts[1]
+	} else {
+		repo = tagParts[0]
 	}
 
-	tag := response.Results[0]
+	if nameParts[0] == "library" {
+		displayName = repo
+		notesURL = fmt.Sprintf(dockerHubOfficialRepoTagURLFormat, repo, tag.Name)
+	} else {
+		displayName = nameParts[0] + "/" + repo
+		notesURL = fmt.Sprintf(dockerHubRepoTagURLFormat, displayName, tag.Name)
+	}
 
 	return &AppRelease{
 		Source:       ReleaseSourceDockerHub,
-		NotesUrl:     fmt.Sprintf(dockerHubReleaseNotesURLFormat, request.Repository, tag.Name),
-		Name:         request.Repository,
+		NotesUrl:     notesURL,
+		Name:         displayName,
 		Version:      tag.Name,
 		TimeReleased: parseRFC3339Time(tag.LastPushed),
 	}, nil
