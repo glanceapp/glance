@@ -152,6 +152,10 @@ func (f *OptionalEnvString) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
+func (f *OptionalEnvString) String() string {
+	return string(*f)
+}
+
 func toSimpleIconIfPrefixed(icon string) (string, bool) {
 	if !strings.HasPrefix(icon, "si:") {
 		return icon, false

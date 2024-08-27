@@ -2,7 +2,9 @@ package widget
 
 import (
 	"context"
+	"errors"
 	"html/template"
+	"strings"
 	"time"
 
 	"github.com/glanceapp/glance/internal/assets"
@@ -10,13 +12,15 @@ import (
 )
 
 type Releases struct {
-	widgetBase    `yaml:",inline"`
-	Releases      feed.AppReleases  `yaml:"-"`
-	Repositories  []string          `yaml:"repositories"`
-	Token         OptionalEnvString `yaml:"token"`
-	Limit         int               `yaml:"limit"`
-	CollapseAfter int               `yaml:"collapse-after"`
-	Source        string            `yaml:"source"`
+	widgetBase      `yaml:",inline"`
+	Releases        feed.AppReleases       `yaml:"-"`
+	releaseRequests []*feed.ReleaseRequest `yaml:"-"`
+	Repositories    []string               `yaml:"repositories"`
+	Token           OptionalEnvString      `yaml:"token"`
+	GitLabToken     OptionalEnvString      `yaml:"gitlab-token"`
+	Limit           int                    `yaml:"limit"`
+	CollapseAfter   int                    `yaml:"collapse-after"`
+	ShowSourceIcon  bool                   `yaml:"show-source-icon"`
 }
 
 func (widget *Releases) Initialize() error {
@@ -30,15 +34,50 @@ func (widget *Releases) Initialize() error {
 		widget.CollapseAfter = 5
 	}
 
-	if widget.Source == "" {
-		widget.Source = "github"
+	var tokenAsString = widget.Token.String()
+	var gitLabTokenAsString = widget.GitLabToken.String()
+
+	for _, repository := range widget.Repositories {
+		parts := strings.Split(repository, ":")
+		var request *feed.ReleaseRequest
+
+		if len(parts) == 1 {
+			request = &feed.ReleaseRequest{
+				Source:     feed.ReleaseSourceGithub,
+				Repository: repository,
+			}
+
+			if widget.Token != "" {
+				request.Token = &tokenAsString
+			}
+		} else if len(parts) == 2 {
+			if parts[0] == string(feed.ReleaseSourceGitlab) {
+				request = &feed.ReleaseRequest{
+					Source:     feed.ReleaseSourceGitlab,
+					Repository: parts[1],
+				}
+
+				if widget.GitLabToken != "" {
+					request.Token = &gitLabTokenAsString
+				}
+			} else if parts[0] == string(feed.ReleaseSourceDockerHub) {
+				request = &feed.ReleaseRequest{
+					Source:     feed.ReleaseSourceDockerHub,
+					Repository: parts[1],
+				}
+			} else {
+				return errors.New("invalid repository source " + parts[0])
+			}
+		}
+
+		widget.releaseRequests = append(widget.releaseRequests, request)
 	}
 
 	return nil
 }
 
 func (widget *Releases) Update(ctx context.Context) {
-	releases, err := feed.FetchLatestReleasesFromGitForge(widget.Repositories, string(widget.Token), widget.Source)
+	releases, err := feed.FetchLatestReleases(widget.releaseRequests)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return

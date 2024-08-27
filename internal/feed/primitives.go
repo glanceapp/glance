@@ -40,6 +40,7 @@ type Weather struct {
 }
 
 type AppRelease struct {
+	Source       ReleaseSource
 	Name         string
 	Version      string
 	NotesUrl     string
