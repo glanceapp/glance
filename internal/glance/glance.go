@@ -277,7 +277,7 @@ func (a *Application) Serve() error {
 
 	mux.Handle(
 		fmt.Sprintf("GET /static/%s/{path...}", a.Config.Server.AssetsHash),
-		http.StripPrefix("/static/"+a.Config.Server.AssetsHash, FileServerWithCache(http.FS(assets.PublicFS), 8*time.Hour)),
+		http.StripPrefix("/static/"+a.Config.Server.AssetsHash, FileServerWithCache(http.FS(assets.PublicFS), 24*time.Hour)),
 	)
 
 	if a.Config.Server.AssetsPath != "" {
