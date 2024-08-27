@@ -134,6 +134,10 @@ func NewApplication(config *Config) (*Application, error) {
 	app.Config.Server.AssetsHash = assets.PublicFSHash
 	app.slugToPage[""] = &config.Pages[0]
 
+	providers := &widget.Providers{
+		AssetResolver: app.AssetPath,
+	}
+
 	for p := range config.Pages {
 		if config.Pages[p].Slug == "" {
 			config.Pages[p].Slug = titleToSlug(config.Pages[p].Title)
@@ -145,6 +149,8 @@ func NewApplication(config *Config) (*Application, error) {
 			for w := range config.Pages[p].Columns[c].Widgets {
 				widget := config.Pages[p].Columns[c].Widgets[w]
 				app.widgetByID[widget.GetID()] = widget
+
+				widget.SetProviders(providers)
 			}
 		}
 	}

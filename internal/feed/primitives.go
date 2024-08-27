@@ -41,12 +41,13 @@ type Weather struct {
 }
 
 type AppRelease struct {
-	Source       ReleaseSource
-	Name         string
-	Version      string
-	NotesUrl     string
-	TimeReleased time.Time
-	Downvotes    int
+	Source        ReleaseSource
+	SourceIconURL string
+	Name          string
+	Version       string
+	NotesUrl      string
+	TimeReleased  time.Time
+	Downvotes     int
 }
 
 type AppReleases []AppRelease

@@ -87,6 +87,10 @@ func (widget *Releases) Update(ctx context.Context) {
 		releases = releases[:widget.Limit]
 	}
 
+	for i := range releases {
+		releases[i].SourceIconURL = widget.Providers.AssetResolver("icons/" + string(releases[i].Source) + ".svg")
+	}
+
 	widget.Releases = releases
 }
 
