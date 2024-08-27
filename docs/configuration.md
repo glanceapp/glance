@@ -1055,7 +1055,7 @@ Same as the above but used when fetching GitLab releases.
 The maximum number of releases to show.
 
 #### `collapse-after`
-How many releases are visible before the "show more" button appears. set to `-1` to never collapse.
+How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
 ### Repository
 Display general information about a repository as well as a list of the latest open pull requests and issues.
