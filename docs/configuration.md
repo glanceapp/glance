@@ -1055,10 +1055,7 @@ Same as the above but used when fetching GitLab releases.
 The maximum number of releases to show.
 
 #### `collapse-after`
-how many releases are visible before the "show more" button appears. set to `-1` to never collapse.
-
-#### `source`
-Either `github` or `gitlab`. Wether to retrieve the releases from github repositories or gitlab repositories.
+How many releases are visible before the "show more" button appears. set to `-1` to never collapse.
 
 ### Repository
 Display general information about a repository as well as a list of the latest open pull requests and issues.
