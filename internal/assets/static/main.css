@@ -543,8 +543,6 @@ kbd:active {
 @container widget (max-width: 750px) { .cards-grid { --cards-per-row: 3; } }
 @container widget (max-width: 650px) { .cards-grid { --cards-per-row: 2; } }
 
-
-
 .widget-error-header {
     display: flex;
     align-items: center;
@@ -705,6 +703,12 @@ kbd:active {
 .nav-item.nav-item-current {
     border-bottom-color: var(--color-primary);
     color: var(--color-text-highlight);
+}
+
+.release-source-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
 }
 
 .market-chart {

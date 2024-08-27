@@ -1105,11 +1105,13 @@ Example:
 
 ```yaml
 - type: releases
+  show-source-icon: true
   repositories:
-    - immich-app/immich
     - go-gitea/gitea
-    - dani-garcia/vaultwarden
     - jellyfin/jellyfin
+    - glanceapp/glance
+    - gitlab:fdroid/fdroidclient
+    - dockerhub:gotify/server
 ```
 
 Preview:
@@ -1121,12 +1123,23 @@ Preview:
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | repositories | array | yes |  |
+| show-source-icon | boolean | no | false |  |
 | token | string | no | |
+| gitlab-token | string | no | |
 | limit | integer | no | 10 |
 | collapse-after | integer | no | 5 |
 
 ##### `repositories`
-A list of repositores for which to fetch the latest release for. Only the name/repo is required, not the full URL.
+A list of repositores to fetch the latest release for. Only the name/repo is required, not the full URL. A prefix can be specified for repositories hosted elsewhere such as GitLab and Docker Hub. Example:
+
+```yaml
+repositories:
+  - gitlab:inkscape/inkscape
+  - dockerhub:glanceapp/glance
+```
+
+##### `show-source-icon`
+Shows an icon of the source (GitHub/GitLab/Docker Hub) next to the repository name when set to `true`.
 
 ##### `token`
 Without authentication Github allows for up to 60 requests per hour. You can easily exceed this limit and start seeing errors if you're tracking lots of repositories or your cache time is low. To circumvent this you can [create a read only token from your Github account](https://github.com/settings/personal-access-tokens/new) and provide it here.
@@ -1150,6 +1163,9 @@ and then use it in your `glance.yml` like this:
 ```
 
 This way you can safely check your `glance.yml` in version control without exposing the token.
+
+##### `gitlab-token`
+Same as the above but used when fetching GitLab releases.
 
 ##### `limit`
 The maximum number of releases to show.
