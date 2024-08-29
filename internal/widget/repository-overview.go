@@ -15,6 +15,7 @@ type Repository struct {
 	Token               OptionalEnvString `yaml:"token"`
 	PullRequestsLimit   int               `yaml:"pull-requests-limit"`
 	IssuesLimit         int               `yaml:"issues-limit"`
+	CommitsLimit        int               `yaml:"commits-limit"`
 	RepositoryDetails   feed.RepositoryDetails
 }
 
@@ -29,6 +30,10 @@ func (widget *Repository) Initialize() error {
 		widget.IssuesLimit = 3
 	}
 
+	if widget.CommitsLimit == 0 || widget.CommitsLimit < -1 {
+		widget.CommitsLimit = -1
+	}
+
 	return nil
 }
 
@@ -38,6 +43,7 @@ func (widget *Repository) Update(ctx context.Context) {
 		string(widget.Token),
 		widget.PullRequestsLimit,
 		widget.IssuesLimit,
+		widget.CommitsLimit,
 	)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {

@@ -3,6 +3,7 @@ package feed
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -67,6 +68,8 @@ type RepositoryDetails struct {
 	PullRequests     []GithubTicket
 	OpenIssues       int
 	Issues           []GithubTicket
+	LastCommits      int
+	Commits          []CommitDetails
 }
 
 type githubRepositoryDetailsResponseJson struct {
@@ -84,21 +87,40 @@ type githubTicketResponseJson struct {
 	} `json:"items"`
 }
 
-func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs int, maxIssues int) (RepositoryDetails, error) {
-	repositoryRequest, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s", repository), nil)
+type CommitDetails struct {
+	Sha       string
+	Author    string
+	CreatedAt time.Time
+	Message   string
+}
 
+type gitHubCommitResponseJson struct {
+	Sha    string `json:"sha"`
+	Commit struct {
+		Author struct {
+			Name string `json:"name"`
+			Date string `json:"date"`
+		} `json:"author"`
+		Message string `json:"message"`
+	} `json:"commit"`
+}
+
+func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs int, maxIssues int, maxCommits int) (RepositoryDetails, error) {
+	repositoryRequest, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s", repository), nil)
 	if err != nil {
 		return RepositoryDetails{}, fmt.Errorf("%w: could not create request with repository: %v", ErrNoContent, err)
 	}
 
 	PRsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=is:pr+is:open+repo:%s&per_page=%d", repository, maxPRs), nil)
 	issuesRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=is:issue+is:open+repo:%s&per_page=%d", repository, maxIssues), nil)
+	CommitsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/commits?per_page=%d", repository, maxCommits), nil)
 
 	if token != "" {
 		token = fmt.Sprintf("Bearer %s", token)
 		repositoryRequest.Header.Add("Authorization", token)
 		PRsRequest.Header.Add("Authorization", token)
 		issuesRequest.Header.Add("Authorization", token)
+		CommitsRequest.Header.Add("Authorization", token)
 	}
 
 	var detailsResponse githubRepositoryDetailsResponseJson
@@ -107,6 +129,8 @@ func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs in
 	var PRsErr error
 	var issuesResponse githubTicketResponseJson
 	var issuesErr error
+	var commitsResponse []gitHubCommitResponseJson
+	var CommitsErr error
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -131,6 +155,14 @@ func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs in
 		})()
 	}
 
+	if maxCommits > 0 {
+		wg.Add(1)
+		go (func() {
+			defer wg.Done()
+			commitsResponse, CommitsErr = decodeJsonFromRequest[[]gitHubCommitResponseJson](defaultClient, CommitsRequest)
+		})()
+	}
+
 	wg.Wait()
 
 	if detailsErr != nil {
@@ -143,6 +175,7 @@ func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs in
 		Forks:        detailsResponse.Forks,
 		PullRequests: make([]GithubTicket, 0, len(PRsResponse.Tickets)),
 		Issues:       make([]GithubTicket, 0, len(issuesResponse.Tickets)),
+		Commits:      make([]CommitDetails, 0, len(commitsResponse)),
 	}
 
 	err = nil
@@ -175,6 +208,21 @@ func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs in
 					Number:    issuesResponse.Tickets[i].Number,
 					CreatedAt: parseRFC3339Time(issuesResponse.Tickets[i].CreatedAt),
 					Title:     issuesResponse.Tickets[i].Title,
+				})
+			}
+		}
+	}
+
+	if maxCommits > 0 {
+		if CommitsErr != nil {
+			err = fmt.Errorf("%w: could not get issues: %s", ErrPartialContent, CommitsErr)
+		} else {
+			for i := range commitsResponse {
+				details.Commits = append(details.Commits, CommitDetails{
+					Sha:       commitsResponse[i].Sha,
+					Author:    commitsResponse[i].Commit.Author.Name,
+					CreatedAt: parseRFC3339Time(commitsResponse[i].Commit.Author.Date),
+					Message:   strings.SplitN(commitsResponse[i].Commit.Message, "\n\n", 2)[0],
 				})
 			}
 		}

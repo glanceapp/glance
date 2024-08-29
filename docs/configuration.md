@@ -1201,6 +1201,7 @@ Example:
   repository: glanceapp/glance
   pull-requests-limit: 5
   issues-limit: 3
+  commits-limit: 3
 ```
 
 Preview:
@@ -1215,6 +1216,7 @@ Preview:
 | token | string | no | |
 | pull-requests-limit | integer | no | 3 |
 | issues-limit | integer | no | 3 |
+| commits-limit | integer | no | -1 |
 
 ##### `repository`
 The owner and repository name that will have their information displayed.
@@ -1227,6 +1229,9 @@ The maximum number of latest open pull requests to show. Set to `-1` to not show
 
 ##### `issues-limit`
 The maximum number of latest open issues to show. Set to `-1` to not show any.
+
+##### `commits-limit`
+The maximum number of lastest commits to show from the default branch. Set to `-1` to not show any.
 
 ### Bookmarks
 Display a list of links which can be grouped.
