@@ -1,20 +1,19 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
-<ul class="list list-gap-14 list-collapsible">
-    {{ range $i, $item := .Items }}
-    <li {{ if shouldCollapse $i $.CollapseAfter }}class="list-collapsible-item" style="--animation-delay: {{ itemAnimationDelay $i $.CollapseAfter }};"{{ end }}>
+<ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .Items }}
+    <li>
         <a class="size-title-dynamic color-primary-if-not-visited" href="{{ .Link }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
-        <ul class="list-horizontal-text">
-            <li title="{{ $item.PublishedAt | formatTime }}" {{ dynamicRelativeTimeAttrs $item.PublishedAt }}>{{ .PublishedAt | relativeTime }}</li>
-            {{ if gt (len $.FeedRequests) 1 }}
-                <li><a href="{{ .ChannelURL }}" target="_blank" rel="noreferrer">{{ .ChannelName }}</a></li>
-            {{ end }}
+        <ul class="list-horizontal-text flex-nowrap">
+            <li {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
+            <li class="min-width-0">
+                <a class="block text-truncate" href="{{ .ChannelURL }}" target="_blank" rel="noreferrer">{{ .ChannelName }}</a>
+            </li>
         </ul>
     </li>
+    {{ else }}
+    <li>{{ .NoItemsMessage }}</li>
     {{ end }}
 </ul>
-    {{ if gt (len .Items) $.CollapseAfter }}
-        <label class="list-collapsible-label"><input type="checkbox" autocomplete="off" class="list-collapsible-input"></label>
-    {{ end }}
 {{ end }}

@@ -6,6 +6,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -149,4 +150,19 @@ func (f *OptionalEnvString) UnmarshalYAML(node *yaml.Node) error {
 	*f = OptionalEnvString(value)
 
 	return nil
+}
+
+func (f *OptionalEnvString) String() string {
+	return string(*f)
+}
+
+func toSimpleIconIfPrefixed(icon string) (string, bool) {
+	if !strings.HasPrefix(icon, "si:") {
+		return icon, false
+	}
+
+	icon = strings.TrimPrefix(icon, "si:")
+	icon = "https://cdnjs.cloudflare.com/ajax/libs/simple-icons/11.14.0/" + icon + ".svg"
+
+	return icon, true
 }

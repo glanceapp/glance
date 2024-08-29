@@ -30,7 +30,7 @@
 <div class="flex gap-7 size-h5 margin-top-3">
     <ul class="list list-gap-2">
         {{ range .RepositoryDetails.PullRequests }}
-        <li title="{{ .CreatedAt | formatTime }}" {{ dynamicRelativeTimeAttrs .CreatedAt }}>{{ .CreatedAt | relativeTime }}</li>
+        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
         {{ end }}
     </ul>
     <ul class="list list-gap-2 min-width-0">
@@ -47,7 +47,7 @@
 <div class="flex gap-7 size-h5 margin-top-3">
     <ul class="list list-gap-2">
         {{ range .RepositoryDetails.Issues }}
-        <li title="{{ .CreatedAt | formatTime }}" {{ dynamicRelativeTimeAttrs .CreatedAt }}>{{ .CreatedAt | relativeTime }}</li>
+        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
         {{ end }}
     </ul>
     <ul class="list list-gap-2 min-width-0">

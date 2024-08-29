@@ -16,6 +16,8 @@ type ForumPost struct {
 	Score           int
 	Engagement      float64
 	TimePosted      time.Time
+	Tags            []string
+	IsCrosspost     bool
 }
 
 type ForumPosts []ForumPost
@@ -39,11 +41,13 @@ type Weather struct {
 }
 
 type AppRelease struct {
-	Name         string
-	Version      string
-	NotesUrl     string
-	TimeReleased time.Time
-	Downvotes    int
+	Source        ReleaseSource
+	SourceIconURL string
+	Name          string
+	Version       string
+	NotesUrl      string
+	TimeReleased  time.Time
+	Downvotes     int
 }
 
 type AppReleases []AppRelease
@@ -84,20 +88,24 @@ var currencyToSymbol = map[string]string{
 	"PHP": "₱",
 }
 
-type Stock struct {
-	Name           string  `yaml:"name"`
-	Symbol         string  `yaml:"symbol"`
-	ChartLink      string  `yaml:"chart-link"`
-	SymbolLink     string  `yaml:"symbol-link"`
+type MarketRequest struct {
+	Name       string `yaml:"name"`
+	Symbol     string `yaml:"symbol"`
+	ChartLink  string `yaml:"chart-link"`
+	SymbolLink string `yaml:"symbol-link"`
+}
+
+type Market struct {
+	MarketRequest
 	Currency       string  `yaml:"-"`
 	Price          float64 `yaml:"-"`
 	PercentChange  float64 `yaml:"-"`
 	SvgChartPoints string  `yaml:"-"`
 }
 
-type Stocks []Stock
+type Markets []Market
 
-func (t Stocks) SortByAbsChange() {
+func (t Markets) SortByAbsChange() {
 	sort.Slice(t, func(i, j int) bool {
 		return math.Abs(t[i].PercentChange) > math.Abs(t[j].PercentChange)
 	})

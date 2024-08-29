@@ -1,0 +1,17 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .ChangeDetections }}
+    <li>
+        <a class="size-h4 block text-truncate color-highlight" href="{{ .URL }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
+        <ul class="list-horizontal-text">
+            <li {{ dynamicRelativeTimeAttrs .LastChanged }}></li>
+            <li class="shrink min-width-0"><a class="visited-indicator" href="{{ .DiffURL }}" target="_blank" rel="noreferrer">diff:{{ .PreviousHash }}</a></li>
+        </ul>
+    </li>
+    {{ else }}
+    <li>No watches configured</li>
+    {{ end}}
+</ul>
+{{ end }}

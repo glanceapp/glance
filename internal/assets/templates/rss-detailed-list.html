@@ -1,0 +1,40 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<ul class="list list-gap-24 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .Items }}
+    <li class="flex gap-15 items-start row-reverse-on-mobile thumbnail-parent">
+        <div class="thumbnail-container rss-detailed-thumbnail">
+            {{ if ne "" .ImageURL }}
+            <img class="thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
+            {{ else }}
+            <svg class="scale-half hide-on-mobile" stroke="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            </svg>
+            {{ end }}
+        </div>
+        <div class="grow min-width-0">
+            <a class="size-h3 color-primary-if-not-visited" href="{{ .Link }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
+            <ul class="list-horizontal-text flex-nowrap">
+                <li {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
+                <li class="min-width-0">
+                    <a class="block text-truncate" href="{{ .ChannelURL }}" target="_blank" rel="noreferrer">{{ .ChannelName }}</a>
+                </li>
+            </ul>
+            {{ if ne "" .Description }}
+            <p class="rss-detailed-description text-truncate-2-lines margin-top-10">{{ .Description }}</p>
+            {{ end }}
+            {{ if gt (len .Categories) 0 }}
+            <ul class="attachments margin-top-10">
+            {{ range .Categories }}
+                <li>{{ . }}</li>
+            {{ end }}
+            </ul>
+            {{ end }}
+        </div>
+    </li>
+    {{ else }}
+    <li>{{ .NoItemsMessage }}</li>
+    {{ end }}
+</ul>
+{{ end }}

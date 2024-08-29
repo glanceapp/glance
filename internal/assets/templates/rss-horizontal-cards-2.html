@@ -3,10 +3,11 @@
 {{ define "widget-content-classes" }}widget-content-frameless{{ end }}
 
 {{ define "widget-content" }}
+{{ if gt (len .Items) 0 }}
 <div class="carousel-container">
     <div class="cards-horizontal carousel-items-container"{{ if ne 0.0 .CardHeight }} style="--rss-card-height: {{ .CardHeight }}rem;"{{ end }}>
         {{ range .Items }}
-        <div class="card rss-card-2 widget-content-frame thumbnail-container">
+        <div class="card rss-card-2 widget-content-frame thumbnail-parent">
             {{ if ne "" .ImageURL }}
             <img class="rss-card-2-image thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
             {{ else }}
@@ -17,12 +18,15 @@
             <div class="rss-card-2-content padding-inline-widget">
                 <a href="{{ .Link }}" title="{{ .Title }}" class="block text-truncate color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
                 <ul class="list-horizontal-text flex-nowrap margin-top-5">
-                    <li class="shrink-0" title="{{ .PublishedAt | formatTime }}" {{ dynamicRelativeTimeAttrs .PublishedAt }}>{{ .PublishedAt | relativeTime }}</li>
-                    <li class="shrink min-width-0 text-truncate">{{ .ChannelName }}</li>
+                    <li class="shrink-0" {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
+                    <li class="min-width-0 text-truncate">{{ .ChannelName }}</li>
                 </ul>
             </div>
         </div>
         {{ end }}
     </div>
 </div>
+{{ else }}
+<div class="widget-content-frame padding-widget">{{ .NoItemsMessage }}</div>
+{{ end }}
 {{ end }}

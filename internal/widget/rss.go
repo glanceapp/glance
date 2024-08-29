@@ -18,6 +18,7 @@ type RSS struct {
 	Items           feed.RSSFeedItems     `yaml:"-"`
 	Limit           int                   `yaml:"limit"`
 	CollapseAfter   int                   `yaml:"collapse-after"`
+	NoItemsMessage  string                `yaml:"-"`
 }
 
 func (widget *RSS) Initialize() error {
@@ -38,6 +39,14 @@ func (widget *RSS) Initialize() error {
 	if widget.CardHeight < 0 {
 		widget.CardHeight = 0
 	}
+
+	if widget.Style == "detailed-list" {
+		for i := range widget.FeedRequests {
+			widget.FeedRequests[i].IsDetailed = true
+		}
+	}
+
+	widget.NoItemsMessage = "No items were returned from the feeds."
 
 	return nil
 }
@@ -63,6 +72,10 @@ func (widget *RSS) Render() template.HTML {
 
 	if widget.Style == "horizontal-cards-2" {
 		return widget.render(widget, assets.RSSHorizontalCards2Template)
+	}
+
+	if widget.Style == "detailed-list" {
+		return widget.render(widget, assets.RSSDetailedListTemplate)
 	}
 
 	return widget.render(widget, assets.RSSListTemplate)
