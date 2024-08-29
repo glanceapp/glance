@@ -3,6 +3,7 @@
 - [Intro](#intro)
 - [Preconfigured page](#preconfigured-page)
 - [Server](#server)
+- [Branding](#branding)
 - [Theme](#theme)
   - [Themes](#themes)
 - [Pages & Columns](#pages--columns)
@@ -173,6 +174,42 @@ To be able to point to an asset from your assets path, use the `/assets/` path l
 ```yaml
 icon: /assets/gitea-icon.png
 ```
+
+## Branding
+You can adjust the various parts of the branding through a top level `branding` property. Example:
+
+```yaml
+branding:
+  custom-footer: |
+    <p>Powered by <a href="https://github.com/glanceapp/glance">Glance</a></p>
+  logo-url: /assets/logo.png
+  favicon-url: /assets/logo.png
+```
+
+### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| hide-footer | bool | no | false |
+| custom-footer | string | no |  |
+| logo-text | string | no | G |
+| logo-url | string | no | |
+| favicon-url | string | no | |
+
+#### `hide-footer`
+Hides the footer when set to `true`.
+
+#### `custom-footer`
+Specify custom HTML to use for the footer.
+
+#### `logo-text`
+Specify custom text to use instead of the "G" found in the navigation.
+
+#### `logo-url`
+Specify a URL to a custom image to use instead of the "G" found in the navigation. If both `logo-text` and `logo-url` are set, only `logo-url` will be used.
+
+#### `favicon-url`
+Specify a URL to a custom image to use for the favicon.
 
 ## Theme
 Theming is done through a top level `theme` property. Values for the colors are in [HSL](https://giggster.com/guide/basics/hue-saturation-lightness/) (hue, saturation, lightness) format. You can use a color picker [like this one](https://hslpicker.com/) to convert colors from other formats to HSL. The values are separated by a space and `%` is not required for any of the numbers.
@@ -1063,17 +1100,19 @@ Whether to ignore invalid/self-signed certificates.
 Whether to open the link in the same or a new tab.
 
 ### Releases
-Display a list of releases for specific repositories on Github. Draft releases and prereleases will not be shown.
+Display a list of latest releases for specific repositories on Github, GitLab or Docker Hub.
 
 Example:
 
 ```yaml
 - type: releases
+  show-source-icon: true
   repositories:
-    - immich-app/immich
     - go-gitea/gitea
-    - dani-garcia/vaultwarden
     - jellyfin/jellyfin
+    - glanceapp/glance
+    - gitlab:fdroid/fdroidclient
+    - dockerhub:gotify/server
 ```
 
 Preview:
@@ -1085,12 +1124,41 @@ Preview:
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | repositories | array | yes |  |
+| show-source-icon | boolean | no | false |  |
 | token | string | no | |
+| gitlab-token | string | no | |
 | limit | integer | no | 10 |
 | collapse-after | integer | no | 5 |
 
 ##### `repositories`
-A list of repositores for which to fetch the latest release for. Only the name/repo is required, not the full URL.
+A list of repositores to fetch the latest release for. Only the name/repo is required, not the full URL. A prefix can be specified for repositories hosted elsewhere such as GitLab and Docker Hub. Example:
+
+```yaml
+repositories:
+  - gitlab:inkscape/inkscape
+  - dockerhub:glanceapp/glance
+```
+
+Official images on Docker Hub can be specified by ommiting the owner:
+
+```yaml
+repositories:
+  - dockerhub:nginx
+  - dockerhub:node
+  - dockerhub:alpine
+```
+
+You can also specify specific tags for Docker Hub images:
+
+```yaml
+repositories:
+  - dockerhub:nginx:latest
+  - dockerhub:nginx:stable-alpine
+```
+
+
+##### `show-source-icon`
+Shows an icon of the source (GitHub/GitLab/Docker Hub) next to the repository name when set to `true`.
 
 ##### `token`
 Without authentication Github allows for up to 60 requests per hour. You can easily exceed this limit and start seeing errors if you're tracking lots of repositories or your cache time is low. To circumvent this you can [create a read only token from your Github account](https://github.com/settings/personal-access-tokens/new) and provide it here.
@@ -1114,6 +1182,9 @@ and then use it in your `glance.yml` like this:
 ```
 
 This way you can safely check your `glance.yml` in version control without exposing the token.
+
+##### `gitlab-token`
+Same as the above but used when fetching GitLab releases.
 
 ##### `limit`
 The maximum number of releases to show.
@@ -1181,6 +1252,7 @@ Example:
   repository: glanceapp/glance
   pull-requests-limit: 5
   issues-limit: 3
+  commits-limit: 3
 ```
 
 Preview:
@@ -1195,6 +1267,7 @@ Preview:
 | token | string | no | |
 | pull-requests-limit | integer | no | 3 |
 | issues-limit | integer | no | 3 |
+| commits-limit | integer | no | -1 |
 
 ##### `repository`
 The owner and repository name that will have their information displayed.
@@ -1207,6 +1280,9 @@ The maximum number of latest open pull requests to show. Set to `-1` to not show
 
 ##### `issues-limit`
 The maximum number of latest open issues to show. Set to `-1` to not show any.
+
+##### `commits-limit`
+The maximum number of lastest commits to show from the default branch. Set to `-1` to not show any.
 
 ### Bookmarks
 Display a list of links which can be grouped.

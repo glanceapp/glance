@@ -55,6 +55,12 @@ func (widget *Group) Update(ctx context.Context) {
 	wg.Wait()
 }
 
+func (widget *Group) SetProviders(providers *Providers) {
+	for i := range widget.Widgets {
+		widget.Widgets[i].SetProviders(providers)
+	}
+}
+
 func (widget *Group) RequiresUpdate(now *time.Time) bool {
 	for i := range widget.Widgets {
 		if widget.Widgets[i].RequiresUpdate(now) {

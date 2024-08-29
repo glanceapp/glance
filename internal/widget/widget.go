@@ -113,6 +113,7 @@ func (w *Widgets) UnmarshalYAML(node *yaml.Node) error {
 type Widget interface {
 	Initialize() error
 	RequiresUpdate(*time.Time) bool
+	SetProviders(*Providers)
 	Update(context.Context)
 	Render() template.HTML
 	GetType() string
@@ -132,6 +133,7 @@ const (
 
 type widgetBase struct {
 	ID                  uint64        `yaml:"-"`
+	Providers           *Providers    `yaml:"-"`
 	Type                string        `yaml:"type"`
 	Title               string        `yaml:"title"`
 	TitleURL            string        `yaml:"title-url"`
@@ -146,6 +148,10 @@ type widgetBase struct {
 	nextUpdate          time.Time     `yaml:"-"`
 	updateRetriedTimes  int           `yaml:"-"`
 	HideHeader          bool          `yaml:"-"`
+}
+
+type Providers struct {
+	AssetResolver func(string) string
 }
 
 func (w *widgetBase) RequiresUpdate(now *time.Time) bool {
@@ -182,6 +188,10 @@ func (widget *widgetBase) HandleRequest(w http.ResponseWriter, r *http.Request) 
 
 func (w *widgetBase) GetType() string {
 	return w.Type
+}
+
+func (w *widgetBase) SetProviders(providers *Providers) {
+	w.Providers = providers
 }
 
 func (w *widgetBase) render(data any, t *template.Template) template.HTML {

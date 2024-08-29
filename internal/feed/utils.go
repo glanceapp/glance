@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"time"
 )
 
 var (
@@ -79,7 +80,6 @@ func maybeCopySliceWithoutZeroValues[T int | float64](values []T) []T {
 	return values
 }
 
-
 var urlSchemePattern = regexp.MustCompile(`^[a-z]+:\/\/`)
 
 func stripURLScheme(url string) string {
@@ -94,4 +94,14 @@ func limitStringLength(s string, max int) (string, bool) {
 	}
 
 	return s, false
+}
+
+func parseRFC3339Time(t string) time.Time {
+	parsed, err := time.Parse(time.RFC3339, t)
+
+	if err != nil {
+		return time.Now()
+	}
+
+	return parsed
 }

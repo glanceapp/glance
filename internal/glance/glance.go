@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"html/template"
 	"log/slog"
 	"net/http"
 	"path/filepath"
@@ -46,6 +47,14 @@ type Server struct {
 	BaseURL    string    `yaml:"base-url"`
 	AssetsHash string    `yaml:"-"`
 	StartedAt  time.Time `yaml:"-"` // used in custom css file
+}
+
+type Branding struct {
+	HideFooter   bool          `yaml:"hide-footer"`
+	CustomFooter template.HTML `yaml:"custom-footer"`
+	LogoText     string        `yaml:"logo-text"`
+	LogoURL      string        `yaml:"logo-url"`
+	FaviconURL   string        `yaml:"favicon-url"`
 }
 
 type Column struct {
@@ -102,6 +111,14 @@ func titleToSlug(s string) string {
 	return s
 }
 
+func (a *Application) TransformUserDefinedAssetPath(path string) string {
+	if strings.HasPrefix(path, "/assets/") {
+		return a.Config.Server.BaseURL + path
+	}
+
+	return path
+}
+
 func NewApplication(config *Config) (*Application, error) {
 	if len(config.Pages) == 0 {
 		return nil, fmt.Errorf("no pages configured")
@@ -114,7 +131,12 @@ func NewApplication(config *Config) (*Application, error) {
 		widgetByID: make(map[uint64]widget.Widget),
 	}
 
+	app.Config.Server.AssetsHash = assets.PublicFSHash
 	app.slugToPage[""] = &config.Pages[0]
+
+	providers := &widget.Providers{
+		AssetResolver: app.AssetPath,
+	}
 
 	for p := range config.Pages {
 		if config.Pages[p].Slug == "" {
@@ -127,6 +149,8 @@ func NewApplication(config *Config) (*Application, error) {
 			for w := range config.Pages[p].Columns[c].Widgets {
 				widget := config.Pages[p].Columns[c].Widgets[w]
 				app.widgetByID[widget.GetID()] = widget
+
+				widget.SetProviders(providers)
 			}
 		}
 	}
@@ -134,12 +158,15 @@ func NewApplication(config *Config) (*Application, error) {
 	config = &app.Config
 
 	config.Server.BaseURL = strings.TrimRight(config.Server.BaseURL, "/")
+	config.Theme.CustomCSSFile = app.TransformUserDefinedAssetPath(config.Theme.CustomCSSFile)
 
-	if config.Server.BaseURL != "" &&
-		config.Theme.CustomCSSFile != "" &&
-		strings.HasPrefix(config.Theme.CustomCSSFile, "/assets/") {
-		config.Theme.CustomCSSFile = config.Server.BaseURL + config.Theme.CustomCSSFile
+	if config.Branding.FaviconURL == "" {
+		config.Branding.FaviconURL = app.AssetPath("favicon.png")
+	} else {
+		config.Branding.FaviconURL = app.TransformUserDefinedAssetPath(config.Branding.FaviconURL)
 	}
+
+	config.Branding.LogoURL = app.TransformUserDefinedAssetPath(config.Branding.LogoURL)
 
 	return app, nil
 }
@@ -238,8 +265,6 @@ func (a *Application) AssetPath(asset string) string {
 }
 
 func (a *Application) Serve() error {
-	a.Config.Server.AssetsHash = assets.PublicFSHash
-
 	// TODO: add gzip support, static files must have their gzipped contents cached
 	// TODO: add HTTPS support
 	mux := http.NewServeMux()
@@ -252,7 +277,7 @@ func (a *Application) Serve() error {
 
 	mux.Handle(
 		fmt.Sprintf("GET /static/%s/{path...}", a.Config.Server.AssetsHash),
-		http.StripPrefix("/static/"+a.Config.Server.AssetsHash, FileServerWithCache(http.FS(assets.PublicFS), 8*time.Hour)),
+		http.StripPrefix("/static/"+a.Config.Server.AssetsHash, FileServerWithCache(http.FS(assets.PublicFS), 24*time.Hour)),
 	)
 
 	if a.Config.Server.AssetsPath != "" {

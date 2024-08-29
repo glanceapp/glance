@@ -782,6 +782,15 @@ details[open] .summary::after {
     padding-right: var(--widget-content-horizontal-padding);
 }
 
+.logo:has(img) {
+    display: flex;
+    align-items: center;
+}
+
+.logo img {
+    max-height: 2.7rem;
+}
+
 .nav {
     height: 100%;
     gap: var(--header-items-gap);
@@ -818,6 +827,13 @@ details[open] .summary::after {
 .nav-item.nav-item-current {
     border-bottom-color: var(--color-primary);
     color: var(--color-text-highlight);
+}
+
+.release-source-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.4;
 }
 
 .market-chart {
@@ -997,16 +1013,13 @@ details[open] .summary::after {
     background-color: var(--color-widget-background-highlight);
     border-radius: var(--border-radius);
     padding: 0.5rem;
+    opacity: 0.7;
 }
 
 .bookmarks-icon {
     width: 20px;
     height: 20px;
     opacity: 0.8;
-}
-
-.simple-icon {
-    opacity: 0.7;
 }
 
 :root:not(.light-scheme) .simple-icon {
@@ -1305,6 +1318,10 @@ details[open] .summary::after {
     position: relative;
     top: -0.1rem;
     transition: filter 0.3s, opacity 0.3s;
+}
+
+.monitor-site-icon.simple-icon {
+    opacity: 0.7;
 }
 
 .monitor-site:hover .monitor-site-icon {
