@@ -1043,13 +1043,17 @@ You can hover over the "ERROR" text to view more information.
 
 #### Properties
 
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| sites | array | yes |
-| style | string | no |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| sites | array | yes | |
+| show-failing-only | boolean | no | false |
+| style | string | no | |
 
 ##### `style`
 To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
+
+##### `show-failing-only`
+Shows only a list of failing sites when set to `true`.
 
 ##### `sites`
 
