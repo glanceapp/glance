@@ -31,6 +31,9 @@
     </div>
     {{ end }}
     <a href="{{ .URL }}" class="bookmarks-link {{ if .HideArrow }}bookmarks-link-no-arrow {{ end }}color-highlight size-h4" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
+    {{ if .StatusPage }}
+        <div class="notice-icon notice-icon-{{ .StatusPage.StatusPageInfo.StatusResponse.Indicator }} {{ if and (not .StatusPage.ShowIfOperational) (eq .StatusPage.StatusPageInfo.StatusResponse.Indicator "none") }}hidden{{ end }}" title="{{ .StatusPage.StatusPageInfo.StatusResponse.Description }}"></div>
+    {{ end}}
 </li>
 {{ end }}
 </ul>
