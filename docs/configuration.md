@@ -1314,6 +1314,72 @@ The link to go to when clicking on the symbol.
 `chart-link`
 The link to go to when clicking on the chart.
 
+### Crypto
+Display a list of cryptocurrencies, their current value, change for the day and a small single day chart. Data is taken from CoinGecko.
+
+Example:
+```yaml
+- type: crypto
+  cryptos:
+    - name: Bitcoin
+      symbol: BTC
+      id: bitcoin
+    - name: Ethereum
+      symbol: ETH
+      id: ethereum
+    - name: Avalanche
+      symbol: AVAX
+      id: avalanche-2
+    - name: Solana
+      symbol: SOL
+      id: solana
+    - name: Dogecoin
+      symbol: DOGE
+      id: dogecoin
+```
+
+Preview:
+![](images/crypto-widget-preview.png)
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| cryptos | array | yes | | 
+| style | string | no | | 
+| sort-by | string | no  | |
+| days | string | no | 1 |
+
+#### Properties for each cryptocurrency
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| symbol | string | yes | |
+| name | string | yes | |
+| id | string | yes | |
+| currency | string | no | usd |
+| symbol-link | string | no | |
+| days | string | no | |
+
+##### `cryptos`
+An array of cryptocurrencies for which to display information about.
+
+##### `currency`
+The currency in which to display the value of the cryptocurrency. Possible values are `usd`, `eur`, `gbp`, `jpy`, `cny`, `krw`, `inr`, `rub`, `brl`, `cad`, `aud`, `chf`, `hkd`, `twd`, `sgd`, `thb`, `idr`, `myr`, `php`, `zar`, `sek`, `nok`, `dkk`, `pln`, `huf`, `czk`, `ils`, `try`, `clp`, `mxn`, `php`, `cop`, `ars`, `pen`, `vef`, `ngn`, `kes`, `egp`, `aed`, `sar`, `qar`, `omr`, `kwd`, `bhd`, `jod`, `ils`, `lbp`, `jmd`, `tt`, `ttd`, `bsd`, `gyd`, `htg`, `npr`, `lkr`, `mvr`, `mur`, `scr`, `xaf`, `xof`, `xpf`, `xdr`, `xag`, `xau`, `bits`, `sats`.
+
+##### `symbol-link`
+The link to go to when clicking on the symbol. Defaults to the CoinGecko page for the cryptocurrency.
+
+##### `days`
+Number of days to show in the chart.
+
+##### `symbol`
+The symbol of the cryptocurrency.
+
+##### `name`
+The name of the cryptocurrency.
+
+##### `id`
+The ID of the cryptocurrency as seen on CoinGecko.
+
 ### Twitch Channels
 Display a list of channels from Twitch.
 

@@ -16,6 +16,7 @@
 * Clock
 * Calendar
 * Stocks
+* Cryptocurrencies
 * iframe
 * Twitch channels & top games
 * GitHub releases

@@ -26,6 +26,7 @@ var (
 	ChangeDetectionTemplate       = compileTemplate("change-detection.html", "widget-base.html")
 	VideosTemplate                = compileTemplate("videos.html", "widget-base.html", "video-card-contents.html")
 	VideosGridTemplate            = compileTemplate("videos-grid.html", "widget-base.html", "video-card-contents.html")
+	CryptoTemplate                = compileTemplate("crypto.html", "widget-base.html")
 	MarketsTemplate               = compileTemplate("markets.html", "widget-base.html")
 	RSSListTemplate               = compileTemplate("rss-list.html", "widget-base.html")
 	RSSDetailedListTemplate       = compileTemplate("rss-detailed-list.html", "widget-base.html")
