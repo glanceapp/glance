@@ -53,9 +53,8 @@ type Monitor struct {
 		StatusText              string           `yaml:"-"`
 		StatusStyle             string           `yaml:"-"`
 	} `yaml:"sites"`
-	Style           string `yaml:"style"`
-	ShowFailingOnly bool   `yaml:"show-failing-only"`
-	HasFailing      bool   `yaml:"-"`
+	ShowFailingOnly bool `yaml:"show-failing-only"`
+	HasFailing      bool `yaml:"-"`
 }
 
 func (widget *Monitor) Initialize() error {

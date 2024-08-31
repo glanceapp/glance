@@ -115,20 +115,11 @@
     color: var(--color-primary);
 }
 
-.list        { --list-half-gap: 0rem; }
-.list-gap-2  { --list-half-gap: 0.1rem; }
-.list-gap-4  { --list-half-gap: 0.2rem; }
-.list-gap-10 { --list-half-gap: 0.5rem; }
-.list-gap-14 { --list-half-gap: 0.7rem; }
-.list-gap-20 { --list-half-gap: 1rem; }
-.list-gap-24 { --list-half-gap: 1.2rem; }
-.list-gap-34 { --list-half-gap: 1.7rem; }
-
 .list > *:not(:first-child) {
     margin-top: calc(var(--list-half-gap) * 2);
 }
 
-.list-with-separator > *:not(:first-child) {
+.list.list-with-separator > *:not(:first-child) {
     margin-top: var(--list-half-gap);
     border-top: 1px solid var(--color-separator);
     padding-top: var(--list-half-gap);
@@ -457,17 +448,24 @@ kbd:active {
     flex-direction: column;
 }
 
+/* TODO: refactor, otherwise I hope I never have to change dynamic columns again */
 .dynamic-columns {
-    gap: calc(var(--widget-content-vertical-padding) / 2);
+    --list-half-gap: 0.5rem;
+    gap: var(--widget-content-vertical-padding) var(--widget-content-horizontal-padding);
     display: grid;
     grid-template-columns: repeat(var(--columns-per-row), 1fr);
-    margin: calc(0px - var(--widget-content-vertical-padding) / 2) calc(0px - var(--widget-content-horizontal-padding) / 2);
 }
 
 .dynamic-columns > * {
-    padding: calc(var(--widget-content-vertical-padding) / 2) calc(var(--widget-content-horizontal-padding) / 1.5);
-    background-color: var(--color-background);
-    border-radius: var(--border-radius);
+    padding-left: var(--widget-content-horizontal-padding);
+    border-left: 1px solid var(--color-separator);
+    min-width: 0;
+}
+
+.dynamic-columns > *:first-child {
+    padding-top: 0;
+    border-top: none;
+    border-left: none;
 }
 
 .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
@@ -476,23 +474,49 @@ kbd:active {
 .dynamic-columns:has(> :nth-child(4)) { --columns-per-row: 4; }
 .dynamic-columns:has(> :nth-child(5)) { --columns-per-row: 5; }
 
-@container widget (max-width: 1500px) {
+@container widget (max-width: 599px) {
+    .dynamic-columns { gap: 0; }
     .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
+    .dynamic-columns > * {
+        border-left: none;
+        padding-left: 0;
+    }
+    .dynamic-columns > *:not(:first-child) {
+        margin-top: calc(var(--list-half-gap) * 2);
+    }
+    .dynamic-columns.list-with-separator > *:not(:first-child) {
+        margin-top: var(--list-half-gap);
+        border-top: 1px solid var(--color-separator);
+        padding-top: var(--list-half-gap);
+    }
+}
+@container widget (min-width: 600px) and (max-width: 849px) {
     .dynamic-columns:has(> :nth-child(2)) { --columns-per-row: 2; }
+    .dynamic-columns > :nth-child(2n-1) {
+        border-left: none;
+        padding-left: 0;
+    }
+}
+@container widget (min-width: 850px) and (max-width: 1249px) {
     .dynamic-columns:has(> :nth-child(3)) { --columns-per-row: 3; }
+    .dynamic-columns > :nth-child(3n+1) {
+        border-left: none;
+        padding-left: 0;
+    }
+}
+@container widget (min-width: 1250px) and (max-width: 1499px) {
     .dynamic-columns:has(> :nth-child(4)) { --columns-per-row: 4; }
+    .dynamic-columns > :nth-child(4n+1) {
+        border-left: none;
+        padding-left: 0;
+    }
 }
-@container widget (max-width: 1250px) {
-    .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
-    .dynamic-columns:has(> :nth-child(2)) { --columns-per-row: 2; }
-    .dynamic-columns:has(> :nth-child(3)) { --columns-per-row: 3; }
-}
-@container widget (max-width: 850px) {
-    .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
-    .dynamic-columns:has(> :nth-child(2)) { --columns-per-row: 2; }
-}
-@container widget (max-width: 550px) {
-    .dynamic-columns:has(> :nth-child(1)) { --columns-per-row: 1; }
+@container widget (min-width: 1500px) {
+    .dynamic-columns:has(> :nth-child(5)) { --columns-per-row: 5; }
+    .dynamic-columns > :nth-child(5n+1) {
+        border-left: none;
+        padding-left: 0;
+    }
 }
 
 .cards-vertical {
@@ -721,6 +745,7 @@ kbd:active {
 .market-chart {
     margin-left: auto;
     width: 6.5rem;
+    flex-shrink: 0;
 }
 
 .market-chart svg {
@@ -1517,3 +1542,11 @@ kbd:active {
 .margin-bottom-auto { margin-bottom: auto; }
 .padding-block-5    { padding-block: 0.5rem; }
 .scale-half         { transform: scale(0.5); }
+.list               { --list-half-gap: 0rem; }
+.list-gap-2         { --list-half-gap: 0.1rem; }
+.list-gap-4         { --list-half-gap: 0.2rem; }
+.list-gap-10        { --list-half-gap: 0.5rem; }
+.list-gap-14        { --list-half-gap: 0.7rem; }
+.list-gap-20        { --list-half-gap: 1rem; }
+.list-gap-24        { --list-half-gap: 1.2rem; }
+.list-gap-34        { --list-half-gap: 1.7rem; }
