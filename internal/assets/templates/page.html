@@ -11,7 +11,7 @@
 </script>
 {{ end }}
 
-{{ define "document-root-attrs" }}class="{{ if .App.Config.Theme.Light }}light-scheme {{ end }}{{ if ne "" .Page.Width }}page-width-{{ .Page.Width }}{{ end }}"{{ end }}
+{{ define "document-root-attrs" }}class="{{ if .App.Config.Theme.Light }}light-scheme {{ end }}{{ if ne "" .Page.Width }}page-width-{{ .Page.Width }} {{ end }}{{ if .Page.CenterVertically }}page-center-vertically{{ end }}"{{ end }}
 
 {{ define "document-head-after" }}
 {{ template "page-style-overrides.gotmpl" . }}

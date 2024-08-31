@@ -73,6 +73,7 @@ type Page struct {
 	Width                 string   `yaml:"width"`
 	ShowMobileHeader      bool     `yaml:"show-mobile-header"`
 	HideDesktopNavigation bool     `yaml:"hide-desktop-navigation"`
+	CenterVertically      bool     `yaml:"center-vertically"`
 	Columns               []Column `yaml:"columns"`
 	mu                    sync.Mutex
 }

@@ -451,6 +451,12 @@ kbd:active {
     max-width: 1100px;
 }
 
+.page-center-vertically .page {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+
 .dynamic-columns {
     gap: calc(var(--widget-content-vertical-padding) / 2);
     display: grid;
