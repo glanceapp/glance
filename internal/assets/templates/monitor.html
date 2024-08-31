@@ -5,7 +5,7 @@
 <ul class="dynamic-columns list-gap-20 list-with-separator">
     {{ range .Sites }}
     {{ if and $.ShowFailingOnly (eq .StatusStyle "ok" ) }} {{ continue }} {{ end }}
-    <div class="flex items-center gap-15">
+    <div class="monitor-site flex items-center gap-15">
         {{ template "site" . }}
     </div>
     {{ end }}

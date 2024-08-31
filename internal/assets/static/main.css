@@ -1107,8 +1107,11 @@ kbd:active {
 }
 
 .monitor-site:hover .monitor-site-icon {
-    filter: grayscale(0);
     opacity: 1;
+}
+
+.monitor-site:hover .monitor-site-icon:not(.simple-icon) {
+    filter: grayscale(0);
 }
 
 .monitor-site-status-icon {
