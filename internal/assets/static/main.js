@@ -142,7 +142,10 @@ function setupSearchBoxes() {
                 let searchUrlTemplate;
 
                 if (currentBang != null) {
-                    query = input.slice(currentBang.dataset.shortcut.length + 1);
+                    let shortcut = currentBang.dataset.shortcut
+                    let regex = new RegExp(`^(${shortcut})|${shortcut}$`);
+
+                    query = input.replace(regex, "").trim();
                     searchUrlTemplate = currentBang.dataset.url;
                 } else {
                     query = input;
@@ -170,19 +173,19 @@ function setupSearchBoxes() {
         }
 
         const handleInput = (event) => {
-            const value = event.target.value.trim();
-            if (value in bangsMap) {
-                changeCurrentBang(bangsMap[value]);
-                return;
+            let value = event.target.value.trim();
+            let bang = null;
+
+            if (value.length >= 2) {
+                let words = value.split(" ");
+
+                let firstWord = bangsMap[words[0]];
+                let lastWord = bangsMap[words[words.length - 1]];
+
+                if (firstWord || lastWord) bang = firstWord || lastWord;
             }
 
-            const words = value.split(" ");
-            if (words.length >= 2 && words[0] in bangsMap) {
-                changeCurrentBang(bangsMap[words[0]]);
-                return;
-            }
-
-            changeCurrentBang(null);
+            changeCurrentBang(bang);
         };
 
         inputElement.addEventListener("focus", () => {
