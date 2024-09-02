@@ -38,16 +38,10 @@ func fetchLatestGithubRelease(request *ReleaseRequest) (*AppRelease, error) {
 		return nil, err
 	}
 
-	version := response.TagName
-
-	if len(version) > 0 && version[0] != 'v' {
-		version = "v" + version
-	}
-
 	return &AppRelease{
 		Source:       ReleaseSourceGithub,
 		Name:         request.Repository,
-		Version:      version,
+		Version:      normalizeVersionFormat(response.TagName),
 		NotesUrl:     response.HtmlUrl,
 		TimeReleased: parseRFC3339Time(response.PublishedAt),
 		Downvotes:    response.Reactions.Downvotes,

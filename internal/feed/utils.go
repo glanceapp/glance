@@ -105,3 +105,13 @@ func parseRFC3339Time(t string) time.Time {
 
 	return parsed
 }
+
+func normalizeVersionFormat(version string) string {
+	version = strings.ToLower(strings.TrimSpace(version))
+
+	if len(version) > 0 && version[0] != 'v' {
+		return "v" + version
+	}
+
+	return version
+}

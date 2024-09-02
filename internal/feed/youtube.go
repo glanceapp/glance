@@ -11,10 +11,8 @@ import (
 
 type youtubeFeedResponseXml struct {
 	Channel     string `xml:"author>name"`
-	ChannelLink struct {
-		Href string `xml:"href,attr"`
-	} `xml:"link"`
-	Videos []struct {
+	ChannelLink string `xml:"author>uri"`
+	Videos      []struct {
 		Title     string `xml:"title"`
 		Published string `xml:"published"`
 		Link      struct {
@@ -97,7 +95,7 @@ func FetchYoutubeChannelUploads(channelIds []string, videoUrlTemplate string, in
 				Title:        video.Title,
 				Url:          videoUrl,
 				Author:       response.Channel,
-				AuthorUrl:    response.ChannelLink.Href + "/videos",
+				AuthorUrl:    response.ChannelLink + "/videos",
 				TimePosted:   parseYoutubeFeedTime(video.Published),
 			})
 		}

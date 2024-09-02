@@ -53,7 +53,8 @@ type Monitor struct {
 		StatusText              string           `yaml:"-"`
 		StatusStyle             string           `yaml:"-"`
 	} `yaml:"sites"`
-	Style string `yaml:"style"`
+	ShowFailingOnly bool `yaml:"show-failing-only"`
+	HasFailing      bool `yaml:"-"`
 }
 
 func (widget *Monitor) Initialize() error {
@@ -79,11 +80,16 @@ func (widget *Monitor) Update(ctx context.Context) {
 		return
 	}
 
+	widget.HasFailing = false
+
 	for i := range widget.Sites {
 		site := &widget.Sites[i]
 		status := &statuses[i]
-
 		site.Status = status
+
+		if status.Code >= 400 || status.TimedOut || status.Error != nil {
+			widget.HasFailing = true
+		}
 
 		if !status.TimedOut {
 			site.StatusText = statusCodeToText(status.Code)

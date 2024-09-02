@@ -14,7 +14,6 @@ type Markets struct {
 	StocksRequests []feed.MarketRequest `yaml:"stocks"`
 	MarketRequests []feed.MarketRequest `yaml:"markets"`
 	Sort           string               `yaml:"sort-by"`
-	Style          string               `yaml:"style"`
 	Markets        feed.Markets         `yaml:"-"`
 }
 

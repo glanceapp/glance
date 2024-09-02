@@ -1044,13 +1044,13 @@ You can hover over the "ERROR" text to view more information.
 
 #### Properties
 
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| sites | array | yes |
-| style | string | no |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| sites | array | yes | |
+| show-failing-only | boolean | no | false |
 
-##### `style`
-To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
+##### `show-failing-only`
+Shows only a list of failing sites when set to `true`.
 
 ##### `sites`
 
@@ -1333,13 +1333,9 @@ Preview:
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | groups | array | yes |
-| style | string | no |
 
 ##### `groups`
 An array of groups which can optionally have a title and a custom color.
-
-##### `style`
-To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ###### Properties for each group
 | Name | Type | Required | Default |
@@ -1518,16 +1514,12 @@ Preview:
 | ---- | ---- | -------- |
 | markets | array | yes |
 | sort-by | string | no |
-| style | string | no |
 
 ##### `markets`
 An array of markets for which to display information about.
 
 ##### `sort-by`
 By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
-
-##### `style`
-To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ###### Properties for each stock
 | Name | Type | Required |

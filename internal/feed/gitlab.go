@@ -38,16 +38,10 @@ func fetchLatestGitLabRelease(request *ReleaseRequest) (*AppRelease, error) {
 		return nil, err
 	}
 
-	version := response.TagName
-
-	if len(version) > 0 && version[0] != 'v' {
-		version = "v" + version
-	}
-
 	return &AppRelease{
 		Source:       ReleaseSourceGitlab,
 		Name:         request.Repository,
-		Version:      version,
+		Version:      normalizeVersionFormat(response.TagName),
 		NotesUrl:     response.Links.Self,
 		TimeReleased: parseRFC3339Time(response.ReleasedAt),
 	}, nil
