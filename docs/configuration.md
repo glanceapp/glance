@@ -472,10 +472,18 @@ Example:
 | thumbnail-height | float | no | 10 |
 | card-height | float | no | 27 |
 | limit | integer | no | 25 |
+| single-line-titles | boolean | no | false |
 | collapse-after | integer | no | 5 |
 
 ##### `style`
-Used to change the appearance of the widget. Possible values are `vertical-list` and `horizontal-cards` where the former is intended to be used within a small column and the latter a full column. Below are previews of each style.
+Used to change the appearance of the widget. Possible values are:
+
+* `vertical-list` - suitable for `full` and `small` columns
+* `detailed-list` - suitable for `full` columns
+* `horizontal-cards` - suitable for `full` columns
+* `horizontal-cards-2` - suitable for `full` columns
+
+Below is a preview of each style:
 
 `vertical-list`
 
@@ -516,6 +524,9 @@ If an RSS feed isn't returning item links with a base domain and Glance has fail
 
 ##### `limit`
 The maximum number of articles to show.
+
+##### `single-line-titles`
+When set to `true`, truncates the title of each post if it exceeds one line. Only applies when the style is set to `vertical-list`.
 
 ##### `collapse-after`
 How many articles are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.

@@ -85,10 +85,16 @@
     color: var(--color-primary);
 }
 
-.text-truncate {
+.text-truncate,
+.single-line-titles .title
+{
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.single-line-titles .title {
+    display: block;
 }
 
 .text-truncate-2-lines, .text-truncate-3-lines {
