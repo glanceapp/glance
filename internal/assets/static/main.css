@@ -1206,7 +1206,6 @@ details[open] .summary::after {
     flex-direction: column;
     width: calc(100% / 12);
     padding-top: 3px;
-    max-width: 30px;
 }
 
 .weather-column-value, .weather-columns:hover .weather-column-value {
