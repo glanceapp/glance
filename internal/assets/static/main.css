@@ -851,6 +851,7 @@ details[open] .summary::after {
     border-bottom: 2px solid transparent;
     transition: color .3s, border-color .3s;
     font-size: var(--font-size-h3);
+    flex-shrink: 0;
 }
 
 .nav-item:not(.nav-item-current):hover {
