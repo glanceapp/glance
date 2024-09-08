@@ -25,12 +25,26 @@ type subredditResponseJson struct {
 				Pinned        bool    `json:"pinned"`
 				IsSelf        bool    `json:"is_self"`
 				Thumbnail     string  `json:"thumbnail"`
+				Flair         string  `json:"link_flair_text"`
+				ParentList    []struct {
+					Id        string `json:"id"`
+					Subreddit string `json:"subreddit"`
+					Permalink string `json:"permalink"`
+				} `json:"crosspost_parent_list"`
 			} `json:"data"`
 		} `json:"children"`
 	} `json:"data"`
 }
 
-func FetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate, requestUrlTemplate string) (ForumPosts, error) {
+func templateRedditCommentsURL(template, subreddit, postId, postPath string) string {
+	template = strings.ReplaceAll(template, "{SUBREDDIT}", subreddit)
+	template = strings.ReplaceAll(template, "{POST-ID}", postId)
+	template = strings.ReplaceAll(template, "{POST-PATH}", strings.TrimLeft(postPath, "/"))
+
+	return template
+}
+
+func FetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate, requestUrlTemplate string, showFlairs bool) (ForumPosts, error) {
 	query := url.Values{}
 	var requestUrl string
 
@@ -85,9 +99,7 @@ func FetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate
 		if commentsUrlTemplate == "" {
 			commentsUrl = "https://www.reddit.com" + post.Permalink
 		} else {
-			commentsUrl = strings.ReplaceAll(commentsUrlTemplate, "{SUBREDDIT}", subreddit)
-			commentsUrl = strings.ReplaceAll(commentsUrl, "{POST-ID}", post.Id)
-			commentsUrl = strings.ReplaceAll(commentsUrl, "{POST-PATH}", strings.TrimLeft(post.Permalink, "/"))
+			commentsUrl = templateRedditCommentsURL(commentsUrlTemplate, subreddit, post.Id, post.Permalink)
 		}
 
 		forumPost := ForumPost{
@@ -105,6 +117,26 @@ func FetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate
 
 		if !post.IsSelf {
 			forumPost.TargetUrl = post.Url
+		}
+
+		if showFlairs && post.Flair != "" {
+			forumPost.Tags = append(forumPost.Tags, post.Flair)
+		}
+
+		if len(post.ParentList) > 0 {
+			forumPost.IsCrosspost = true
+			forumPost.TargetUrlDomain = "r/" + post.ParentList[0].Subreddit
+
+			if commentsUrlTemplate == "" {
+				forumPost.TargetUrl = "https://www.reddit.com" + post.ParentList[0].Permalink
+			} else {
+				forumPost.TargetUrl = templateRedditCommentsURL(
+					commentsUrlTemplate,
+					post.ParentList[0].Subreddit,
+					post.ParentList[0].Id,
+					post.ParentList[0].Permalink,
+				)
+			}
 		}
 
 		posts = append(posts, forumPost)

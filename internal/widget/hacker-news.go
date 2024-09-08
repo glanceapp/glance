@@ -21,7 +21,10 @@ type HackerNews struct {
 }
 
 func (widget *HackerNews) Initialize() error {
-	widget.withTitle("Hacker News").withCacheDuration(30 * time.Minute)
+	widget.
+		withTitle("Hacker News").
+		withTitleURL("https://news.ycombinator.com/").
+		withCacheDuration(30 * time.Minute)
 
 	if widget.Limit <= 0 {
 		widget.Limit = 15

@@ -17,6 +17,7 @@ type ForumPost struct {
 	Engagement      float64
 	TimePosted      time.Time
 	Tags            []string
+	IsCrosspost     bool
 }
 
 type ForumPosts []ForumPost
@@ -40,11 +41,13 @@ type Weather struct {
 }
 
 type AppRelease struct {
-	Name         string
-	Version      string
-	NotesUrl     string
-	TimeReleased time.Time
-	Downvotes    int
+	Source        ReleaseSource
+	SourceIconURL string
+	Name          string
+	Version       string
+	NotesUrl      string
+	TimeReleased  time.Time
+	Downvotes     int
 }
 
 type AppReleases []AppRelease
@@ -83,6 +86,28 @@ var currencyToSymbol = map[string]string{
 	"DKK": "kr",
 	"PLN": "zł",
 	"PHP": "₱",
+}
+
+type DNSStats struct {
+	TotalQueries      int
+	BlockedQueries    int
+	BlockedPercent    int
+	ResponseTime      int
+	DomainsBlocked    int
+	Series            [8]DNSStatsSeries
+	TopBlockedDomains []DNSStatsBlockedDomain
+}
+
+type DNSStatsSeries struct {
+	Queries        int
+	Blocked        int
+	PercentTotal   int
+	PercentBlocked int
+}
+
+type DNSStatsBlockedDomain struct {
+	Domain         string
+	PercentBlocked int
 }
 
 type MarketRequest struct {

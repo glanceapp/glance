@@ -1,15 +1,20 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
-<ul class="list list-gap-10 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
-    {{ range $i, $release := .Releases }}
+<ul class="list list-gap-10 collapsible-container single-line-titles" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .Releases }}
     <li>
-        <a class="size-h4 block text-truncate color-primary-if-not-visited" href="{{ $release.NotesUrl }}" target="_blank" rel="noreferrer">{{ .Name }}</a>
+        <div class="flex items-center gap-10">
+            <a class="size-h4 block text-truncate color-primary-if-not-visited" href="{{ .NotesUrl }}" target="_blank" rel="noreferrer">{{ .Name }}</a>
+            {{ if $.ShowSourceIcon }}
+            <img class="simple-icon release-source-icon" src="{{ .SourceIconURL }}" alt="" loading="lazy">
+            {{ end }}
+        </div>
         <ul class="list-horizontal-text">
-            <li {{ dynamicRelativeTimeAttrs $release.TimeReleased }}></li>
-            <li>{{ $release.Version }}</li>
-            {{ if gt $release.Downvotes 3 }}
-            <li>{{ $release.Downvotes | formatNumber }} ⚠</li>
+            <li {{ dynamicRelativeTimeAttrs .TimeReleased }}></li>
+            <li>{{ .Version }}</li>
+            {{ if gt .Downvotes 3 }}
+            <li>{{ .Downvotes | formatNumber }} ⚠</li>
             {{ end }}
         </ul>
     </li>

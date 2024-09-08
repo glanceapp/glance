@@ -3,6 +3,7 @@
 - [Intro](#intro)
 - [Preconfigured page](#preconfigured-page)
 - [Server](#server)
+- [Branding](#branding)
 - [Theme](#theme)
   - [Themes](#themes)
 - [Pages & Columns](#pages--columns)
@@ -13,10 +14,12 @@
   - [Lobsters](#lobsters)
   - [Reddit](#reddit)
   - [Search](#search-widget)
+  - [Group](#group)
   - [Extension](#extension)
   - [Weather](#weather)
   - [Monitor](#monitor)
   - [Releases](#releases)
+  - [DNS Stats](#dns-stats)
   - [Repository](#repository)
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
@@ -123,6 +126,7 @@ server:
 | ---- | ---- | -------- | ------- |
 | host | string | no |  |
 | port | number | no | 8080 |
+| base-url | string | no | |
 | assets-path | string | no |  |
 
 #### `host`
@@ -130,6 +134,9 @@ The address which the server will listen on. Setting it to `localhost` means tha
 
 #### `port`
 A number between 1 and 65,535, so long as that port isn't already used by anything else.
+
+#### `base-url`
+The base URL that Glance is hosted under. No need to specify this unless you're using a reverse proxy and are hosting Glance under a directory. If that's the case then you can set this value to `/glance` or whatever the directory is called. Note that the forward slash (`/`) in the beginning is required unless you specify the full domain and path.
 
 #### `assets-path`
 The path to a directory that will be served by the server under the `/assets/` path. This is handy for widgets like the Monitor where you have to specify an icon URL and you want to self host all the icons rather than pointing to an external source.
@@ -167,6 +174,42 @@ To be able to point to an asset from your assets path, use the `/assets/` path l
 ```yaml
 icon: /assets/gitea-icon.png
 ```
+
+## Branding
+You can adjust the various parts of the branding through a top level `branding` property. Example:
+
+```yaml
+branding:
+  custom-footer: |
+    <p>Powered by <a href="https://github.com/glanceapp/glance">Glance</a></p>
+  logo-url: /assets/logo.png
+  favicon-url: /assets/logo.png
+```
+
+### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| hide-footer | bool | no | false |
+| custom-footer | string | no |  |
+| logo-text | string | no | G |
+| logo-url | string | no | |
+| favicon-url | string | no | |
+
+#### `hide-footer`
+Hides the footer when set to `true`.
+
+#### `custom-footer`
+Specify custom HTML to use for the footer.
+
+#### `logo-text`
+Specify custom text to use instead of the "G" found in the navigation.
+
+#### `logo-url`
+Specify a URL to a custom image to use instead of the "G" found in the navigation. If both `logo-text` and `logo-url` are set, only `logo-url` will be used.
+
+#### `favicon-url`
+Specify a URL to a custom image to use for the favicon.
 
 ## Theme
 Theming is done through a top level `theme` property. Values for the colors are in [HSL](https://giggster.com/guide/basics/hue-saturation-lightness/) (hue, saturation, lightness) format. You can use a color picker [like this one](https://hslpicker.com/) to convert colors from other formats to HSL. The values are separated by a space and `%` is not required for any of the numbers.
@@ -234,6 +277,8 @@ theme:
 > .widget-type-rss a {
 >     font-size: 1.5rem;
 > }
+>
+> In addition, you can also use the `css-class` property which is available on every widget to set custom class names for individual widgets.
 
 
 ## Pages & Columns
@@ -261,6 +306,8 @@ pages:
 | ---- | ---- | -------- | ------- |
 | title | string | yes | |
 | slug | string | no | |
+| width | string | no | |
+| hide-desktop-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
 
@@ -269,6 +316,21 @@ The name of the page which gets shown in the navigation bar.
 
 #### `slug`
 The URL friendly version of the title which is used to access the page. For example if the title of the page is "RSS Feeds" you can make the page accessible via `localhost:8080/feeds` by setting the slug to `feeds`. If not defined, it will automatically be generated from the title.
+
+#### `width`
+The maximum width of the page on desktop. Possible values are `slim` and `wide`.
+
+* default: `1600px`
+* slim: `1100px`
+* wide: `1920px`
+
+> [!NOTE]
+>
+> When using `slim`, the maximum number of columns allowed for that page is `2`.
+
+
+#### `hide-desktop-navigation`
+Whether to show the navigation links at the top of the page on desktop.
 
 #### `show-mobile-header`
 Whether to show a header displaying the name of the page on mobile. The header purposefully has a lot of vertical whitespace in order to push the content down and make it easier to reach on tall devices.
@@ -354,13 +416,18 @@ pages:
 | ---- | ---- | -------- |
 | type | string | yes |
 | title | string | no |
+| title-url | string | no |
 | cache | string | no |
+| css-class | string | no |
 
 #### `type`
 Used to specify the widget.
 
 #### `title`
 The title of the widget. If left blank it will be defined by the widget.
+
+#### `title-url`
+The URL to go to when clicking on the widget's title. If left blank it will be defined by the widget (if available).
 
 #### `cache`
 How long to keep the fetched data in memory. The value is a string and must be a number followed by one of s, m, h, d. Examples:
@@ -375,6 +442,9 @@ cache: 1d  # 1 day
 > [!NOTE]
 >
 > Not all widgets can have their cache duration modified. The calendar and weather widgets update on the hour and this cannot be changed.
+
+#### `css-class`
+Set custom CSS classes for the specific widget instance.
 
 ### RSS
 Display a list of articles from multiple RSS feeds.
@@ -402,10 +472,18 @@ Example:
 | thumbnail-height | float | no | 10 |
 | card-height | float | no | 27 |
 | limit | integer | no | 25 |
+| single-line-titles | boolean | no | false |
 | collapse-after | integer | no | 5 |
 
 ##### `style`
-Used to change the appearance of the widget. Possible values are `vertical-list` and `horizontal-cards` where the former is intended to be used within a small column and the latter a full column. Below are previews of each style.
+Used to change the appearance of the widget. Possible values are:
+
+* `vertical-list` - suitable for `full` and `small` columns
+* `detailed-list` - suitable for `full` columns
+* `horizontal-cards` - suitable for `full` columns
+* `horizontal-cards-2` - suitable for `full` columns
+
+Below is a preview of each style:
 
 `vertical-list`
 
@@ -447,6 +525,9 @@ If an RSS feed isn't returning item links with a base domain and Glance has fail
 ##### `limit`
 The maximum number of articles to show.
 
+##### `single-line-titles`
+When set to `true`, truncates the title of each post if it exceeds one line. Only applies when the style is set to `vertical-list`.
+
 ##### `collapse-after`
 How many articles are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
@@ -473,6 +554,7 @@ Preview:
 | limit | integer | no | 25 |
 | style | string | no | horizontal-cards |
 | collapse-after-rows | integer | no | 4 |
+| include-shorts | boolean | no | false |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
@@ -572,10 +654,22 @@ Preview:
 #### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
+| instance-url | string | no | https://lobste.rs/ |
+| custom-url | string | no | |
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
 | sort-by | string | no | hot |
 | tags | array | no | |
+
+##### `instance-url`
+The base URL for a lobsters instance hosted somewhere other than on lobste.rs. Example:
+
+```yaml
+instance-url: https://www.journalduhacker.net/
+```
+
+##### `custom-url`
+A custom URL to retrieve lobsters posts from. If this is specified, the `instance-url`, `sort-by` and `tags` properties are ignored.
 
 ##### `limit`
 The maximum number of posts to show.
@@ -609,6 +703,7 @@ Example:
 | subreddit | string | yes |  |
 | style | string | no | vertical-list |
 | show-thumbnails | boolean | no | false |
+| show-flairs | boolean | no | false |
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
 | comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
@@ -644,6 +739,9 @@ Shows or hides thumbnails next to the post. This only works if the `style` is `v
 > [!NOTE]
 >
 > Thumbnails don't work for some subreddits due to Reddit's API not returning the thumbnail URL. No workaround for this yet.
+
+##### `show-flairs`
+Shows post flairs when set to `true`.
 
 ##### `limit`
 The maximum number of posts to show.
@@ -724,10 +822,16 @@ Preview:
 | <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Perform search in a new tab | Search input is focused and not empty |
 | <kbd>Escape</kbd> | Leave focus | Search input is focused |
 
+> [!TIP]
+>
+> You can use the property `new-tab` with a value of `true` if you want to show search results in a new tab by default. <kbd>Ctrl</kbd> + <kbd>Enter</kbd> will then show results in the same tab.
+
 #### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | search-engine | string | no | duckduckgo |
+| new-tab | boolean | no | false |
+| autofocus | boolean | no | false |
 | bangs | array | no | |
 
 ##### `search-engine`
@@ -737,6 +841,12 @@ Either a value from the table below or a URL to a custom search engine. Use `{QU
 | ---- | --- |
 | duckduckgo | `https://duckduckgo.com/?q={QUERY}` |
 | google | `https://www.google.com/search?q={QUERY}` |
+
+##### `new-tab`
+When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
+
+##### `new-tab`
+When set to `true`, automatically focuses the search input on page load.
 
 ##### `bangs`
 What now? [Bangs](https://duckduckgo.com/bangs). They're shortcuts that allow you to use the same search box for many different sites. Assuming you have it configured, if for example you start your search input with `!yt` you'd be able to perform a search on YouTube:
@@ -770,6 +880,50 @@ The URL of the search engine. Use `{QUERY}` to indicate where the query value ge
 url: https://www.reddit.com/search?q={QUERY}
 url: https://store.steampowered.com/search/?term={QUERY}
 url: https://www.amazon.com/s?k={QUERY}
+```
+
+### Group
+Group multiple widgets into one using tabs. Widgets are defined using a `widgets` property exactly as you would on a page column. The only limitation is that you cannot place a group widget within a group widget.
+
+Example:
+
+```yaml
+- type: group
+  widgets:
+    - type: reddit
+      subreddit: gamingnews
+      show-thumbnails: true
+      collapse-after: 6
+    - type: reddit
+      subreddit: games
+    - type: reddit
+      subreddit: pcgaming
+      show-thumbnails: true
+```
+
+Preview:
+
+![](images/group-widget-preview.png)
+
+#### Sharing properties
+
+To avoid repetition you can use [YAML anchors](https://support.atlassian.com/bitbucket-cloud/docs/yaml-anchors/) and share properties between widgets.
+
+Example:
+
+```yaml
+- type: group
+  define: &shared-properties
+      type: reddit
+      show-thumbnails: true
+      collapse-after: 6
+  widgets:
+    - subreddit: gamingnews
+      <<: *shared-properties
+    - subreddit: games
+      <<: *shared-properties
+    - subreddit: pcgaming
+      <<: *shared-properties
 ```
 
 ### Extension
@@ -901,13 +1055,13 @@ You can hover over the "ERROR" text to view more information.
 
 #### Properties
 
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| sites | array | yes |
-| style | string | no |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| sites | array | yes | |
+| show-failing-only | boolean | no | false |
 
-##### `style`
-To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
+##### `show-failing-only`
+Shows only a list of failing sites when set to `true`.
 
 ##### `sites`
 
@@ -917,6 +1071,7 @@ Properties for each site:
 | ---- | ---- | -------- | ------- |
 | title | string | yes | |
 | url | string | yes | |
+| check-url | string | no | |
 | icon | string | no | |
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
@@ -927,7 +1082,11 @@ The title used to indicate the site.
 
 `url`
 
-The URL which will be requested and its response will determine the status of the site. Optionally, you can specify this using an environment variable with the syntax `${VARIABLE_NAME}`.
+The public facing URL of a monitored service, the user will be redirected here. If `check-url` is not specified, this is used as the status check.
+
+`check-url`
+
+The URL which will be requested and its response will determine the status of the site. If not specified, the `url` property is used.
 
 `icon`
 
@@ -952,17 +1111,19 @@ Whether to ignore invalid/self-signed certificates.
 Whether to open the link in the same or a new tab.
 
 ### Releases
-Display a list of releases for specific repositories on Github. Draft releases and prereleases will not be shown.
+Display a list of latest releases for specific repositories on Github, GitLab or Docker Hub.
 
 Example:
 
 ```yaml
 - type: releases
+  show-source-icon: true
   repositories:
-    - immich-app/immich
     - go-gitea/gitea
-    - dani-garcia/vaultwarden
     - jellyfin/jellyfin
+    - glanceapp/glance
+    - gitlab:fdroid/fdroidclient
+    - dockerhub:gotify/server
 ```
 
 Preview:
@@ -974,12 +1135,41 @@ Preview:
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | repositories | array | yes |  |
+| show-source-icon | boolean | no | false |  |
 | token | string | no | |
+| gitlab-token | string | no | |
 | limit | integer | no | 10 |
 | collapse-after | integer | no | 5 |
 
 ##### `repositories`
-A list of repositores for which to fetch the latest release for. Only the name/repo is required, not the full URL.
+A list of repositores to fetch the latest release for. Only the name/repo is required, not the full URL. A prefix can be specified for repositories hosted elsewhere such as GitLab and Docker Hub. Example:
+
+```yaml
+repositories:
+  - gitlab:inkscape/inkscape
+  - dockerhub:glanceapp/glance
+```
+
+Official images on Docker Hub can be specified by ommiting the owner:
+
+```yaml
+repositories:
+  - dockerhub:nginx
+  - dockerhub:node
+  - dockerhub:alpine
+```
+
+You can also specify specific tags for Docker Hub images:
+
+```yaml
+repositories:
+  - dockerhub:nginx:latest
+  - dockerhub:nginx:stable-alpine
+```
+
+
+##### `show-source-icon`
+Shows an icon of the source (GitHub/GitLab/Docker Hub) next to the repository name when set to `true`.
 
 ##### `token`
 Without authentication Github allows for up to 60 requests per hour. You can easily exceed this limit and start seeing errors if you're tracking lots of repositories or your cache time is low. To circumvent this you can [create a read only token from your Github account](https://github.com/settings/personal-access-tokens/new) and provide it here.
@@ -1004,11 +1194,64 @@ and then use it in your `glance.yml` like this:
 
 This way you can safely check your `glance.yml` in version control without exposing the token.
 
+##### `gitlab-token`
+Same as the above but used when fetching GitLab releases.
+
 ##### `limit`
 The maximum number of releases to show.
 
 #### `collapse-after`
 How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+### DNS Stats
+Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home or Pi-hole.
+
+Example:
+
+```yaml
+- type: dns-stats
+  service: adguard
+  url: https://adguard.domain.com/
+  username: admin
+  password: ${ADGUARD_PASSWORD}
+```
+
+Preview:
+
+![](images/dns-stats-widget-preview.png)
+
+> [!NOTE]
+>
+> When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole it will be the total number of blocked domains from all adlists.
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| service | string | no | pihole |
+| url | string | yes |  |
+| username | string | when service is `adguard` |  |
+| password | string | when service is `adguard` |  |
+| token | string | when service is `pihole` |  |
+| hour-format | string | no | 12h |
+
+##### `service`
+Either `adguard` or `pihole`.
+
+##### `url`
+The base URL of the service. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+
+##### `username`
+Only required when using AdGuard Home. The username used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+
+##### `password`
+Only required when using AdGuard Home. The password used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+
+##### `token`
+Only required when using Pi-hole. The API token which can be found in `Settings -> API -> Show API token`. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+
+##### `hour-format`
+Whether to display the relative time in the graph in `12h` or `24h` format.
 
 ### Repository
 Display general information about a repository as well as a list of the latest open pull requests and issues.
@@ -1020,6 +1263,7 @@ Example:
   repository: glanceapp/glance
   pull-requests-limit: 5
   issues-limit: 3
+  commits-limit: 3
 ```
 
 Preview:
@@ -1034,6 +1278,7 @@ Preview:
 | token | string | no | |
 | pull-requests-limit | integer | no | 3 |
 | issues-limit | integer | no | 3 |
+| commits-limit | integer | no | -1 |
 
 ##### `repository`
 The owner and repository name that will have their information displayed.
@@ -1046,6 +1291,9 @@ The maximum number of latest open pull requests to show. Set to `-1` to not show
 
 ##### `issues-limit`
 The maximum number of latest open issues to show. Set to `-1` to not show any.
+
+##### `commits-limit`
+The maximum number of lastest commits to show from the default branch. Set to `-1` to not show any.
 
 ### Bookmarks
 Display a list of links which can be grouped.
@@ -1096,13 +1344,9 @@ Preview:
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | groups | array | yes |
-| style | string | no |
 
 ##### `groups`
 An array of groups which can optionally have a title and a custom color.
-
-##### `style`
-To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ###### Properties for each group
 | Name | Type | Required | Default |
@@ -1281,16 +1525,12 @@ Preview:
 | ---- | ---- | -------- |
 | markets | array | yes |
 | sort-by | string | no |
-| style | string | no |
 
 ##### `markets`
 An array of markets for which to display information about.
 
 ##### `sort-by`
 By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
-
-##### `style`
-To make the widget scale appropriately in a `full` size column, set the style to the experimental `dynamic-columns-experimental` option.
 
 ###### Properties for each stock
 | Name | Type | Required |

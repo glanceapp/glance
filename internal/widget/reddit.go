@@ -17,6 +17,7 @@ type Reddit struct {
 	Subreddit           string          `yaml:"subreddit"`
 	Style               string          `yaml:"style"`
 	ShowThumbnails      bool            `yaml:"show-thumbnails"`
+	ShowFlairs          bool            `yaml:"show-flairs"`
 	SortBy              string          `yaml:"sort-by"`
 	TopPeriod           string          `yaml:"top-period"`
 	Search              string          `yaml:"search"`
@@ -54,7 +55,10 @@ func (widget *Reddit) Initialize() error {
 		}
 	}
 
-	widget.withTitle("/r/" + widget.Subreddit).withCacheDuration(30 * time.Minute)
+	widget.
+		withTitle("/r/" + widget.Subreddit).
+		withTitleURL("https://www.reddit.com/r/" + widget.Subreddit + "/").
+		withCacheDuration(30 * time.Minute)
 
 	return nil
 }
@@ -84,6 +88,7 @@ func (widget *Reddit) Update(ctx context.Context) {
 		widget.Search,
 		widget.CommentsUrlTemplate,
 		widget.RequestUrlTemplate,
+		widget.ShowFlairs,
 	)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {

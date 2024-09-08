@@ -3,7 +3,7 @@
 {{ define "widget-content-classes" }}widget-content-frameless{{ end }}
 
 {{ define "widget-content" }}
-<div class="search widget-content-frame padding-inline-widget flex gap-15 items-center" data-default-search-url="{{ .SearchEngine }}">
+<div class="search widget-content-frame padding-inline-widget flex gap-15 items-center" data-default-search-url="{{ .SearchEngine }}" data-new-tab="{{ .NewTab }}">
     <div class="search-bangs">
         {{ range .Bangs }}
         <input type="hidden" data-shortcut="{{ .Shortcut }}" data-title="{{ .Title }}" data-url="{{ .URL }}">
@@ -16,7 +16,7 @@
         </svg>
     </div>
 
-    <input class="search-input" type="text" placeholder="Type here to search…" autocomplete="off">
+    <input class="search-input" type="text" placeholder="Type here to search…" autocomplete="off"{{ if .Autofocus }} autofocus{{ end }}>
 
     <div class="search-bang"></div>
     <kbd class="hide-on-mobile" title="Press [S] to focus the search input">S</kbd>

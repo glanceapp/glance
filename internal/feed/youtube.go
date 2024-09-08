@@ -10,11 +10,9 @@ import (
 )
 
 type youtubeFeedResponseXml struct {
-	Channel     string `xml:"title"`
-	ChannelLink struct {
-		Href string `xml:"href,attr"`
-	} `xml:"link"`
-	Videos []struct {
+	Channel     string `xml:"author>name"`
+	ChannelLink string `xml:"author>uri"`
+	Videos      []struct {
 		Title     string `xml:"title"`
 		Published string `xml:"published"`
 		Link      struct {
@@ -39,11 +37,19 @@ func parseYoutubeFeedTime(t string) time.Time {
 	return parsedTime
 }
 
-func FetchYoutubeChannelUploads(channelIds []string, videoUrlTemplate string) (Videos, error) {
+func FetchYoutubeChannelUploads(channelIds []string, videoUrlTemplate string, includeShorts bool) (Videos, error) {
 	requests := make([]*http.Request, 0, len(channelIds))
 
 	for i := range channelIds {
-		request, _ := http.NewRequest("GET", "https://www.youtube.com/feeds/videos.xml?channel_id="+channelIds[i], nil)
+		var feedUrl string
+		if !includeShorts && strings.HasPrefix(channelIds[i], "UC") {
+			playlistId := strings.Replace(channelIds[i], "UC", "UULF", 1)
+			feedUrl = "https://www.youtube.com/feeds/videos.xml?playlist_id=" + playlistId
+		} else {
+			feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=" + channelIds[i]
+		}
+
+		request, _ := http.NewRequest("GET", feedUrl, nil)
 		requests = append(requests, request)
 	}
 
@@ -70,12 +76,6 @@ func FetchYoutubeChannelUploads(channelIds []string, videoUrlTemplate string) (V
 
 		for j := range response.Videos {
 			video := &response.Videos[j]
-
-			// TODO: figure out a better way of skipping shorts
-			if strings.Contains(video.Title, "#shorts") {
-				continue
-			}
-
 			var videoUrl string
 
 			if videoUrlTemplate == "" {
@@ -95,7 +95,7 @@ func FetchYoutubeChannelUploads(channelIds []string, videoUrlTemplate string) (V
 				Title:        video.Title,
 				Url:          videoUrl,
 				Author:       response.Channel,
-				AuthorUrl:    response.ChannelLink.Href + "/videos",
+				AuthorUrl:    response.ChannelLink + "/videos",
 				TimePosted:   parseYoutubeFeedTime(video.Published),
 			})
 		}

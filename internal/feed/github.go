@@ -2,8 +2,8 @@ package feed
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -17,85 +17,35 @@ type githubReleaseLatestResponseJson struct {
 	} `json:"reactions"`
 }
 
-func parseGithubTime(t string) time.Time {
-	parsedTime, err := time.Parse("2006-01-02T15:04:05Z", t)
-
-	if err != nil {
-		return time.Now()
-	}
-
-	return parsedTime
-}
-
-func FetchLatestReleasesFromGithub(repositories []string, token string) (AppReleases, error) {
-	appReleases := make(AppReleases, 0, len(repositories))
-
-	if len(repositories) == 0 {
-		return appReleases, nil
-	}
-
-	requests := make([]*http.Request, len(repositories))
-
-	for i, repository := range repositories {
-		request, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", repository), nil)
-
-		if token != "" {
-			request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
-		}
-
-		requests[i] = request
-	}
-
-	task := decodeJsonFromRequestTask[githubReleaseLatestResponseJson](defaultClient)
-	job := newJob(task, requests).withWorkers(15)
-	responses, errs, err := workerPoolDo(job)
+func fetchLatestGithubRelease(request *ReleaseRequest) (*AppRelease, error) {
+	httpRequest, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", request.Repository),
+		nil,
+	)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var failed int
-
-	for i := range responses {
-		if errs[i] != nil {
-			failed++
-			slog.Error("Failed to fetch or parse github release", "error", errs[i], "url", requests[i].URL)
-			continue
-		}
-
-		liveRelease := &responses[i]
-
-		if liveRelease == nil {
-			slog.Error("No live release found", "repository", repositories[i], "url", requests[i].URL)
-			continue
-		}
-
-		version := liveRelease.TagName
-
-		if version[0] != 'v' {
-			version = "v" + version
-		}
-
-		appReleases = append(appReleases, AppRelease{
-			Name:         repositories[i],
-			Version:      version,
-			NotesUrl:     liveRelease.HtmlUrl,
-			TimeReleased: parseGithubTime(liveRelease.PublishedAt),
-			Downvotes:    liveRelease.Reactions.Downvotes,
-		})
+	if request.Token != nil {
+		httpRequest.Header.Add("Authorization", "Bearer "+(*request.Token))
 	}
 
-	if len(appReleases) == 0 {
-		return nil, ErrNoContent
+	response, err := decodeJsonFromRequest[githubReleaseLatestResponseJson](defaultClient, httpRequest)
+
+	if err != nil {
+		return nil, err
 	}
 
-	appReleases.SortByNewest()
-
-	if failed > 0 {
-		return appReleases, fmt.Errorf("%w: could not get %d releases", ErrPartialContent, failed)
-	}
-
-	return appReleases, nil
+	return &AppRelease{
+		Source:       ReleaseSourceGithub,
+		Name:         request.Repository,
+		Version:      normalizeVersionFormat(response.TagName),
+		NotesUrl:     response.HtmlUrl,
+		TimeReleased: parseRFC3339Time(response.PublishedAt),
+		Downvotes:    response.Reactions.Downvotes,
+	}, nil
 }
 
 type GithubTicket struct {
@@ -112,6 +62,8 @@ type RepositoryDetails struct {
 	PullRequests     []GithubTicket
 	OpenIssues       int
 	Issues           []GithubTicket
+	LastCommits      int
+	Commits          []CommitDetails
 }
 
 type githubRepositoryDetailsResponseJson struct {
@@ -129,21 +81,40 @@ type githubTicketResponseJson struct {
 	} `json:"items"`
 }
 
-func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs int, maxIssues int) (RepositoryDetails, error) {
-	repositoryRequest, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s", repository), nil)
+type CommitDetails struct {
+	Sha       string
+	Author    string
+	CreatedAt time.Time
+	Message   string
+}
 
+type gitHubCommitResponseJson struct {
+	Sha    string `json:"sha"`
+	Commit struct {
+		Author struct {
+			Name string `json:"name"`
+			Date string `json:"date"`
+		} `json:"author"`
+		Message string `json:"message"`
+	} `json:"commit"`
+}
+
+func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs int, maxIssues int, maxCommits int) (RepositoryDetails, error) {
+	repositoryRequest, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s", repository), nil)
 	if err != nil {
 		return RepositoryDetails{}, fmt.Errorf("%w: could not create request with repository: %v", ErrNoContent, err)
 	}
 
 	PRsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=is:pr+is:open+repo:%s&per_page=%d", repository, maxPRs), nil)
 	issuesRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=is:issue+is:open+repo:%s&per_page=%d", repository, maxIssues), nil)
+	CommitsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/commits?per_page=%d", repository, maxCommits), nil)
 
 	if token != "" {
 		token = fmt.Sprintf("Bearer %s", token)
 		repositoryRequest.Header.Add("Authorization", token)
 		PRsRequest.Header.Add("Authorization", token)
 		issuesRequest.Header.Add("Authorization", token)
+		CommitsRequest.Header.Add("Authorization", token)
 	}
 
 	var detailsResponse githubRepositoryDetailsResponseJson
@@ -152,6 +123,8 @@ func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs in
 	var PRsErr error
 	var issuesResponse githubTicketResponseJson
 	var issuesErr error
+	var commitsResponse []gitHubCommitResponseJson
+	var CommitsErr error
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -176,6 +149,14 @@ func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs in
 		})()
 	}
 
+	if maxCommits > 0 {
+		wg.Add(1)
+		go (func() {
+			defer wg.Done()
+			commitsResponse, CommitsErr = decodeJsonFromRequest[[]gitHubCommitResponseJson](defaultClient, CommitsRequest)
+		})()
+	}
+
 	wg.Wait()
 
 	if detailsErr != nil {
@@ -188,6 +169,7 @@ func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs in
 		Forks:        detailsResponse.Forks,
 		PullRequests: make([]GithubTicket, 0, len(PRsResponse.Tickets)),
 		Issues:       make([]GithubTicket, 0, len(issuesResponse.Tickets)),
+		Commits:      make([]CommitDetails, 0, len(commitsResponse)),
 	}
 
 	err = nil
@@ -201,7 +183,7 @@ func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs in
 			for i := range PRsResponse.Tickets {
 				details.PullRequests = append(details.PullRequests, GithubTicket{
 					Number:    PRsResponse.Tickets[i].Number,
-					CreatedAt: parseGithubTime(PRsResponse.Tickets[i].CreatedAt),
+					CreatedAt: parseRFC3339Time(PRsResponse.Tickets[i].CreatedAt),
 					Title:     PRsResponse.Tickets[i].Title,
 				})
 			}
@@ -218,8 +200,23 @@ func FetchRepositoryDetailsFromGithub(repository string, token string, maxPRs in
 			for i := range issuesResponse.Tickets {
 				details.Issues = append(details.Issues, GithubTicket{
 					Number:    issuesResponse.Tickets[i].Number,
-					CreatedAt: parseGithubTime(issuesResponse.Tickets[i].CreatedAt),
+					CreatedAt: parseRFC3339Time(issuesResponse.Tickets[i].CreatedAt),
 					Title:     issuesResponse.Tickets[i].Title,
+				})
+			}
+		}
+	}
+
+	if maxCommits > 0 {
+		if CommitsErr != nil {
+			err = fmt.Errorf("%w: could not get issues: %s", ErrPartialContent, CommitsErr)
+		} else {
+			for i := range commitsResponse {
+				details.Commits = append(details.Commits, CommitDetails{
+					Sha:       commitsResponse[i].Sha,
+					Author:    commitsResponse[i].Commit.Author.Name,
+					CreatedAt: parseRFC3339Time(commitsResponse[i].Commit.Author.Date),
+					Message:   strings.SplitN(commitsResponse[i].Commit.Message, "\n\n", 2)[0],
 				})
 			}
 		}

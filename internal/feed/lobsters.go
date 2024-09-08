@@ -55,20 +55,30 @@ func getLobstersPostsFromFeed(feedUrl string) (ForumPosts, error) {
 	return posts, nil
 }
 
-func FetchLobstersPosts(sortBy string, tags []string) (ForumPosts, error) {
+func FetchLobstersPosts(customURL string, instanceURL string, sortBy string, tags []string) (ForumPosts, error) {
 	var feedUrl string
 
-	if sortBy == "hot" {
-		sortBy = "hottest"
-	} else if sortBy == "new" {
-		sortBy = "newest"
-	}
-
-	if len(tags) == 0 {
-		feedUrl = "https://lobste.rs/" + sortBy + ".json"
+	if customURL != "" {
+		feedUrl = customURL
 	} else {
-		tags := strings.Join(tags, ",")
-		feedUrl = "https://lobste.rs/t/" + tags + ".json"
+		if instanceURL != "" {
+			instanceURL = strings.TrimRight(instanceURL, "/") + "/"
+		} else {
+			instanceURL = "https://lobste.rs/"
+		}
+
+		if sortBy == "hot" {
+			sortBy = "hottest"
+		} else if sortBy == "new" {
+			sortBy = "newest"
+		}
+
+		if len(tags) == 0 {
+			feedUrl = instanceURL + sortBy + ".json"
+		} else {
+			tags := strings.Join(tags, ",")
+			feedUrl = instanceURL + "t/" + tags + ".json"
+		}
 	}
 
 	posts, err := getLobstersPostsFromFeed(feedUrl)

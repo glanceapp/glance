@@ -3,6 +3,7 @@
 {{ define "widget-content-classes" }}widget-content-frameless{{ end }}
 
 {{ define "widget-content" }}
+{{ if gt (len .Items) 0 }}
 <div class="carousel-container">
     <div class="cards-horizontal carousel-items-container"{{ if ne 0.0 .CardHeight }} style="--rss-card-height: {{ .CardHeight }}rem;"{{ end }}>
         {{ range .Items }}
@@ -25,4 +26,7 @@
         {{ end }}
     </div>
 </div>
+{{ else }}
+<div class="widget-content-frame padding-widget">{{ .NoItemsMessage }}</div>
+{{ end }}
 {{ end }}
