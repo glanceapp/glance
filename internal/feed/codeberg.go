@@ -11,7 +11,7 @@ type codebergReleaseResponseJson struct {
 	HtmlUrl     string `json:"html_url"`
 }
 
-func FetchLatestCodebergRelease(request *ReleaseRequest) (*AppRelease, error) {
+func fetchLatestCodebergRelease(request *ReleaseRequest) (*AppRelease, error) {
 	httpRequest, err := http.NewRequest(
 		"GET",
 		fmt.Sprintf(

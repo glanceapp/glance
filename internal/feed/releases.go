@@ -59,7 +59,7 @@ func FetchLatestReleases(requests []*ReleaseRequest) (AppReleases, error) {
 func fetchLatestReleaseTask(request *ReleaseRequest) (*AppRelease, error) {
 	switch request.Source {
 	case ReleaseSourceCodeberg:
-		return FetchLatestCodebergRelease(request)
+		return fetchLatestCodebergRelease(request)
 	case ReleaseSourceGithub:
 		return fetchLatestGithubRelease(request)
 	case ReleaseSourceGitlab:
