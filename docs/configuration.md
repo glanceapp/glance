@@ -307,6 +307,7 @@ pages:
 | title | string | yes | |
 | slug | string | no | |
 | width | string | no | |
+| center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
@@ -328,6 +329,8 @@ The maximum width of the page on desktop. Possible values are `slim` and `wide`.
 >
 > When using `slim`, the maximum number of columns allowed for that page is `2`.
 
+#### `center-vertically`
+When set to `true`, vertically centers the content on the page. Has no effect if the content is taller than the height of the viewport.
 
 #### `hide-desktop-navigation`
 Whether to show the navigation links at the top of the page on desktop.
