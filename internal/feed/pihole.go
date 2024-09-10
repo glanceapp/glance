@@ -2,6 +2,7 @@ package feed
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"sort"
 	"strings"
@@ -63,6 +64,11 @@ func FetchPiholeStats(instanceURL, token string) (*DNSStats, error) {
 
 	// Pihole _should_ return data for the last 24 hours in a 10 minute interval, 6*24 = 144
 	if len(responseJson.QueriesSeries) != 144 || len(responseJson.BlockedSeries) != 144 {
+		slog.Warn(
+			"DNS stats for pihole: did not get expected 144 data points",
+			"len(queries)", len(responseJson.QueriesSeries),
+			"len(blocked)", len(responseJson.BlockedSeries),
+		)
 		return stats, nil
 	}
 
