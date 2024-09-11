@@ -795,6 +795,11 @@ details[open] .summary::after {
     top: 0.1rem;
 }
 
+.list-horizontal-text > .rss-li {
+    display: inline-flex;
+    align-items: center;
+}
+
 .header-container {
     margin-top: calc(var(--widget-gap) / 2);
     --header-height: 45px;
