@@ -15,6 +15,7 @@ type RSS struct {
 	Style            string                `yaml:"style"`
 	ThumbnailHeight  float64               `yaml:"thumbnail-height"`
 	CardHeight       float64               `yaml:"card-height"`
+	TitleLineLimit   int                   `yaml:"title-line-limit"`
 	Items            feed.RSSFeedItems     `yaml:"-"`
 	Limit            int                   `yaml:"limit"`
 	CollapseAfter    int                   `yaml:"collapse-after"`
@@ -39,6 +40,10 @@ func (widget *RSS) Initialize() error {
 
 	if widget.CardHeight < 0 {
 		widget.CardHeight = 0
+	}
+
+	if widget.TitleLineLimit <= 0 || widget.TitleLineLimit > 3 {
+		widget.TitleLineLimit = 3
 	}
 
 	if widget.Style == "detailed-list" {
