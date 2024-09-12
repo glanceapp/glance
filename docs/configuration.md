@@ -465,15 +465,16 @@ Example:
 ```
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| style | string | no | vertical-list |
-| feeds | array | yes |
-| thumbnail-height | float | no | 10 |
-| card-height | float | no | 27 |
-| limit | integer | no | 25 |
-| single-line-titles | boolean | no | false |
-| collapse-after | integer | no | 5 |
+| Name | Type | Required | Default | Note
+| ---- | ---- | -------- | ------- | ------- |
+| style | string | no | vertical-list | |
+| feeds | array | yes | |
+| thumbnail-height | float | no | 10 | |
+| card-height | float | no | 27 | |
+| limit | integer | no | 25 | |
+| single-line-titles | boolean | no | false | |
+| collapse-after | integer | no | 5 | |
+| title-line-limit | integer | no | 3 | Only applicable for `horizontal-cards` style. Max is 3 |
 
 ##### `style`
 Used to change the appearance of the widget. Possible values are:
