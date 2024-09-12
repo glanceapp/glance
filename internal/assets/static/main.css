@@ -1050,6 +1050,7 @@ details[open] .summary::after {
     border-radius: var(--border-radius);
     padding: 0.5rem;
     opacity: 0.7;
+    flex-shrink: 0;
 }
 
 .bookmarks-icon {
