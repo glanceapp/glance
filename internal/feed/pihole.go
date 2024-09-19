@@ -18,6 +18,17 @@ type piholeStatsResponse struct {
 	DomainsBlocked    int            `json:"domains_being_blocked"`
 }
 
+// If user has some level of privacy enabled on Pihole, `json:"top_ads"` is an empty array
+// Use alternate struct without that field to avoid error when unmarshalling
+type piholeStatsResponsePrivate struct {
+	TotalQueries      int            `json:"dns_queries_today"`
+	QueriesSeries     map[int64]int  `json:"domains_over_time"`
+	BlockedQueries    int            `json:"ads_blocked_today"`
+	BlockedSeries     map[int64]int  `json:"ads_over_time"`
+	BlockedPercentage float64        `json:"ads_percentage_today"`
+	DomainsBlocked    int            `json:"domains_being_blocked"`
+}
+
 func FetchPiholeStats(instanceURL, token string) (*DNSStats, error) {
 	if token == "" {
 		return nil, errors.New("missing API token")
@@ -31,13 +42,27 @@ func FetchPiholeStats(instanceURL, token string) (*DNSStats, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	
 	responseJson, err := decodeJsonFromRequest[piholeStatsResponse](defaultClient, request)
-
+	
 	if err != nil {
-		return nil, err
+		// Refer to piholeStatsResponsePrivate above
+		responseJsonPriv, err :=
+			decodeJsonFromRequest[piholeStatsResponsePrivate](defaultClient, request)
+		if err != nil {
+			return nil, err
+		}
+		
+		// Copy the results back to responseJson, leaving the TopBlockedDomains field empty
+		responseJson.TotalQueries = responseJsonPriv.TotalQueries
+		responseJson.QueriesSeries = responseJsonPriv.QueriesSeries
+		responseJson.BlockedQueries = responseJsonPriv.BlockedQueries
+		responseJson.BlockedSeries = responseJsonPriv.BlockedSeries
+		responseJson.BlockedPercentage = responseJsonPriv.BlockedPercentage
+		responseJson.TopBlockedDomains = make(map[string]int)
+		responseJson.DomainsBlocked = responseJsonPriv.DomainsBlocked
 	}
-
+	
 	stats := &DNSStats{
 		TotalQueries:   responseJson.TotalQueries,
 		BlockedQueries: responseJson.BlockedQueries,
