@@ -54,7 +54,7 @@ func getItemsFromBGGFeedTask(response BGGFeedResponseXML) (BggBoardGames) {
 
     for _, item := range response.Items {
         splitUrl :=  strings.Split(item.Thumbnail.Value, "filters:strip_icc()")
-        thumbUrl := ThumbnailUrl { splitUrl[0], splitUrl[1]}
+        thumbUrl := BggThumbnailUrl { splitUrl[0], splitUrl[1]}
         bggBoardGame := BggBoardGame {
             ID:             item.ID,
             ThumbnailUrl:   thumbUrl, 
