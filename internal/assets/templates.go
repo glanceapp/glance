@@ -39,6 +39,7 @@ var (
 	ExtensionTemplate             = compileTemplate("extension.html", "widget-base.html")
 	GroupTemplate                 = compileTemplate("group.html", "widget-base.html")
 	DNSStatsTemplate              = compileTemplate("dns-stats.html", "widget-base.html")
+    BGGHotnessTemplate            = compileTemplate("bgghotness.html", "widget-base.html")
 )
 
 var globalTemplateFunctions = template.FuncMap{

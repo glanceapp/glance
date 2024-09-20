@@ -30,6 +30,7 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
+  - [BGG Hotness](#bgghotness)
 
 ## Intro
 Configuration is done via a single YAML file and a server restart is required in order for any changes to take effect. Trying to start the server with an invalid config file will result in an error.
@@ -1665,3 +1666,26 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+### bgghotness
+Display the current games listed in the Board Game Geek Hotness list
+
+Example:
+
+```yaml
+- type: bgghotness
+  limit: 20
+  collapse-after-rows: 4
+```
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| limit | integer | no | 20 |
+| collapse-after-rows| integer | no | 4 |
+
+##### `limit`
+The number of games to show. The BGG hotness has a maximum of 50 so any number greater than that will be clamped at 50
+
+##### `collapse-after-rows`
+How many rows of games are shown before the "SHOW MORE" button appears. Set to `-1` to never collapse.
