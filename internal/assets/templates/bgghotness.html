@@ -1,0 +1,17 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<div class="cards-grid collapsible-container" data-collapse-after-rows="{{ .CollapseAfterRows }}">
+    {{ range .Games }}
+    <div class="card widget-content-frame thumbnail-parent">
+        <img class="thumbnail" loading="lazy" src="{{ .ThumbnailUrl.PreFilter }}filters:strip_icc(){{ .ThumbnailUrl.PostFilter}}" alt="">
+        <div class="margin-top-10 margin-bottom-widget flex flex-column grow padding-inline-widget">
+            <a class="video-title color-primary-if-not-visited" href="{{ .BGGGameLink }}">{{ .Name }}</a>
+            <ul class="list-horizontal-text flex-nowrap margin-top-7">
+                <li class="min-width-0">Rank: {{ .Rank }}</li>
+            </ul>
+        </div>
+    </div>
+    {{ end }}
+</div>
+{{ end }}

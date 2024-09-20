@@ -63,10 +63,12 @@ func New(widgetType string) (Widget, error) {
 		widget = &Search{}
 	case "extension":
 		widget = &Extension{}
-	case "group":
+    case "group":
 		widget = &Group{}
 	case "dns-stats":
 		widget = &DNSStats{}
+    case "bgghotness":
+        widget = &BGGHotness{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}

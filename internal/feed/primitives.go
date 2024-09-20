@@ -63,6 +63,22 @@ type Video struct {
 
 type Videos []Video
 
+type BggBoardGame struct {
+    ID              string
+    ThumbnailUrl    BggThumbnailUrl
+    Name            string
+    YearPublished   string
+    Rank            string
+    BGGGameLink     string
+}
+
+type BggBoardGames []BggBoardGame
+
+type BggThumbnailUrl struct {
+    PreFilter       string
+    PostFilter      string
+}
+
 var currencyToSymbol = map[string]string{
 	"USD": "$",
 	"EUR": "€",
