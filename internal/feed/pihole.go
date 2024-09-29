@@ -1,6 +1,7 @@
 package feed
 
 import (
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -9,13 +10,33 @@ import (
 )
 
 type piholeStatsResponse struct {
-	TotalQueries      int            `json:"dns_queries_today"`
-	QueriesSeries     map[int64]int  `json:"domains_over_time"`
-	BlockedQueries    int            `json:"ads_blocked_today"`
-	BlockedSeries     map[int64]int  `json:"ads_over_time"`
-	BlockedPercentage float64        `json:"ads_percentage_today"`
-	TopBlockedDomains map[string]int `json:"top_ads"`
-	DomainsBlocked    int            `json:"domains_being_blocked"`
+	TotalQueries      int                     `json:"dns_queries_today"`
+	QueriesSeries     map[int64]int           `json:"domains_over_time"`
+	BlockedQueries    int                     `json:"ads_blocked_today"`
+	BlockedSeries     map[int64]int           `json:"ads_over_time"`
+	BlockedPercentage float64                 `json:"ads_percentage_today"`
+	TopBlockedDomains piholeTopBlockedDomains `json:"top_ads"`
+	DomainsBlocked    int                     `json:"domains_being_blocked"`
+}
+
+// If user has some level of privacy enabled on Pihole, `json:"top_ads"` is an empty array
+// Use custom unmarshal behavior to avoid not getting the rest of the valid data when unmarshalling
+type piholeTopBlockedDomains map[string]int
+
+func (p *piholeTopBlockedDomains) UnmarshalJSON(data []byte) error {
+	// NOTE: do not change to piholeTopBlockedDomains type here or it will cause a stack overflow
+	// because of the UnmarshalJSON method getting called recursively
+	temp := make(map[string]int)
+
+	err := json.Unmarshal(data, &temp)
+
+	if err != nil {
+		*p = make(piholeTopBlockedDomains)
+	} else {
+		*p = temp
+	}
+
+	return nil
 }
 
 func FetchPiholeStats(instanceURL, token string) (*DNSStats, error) {
