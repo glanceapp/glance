@@ -275,6 +275,9 @@ func (a *Application) Serve() error {
 
 	mux.HandleFunc("GET /api/pages/{page}/content/{$}", a.HandlePageContentRequest)
 	mux.HandleFunc("/api/widgets/{widget}/{path...}", a.HandleWidgetRequest)
+	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	mux.Handle(
 		fmt.Sprintf("GET /static/%s/{path...}", a.Config.Server.AssetsHash),
