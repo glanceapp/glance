@@ -852,7 +852,7 @@ Either a value from the table below or a URL to a custom search engine. Use `{QU
 ##### `new-tab`
 When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
 
-##### `new-tab`
+##### `autofocus`
 When set to `true`, automatically focuses the search input on page load.
 
 ##### `bangs`
