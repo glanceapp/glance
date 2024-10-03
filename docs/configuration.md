@@ -1539,7 +1539,7 @@ Preview:
 An array of markets for which to display information about.
 
 ##### `sort-by`
-By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
+By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `change` for descending order based on the stock's percentage change (e.g. 1% would be sorted higher than -1%) or `absolute-change` for descending order based on the stock's absolute price change (e.g. -1% would be sorted higher than +0.5%).
 
 ###### Properties for each stock
 | Name | Type | Required |
