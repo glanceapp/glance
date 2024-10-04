@@ -133,6 +133,12 @@ func (t Markets) SortByAbsChange() {
 	})
 }
 
+func (t Markets) SortByChange() {
+	sort.Slice(t, func(i, j int) bool {
+		return t[i].PercentChange > t[j].PercentChange
+	})
+}
+
 var weatherCodeTable = map[int]string{
 	0:  "Clear Sky",
 	1:  "Mainly Clear",
