@@ -695,6 +695,7 @@ details[open] .summary::after {
 @container widget (max-width: 850px) { .cards-grid { --cards-per-row: 3; } }
 @container widget (max-width: 750px) { .cards-grid { --cards-per-row: 3; } }
 @container widget (max-width: 650px) { .cards-grid { --cards-per-row: 2; } }
+@container widget (max-width: 300px) { .cards-grid { --cards-per-row: 1; } }
 
 .widget-small-content-bounds {
     max-width: 350px;
