@@ -1,7 +1,7 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
-<ul class="list list-gap-10 collapsible-container single-line-titles" data-collapse-after="{{ .CollapseAfter }}">
+<ul class="list list-gap-10 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
     {{ range .Releases }}
     <li>
         <div class="flex items-center gap-10">
