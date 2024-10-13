@@ -23,3 +23,7 @@ export function throttledDebounce(callback, maxDebounceTimes, debounceDelay) {
 export function isElementVisible(element) {
     return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
 }
+
+export function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+}
