@@ -4,15 +4,14 @@ import (
 	"context"
 	"errors"
 	"html/template"
-	"sync"
 	"time"
 
 	"github.com/glanceapp/glance/internal/assets"
 )
 
 type Group struct {
-	widgetBase `yaml:",inline"`
-	Widgets    Widgets `yaml:"widgets"`
+	widgetBase      `yaml:",inline"`
+	containerWidget `yaml:",inline"`
 }
 
 func (widget *Group) Initialize() error {
@@ -35,40 +34,15 @@ func (widget *Group) Initialize() error {
 }
 
 func (widget *Group) Update(ctx context.Context) {
-	var wg sync.WaitGroup
-	now := time.Now()
-
-	for w := range widget.Widgets {
-		widget := widget.Widgets[w]
-
-		if !widget.RequiresUpdate(&now) {
-			continue
-		}
-
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			widget.Update(ctx)
-		}()
-	}
-
-	wg.Wait()
+	widget.containerWidget.Update(ctx)
 }
 
 func (widget *Group) SetProviders(providers *Providers) {
-	for i := range widget.Widgets {
-		widget.Widgets[i].SetProviders(providers)
-	}
+	widget.containerWidget.SetProviders(providers)
 }
 
 func (widget *Group) RequiresUpdate(now *time.Time) bool {
-	for i := range widget.Widgets {
-		if widget.Widgets[i].RequiresUpdate(now) {
-			return true
-		}
-	}
-
-	return false
+	return widget.containerWidget.RequiresUpdate(now)
 }
 
 func (widget *Group) Render() template.HTML {
