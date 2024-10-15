@@ -6,11 +6,11 @@ import (
 	"time"
 )
 
-type containerWidget struct {
+type containerWidgetBase struct {
 	Widgets Widgets `yaml:"widgets"`
 }
 
-func (widget *containerWidget) Update(ctx context.Context) {
+func (widget *containerWidgetBase) Update(ctx context.Context) {
 	var wg sync.WaitGroup
 	now := time.Now()
 
@@ -31,13 +31,13 @@ func (widget *containerWidget) Update(ctx context.Context) {
 	wg.Wait()
 }
 
-func (widget *containerWidget) SetProviders(providers *Providers) {
+func (widget *containerWidgetBase) SetProviders(providers *Providers) {
 	for i := range widget.Widgets {
 		widget.Widgets[i].SetProviders(providers)
 	}
 }
 
-func (widget *containerWidget) RequiresUpdate(now *time.Time) bool {
+func (widget *containerWidgetBase) RequiresUpdate(now *time.Time) bool {
 	for i := range widget.Widgets {
 		if widget.Widgets[i].RequiresUpdate(now) {
 			return true

@@ -1,4 +1,5 @@
 import { setupPopovers } from './popover.js';
+import { setupMasonries } from './masonry.js';
 import { throttledDebounce, isElementVisible } from './utils.js';
 
 async function fetchPageContent(pageData) {
@@ -581,6 +582,7 @@ async function setupPage() {
         setupCollapsibleLists();
         setupCollapsibleGrids();
         setupGroups();
+        setupMasonries();
         setupDynamicRelativeTime();
         setupLazyImages();
     } finally {

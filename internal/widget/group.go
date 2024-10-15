@@ -10,8 +10,8 @@ import (
 )
 
 type Group struct {
-	widgetBase      `yaml:",inline"`
-	containerWidget `yaml:",inline"`
+	widgetBase          `yaml:",inline"`
+	containerWidgetBase `yaml:",inline"`
 }
 
 func (widget *Group) Initialize() error {
@@ -22,7 +22,9 @@ func (widget *Group) Initialize() error {
 		widget.Widgets[i].SetHideHeader(true)
 
 		if widget.Widgets[i].GetType() == "group" {
-			return errors.New("nested groups are not allowed")
+			return errors.New("nested groups are not supported")
+		} else if widget.Widgets[i].GetType() == "split-column" {
+			return errors.New("split columns inside of groups are not supported")
 		}
 
 		if err := widget.Widgets[i].Initialize(); err != nil {
@@ -34,15 +36,15 @@ func (widget *Group) Initialize() error {
 }
 
 func (widget *Group) Update(ctx context.Context) {
-	widget.containerWidget.Update(ctx)
+	widget.containerWidgetBase.Update(ctx)
 }
 
 func (widget *Group) SetProviders(providers *Providers) {
-	widget.containerWidget.SetProviders(providers)
+	widget.containerWidgetBase.SetProviders(providers)
 }
 
 func (widget *Group) RequiresUpdate(now *time.Time) bool {
-	return widget.containerWidget.RequiresUpdate(now)
+	return widget.containerWidgetBase.RequiresUpdate(now)
 }
 
 func (widget *Group) Render() template.HTML {

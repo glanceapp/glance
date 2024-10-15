@@ -15,6 +15,7 @@
   - [Reddit](#reddit)
   - [Search](#search-widget)
   - [Group](#group)
+  - [Split Column](#split-column)
   - [Extension](#extension)
   - [Weather](#weather)
   - [Monitor](#monitor)
@@ -890,7 +891,7 @@ url: https://www.amazon.com/s?k={QUERY}
 ```
 
 ### Group
-Group multiple widgets into one using tabs. Widgets are defined using a `widgets` property exactly as you would on a page column. The only limitation is that you cannot place a group widget within a group widget.
+Group multiple widgets into one using tabs. Widgets are defined using a `widgets` property exactly as you would on a page column. The only limitation is that you cannot place a group widget or a split column widget within a group widget.
 
 Example:
 
@@ -932,6 +933,63 @@ Example:
     - subreddit: pcgaming
       <<: *shared-properties
 ```
+
+### Split Column
+Splits a full sized column in half, allowing you to place widgets side by side. This is converted to a single column on mobile devices or if not enough width is available. Widgets are defined using a `widgets` property exactly as you would on a page column.
+
+Example of a full page with an effective 4 column layout using two split column widgets inside of two full sized columns:
+
+<details>
+<summary>View config</summary>
+
+```yaml
+shared:
+  - &reddit-props
+    type: reddit
+    collapse-after: 4
+    show-thumbnails: true
+
+pages:
+  - name: Split Column Demo
+    width: wide
+    columns:
+      - size: full
+        widgets:
+          - type: split-column
+            widgets:
+              - subreddit: gaming
+                <<: *reddit-props
+              - subreddit: worldnews
+                <<: *reddit-props
+              - subreddit: lifeprotips
+                <<: *reddit-props
+                show-thumbnails: false
+              - subreddit: askreddit
+                <<: *reddit-props
+                show-thumbnails: false
+
+      - size: full
+        widgets:
+          - type: split-column
+            widgets:
+              - subreddit: todayilearned
+                <<: *reddit-props
+                collapse-after: 2
+              - subreddit: aww
+                <<: *reddit-props
+              - subreddit: science
+                <<: *reddit-props
+              - subreddit: showerthoughts
+                <<: *reddit-props
+                show-thumbnails: false
+```
+</details>
+
+<br>
+
+Preview:
+
+![](images/split-column-widget-preview.png)
 
 ### Extension
 Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
