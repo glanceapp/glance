@@ -1,16 +1,17 @@
+
 import { clamp } from "./utils.js";
 
-export function setupMasonries(options = {}, selector = ".masonry") {
-    options = {
-        minColumnWidth: 300,
-        maxColumns: 6,
-         ...options
-    };
-
-    const masonryContainers = document.querySelectorAll(selector);
+export function setupMasonries() {
+    const masonryContainers = document.getElementsByClassName("masonry");
 
     for (let i = 0; i < masonryContainers.length; i++) {
         const container = masonryContainers[i];
+
+        const options = {
+            minColumnWidth: container.dataset.minColumnWidth || 330,
+            maxColumns: container.dataset.maxColumns || 6,
+        };
+
         const items = Array.from(container.children);
         let previousColumnsCount = 0;
 
