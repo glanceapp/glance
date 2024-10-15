@@ -44,7 +44,7 @@
         <div class="mobile-navigation-icons">
             <a class="mobile-navigation-label" href="#top">↑</a>
             {{ range $i, $column := .Page.Columns }}
-            <label class="mobile-navigation-label"><input type="radio" class="mobile-navigation-input" name="column" value="{{ $i }}" autocomplete="off"{{ if eq "full" $column.Size }} checked{{ end }}><div class="mobile-navigation-pill"></div></label>
+            <label class="mobile-navigation-label"><input type="radio" class="mobile-navigation-input" name="column" value="{{ $i }}" autocomplete="off"{{ if eq $i $.Page.PrimaryColumnIndex }} checked{{ end }}><div class="mobile-navigation-pill"></div></label>
             {{ end }}
             <label class="mobile-navigation-label"><input type="checkbox" class="mobile-navigation-page-links-input" autocomplete="on"><div class="hamburger-icon"></div></label>
         </div>
