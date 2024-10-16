@@ -1,6 +1,7 @@
 package feed
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -26,6 +27,30 @@ type marketResponseJson struct {
 
 // TODO: allow changing chart time frame
 const marketChartDays = 21
+
+func FetchUSDExchangeRate(currency string) (float64, error) {
+	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/USD%s=X?range=1d&interval=1d", currency)
+	resp, err := http.Get(url)
+	if err != nil {
+		return 0, fmt.Errorf("failed to fetch exchange rate: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var response marketResponseJson
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return 0, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if len(response.Chart.Result) == 0 {
+		return 0, fmt.Errorf("no result in response")
+	}
+
+	return response.Chart.Result[0].Meta.RegularMarketPrice, nil
+}
 
 func FetchMarketsDataFromYahoo(marketRequests []MarketRequest) (Markets, error) {
 	requests := make([]*http.Request, 0, len(marketRequests))
@@ -78,6 +103,19 @@ func FetchMarketsDataFromYahoo(marketRequests []MarketRequest) (Markets, error) 
 
 		if !exists {
 			currency = response.Chart.Result[0].Meta.Currency
+		}
+
+		if marketRequests[i].Currency != "" {
+			exchangeRate, err := FetchUSDExchangeRate(marketRequests[i].Currency)
+			if err != nil {
+				slog.Error("Failed to fetch USD/EUR exchange rate", "error", err)
+				continue
+			}
+
+			if response.Chart.Result[0].Meta.Currency == "USD" {
+				response.Chart.Result[0].Meta.RegularMarketPrice *= exchangeRate
+				currency = currencyToSymbol[marketRequests[i].Currency]
+			}
 		}
 
 		markets = append(markets, Market{
