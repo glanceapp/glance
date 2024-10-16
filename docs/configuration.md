@@ -1006,11 +1006,15 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | url | string | yes | |
+| fallback-content-type | string | no | |
 | allow-potentially-dangerous-html | boolean | no | false |
 | parameters | key & value | no | |
 
 ##### `url`
 The URL of the extension.
+
+##### `fallback-content-type`
+Optionally specify the fallback content type of the extension if the URL does not return a valid `Widget-Content-Type` header. Currently the only supported value for this property is `html`.
 
 ##### `allow-potentially-dangerous-html`
 Whether to allow the extension to display HTML.
