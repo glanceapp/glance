@@ -28,6 +28,7 @@ type TwitchChannel struct {
 	Login        string
 	Exists       bool
 	Name         string
+	StreamTitle  string
 	AvatarUrl    string
 	IsLive       bool
 	LiveSince    time.Time
@@ -77,6 +78,9 @@ type twitchStreamMetadataOperationResponse struct {
 				Name string `json:"name"`
 			} `json:"game"`
 		} `json:"stream"`
+		LastBroadcast *struct {
+			Title string `json:"title"`
+		}
 	} `json:"user"`
 }
 
@@ -208,6 +212,10 @@ func fetchChannelFromTwitchTask(channel string) (TwitchChannel, error) {
 		result.ViewersCount = channelShell.UserOrError.Stream.ViewersCount
 
 		if streamMetadata.UserOrNull != nil && streamMetadata.UserOrNull.Stream != nil {
+			if streamMetadata.UserOrNull.LastBroadcast != nil {
+				result.StreamTitle = streamMetadata.UserOrNull.LastBroadcast.Title
+			}
+
 			if streamMetadata.UserOrNull.Stream.Game != nil {
 				result.Category = streamMetadata.UserOrNull.Stream.Game.Name
 				result.CategorySlug = streamMetadata.UserOrNull.Stream.Game.Slug
