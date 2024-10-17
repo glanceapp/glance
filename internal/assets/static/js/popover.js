@@ -56,6 +56,8 @@ function clearTogglePopoverTimeout() {
 }
 
 function showPopover() {
+    if (pendingTarget === null) return;
+
     activeTarget = pendingTarget;
     pendingTarget = null;
 

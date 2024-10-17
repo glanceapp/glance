@@ -440,6 +440,17 @@ kbd:active {
     box-shadow: 0 0 0 0 var(--color-widget-background-highlight);
 }
 
+.masonry {
+    display: flex;
+    gap: var(--widget-gap);
+}
+
+.masonry-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
 .popover-container, [data-popover-html] {
     display: none;
 }
@@ -1491,6 +1502,13 @@ details[open] .summary::after {
     padding-inline: 0.3rem;
     transform: translate(-50%);
     border: 2px solid var(--color-widget-background);
+}
+
+.twitch-stream-preview {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--border-radius);
+    object-fit: cover;
 }
 
 .reddit-card-thumbnail {

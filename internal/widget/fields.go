@@ -13,7 +13,7 @@ import (
 )
 
 var HSLColorPattern = regexp.MustCompile(`^(?:hsla?\()?(\d{1,3})(?: |,)+(\d{1,3})%?(?: |,)+(\d{1,3})%?\)?$`)
-var EnvFieldPattern = regexp.MustCompile(`^\${([A-Z_]+)}$`)
+var EnvFieldPattern = regexp.MustCompile(`(^|.)\$\{([A-Z_]+)\}`)
 
 const (
 	HSLHueMax        = 360
@@ -133,21 +133,42 @@ func (f *OptionalEnvString) UnmarshalYAML(node *yaml.Node) error {
 		return err
 	}
 
-	matches := EnvFieldPattern.FindStringSubmatch(value)
+	replaced := EnvFieldPattern.ReplaceAllStringFunc(value, func(whole string) string {
+		if err != nil {
+			return ""
+		}
 
-	if len(matches) != 2 {
-		*f = OptionalEnvString(value)
+		groups := EnvFieldPattern.FindStringSubmatch(whole)
 
-		return nil
+		if len(groups) != 3 {
+			return whole
+		}
+
+		prefix, key := groups[1], groups[2]
+
+		if prefix == `\` {
+			if len(whole) >= 2 {
+				return whole[1:]
+			} else {
+				return ""
+			}
+		}
+
+		value, found := os.LookupEnv(key)
+
+		if !found {
+			err = fmt.Errorf("environment variable %s not found", key)
+			return ""
+		}
+
+		return prefix + value
+	})
+
+	if err != nil {
+		return err
 	}
 
-	value, found := os.LookupEnv(matches[1])
-
-	if !found {
-		return fmt.Errorf("environment variable %s not found", matches[1])
-	}
-
-	*f = OptionalEnvString(value)
+	*f = OptionalEnvString(replaced)
 
 	return nil
 }
@@ -162,7 +183,7 @@ func toSimpleIconIfPrefixed(icon string) (string, bool) {
 	}
 
 	icon = strings.TrimPrefix(icon, "si:")
-	icon = "https://cdnjs.cloudflare.com/ajax/libs/simple-icons/11.14.0/" + icon + ".svg"
+	icon = "https://cdn.jsdelivr.net/npm/simple-icons@latest/" + icon + ".svg"
 
 	return icon, true
 }

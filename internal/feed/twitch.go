@@ -28,6 +28,7 @@ type TwitchChannel struct {
 	Login        string
 	Exists       bool
 	Name         string
+	StreamTitle  string
 	AvatarUrl    string
 	IsLive       bool
 	LiveSince    time.Time
@@ -77,6 +78,9 @@ type twitchStreamMetadataOperationResponse struct {
 				Name string `json:"name"`
 			} `json:"game"`
 		} `json:"stream"`
+		LastBroadcast *struct {
+			Title string `json:"title"`
+		}
 	} `json:"user"`
 }
 
@@ -142,7 +146,10 @@ func FetchTopGamesFromTwitch(exclude []string, limit int) ([]TwitchCategory, err
 	return categories, nil
 }
 
-const twitchChannelStatusOperationRequestBody = `[{"operationName":"ChannelShell","variables":{"login":"%s"},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"580ab410bcd0c1ad194224957ae2241e5d252b2c5173d8e0cce9d32d5bb14efe"}}},{"operationName":"StreamMetadata","variables":{"channelLogin":"%s"},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"676ee2f834ede42eb4514cdb432b3134fefc12590080c9a2c9bb44a2a4a63266"}}}]`
+const twitchChannelStatusOperationRequestBody = `[
+{"operationName":"ChannelShell","variables":{"login":"%s"},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"580ab410bcd0c1ad194224957ae2241e5d252b2c5173d8e0cce9d32d5bb14efe"}}},
+{"operationName":"StreamMetadata","variables":{"channelLogin":"%s"},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"676ee2f834ede42eb4514cdb432b3134fefc12590080c9a2c9bb44a2a4a63266"}}}
+]`
 
 // TODO: rework
 // The operations for multiple channels can all be sent in a single request
@@ -205,6 +212,10 @@ func fetchChannelFromTwitchTask(channel string) (TwitchChannel, error) {
 		result.ViewersCount = channelShell.UserOrError.Stream.ViewersCount
 
 		if streamMetadata.UserOrNull != nil && streamMetadata.UserOrNull.Stream != nil {
+			if streamMetadata.UserOrNull.LastBroadcast != nil {
+				result.StreamTitle = streamMetadata.UserOrNull.LastBroadcast.Title
+			}
+
 			if streamMetadata.UserOrNull.Stream.Game != nil {
 				result.Category = streamMetadata.UserOrNull.Stream.Game.Name
 				result.CategorySlug = streamMetadata.UserOrNull.Stream.Game.Slug

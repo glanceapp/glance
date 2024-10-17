@@ -5,7 +5,13 @@
     {{ range .Channels }}
     <li>
         <div class="{{ if .IsLive }}twitch-channel-live {{ end }}flex gap-10 items-start thumbnail-parent">
-            <div class="twitch-channel-avatar-container">
+            <div class="twitch-channel-avatar-container"{{ if .IsLive }} data-popover-type="html" data-popover-position="above" data-popover-margin="0.15rem"{{ end }}>
+                {{ if .IsLive }}
+                <div data-popover-html>
+                    <img class="twitch-stream-preview" src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{{ .Login }}-440x248.jpg" loading="lazy" alt="">
+                    <p class="margin-top-10 color-highlight text-truncate-3-lines">{{ .StreamTitle }}</p>
+                </div>
+                {{ end }}
                 {{ if .Exists }}
                 <a href="https://twitch.tv/{{ .Login }}" class="twitch-channel-avatar-link" target="_blank" rel="noreferrer">
                     <img class="twitch-channel-avatar thumbnail" src="{{ .AvatarUrl }}" alt="" loading="lazy">
