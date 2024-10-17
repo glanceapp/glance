@@ -25,7 +25,8 @@
         function createWebSocket() {
             let host = window.location.hostname;
             let port = window.location.protocol === "https:" ? (window.location.port || 443) : (window.location.port || 80);
-            let ws = new WebSocket("ws://" + host + ":" + port + "/ws");
+            let protocol = window.location.protocol === "https:" ? "wss" : "ws";
+            let ws = new WebSocket(protocol + "://" + host + ":" + port + "/ws");
             console.log("WebSocket connection established");
             ws.onmessage = function(event) {
                 if (event.data === "reload") {

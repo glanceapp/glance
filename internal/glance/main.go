@@ -3,6 +3,7 @@ package glance
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -21,7 +22,7 @@ func Main() int {
 	}
 
 	if options.Intent == CliIntentServe {
-		err := startWatcherAndApp(options.ConfigPath)
+		err := startWatcherAndApp(options.ConfigPath, false)
 		if err != nil {
 			fmt.Println(err)
 			return 1
@@ -31,7 +32,7 @@ func Main() int {
 	return 0
 }
 
-func startWatcherAndApp(configPath string) error {
+func startWatcherAndApp(configPath string, sendReload bool) error {
 	done = make(chan bool)
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -49,12 +50,12 @@ func startWatcherAndApp(configPath string) error {
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					fmt.Println("config file modified, restarting application...")
 					if currentApp != nil {
-						wsBroadcast <- []byte("reload")
 						if err := currentApp.Stop(); err != nil {
 							fmt.Printf("failed to shutdown application: %v\n", err)
 						}
+						time.Sleep(1 * time.Second) // give it enough time to shutdown
 					}
-					startWatcherAndApp(configPath)
+					startWatcherAndApp(configPath, true)
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
@@ -70,14 +71,13 @@ func startWatcherAndApp(configPath string) error {
 		return fmt.Errorf("failed to watch config file: %v", err)
 	}
 
-	restartApplication(configPath)
+	restartApplication(configPath, sendReload)
 	<-done
 
 	return nil
 }
 
-func restartApplication(configPath string) {
-
+func restartApplication(configPath string, sendReload bool) {
 	configFile, err := os.Open(configPath)
 	if err != nil {
 		fmt.Printf("failed opening config file: %v\n", err)
@@ -99,7 +99,12 @@ func restartApplication(configPath string) {
 
 	currentApp = app
 
+	if sendReload {
+		wsBroadcast <- []byte("reload")
+	}
+
 	if err := app.Serve(); err != nil {
 		fmt.Printf("http server error: %v\n", err)
 	}
+
 }
