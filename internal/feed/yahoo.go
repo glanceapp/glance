@@ -108,12 +108,13 @@ func FetchMarketsDataFromYahoo(marketRequests []MarketRequest) (Markets, error) 
 		if marketRequests[i].Currency != "" {
 			exchangeRate, err := FetchUSDExchangeRate(marketRequests[i].Currency)
 			if err != nil {
-				slog.Error("Failed to fetch USD/EUR exchange rate", "error", err)
+				slog.Error("Failed to fetch USD exchange rate", "error", err)
 				continue
 			}
 
 			if response.Chart.Result[0].Meta.Currency == "USD" {
 				response.Chart.Result[0].Meta.RegularMarketPrice *= exchangeRate
+				previous *= exchangeRate
 				currency = currencyToSymbol[marketRequests[i].Currency]
 			}
 		}
