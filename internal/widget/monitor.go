@@ -3,6 +3,7 @@ package widget
 import (
 	"context"
 	"html/template"
+	"slices"
 	"strconv"
 	"time"
 
@@ -10,8 +11,8 @@ import (
 	"github.com/glanceapp/glance/internal/feed"
 )
 
-func statusCodeToText(status int) string {
-	if status == 200 {
+func statusCodeToText(status int, altStatusCodes []int) string {
+	if status == 200 || slices.Contains(altStatusCodes, status) {
 		return "OK"
 	}
 	if status == 404 {
@@ -33,8 +34,8 @@ func statusCodeToText(status int) string {
 	return strconv.Itoa(status)
 }
 
-func statusCodeToStyle(status int) string {
-	if status == 200 {
+func statusCodeToStyle(status int, altStatusCodes []int) string {
+	if status == 200 || slices.Contains(altStatusCodes, status) {
 		return "ok"
 	}
 
@@ -52,6 +53,7 @@ type Monitor struct {
 		SameTab                 bool             `yaml:"same-tab"`
 		StatusText              string           `yaml:"-"`
 		StatusStyle             string           `yaml:"-"`
+		AltStatusCodes          []int            `yaml:"alt-status-codes"`
 	} `yaml:"sites"`
 	ShowFailingOnly bool `yaml:"show-failing-only"`
 	HasFailing      bool `yaml:"-"`
@@ -92,8 +94,8 @@ func (widget *Monitor) Update(ctx context.Context) {
 		}
 
 		if !status.TimedOut {
-			site.StatusText = statusCodeToText(status.Code)
-			site.StatusStyle = statusCodeToStyle(status.Code)
+			site.StatusText = statusCodeToText(status.Code, site.AltStatusCodes)
+			site.StatusStyle = statusCodeToStyle(status.Code, site.AltStatusCodes)
 		}
 	}
 }
