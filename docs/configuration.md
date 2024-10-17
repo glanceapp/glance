@@ -853,7 +853,7 @@ Either a value from the table below or a URL to a custom search engine. Use `{QU
 ##### `new-tab`
 When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
 
-##### `new-tab`
+##### `autofocus`
 When set to `true`, automatically focuses the search input on page load.
 
 ##### `bangs`
@@ -1144,6 +1144,7 @@ Properties for each site:
 | icon | string | no | |
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
+| alt-status-codes | array | no | |
 
 `title`
 
@@ -1178,6 +1179,15 @@ Whether to ignore invalid/self-signed certificates.
 `same-tab`
 
 Whether to open the link in the same or a new tab.
+
+`alt-status-codes`
+
+Status codes other than 200 that you want to return "OK".
+
+```yaml
+alt-status-codes:
+  - 403
+```
 
 ### Releases
 Display a list of latest releases for specific repositories on Github, GitLab, Codeberg or Docker Hub.
