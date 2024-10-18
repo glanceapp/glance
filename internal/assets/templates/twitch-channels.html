@@ -13,7 +13,7 @@
                 </div>
                 {{ end }}
                 {{ if .Exists }}
-                <a href="https://twitch.tv/{{ .Login }}" class="twitch-channel-avatar-link" target="_blank" rel="noreferrer">
+                <a href="https://twitch.tv/{{ .Login }}" target="_blank" rel="noreferrer">
                     <img class="twitch-channel-avatar thumbnail" src="{{ .AvatarUrl }}" alt="" loading="lazy">
                 </a>
                 {{ else }}
