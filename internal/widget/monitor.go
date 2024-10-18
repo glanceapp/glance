@@ -89,7 +89,7 @@ func (widget *Monitor) Update(ctx context.Context) {
 		status := &statuses[i]
 		site.Status = status
 
-		if status.Code >= 400 || status.TimedOut || status.Error != nil {
+		if !slices.Contains(site.AltStatusCodes, status.Code) && (status.Code >= 400 || status.TimedOut || status.Error != nil) {
 			widget.HasFailing = true
 		}
 
