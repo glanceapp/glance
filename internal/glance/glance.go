@@ -16,17 +16,29 @@ import (
 
 	"github.com/glanceapp/glance/internal/assets"
 	"github.com/glanceapp/glance/internal/widget"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 )
 
 var buildVersion = "dev"
 
 var sequentialWhitespacePattern = regexp.MustCompile(`\s+`)
 
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+var wsClients = make(map[*websocket.Conn]bool)
+var wsBroadcast = make(chan []byte)
+
 type Application struct {
 	Version    string
 	Config     Config
 	slugToPage map[string]*Page
 	widgetByID map[uint64]widget.Widget
+	server     *http.Server
 }
 
 type Theme struct {
@@ -173,7 +185,7 @@ func NewApplication(config *Config) (*Application, error) {
 }
 
 func (a *Application) HandlePageRequest(w http.ResponseWriter, r *http.Request) {
-	page, exists := a.slugToPage[r.PathValue("page")]
+	page, exists := a.slugToPage[mux.Vars(r)["page"]]
 
 	if !exists {
 		a.HandleNotFound(w, r)
@@ -198,7 +210,7 @@ func (a *Application) HandlePageRequest(w http.ResponseWriter, r *http.Request) 
 }
 
 func (a *Application) HandlePageContentRequest(w http.ResponseWriter, r *http.Request) {
-	page, exists := a.slugToPage[r.PathValue("page")]
+	page, exists := a.slugToPage[mux.Vars(r)["page"]]
 
 	if !exists {
 		a.HandleNotFound(w, r)
@@ -242,7 +254,7 @@ func FileServerWithCache(fs http.FileSystem, cacheDuration time.Duration) http.H
 }
 
 func (a *Application) HandleWidgetRequest(w http.ResponseWriter, r *http.Request) {
-	widgetValue := r.PathValue("widget")
+	widgetValue := mux.Vars(r)["widget"]
 
 	widgetID, err := strconv.ParseUint(widgetValue, 10, 64)
 
@@ -268,19 +280,23 @@ func (a *Application) AssetPath(asset string) string {
 func (a *Application) Serve() error {
 	// TODO: add gzip support, static files must have their gzipped contents cached
 	// TODO: add HTTPS support
-	mux := http.NewServeMux()
+	router := mux.NewRouter()
 
-	mux.HandleFunc("GET /{$}", a.HandlePageRequest)
-	mux.HandleFunc("GET /{page}", a.HandlePageRequest)
+	// In gorilla/mux, routes are matched in the order they are registered,
+	// so more specific routes should be registered before more general ones
+	router.HandleFunc("/ws", a.handleWebSocket)
 
-	mux.HandleFunc("GET /api/pages/{page}/content/{$}", a.HandlePageContentRequest)
-	mux.HandleFunc("/api/widgets/{widget}/{path...}", a.HandleWidgetRequest)
-	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
+	router.HandleFunc("/{page}", a.HandlePageRequest).Methods("GET")
+
+	router.HandleFunc("/api/pages/{page}/content/", a.HandlePageContentRequest).Methods("GET")
+	router.HandleFunc("/api/widgets/{widget}/{path:.*}", a.HandleWidgetRequest)
+	router.HandleFunc("/api/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-	})
+	}).Methods("GET")
+	router.HandleFunc("/", a.HandlePageRequest).Methods("GET")
 
-	mux.Handle(
-		fmt.Sprintf("GET /static/%s/{path...}", a.Config.Server.AssetsHash),
+	router.Handle(
+		fmt.Sprintf("/static/%s/{path:.*}", a.Config.Server.AssetsHash),
 		http.StripPrefix("/static/"+a.Config.Server.AssetsHash, FileServerWithCache(http.FS(assets.PublicFS), 24*time.Hour)),
 	)
 
@@ -293,16 +309,61 @@ func (a *Application) Serve() error {
 
 		slog.Info("Serving assets", "path", absAssetsPath)
 		assetsFS := FileServerWithCache(http.Dir(a.Config.Server.AssetsPath), 2*time.Hour)
-		mux.Handle("/assets/{path...}", http.StripPrefix("/assets/", assetsFS))
+		router.Handle("/assets/{path:.*}", http.StripPrefix("/assets/", assetsFS))
 	}
 
-	server := http.Server{
+	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", a.Config.Server.Host, a.Config.Server.Port),
-		Handler: mux,
+		Handler: router,
 	}
+
+	a.server = server
+
+	go a.handleWebSocketMessages()
 
 	a.Config.Server.StartedAt = time.Now()
 	slog.Info("Starting server", "host", a.Config.Server.Host, "port", a.Config.Server.Port, "base-url", a.Config.Server.BaseURL)
 
 	return server.ListenAndServe()
+}
+
+func (a *Application) handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Printf("failed to upgrade to websocket: %v\n", err)
+		return
+	}
+	defer conn.Close()
+
+	wsClients[conn] = true
+
+	for {
+		_, _, err := conn.ReadMessage()
+		if err != nil {
+			delete(wsClients, conn)
+			break
+		}
+	}
+}
+
+func (a *Application) handleWebSocketMessages() {
+	for {
+		msg := <-wsBroadcast
+		for client := range wsClients {
+			err := client.WriteMessage(websocket.TextMessage, msg)
+			if err != nil {
+				client.Close()
+				delete(wsClients, client)
+			}
+		}
+	}
+}
+
+func (a *Application) Stop() error {
+	if a.server != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		return a.server.Shutdown(ctx)
+	}
+	return nil
 }
