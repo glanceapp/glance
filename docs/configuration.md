@@ -16,6 +16,7 @@
   - [Search](#search-widget)
   - [Group](#group)
   - [Split Column](#split-column)
+  - [Custom API](#custom-api)
   - [Extension](#extension)
   - [Weather](#weather)
   - [Monitor](#monitor)
@@ -990,6 +991,9 @@ pages:
 Preview:
 
 ![](images/split-column-widget-preview.png)
+
+### Custom API
+<!-- TODO -->
 
 ### Extension
 Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
