@@ -527,9 +527,21 @@ An array of RSS/atom feeds. The title can optionally be changed.
 | hide-categories | boolean | no | false | Only applicable for `detailed-list` style |
 | hide-description | boolean | no | false | Only applicable for `detailed-list` style |
 | item-link-prefix | string | no | | |
+| headers | key (string) & value (string) | no | | |
 
 ###### `item-link-prefix`
 If an RSS feed isn't returning item links with a base domain and Glance has failed to automatically detect the correct domain you can manually add a prefix to each link with this property.
+
+###### `headers`
+Optionally specify the headers that will be sent with the request. Example:
+
+```yaml
+- type: rss
+  feeds:
+    - url: https://domain.com/rss
+      headers:
+        User-Agent: Custom User Agent
+```
 
 ##### `limit`
 The maximum number of articles to show.
