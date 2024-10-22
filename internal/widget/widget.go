@@ -67,6 +67,8 @@ func New(widgetType string) (Widget, error) {
 		widget = &Group{}
 	case "dns-stats":
 		widget = &DNSStats{}
+	case "heading":
+		widget = &Heading{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}

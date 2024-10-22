@@ -1,27 +1,5 @@
 import { setupPopovers } from './popover.js';
-
-function throttledDebounce(callback, maxDebounceTimes, debounceDelay) {
-    let debounceTimeout;
-    let timesDebounced = 0;
-
-    return function () {
-        if (timesDebounced == maxDebounceTimes) {
-            clearTimeout(debounceTimeout);
-            timesDebounced = 0;
-            callback();
-            return;
-        }
-
-        clearTimeout(debounceTimeout);
-        timesDebounced++;
-
-        debounceTimeout = setTimeout(() => {
-            timesDebounced = 0;
-            callback();
-        }, debounceDelay);
-    };
-};
-
+import { throttledDebounce, isElementVisible } from './utils.js';
 
 async function fetchPageContent(pageData) {
     // TODO: handle non 200 status codes/time outs
@@ -427,7 +405,7 @@ function setupCollapsibleGrids() {
 
         const button = attachExpandToggleButton(gridElement);
 
-        let cardsPerRow = 2;
+        let cardsPerRow;
 
         const resolveCollapsibleItems = () => {
             const hideItemsAfterIndex = cardsPerRow * collapseAfterRows;
@@ -457,12 +435,11 @@ function setupCollapsibleGrids() {
             }
         };
 
-        afterContentReady(() => {
-            cardsPerRow = getCardsPerRow();
-            resolveCollapsibleItems();
-        });
+        const observer = new ResizeObserver(() => {
+            if (!isElementVisible(gridElement)) {
+                return;
+            }
 
-        window.addEventListener("resize", () => {
             const newCardsPerRow = getCardsPerRow();
 
             if (cardsPerRow == newCardsPerRow) {
@@ -472,6 +449,8 @@ function setupCollapsibleGrids() {
             cardsPerRow = newCardsPerRow;
             resolveCollapsibleItems();
         });
+
+        afterContentReady(() => observer.observe(gridElement));
     }
 }
 

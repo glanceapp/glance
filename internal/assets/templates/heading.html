@@ -1,0 +1,21 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content-classes" }}
+    {{- if .Frameless -}}
+        widget-content-frameless
+    {{- end -}}
+{{ end }}
+
+{{ define "widget-content" }}
+    <div class="flex items-center gap-10">
+        {{ if ne "" .Icon }}
+        <div class="heading-icon-container">
+            <img class="heading-icon{{ if .IsSimpleIcon }} simple-icon{{ end }}" src="{{ .Icon }}" alt="" loading="lazy">
+        </div>
+        {{ end }}
+        <h{{ .Size }} class="size-h{{ .Size }} heading-text">{{ .Text }}</h{{ .Size }}>
+    </div>
+    {{ if .Separator }}
+        <div class="heading-dotted-line"></div>
+    {{ end }}
+{{ end }}

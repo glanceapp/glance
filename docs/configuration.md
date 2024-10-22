@@ -30,7 +30,8 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
-
+  - [Heading](#heading)
+  
 ## Intro
 Configuration is done via a single YAML file and a server restart is required in order for any changes to take effect. Trying to start the server with an invalid config file will result in an error.
 
@@ -137,6 +138,10 @@ A number between 1 and 65,535, so long as that port isn't already used by anythi
 
 #### `base-url`
 The base URL that Glance is hosted under. No need to specify this unless you're using a reverse proxy and are hosting Glance under a directory. If that's the case then you can set this value to `/glance` or whatever the directory is called. Note that the forward slash (`/`) in the beginning is required unless you specify the full domain and path.
+
+> [!IMPORTANT]
+> You need to strip the `base-url` prefix before forwarding the request to the Glance server.
+> In Caddy you can do this using [`handle_path`](https://caddyserver.com/docs/caddyfile/directives/handle_path) or [`uri strip_prefix`](https://caddyserver.com/docs/caddyfile/directives/uri).
 
 #### `assets-path`
 The path to a directory that will be served by the server under the `/assets/` path. This is handy for widgets like the Monitor where you have to specify an icon URL and you want to self host all the icons rather than pointing to an external source.
@@ -307,6 +312,7 @@ pages:
 | title | string | yes | |
 | slug | string | no | |
 | width | string | no | |
+| center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
@@ -328,6 +334,8 @@ The maximum width of the page on desktop. Possible values are `slim` and `wide`.
 >
 > When using `slim`, the maximum number of columns allowed for that page is `2`.
 
+#### `center-vertically`
+When set to `true`, vertically centers the content on the page. Has no effect if the content is taller than the height of the viewport.
 
 #### `hide-desktop-navigation`
 Whether to show the navigation links at the top of the page on desktop.
@@ -845,7 +853,7 @@ Either a value from the table below or a URL to a custom search engine. Use `{QU
 ##### `new-tab`
 When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
 
-##### `new-tab`
+##### `autofocus`
 When set to `true`, automatically focuses the search input on page load.
 
 ##### `bangs`
@@ -1111,7 +1119,7 @@ Whether to ignore invalid/self-signed certificates.
 Whether to open the link in the same or a new tab.
 
 ### Releases
-Display a list of latest releases for specific repositories on Github, GitLab or Docker Hub.
+Display a list of latest releases for specific repositories on Github, GitLab, Codeberg or Docker Hub.
 
 Example:
 
@@ -1122,6 +1130,7 @@ Example:
     - go-gitea/gitea
     - jellyfin/jellyfin
     - glanceapp/glance
+    - codeberg:redict/redict
     - gitlab:fdroid/fdroidclient
     - dockerhub:gotify/server
 ```
@@ -1142,12 +1151,13 @@ Preview:
 | collapse-after | integer | no | 5 |
 
 ##### `repositories`
-A list of repositores to fetch the latest release for. Only the name/repo is required, not the full URL. A prefix can be specified for repositories hosted elsewhere such as GitLab and Docker Hub. Example:
+A list of repositores to fetch the latest release for. Only the name/repo is required, not the full URL. A prefix can be specified for repositories hosted elsewhere such as GitLab, Codeberg and Docker Hub. Example:
 
 ```yaml
 repositories:
   - gitlab:inkscape/inkscape
   - dockerhub:glanceapp/glance
+  - codeberg:redict/redict
 ```
 
 Official images on Docker Hub can be specified by ommiting the owner:
@@ -1169,7 +1179,7 @@ repositories:
 
 
 ##### `show-source-icon`
-Shows an icon of the source (GitHub/GitLab/Docker Hub) next to the repository name when set to `true`.
+Shows an icon of the source (GitHub/GitLab/Codeberg/Docker Hub) next to the repository name when set to `true`.
 
 ##### `token`
 Without authentication Github allows for up to 60 requests per hour. You can easily exceed this limit and start seeing errors if you're tracking lots of repositories or your cache time is low. To circumvent this you can [create a read only token from your Github account](https://github.com/settings/personal-access-tokens/new) and provide it here.
@@ -1665,3 +1675,53 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+
+### Heading
+Display a heading with an optional separator, icon and frame.
+
+Example:
+
+```yaml
+- type: heading
+  size: 1
+  text: Subreddit
+  icon: si:reddit
+  separator: true
+  frameless: false
+```
+Preview:
+
+![](images/heading-widget-preview.png)
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| size | integer | yes | |
+| text | string | yes | |
+| icon | string | no | |
+| separator | boolean | no | false |
+| frameless | boolean | no | false |
+
+##### `icon`
+
+URL pointing to an image. You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix:
+
+```yaml
+icon: si:gmail
+icon: si:youtube
+icon: si:reddit
+```
+
+> [!WARNING]
+>
+> Simple Icons are loaded externally and are hosted on `cdnjs.cloudflare.com`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+
+##### `size`
+The size of the heading. Possible values are `1`, `2`, `3`, `4` and `5`.
+
+##### `separator`
+Whether to show a separator.
+
+##### `frameless`
+Whether to show a frame.

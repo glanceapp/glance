@@ -40,7 +40,6 @@ func (widget *Releases) Initialize() error {
 	for _, repository := range widget.Repositories {
 		parts := strings.SplitN(repository, ":", 2)
 		var request *feed.ReleaseRequest
-
 		if len(parts) == 1 {
 			request = &feed.ReleaseRequest{
 				Source:     feed.ReleaseSourceGithub,
@@ -63,6 +62,11 @@ func (widget *Releases) Initialize() error {
 			} else if parts[0] == string(feed.ReleaseSourceDockerHub) {
 				request = &feed.ReleaseRequest{
 					Source:     feed.ReleaseSourceDockerHub,
+					Repository: parts[1],
+				}
+			} else if parts[0] == string(feed.ReleaseSourceCodeberg) {
+				request = &feed.ReleaseRequest{
+					Source:     feed.ReleaseSourceCodeberg,
 					Repository: parts[1],
 				}
 			} else {

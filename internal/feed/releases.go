@@ -9,6 +9,7 @@ import (
 type ReleaseSource string
 
 const (
+	ReleaseSourceCodeberg  ReleaseSource = "codeberg"
 	ReleaseSourceGithub    ReleaseSource = "github"
 	ReleaseSourceGitlab    ReleaseSource = "gitlab"
 	ReleaseSourceDockerHub ReleaseSource = "dockerhub"
@@ -57,6 +58,8 @@ func FetchLatestReleases(requests []*ReleaseRequest) (AppReleases, error) {
 
 func fetchLatestReleaseTask(request *ReleaseRequest) (*AppRelease, error) {
 	switch request.Source {
+	case ReleaseSourceCodeberg:
+		return fetchLatestCodebergRelease(request)
 	case ReleaseSourceGithub:
 		return fetchLatestGithubRelease(request)
 	case ReleaseSourceGitlab:
