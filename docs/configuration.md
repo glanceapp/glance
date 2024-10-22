@@ -30,7 +30,7 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
-
+  - [Heading](#heading)
 ## Intro
 Configuration is done via a single YAML file and a server restart is required in order for any changes to take effect. Trying to start the server with an invalid config file will result in an error.
 
@@ -1674,3 +1674,53 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+
+### Heading
+Display a heading with an optional separator, icon and frame.
+
+Example:
+
+```yaml
+- type: heading
+  size: 1
+  text: Subreddit
+  icon: si:reddit
+  separator: true
+  frameless: false
+```
+Preview:
+
+![](images/heading-widget-preview.png)
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| size | integer | yes | |
+| text | string | yes | |
+| icon | string | no | |
+| separator | boolean | no | false |
+| frameless | boolean | no | false |
+
+##### `icon`
+
+URL pointing to an image. You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix:
+
+```yaml
+icon: si:gmail
+icon: si:youtube
+icon: si:reddit
+```
+
+> [!WARNING]
+>
+> Simple Icons are loaded externally and are hosted on `cdnjs.cloudflare.com`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+
+##### `size`
+The size of the heading. Possible values are `1`, `2`, `3`, `4` and `5`.
+
+##### `separator`
+Whether to show a separator.
+
+##### `frameless`
+Whether to show a frame.

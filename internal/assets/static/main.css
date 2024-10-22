@@ -1516,19 +1516,39 @@ details[open] .summary::after {
     background: linear-gradient(0deg, var(--color-widget-background) 10%, transparent);
 }
 
+.heading-text {
+    line-height: 1;
+    text-transform: uppercase;
+}
+
 .heading-dotted-line {
     width: calc(100% - 2 * (var(--widget-content-horizontal-padding) + 1px));
     height: 1px;
-    margin-left: calc(var(--widget-content-horizontal-padding) + 1px);
+    margin-top: 0.6rem;
     background-image: linear-gradient(to right, 
-        var(--color-primary) 4px, 
-        transparent 4px, 
+        var(--color-primary) 2px, 
+        transparent 2px, 
         transparent 8px
     );
-    background-size: 8px 1px;
+    background-size: 6px 1px;
     background-repeat: repeat-x;
     mask-image: linear-gradient(to right, black 20%, transparent);
     -webkit-mask-image: linear-gradient(to right, black 20%, transparent);
+}
+
+.heading-icon-container {
+    margin-block: 0.1rem;
+    background-color: var(--color-widget-background-highlight);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    opacity: 0.7;
+    flex-shrink: 0;
+}
+
+.heading-icon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.8;
 }
 
 @media (max-width: 1190px) {

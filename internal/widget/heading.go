@@ -18,11 +18,13 @@ const (
 )
 
 type Heading struct {
-	widgetBase `yaml:",inline"`
-	Size       HeadingSize `yaml:"size"`
-	Text       string      `yaml:"text"`
-	Separator  bool        `yaml:"separator"`
-	Frameless  bool        `yaml:"frameless"`
+	widgetBase   `yaml:",inline"`
+	Size         HeadingSize `yaml:"size"`
+	Text         string      `yaml:"text"`
+	Icon         string      `yaml:"icon"`
+	IsSimpleIcon bool        `yaml:"-"`
+	Separator    bool        `yaml:"separator"`
+	Frameless    bool        `yaml:"frameless"`
 }
 
 func (widget *Heading) Initialize() error {
@@ -30,6 +32,10 @@ func (widget *Heading) Initialize() error {
 
 	if widget.Size < Size1 || widget.Size > Size5 {
 		return fmt.Errorf("invalid heading size: %d", widget.Size)
+	}
+
+	if widget.Icon != "" {
+		widget.Icon, widget.IsSimpleIcon = toSimpleIconIfPrefixed(widget.Icon)
 	}
 
 	widget.HideHeader = true
