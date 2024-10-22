@@ -1516,6 +1516,21 @@ details[open] .summary::after {
     background: linear-gradient(0deg, var(--color-widget-background) 10%, transparent);
 }
 
+.heading-dotted-line {
+    width: calc(100% - 2 * (var(--widget-content-horizontal-padding) + 1px));
+    height: 1px;
+    margin-left: calc(var(--widget-content-horizontal-padding) + 1px);
+    background-image: linear-gradient(to right, 
+        var(--color-primary) 4px, 
+        transparent 4px, 
+        transparent 8px
+    );
+    background-size: 8px 1px;
+    background-repeat: repeat-x;
+    mask-image: linear-gradient(to right, black 20%, transparent);
+    -webkit-mask-image: linear-gradient(to right, black 20%, transparent);
+}
+
 @media (max-width: 1190px) {
     .header-container {
         display: none;

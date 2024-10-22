@@ -1,0 +1,14 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content-classes" }}
+    {{- if .Frameless -}}
+        widget-content-frameless
+    {{- end -}}
+{{ end }}
+
+{{ define "widget-content" }}
+	<h{{ .Size }} class="size-h{{ .Size }} uppercase widget-header">{{ .Text }}</h{{ .Size }}>
+	{{ if .Separator }}
+		<div class="heading-dotted-line"></div>
+	{{ end }}
+{{ end }}
