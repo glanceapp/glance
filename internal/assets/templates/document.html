@@ -9,9 +9,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Glance">
+    <meta name="apple-mobile-web-app-title" content="{{ if ne "" .App.Config.Branding.PwaText }}{{ .App.Config.Branding.PwaText }}{{ else }}Glance{{ end }}">
     <meta name="theme-color" content="{{ if ne nil .App.Config.Theme.BackgroundColor }}{{ .App.Config.Theme.BackgroundColor }}{{ else }}hsl(240, 8%, 9%){{ end }}">
-    <link rel="apple-touch-icon" sizes="512x512" href="{{ .App.AssetPath "app-icon.png" }}">
+    <link rel="apple-touch-icon" sizes="512x512" href="{{ if ne "" .App.Config.Branding.FaviconURL }}{{ .App.Config.Branding.FaviconURL }}{{ else }}{{ .App.AssetPath "app-icon.png" }}{{ end }}">
     <link rel="manifest" href="{{ .App.AssetPath "manifest.json" }}">
     <link rel="icon" type="image/png" href="{{ .App.Config.Branding.FaviconURL }}" />
     <link rel="stylesheet" href="{{ .App.AssetPath "main.css" }}">
