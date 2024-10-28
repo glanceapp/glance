@@ -502,9 +502,24 @@ function timeInZone(now, zone) {
         timeInZone = now
     }
 
-    const diffInHours = Math.round((timeInZone.getTime() - now.getTime()) / 1000 / 60 / 60);
+    const diffInMinutes = Math.round((timeInZone.getTime() - now.getTime()) / 1000 / 60);
 
-    return { time: timeInZone, diffInHours: diffInHours };
+    return { time: timeInZone, diffInMinutes: diffInMinutes };
+}
+
+function zoneDiffText(diffInMinutes) {
+    if (diffInMinutes == 0) {
+        return "";
+    }
+
+    const sign = diffInMinutes < 0 ? "-" : "+";
+
+    diffInMinutes = Math.abs(diffInMinutes);
+    
+    const hours = `${Math.floor(diffInMinutes / 60)}`.padStart(2, '0');
+    const minutes = `${diffInMinutes % 60}`.padStart(2, '0');
+
+    return `${sign}${hours}:${minutes}`;
 }
 
 function setupClocks() {
@@ -547,9 +562,9 @@ function setupClocks() {
             );
 
             updateCallbacks.push((now) => {
-                const { time, diffInHours } = timeInZone(now, timeZoneContainer.dataset.timeInZone);
+                const { time, diffInMinutes } = timeInZone(now, timeZoneContainer.dataset.timeInZone);
                 setZoneTime(time);
-                diffElement.textContent = (diffInHours <= 0 ? diffInHours : '+' + diffInHours) + 'h';
+                diffElement.textContent = zoneDiffText(diffInMinutes);
             });
         }
     }
