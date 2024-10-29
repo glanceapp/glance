@@ -72,7 +72,7 @@ type Page struct {
 	Slug                        string   `yaml:"slug"`
 	Width                       string   `yaml:"width"`
 	ShowMobileHeader            bool     `yaml:"show-mobile-header"`
-	ExpandMobilePageNavigation  bool	 `yaml:"expand-mobile-page-navigation"`
+	ExpandMobilePageNavigation  bool     `yaml:"expand-mobile-page-navigation"`
 	HideDesktopNavigation       bool     `yaml:"hide-desktop-navigation"`
 	CenterVertically            bool     `yaml:"center-vertically"`
 	Columns                     []Column `yaml:"columns"`
