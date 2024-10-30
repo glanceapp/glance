@@ -513,13 +513,23 @@ function zoneDiffText(diffInMinutes) {
     }
 
     const sign = diffInMinutes < 0 ? "-" : "+";
+    const signText = diffInMinutes < 0 ? "behind" : "ahead";
 
     diffInMinutes = Math.abs(diffInMinutes);
-    
-    const hours = `${Math.floor(diffInMinutes / 60)}`.padStart(2, '0');
-    const minutes = `${diffInMinutes % 60}`.padStart(2, '0');
 
-    return `${sign}${hours}:${minutes}`;
+    const hours = Math.floor(diffInMinutes / 60);
+    const minutes = diffInMinutes % 60;
+    const hourSuffix = hours == 1 ? "" : "s";
+
+    if (minutes == 0) {
+        return { text: `${sign}${hours}h`, title: `${hours} hour${hourSuffix} ${signText}` };
+    }
+
+    if (hours == 0) {
+        return { text: `${sign}${minutes}m`, title: `${minutes} minutes ${signText}` };
+    }
+
+    return { text: `${sign}${hours}h~`, title: `${hours} hour${hourSuffix} and ${minutes} minutes ${signText}` };
 }
 
 function setupClocks() {
@@ -564,7 +574,9 @@ function setupClocks() {
             updateCallbacks.push((now) => {
                 const { time, diffInMinutes } = timeInZone(now, timeZoneContainer.dataset.timeInZone);
                 setZoneTime(time);
-                diffElement.textContent = zoneDiffText(diffInMinutes);
+                const { text, title } = zoneDiffText(diffInMinutes);
+                diffElement.textContent = text;
+                diffElement.title = title;
             });
         }
     }
