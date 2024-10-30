@@ -6,7 +6,7 @@
     <div class="flex items-center gap-15">
         <div class="min-width-0">
             <a{{ if ne "" .SymbolLink }} href="{{ .SymbolLink }}" target="_blank" rel="noreferrer"{{ end }} class="color-highlight size-h3 block text-truncate">{{ .Symbol }}</a>
-            <div class="text-truncate">{{ .Name }}</div>
+            <div title="{{ .Name }}" class="text-truncate">{{ .Name }}</div>
         </div>
 
         <a class="market-chart" {{ if ne "" .ChartLink }} href="{{ .ChartLink }}" target="_blank" rel="noreferrer"{{ end }}>
