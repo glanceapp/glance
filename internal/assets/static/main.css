@@ -1339,6 +1339,10 @@ details[open] .summary::after {
     transform: translate(-50%, -50%);
 }
 
+.clock-time {
+    min-width: 8ch;
+}
+
 .clock-time span {
     color: var(--color-text-highlight);
 }
