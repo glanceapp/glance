@@ -11,6 +11,7 @@ import (
 type SplitColumn struct {
 	widgetBase          `yaml:",inline"`
 	containerWidgetBase `yaml:",inline"`
+	MaxColumns          int `yaml:"max-columns"`
 }
 
 func (widget *SplitColumn) Initialize() error {
@@ -20,6 +21,10 @@ func (widget *SplitColumn) Initialize() error {
 		if err := widget.Widgets[i].Initialize(); err != nil {
 			return err
 		}
+	}
+
+	if widget.MaxColumns < 2 {
+		widget.MaxColumns = 2
 	}
 
 	return nil

@@ -948,6 +948,7 @@ Example:
 ```
 
 ### Split Column
+<!-- TODO: update -->
 Splits a full sized column in half, allowing you to place widgets side by side. This is converted to a single column on mobile devices or if not enough width is available. Widgets are defined using a `widgets` property exactly as you would on a page column.
 
 Example of a full page with an effective 4 column layout using two split column widgets inside of two full sized columns:
