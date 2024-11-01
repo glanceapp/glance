@@ -111,9 +111,10 @@ function repositionContainer() {
 
     const containerBounds = containerElement.getBoundingClientRect();
     const containerInlinePadding = parseInt(containerComputedStyle.getPropertyValue("padding-inline"));
-    const targetBoundsWidthOffset = targetBounds.width * (activeTarget.dataset.popoverOffset || 0.5);
+    const targetBoundsWidthOffset = targetBounds.width * (activeTarget.dataset.popoverTargetOffset || 0.5);
     const position = activeTarget.dataset.popoverPosition || "below";
-    const left = Math.round(targetBounds.left + targetBoundsWidthOffset - (containerBounds.width / 2));
+    const popoverOffest = activeTarget.dataset.popoverOffset || 0.5;
+    const left = Math.round(targetBounds.left + targetBoundsWidthOffset - (containerBounds.width * popoverOffest));
 
     if (left < 0) {
         containerElement.style.left = 0;
@@ -126,7 +127,7 @@ function repositionContainer() {
     } else {
         containerElement.style.removeProperty("right");
         containerElement.style.left = left + "px";
-        containerElement.style.removeProperty("--triangle-offset");
+        containerElement.style.setProperty("--triangle-offset", ((targetBounds.left + targetBoundsWidthOffset) - left - containerInlinePadding) + "px");
     }
 
     const distanceFromTarget = activeTarget.dataset.popoverMargin || defaultDistanceFromTarget;
