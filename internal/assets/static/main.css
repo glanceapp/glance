@@ -1509,7 +1509,8 @@ details[open] .summary::after {
 }
 
 .twitch-stream-preview {
-    width: 100%;
+    max-width: 100%;
+    width: 400px;
     aspect-ratio: 16 / 9;
     border-radius: var(--border-radius);
     object-fit: cover;
