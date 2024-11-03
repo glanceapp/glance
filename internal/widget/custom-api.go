@@ -14,7 +14,7 @@ import (
 
 type CustomApi struct {
 	widgetBase       `yaml:",inline"`
-	URL              string                       `yaml:"url"`
+	URL              OptionalEnvString            `yaml:"url"`
 	Template         string                       `yaml:"template"`
 	Frameless        bool                         `yaml:"frameless"`
 	Headers          map[string]OptionalEnvString `yaml:"headers"`
@@ -42,7 +42,7 @@ func (widget *CustomApi) Initialize() error {
 
 	widget.compiledTemplate = compiledTemplate
 
-	req, err := http.NewRequest(http.MethodGet, widget.URL, nil)
+	req, err := http.NewRequest(http.MethodGet, widget.URL.String(), nil)
 	if err != nil {
 		return err
 	}
