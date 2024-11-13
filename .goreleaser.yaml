@@ -1,0 +1,69 @@
+project_name: glanceapp/glance
+
+checksum:
+  disable: true
+
+builds:
+  - binary: glance
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - openbsd
+      - freebsd
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+      - arm
+      - 386
+    goarm:
+      - 7
+    ldflags:
+      - -s -w -X github.com/glanceapp/glance/internal/glance.buildVersion={{ .Tag }}
+
+archives:
+  -
+    name_template: "glance-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
+    files:
+      - nothing*
+    format_overrides:
+      - goos: windows
+        format: zip
+
+dockers:
+  - image_templates:
+      - &amd64_image "{{ .ProjectName }}:{{ .Tag }}-amd64"
+    build_flag_templates:
+      - --platform=linux/amd64
+    goarch: amd64
+    use: buildx
+    dockerfile: Dockerfile.goreleaser
+
+  - image_templates:
+      - &arm64v8_image "{{ .ProjectName }}:{{ .Tag }}-arm64"
+    build_flag_templates:
+      - --platform=linux/arm64
+    goarch: arm64
+    use: buildx
+    dockerfile: Dockerfile.goreleaser
+
+  - image_templates:
+      - &armv7_image "{{ .ProjectName }}:{{ .Tag }}-armv7"
+    build_flag_templates:
+      - --platform=linux/arm/v7
+    goarch: arm
+    goarm: 7
+    use: buildx
+    dockerfile: Dockerfile.goreleaser
+
+docker_manifests:
+  - name_template: "{{ .ProjectName }}:{{ .Tag }}"
+    image_templates: &multiarch_images
+      - *amd64_image
+      - *arm64v8_image
+      - *armv7_image
+  - name_template: "{{ .ProjectName }}:latest"
+    skip_push: auto
+    image_templates: *multiarch_images

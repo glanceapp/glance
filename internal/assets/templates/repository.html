@@ -7,6 +7,23 @@
     <li>{{ .RepositoryDetails.Forks | formatNumber }} forks</li>
 </ul>
 
+{{ if gt (len .RepositoryDetails.Commits) 0 }}
+<hr class="margin-block-10">
+<a class="text-compact" href="https://github.com/{{ $.RepositoryDetails.Name }}/commits" target="_blank" rel="noreferrer">Last {{ .CommitsLimit }} commits</a>
+<div class="flex gap-7 size-h5 margin-top-3">
+    <ul class="list list-gap-2">
+        {{ range .RepositoryDetails.Commits }}
+        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
+        {{ end }}
+    </ul>
+    <ul class="list list-gap-2 min-width-0">
+        {{ range .RepositoryDetails.Commits }}
+        <li><a class="color-primary-if-not-visited text-truncate block" title="{{ .Author }}" target="_blank" rel="noreferrer" href="https://github.com/{{ $.RepositoryDetails.Name }}/commit/{{ .Sha }}">{{ .Message }}</a></li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+
 {{ if gt (len .RepositoryDetails.PullRequests) 0 }}
 <hr class="margin-block-10">
 <a class="text-compact" href="https://github.com/{{ $.RepositoryDetails.Name }}/pulls" target="_blank" rel="noreferrer">Open pull requests ({{ .RepositoryDetails.OpenPullRequests | formatNumber }} total)</a>

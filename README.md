@@ -1,6 +1,6 @@
 <p align="center"><em>What if you could see everything at a...</em></p>
 <h1 align="center">Glance</h1>
-<p align="center"><a href="#installation">Install</a> • <a href="docs/configuration.md">Configuration</a> • <a href="docs/themes.md">Themes</a></p>
+<p align="center"><a href="#installation">Install</a> • <a href="docs/configuration.md">Configuration</a> • <a href="docs/preconfigured-pages.md">Preconfigured pages</a> • <a href="docs/themes.md">Themes</a> • <a href="https://discord.com/invite/7KQ7Xa9kJd">Discord</a></p>
 
 ![example homepage](docs/images/readme-main-image.png)
 
@@ -101,7 +101,7 @@ Build the image:
 **Make sure to replace "owner" with your name or organization.**
 
 ```bash
-docker build -t owner/glance:latest -f Dockerfile.single-platform .
+docker build -t owner/glance:latest .
 ```
 
 Push the image to your registry:

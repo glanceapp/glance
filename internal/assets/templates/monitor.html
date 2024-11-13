@@ -1,22 +1,22 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
-{{ if ne .Style "dynamic-columns-experimental" }}
-<ul class="list list-gap-20 list-with-separator">
+{{ if not (and .ShowFailingOnly (not .HasFailing)) }}
+<ul class="dynamic-columns list-gap-20 list-with-separator">
     {{ range .Sites }}
-    <li class="monitor-site flex items-center gap-15">
-        {{ template "site" . }}
-    </li>
-    {{ end }}
-</ul>
-{{ else }}
-<ul class="dynamic-columns">
-    {{ range .Sites }}
-    <div class="flex items-center gap-15">
+    {{ if and $.ShowFailingOnly (eq .StatusStyle "ok" ) }} {{ continue }} {{ end }}
+    <div class="monitor-site flex items-center gap-15">
         {{ template "site" . }}
     </div>
     {{ end }}
 </ul>
+{{ else }}
+<div class="flex items-center justify-center gap-10 padding-block-5">
+    <p>All sites are online</p>
+    <svg class="shrink-0" style="width: 1.7rem;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--color-positive)">
+        <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" />
+    </svg>
+</div>
 {{ end }}
 {{ end }}
 
@@ -24,8 +24,8 @@
 {{ if .IconUrl }}
 <img class="monitor-site-icon{{ if .IsSimpleIcon }} simple-icon{{ end }}" src="{{ .IconUrl }}" alt="" loading="lazy">
 {{ end }}
-<div>
-    <a class="size-h3 color-highlight" href="{{ .URL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
+<div class="min-width-0">
+    <a class="size-h3 color-highlight text-truncate block" href="{{ .URL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
     <ul class="list-horizontal-text">
         {{ if not .Status.Error }}
         <li title="{{ .Status.Code }}">{{ .StatusText }}</li>

@@ -21,7 +21,6 @@ type Bookmarks struct {
 			HideArrow    bool   `yaml:"hide-arrow"`
 		} `yaml:"links"`
 	} `yaml:"groups"`
-	Style string `yaml:"style"`
 }
 
 func (widget *Bookmarks) Initialize() error {

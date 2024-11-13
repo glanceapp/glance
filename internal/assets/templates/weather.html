@@ -1,29 +1,31 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
-<div class="size-h2 color-highlight text-center">{{ .Weather.WeatherCodeAsString }}</div>
-<div class="size-h4 text-center">Feels like {{ .Weather.ApparentTemperature }}°{{ if eq .Units "metric" }}C{{ else }}F{{ end }}</div>
+<div class="widget-small-content-bounds">
+    <div class="size-h2 color-highlight text-center">{{ .Weather.WeatherCodeAsString }}</div>
+    <div class="size-h4 text-center">Feels like {{ .Weather.ApparentTemperature }}°{{ if eq .Units "metric" }}C{{ else }}F{{ end }}</div>
 
-<div class="weather-columns flex margin-top-15 justify-center">
-    {{ range $i, $column := .Weather.Columns }}
-    <div class="weather-column{{ if eq $i $.Weather.CurrentColumn }} weather-column-current{{ end }}">
-        {{ if $column.HasPrecipitation }}
-        <div class="weather-column-rain"></div>
+    <div class="weather-columns flex margin-top-15 justify-center">
+        {{ range $i, $column := .Weather.Columns }}
+        <div class="weather-column{{ if eq $i $.Weather.CurrentColumn }} weather-column-current{{ end }}">
+            {{ if $column.HasPrecipitation }}
+            <div class="weather-column-rain"></div>
+            {{ end }}
+            {{ if and (ge $i $.Weather.SunriseColumn) (le $i $.Weather.SunsetColumn ) }}
+            <div class="weather-column-daylight{{ if eq $i $.Weather.SunriseColumn }} weather-column-daylight-sunrise{{ else if eq $i $.Weather.SunsetColumn }} weather-column-daylight-sunset{{ end }}"></div>
+            {{ end }}
+            <div class="weather-column-value{{ if lt $column.Temperature 0 }} weather-column-value-negative{{ end }}">{{ $column.Temperature | absInt }}</div>
+            <div class="weather-bar" style='--weather-bar-height: {{ printf "%.2f" $column.Scale }}'></div>
+            <div class="weather-column-time">{{ index $.TimeLabels $i }}</div>
+        </div>
         {{ end }}
-        {{ if and (ge $i $.Weather.SunriseColumn) (le $i $.Weather.SunsetColumn ) }}
-        <div class="weather-column-daylight{{ if eq $i $.Weather.SunriseColumn }} weather-column-daylight-sunrise{{ else if eq $i $.Weather.SunsetColumn }} weather-column-daylight-sunset{{ end }}"></div>
-        {{ end }}
-        <div class="weather-column-value{{ if lt $column.Temperature 0 }} weather-column-value-negative{{ end }}">{{ $column.Temperature | absInt }}</div>
-        <div class="weather-bar" style='--weather-bar-height: {{ printf "%.2f" $column.Scale }}'></div>
-        <div class="weather-column-time">{{ index $.TimeLabels $i }}</div>
+    </div>
+
+    {{ if not .HideLocation }}
+    <div class="flex items-center justify-center margin-top-15 gap-7 size-h5">
+        <div class="location-icon"></div>
+        <div class="text-truncate">{{ .Place.Name }},{{ if .ShowAreaName }} {{ .Place.Area }},{{ end }} {{ .Place.Country }}</div>
     </div>
     {{ end }}
 </div>
-
-{{ if not .HideLocation }}
-<div class="flex items-center justify-center margin-top-15 gap-7 size-h5">
-    <div class="location-icon"></div>
-    <div class="text-truncate">{{ .Place.Name }},{{ if .ShowAreaName }} {{ .Place.Area }},{{ end }} {{ .Place.Country }}</div>
-</div>
-{{ end }}
 {{ end }}

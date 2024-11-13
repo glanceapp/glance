@@ -1,30 +1,10 @@
-function throttledDebounce(callback, maxDebounceTimes, debounceDelay) {
-    let debounceTimeout;
-    let timesDebounced = 0;
+import { setupPopovers } from './popover.js';
+import { throttledDebounce, isElementVisible } from './utils.js';
 
-    return function () {
-        if (timesDebounced == maxDebounceTimes) {
-            clearTimeout(debounceTimeout);
-            timesDebounced = 0;
-            callback();
-            return;
-        }
-
-        clearTimeout(debounceTimeout);
-        timesDebounced++;
-
-        debounceTimeout = setTimeout(() => {
-            timesDebounced = 0;
-            callback();
-        }, debounceDelay);
-    };
-};
-
-
-async function fetchPageContent(pageSlug) {
+async function fetchPageContent(pageData) {
     // TODO: handle non 200 status codes/time outs
     // TODO: add retries
-    const response = await fetch(`/api/pages/${pageSlug}/content/`);
+    const response = await fetch(`${pageData.baseURL}/api/pages/${pageData.slug}/content/`);
     const content = await response.text();
 
     return content;
@@ -107,7 +87,7 @@ function updateRelativeTimeForElements(elements)
     }
 }
 
-function setupSearchboxes() {
+function setupSearchBoxes() {
     const searchWidgets = document.getElementsByClassName("search");
 
     if (searchWidgets.length == 0) {
@@ -117,6 +97,7 @@ function setupSearchboxes() {
     for (let i = 0; i < searchWidgets.length; i++) {
         const widget = searchWidgets[i];
         const defaultSearchUrl = widget.dataset.defaultSearchUrl;
+        const newTab = widget.dataset.newTab === "true";
         const inputElement = widget.getElementsByClassName("search-input")[0];
         const bangElement = widget.getElementsByClassName("search-bang")[0];
         const bangs = widget.querySelectorAll(".search-bangs > input");
@@ -147,14 +128,13 @@ function setupSearchboxes() {
                     query = input;
                     searchUrlTemplate = defaultSearchUrl;
                 }
-
-                if (query.length == 0) {
+                if (query.length == 0 && currentBang == null) {
                     return;
                 }
 
                 const url = searchUrlTemplate.replace("!QUERY!", encodeURIComponent(query));
 
-                if (event.ctrlKey) {
+                if (newTab && !event.ctrlKey || !newTab && event.ctrlKey) {
                     window.open(url, '_blank').focus();
                 } else {
                     window.location.href = url;
@@ -170,9 +150,13 @@ function setupSearchboxes() {
         }
 
         const handleInput = (event) => {
-            const value = event.target.value.trimStart();
-            const words = value.split(" ");
+            const value = event.target.value.trim();
+            if (value in bangsMap) {
+                changeCurrentBang(bangsMap[value]);
+                return;
+            }
 
+            const words = value.split(" ");
             if (words.length >= 2 && words[0] in bangsMap) {
                 changeCurrentBang(bangsMap[words[0]]);
                 return;
@@ -244,6 +228,46 @@ function setupDynamicRelativeTime() {
             timeout = scheduleRepeatingUpdate();
         }, updateInterval - delta);
     });
+}
+
+function setupGroups() {
+    const groups = document.getElementsByClassName("widget-type-group");
+
+    if (groups.length == 0) {
+        return;
+    }
+
+    for (let g = 0; g < groups.length; g++) {
+        const group = groups[g];
+        const titles = group.getElementsByClassName("widget-header")[0].children;
+        const tabs = group.getElementsByClassName("widget-group-contents")[0].children;
+        let current = 0;
+
+        for (let t = 0; t < titles.length; t++) {
+            const title = titles[t];
+            title.addEventListener("click", () => {
+                if (t == current) {
+                    return;
+                }
+
+                for (let i = 0; i < titles.length; i++) {
+                    titles[i].classList.remove("widget-group-title-current");
+                    tabs[i].classList.remove("widget-group-content-current");
+                }
+
+                if (current < t) {
+                    tabs[t].dataset.direction = "right";
+                } else {
+                    tabs[t].dataset.direction = "left";
+                }
+
+                current = t;
+
+                title.classList.add("widget-group-title-current");
+                tabs[t].classList.add("widget-group-content-current");
+            });
+        }
+    }
 }
 
 function setupLazyImages() {
@@ -381,7 +405,7 @@ function setupCollapsibleGrids() {
 
         const button = attachExpandToggleButton(gridElement);
 
-        let cardsPerRow = 2;
+        let cardsPerRow;
 
         const resolveCollapsibleItems = () => {
             const hideItemsAfterIndex = cardsPerRow * collapseAfterRows;
@@ -411,12 +435,11 @@ function setupCollapsibleGrids() {
             }
         };
 
-        afterContentReady(() => {
-            cardsPerRow = getCardsPerRow();
-            resolveCollapsibleItems();
-        });
+        const observer = new ResizeObserver(() => {
+            if (!isElementVisible(gridElement)) {
+                return;
+            }
 
-        window.addEventListener("resize", () => {
             const newCardsPerRow = getCardsPerRow();
 
             if (cardsPerRow == newCardsPerRow) {
@@ -426,6 +449,8 @@ function setupCollapsibleGrids() {
             cardsPerRow = newCardsPerRow;
             resolveCollapsibleItems();
         });
+
+        afterContentReady(() => observer.observe(gridElement));
     }
 }
 
@@ -544,16 +569,18 @@ function setupClocks() {
 async function setupPage() {
     const pageElement = document.getElementById("page");
     const pageContentElement = document.getElementById("page-content");
-    const pageContent = await fetchPageContent(pageData.slug);
+    const pageContent = await fetchPageContent(pageData);
 
     pageContentElement.innerHTML = pageContent;
 
     try {
+        setupPopovers();
         setupClocks()
         setupCarousels();
-        setupSearchboxes();
+        setupSearchBoxes();
         setupCollapsibleLists();
         setupCollapsibleGrids();
+        setupGroups();
         setupDynamicRelativeTime();
         setupLazyImages();
     } finally {
@@ -569,8 +596,4 @@ async function setupPage() {
     }
 }
 
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", setupPage);
-} else {
-    setupPage();
-}
+setupPage();

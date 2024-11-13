@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/mmcdole/gofeed"
+	gofeedext "github.com/mmcdole/gofeed/extensions"
 )
 
 type RSSFeedItem struct {
@@ -43,12 +44,25 @@ func sanitizeFeedDescription(description string) string {
 	return description
 }
 
+func shortenFeedDescriptionLen(description string, maxLen int) string {
+	description, _ = limitStringLength(description, 1000)
+	description = sanitizeFeedDescription(description)
+	description, limited := limitStringLength(description, maxLen)
+
+	if limited {
+		description += "…"
+	}
+
+	return description
+}
+
 type RSSFeedRequest struct {
 	Url             string `yaml:"url"`
 	Title           string `yaml:"title"`
 	HideCategories  bool   `yaml:"hide-categories"`
 	HideDescription bool   `yaml:"hide-description"`
 	ItemLinkPrefix  string `yaml:"item-link-prefix"`
+	IsDetailed      bool   `yaml:"-"`
 }
 
 type RSSFeedItems []RSSFeedItem
@@ -80,7 +94,6 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 
 		rssItem := RSSFeedItem{
 			ChannelURL: feed.Link,
-			Title:      item.Title,
 		}
 
 		if request.ItemLinkPrefix != "" {
@@ -97,7 +110,7 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 			if err == nil {
 				var link string
 
-				if item.Link[0] == '/' {
+				if len(item.Link) > 0 && item.Link[0] == '/' {
 					link = item.Link
 				} else {
 					link = "/" + item.Link
@@ -107,34 +120,34 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 			}
 		}
 
-		if !request.HideDescription && item.Description != "" {
-			description, _ := limitStringLength(item.Description, 1000)
-			description = sanitizeFeedDescription(description)
-			description, limited := limitStringLength(description, 200)
-
-			if limited {
-				description += "…"
-			}
-
-			rssItem.Description = description
+		if item.Title != "" {
+			rssItem.Title = item.Title
+		} else {
+			rssItem.Title = shortenFeedDescriptionLen(item.Description, 100)
 		}
 
-		if !request.HideCategories {
-			var categories = make([]string, 0, 6)
-
-			for _, category := range item.Categories {
-				if len(categories) == 6 {
-					break
-				}
-
-				if len(category) == 0 || len(category) > 30 {
-					continue
-				}
-
-				categories = append(categories, category)
+		if request.IsDetailed {
+			if !request.HideDescription && item.Description != "" && item.Title != "" {
+				rssItem.Description = shortenFeedDescriptionLen(item.Description, 200)
 			}
 
-			rssItem.Categories = categories
+			if !request.HideCategories {
+				var categories = make([]string, 0, 6)
+
+				for _, category := range item.Categories {
+					if len(categories) == 6 {
+						break
+					}
+
+					if len(category) == 0 || len(category) > 30 {
+						continue
+					}
+
+					categories = append(categories, category)
+				}
+
+				rssItem.Categories = categories
+			}
 		}
 
 		if request.Title != "" {
@@ -145,8 +158,14 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 
 		if item.Image != nil {
 			rssItem.ImageURL = item.Image.URL
+		} else if url := findThumbnailInItemExtensions(item); url != "" {
+			rssItem.ImageURL = url
 		} else if feed.Image != nil {
-			rssItem.ImageURL = feed.Image.URL
+			if len(feed.Image.URL) > 0 && feed.Image.URL[0] == '/' {
+				rssItem.ImageURL = strings.TrimRight(feed.Link, "/") + feed.Image.URL
+			} else {
+				rssItem.ImageURL = feed.Image.URL
+			}
 		}
 
 		if item.PublishedParsed != nil {
@@ -159,6 +178,36 @@ func getItemsFromRSSFeedTask(request RSSFeedRequest) ([]RSSFeedItem, error) {
 	}
 
 	return items, nil
+}
+
+func recursiveFindThumbnailInExtensions(extensions map[string][]gofeedext.Extension) string {
+	for _, exts := range extensions {
+		for _, ext := range exts {
+			if ext.Name == "thumbnail" || ext.Name == "image" {
+				if url, ok := ext.Attrs["url"]; ok {
+					return url
+				}
+			}
+
+			if ext.Children != nil {
+				if url := recursiveFindThumbnailInExtensions(ext.Children); url != "" {
+					return url
+				}
+			}
+		}
+	}
+
+	return ""
+}
+
+func findThumbnailInItemExtensions(item *gofeed.Item) string {
+	media, ok := item.Extensions["media"]
+
+	if !ok {
+		return ""
+	}
+
+	return recursiveFindThumbnailInExtensions(media)
 }
 
 func GetItemsFromRSSFeeds(requests []RSSFeedRequest) (RSSFeedItems, error) {
@@ -183,7 +232,7 @@ func GetItemsFromRSSFeeds(requests []RSSFeedRequest) (RSSFeedItems, error) {
 		entries = append(entries, feeds[i]...)
 	}
 
-	if len(entries) == 0 {
+	if failed == len(requests) {
 		return nil, ErrNoContent
 	}
 

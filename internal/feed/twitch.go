@@ -204,9 +204,11 @@ func fetchChannelFromTwitchTask(channel string) (TwitchChannel, error) {
 		result.IsLive = true
 		result.ViewersCount = channelShell.UserOrError.Stream.ViewersCount
 
-		if streamMetadata.UserOrNull != nil && streamMetadata.UserOrNull.Stream != nil && streamMetadata.UserOrNull.Stream.Game != nil {
-			result.Category = streamMetadata.UserOrNull.Stream.Game.Name
-			result.CategorySlug = streamMetadata.UserOrNull.Stream.Game.Slug
+		if streamMetadata.UserOrNull != nil && streamMetadata.UserOrNull.Stream != nil {
+			if streamMetadata.UserOrNull.Stream.Game != nil {
+				result.Category = streamMetadata.UserOrNull.Stream.Game.Name
+				result.CategorySlug = streamMetadata.UserOrNull.Stream.Game.Slug
+			}
 			startedAt, err := time.Parse("2006-01-02T15:04:05Z", streamMetadata.UserOrNull.Stream.StartedAt)
 
 			if err == nil {

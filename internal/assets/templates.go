@@ -37,6 +37,8 @@ var (
 	RepositoryTemplate            = compileTemplate("repository.html", "widget-base.html")
 	SearchTemplate                = compileTemplate("search.html", "widget-base.html")
 	ExtensionTemplate             = compileTemplate("extension.html", "widget-base.html")
+	GroupTemplate                 = compileTemplate("group.html", "widget-base.html")
+	DNSStatsTemplate              = compileTemplate("dns-stats.html", "widget-base.html")
 )
 
 var globalTemplateFunctions = template.FuncMap{
@@ -48,19 +50,6 @@ var globalTemplateFunctions = template.FuncMap{
 	},
 	"formatPrice": func(price float64) string {
 		return intl.Sprintf("%.2f", price)
-	},
-	"formatTime": func(t time.Time) string {
-		return t.Format("2006-01-02 15:04:05")
-	},
-	"shouldCollapse": func(i int, collapseAfter int) bool {
-		if collapseAfter < -1 {
-			return false
-		}
-
-		return i >= collapseAfter
-	},
-	"itemAnimationDelay": func(i int, collapseAfter int) string {
-		return fmt.Sprintf("%dms", (i-collapseAfter)*30)
 	},
 	"dynamicRelativeTimeAttrs": func(t time.Time) template.HTMLAttr {
 		return template.HTMLAttr(fmt.Sprintf(`data-dynamic-relative-time="%d"`, t.Unix()))
