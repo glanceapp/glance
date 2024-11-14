@@ -62,7 +62,7 @@ func (widget *Monitor) Initialize() error {
 	widget.withTitle("Monitor").withCacheDuration(5 * time.Minute)
 
 	for i := range widget.Sites {
-		widget.Sites[i].IconUrl, widget.Sites[i].IconSource = toRemoteResourceIconIfPrefixed(widget.Sites[i].IconUrl)
+		widget.Sites[i].IconUrl, widget.Sites[i].IconSource = toIconURIIfPrefixed(widget.Sites[i].IconUrl)
 		widget.Sites[i].IsSimpleIcon = widget.Sites[i].IconSource == SimpleIcon
 	}
 

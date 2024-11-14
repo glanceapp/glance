@@ -30,7 +30,7 @@ type HSLColorField struct {
 type IconSource uint8
 
 const (
-	LocalFile IconSource = iota
+	IconURI IconSource = iota
 	SimpleIcon
 	DashboardIcon
 )
@@ -164,24 +164,38 @@ func (f *OptionalEnvString) String() string {
 	return string(*f)
 }
 
-func toRemoteResourceIconIfPrefixed(icon string) (string, IconSource) {
+func toIconURIIfPrefixed(icon string) (string, IconSource) {
 	var prefix, iconstr string
 
 	prefix, iconstr, found := strings.Cut(icon, ":")
 
 	if !found {
-		return icon, LocalFile
+		return icon, IconURI
 	}
 
+	// syntax: si:<icon_name>
 	if prefix == "si" {
 		icon = "https://cdnjs.cloudflare.com/ajax/libs/simple-icons/11.14.0/" + iconstr + ".svg"
 		return icon, SimpleIcon
 	}
 
+	// syntax: di:<icon_name>[.svg|.png]
 	if prefix == "di" {
-		icon = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/svg/" + iconstr + ".svg"
+		// if the icon name is specified without extension, it is assumed to be wanting the SVG icon
+		// otherwise, specify the extension of either .svg or .png to use either of the CDN offerings
+		// any other extension will be interpreted as .svg
+		var basename, ext string
+
+		basename, ext, found := strings.Cut(iconstr, ".")
+
+		if !found {
+			ext = "svg"
+			basename = iconstr
+		}
+
+		icon = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/" + ext + "/" + basename + "." + ext
 		return icon, DashboardIcon
 	}
 
-	return icon, LocalFile
+	return icon, IconURI
 }

@@ -34,7 +34,7 @@ func (widget *Bookmarks) Initialize() error {
 			}
 
 			link := &widget.Groups[g].Links[l]
-			link.Icon, link.IconSource = toRemoteResourceIconIfPrefixed(link.Icon)
+			link.Icon, link.IconSource = toIconURIIfPrefixed(link.Icon)
 			link.IsSimpleIcon = link.IconSource == SimpleIcon
 		}
 	}
