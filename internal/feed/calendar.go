@@ -53,7 +53,7 @@ func NewCalendar(now time.Time, icsurl string) *Calendar {
 				if err != nil {
 					log.Panic(err)
 				}
-				if startAt.Day() == day && startAt.Month() == month {
+				if startAt.Day() == day && startAt.Month() == month && startAt.Year() == year {
 					dayEvent.StartedDay = startAt
 					dayEvent.EventHover = event.GetProperty("SUMMARY").Value
 					days[i].IsEvent = true
