@@ -27,6 +27,14 @@ type HSLColorField struct {
 	Lightness  uint8
 }
 
+type IconSource uint8
+
+const (
+	LocalFile IconSource = iota
+	SimpleIcon
+	DashboardIcon
+)
+
 func (c *HSLColorField) String() string {
 	return fmt.Sprintf("hsl(%d, %d%%, %d%%)", c.Hue, c.Saturation, c.Lightness)
 }
@@ -156,13 +164,24 @@ func (f *OptionalEnvString) String() string {
 	return string(*f)
 }
 
-func toSimpleIconIfPrefixed(icon string) (string, bool) {
-	if !strings.HasPrefix(icon, "si:") {
-		return icon, false
+func toRemoteResourceIconIfPrefixed(icon string) (string, IconSource) {
+	var prefix, iconstr string
+
+	prefix, iconstr, found := strings.Cut(icon, ":")
+
+	if !found {
+		return icon, LocalFile
 	}
 
-	icon = strings.TrimPrefix(icon, "si:")
-	icon = "https://cdnjs.cloudflare.com/ajax/libs/simple-icons/11.14.0/" + icon + ".svg"
+	if prefix == "si" {
+		icon = "https://cdnjs.cloudflare.com/ajax/libs/simple-icons/11.14.0/" + iconstr + ".svg"
+		return icon, SimpleIcon
+	}
 
-	return icon, true
+	if prefix == "di" {
+		icon = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/svg/" + iconstr + ".svg"
+		return icon, DashboardIcon
+	}
+
+	return icon, LocalFile
 }

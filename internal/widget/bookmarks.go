@@ -13,12 +13,13 @@ type Bookmarks struct {
 		Title string         `yaml:"title"`
 		Color *HSLColorField `yaml:"color"`
 		Links []struct {
-			Title        string `yaml:"title"`
-			URL          string `yaml:"url"`
-			Icon         string `yaml:"icon"`
-			IsSimpleIcon bool   `yaml:"-"`
-			SameTab      bool   `yaml:"same-tab"`
-			HideArrow    bool   `yaml:"hide-arrow"`
+			Title        string     `yaml:"title"`
+			URL          string     `yaml:"url"`
+			Icon         string     `yaml:"icon"`
+			IsSimpleIcon bool       `yaml:"-"`
+			IconSource   IconSource `yaml:"-"`
+			SameTab      bool       `yaml:"same-tab"`
+			HideArrow    bool       `yaml:"hide-arrow"`
 		} `yaml:"links"`
 	} `yaml:"groups"`
 }
@@ -33,7 +34,8 @@ func (widget *Bookmarks) Initialize() error {
 			}
 
 			link := &widget.Groups[g].Links[l]
-			link.Icon, link.IsSimpleIcon = toSimpleIconIfPrefixed(link.Icon)
+			link.Icon, link.IconSource = toRemoteResourceIconIfPrefixed(link.Icon)
+			link.IsSimpleIcon = link.IconSource == SimpleIcon
 		}
 	}
 
