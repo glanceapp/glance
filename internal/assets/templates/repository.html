@@ -8,7 +8,7 @@
 </ul>
 
 {{ if gt (len .RepositoryDetails.Commits) 0 }}
-<hr class="margin-block-10">
+<hr class="margin-block-8">
 <a class="text-compact" href="https://github.com/{{ $.RepositoryDetails.Name }}/commits" target="_blank" rel="noreferrer">Last {{ .CommitsLimit }} commits</a>
 <div class="flex gap-7 size-h5 margin-top-3">
     <ul class="list list-gap-2">
@@ -25,7 +25,7 @@
 {{ end }}
 
 {{ if gt (len .RepositoryDetails.PullRequests) 0 }}
-<hr class="margin-block-10">
+<hr class="margin-block-8">
 <a class="text-compact" href="https://github.com/{{ $.RepositoryDetails.Name }}/pulls" target="_blank" rel="noreferrer">Open pull requests ({{ .RepositoryDetails.OpenPullRequests | formatNumber }} total)</a>
 <div class="flex gap-7 size-h5 margin-top-3">
     <ul class="list list-gap-2">
