@@ -105,6 +105,7 @@ function setupSearchBoxes() {
         const bangsMap = {};
         const kbdElement = widget.getElementsByTagName("kbd")[0];
         let currentBang = null;
+        let lastQuery = "";
 
         for (let j = 0; j < bangs.length; j++) {
             const bang = bangs[j];
@@ -141,6 +142,14 @@ function setupSearchBoxes() {
                     window.location.href = url;
                 }
 
+                lastQuery = query;
+                inputElement.value = "";
+
+                return;
+            }
+
+            if (event.key == "ArrowUp" && lastQuery.length > 0) {
+                inputElement.value = lastQuery;
                 return;
             }
         };

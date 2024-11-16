@@ -846,6 +846,7 @@ Preview:
 | <kbd>Enter</kbd> | Perform search in the same tab | Search input is focused and not empty |
 | <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Perform search in a new tab | Search input is focused and not empty |
 | <kbd>Escape</kbd> | Leave focus | Search input is focused |
+| <kbd>Up</kbd> | Insert the last search query since the page was opened into the input field | Search input is focused |
 
 > [!TIP]
 >
