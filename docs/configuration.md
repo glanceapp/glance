@@ -308,6 +308,7 @@ pages:
 | slug | string | no | |
 | width | string | no | |
 | hide-desktop-navigation | boolean | no | false |
+| expand-mobile-page-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
 
@@ -331,6 +332,9 @@ The maximum width of the page on desktop. Possible values are `slim` and `wide`.
 
 #### `hide-desktop-navigation`
 Whether to show the navigation links at the top of the page on desktop.
+
+#### `expand-mobile-page-navigation`
+Whether the mobile page navigation should be expanded by default.
 
 #### `show-mobile-header`
 Whether to show a header displaying the name of the page on mobile. The header purposefully has a lot of vertical whitespace in order to push the content down and make it easier to reach on tall devices.
