@@ -12,12 +12,13 @@ import (
 )
 
 type Extension struct {
-	widgetBase `yaml:",inline"`
-	URL        string            `yaml:"url"`
-	Parameters map[string]string `yaml:"parameters"`
-	AllowHtml  bool              `yaml:"allow-potentially-dangerous-html"`
-	Extension  feed.Extension    `yaml:"-"`
-	cachedHTML template.HTML     `yaml:"-"`
+	widgetBase          `yaml:",inline"`
+	URL                 string            `yaml:"url"`
+	FallbackContentType string            `yaml:"fallback-content-type"`
+	Parameters          map[string]string `yaml:"parameters"`
+	AllowHtml           bool              `yaml:"allow-potentially-dangerous-html"`
+	Extension           feed.Extension    `yaml:"-"`
+	cachedHTML          template.HTML     `yaml:"-"`
 }
 
 func (widget *Extension) Initialize() error {
@@ -38,9 +39,10 @@ func (widget *Extension) Initialize() error {
 
 func (widget *Extension) Update(ctx context.Context) {
 	extension, err := feed.FetchExtension(feed.ExtensionRequestOptions{
-		URL:        widget.URL,
-		Parameters: widget.Parameters,
-		AllowHtml:  widget.AllowHtml,
+		URL:                 widget.URL,
+		FallbackContentType: widget.FallbackContentType,
+		Parameters:          widget.Parameters,
+		AllowHtml:           widget.AllowHtml,
 	})
 
 	widget.canContinueUpdateAfterHandlingErr(err)

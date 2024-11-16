@@ -189,12 +189,19 @@ func FetchWeatherForPlace(place *PlaceJson, units string) (*Weather, error) {
 		minT := slices.Min(temperatures)
 		maxT := slices.Max(temperatures)
 
+		temperaturesRange := float64(maxT - minT)
+
 		for i := 0; i < 12; i++ {
 			bars = append(bars, weatherColumn{
 				Temperature:      temperatures[i],
-				Scale:            float64(temperatures[i]-minT) / float64(maxT-minT),
 				HasPrecipitation: precipitations[i],
 			})
+
+			if temperaturesRange > 0 {
+				bars[i].Scale = float64(temperatures[i]-minT) / temperaturesRange
+			} else {
+				bars[i].Scale = 1
+			}
 		}
 	}
 

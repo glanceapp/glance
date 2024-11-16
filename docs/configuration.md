@@ -15,6 +15,8 @@
   - [Reddit](#reddit)
   - [Search](#search-widget)
   - [Group](#group)
+  - [Split Column](#split-column)
+  - [Custom API](#custom-api)
   - [Extension](#extension)
   - [Weather](#weather)
   - [Monitor](#monitor)
@@ -525,9 +527,21 @@ An array of RSS/atom feeds. The title can optionally be changed.
 | hide-categories | boolean | no | false | Only applicable for `detailed-list` style |
 | hide-description | boolean | no | false | Only applicable for `detailed-list` style |
 | item-link-prefix | string | no | | |
+| headers | key (string) & value (string) | no | | |
 
 ###### `item-link-prefix`
 If an RSS feed isn't returning item links with a base domain and Glance has failed to automatically detect the correct domain you can manually add a prefix to each link with this property.
+
+###### `headers`
+Optionally specify the headers that will be sent with the request. Example:
+
+```yaml
+- type: rss
+  feeds:
+    - url: https://domain.com/rss
+      headers:
+        User-Agent: Custom User Agent
+```
 
 ##### `limit`
 The maximum number of articles to show.
@@ -890,7 +904,7 @@ url: https://www.amazon.com/s?k={QUERY}
 ```
 
 ### Group
-Group multiple widgets into one using tabs. Widgets are defined using a `widgets` property exactly as you would on a page column. The only limitation is that you cannot place a group widget within a group widget.
+Group multiple widgets into one using tabs. Widgets are defined using a `widgets` property exactly as you would on a page column. The only limitation is that you cannot place a group widget or a split column widget within a group widget.
 
 Example:
 
@@ -933,6 +947,67 @@ Example:
       <<: *shared-properties
 ```
 
+### Split Column
+<!-- TODO: update -->
+Splits a full sized column in half, allowing you to place widgets side by side. This is converted to a single column on mobile devices or if not enough width is available. Widgets are defined using a `widgets` property exactly as you would on a page column.
+
+Example of a full page with an effective 4 column layout using two split column widgets inside of two full sized columns:
+
+<details>
+<summary>View config</summary>
+
+```yaml
+shared:
+  - &reddit-props
+    type: reddit
+    collapse-after: 4
+    show-thumbnails: true
+
+pages:
+  - name: Split Column Demo
+    width: wide
+    columns:
+      - size: full
+        widgets:
+          - type: split-column
+            widgets:
+              - subreddit: gaming
+                <<: *reddit-props
+              - subreddit: worldnews
+                <<: *reddit-props
+              - subreddit: lifeprotips
+                <<: *reddit-props
+                show-thumbnails: false
+              - subreddit: askreddit
+                <<: *reddit-props
+                show-thumbnails: false
+
+      - size: full
+        widgets:
+          - type: split-column
+            widgets:
+              - subreddit: todayilearned
+                <<: *reddit-props
+                collapse-after: 2
+              - subreddit: aww
+                <<: *reddit-props
+              - subreddit: science
+                <<: *reddit-props
+              - subreddit: showerthoughts
+                <<: *reddit-props
+                show-thumbnails: false
+```
+</details>
+
+<br>
+
+Preview:
+
+![](images/split-column-widget-preview.png)
+
+### Custom API
+<!-- TODO -->
+
 ### Extension
 Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
 
@@ -948,11 +1023,15 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | url | string | yes | |
+| fallback-content-type | string | no | |
 | allow-potentially-dangerous-html | boolean | no | false |
 | parameters | key & value | no | |
 
 ##### `url`
 The URL of the extension.
+
+##### `fallback-content-type`
+Optionally specify the fallback content type of the extension if the URL does not return a valid `Widget-Content-Type` header. Currently the only supported value for this property is `html`.
 
 ##### `allow-potentially-dangerous-html`
 Whether to allow the extension to display HTML.
@@ -1082,6 +1161,7 @@ Properties for each site:
 | icon | string | no | |
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
+| alt-status-codes | array | no | |
 
 `title`
 
@@ -1107,7 +1187,7 @@ icon: si:adguard
 
 > [!WARNING]
 >
-> Simple Icons are loaded externally and are hosted on `cdnjs.cloudflare.com`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+> Simple Icons are loaded externally and are hosted on `cdn.jsdelivr.net`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
 
 `allow-insecure`
 
@@ -1116,6 +1196,15 @@ Whether to ignore invalid/self-signed certificates.
 `same-tab`
 
 Whether to open the link in the same or a new tab.
+
+`alt-status-codes`
+
+Status codes other than 200 that you want to return "OK".
+
+```yaml
+alt-status-codes:
+  - 403
+```
 
 ### Releases
 Display a list of latest releases for specific repositories on Github, GitLab, Codeberg or Docker Hub.
@@ -1385,7 +1474,7 @@ icon: si:reddit
 
 > [!WARNING]
 >
-> Simple Icons are loaded externally and are hosted on `cdnjs.cloudflare.com`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+> Simple Icons are loaded externally and are hosted on `cdn.jsdelivr.net`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
 
 `same-tab`
 
@@ -1539,7 +1628,7 @@ Preview:
 An array of markets for which to display information about.
 
 ##### `sort-by`
-By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
+By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `change` for descending order based on the stock's percentage change (e.g. 1% would be sorted higher than -1%) or `absolute-change` for descending order based on the stock's absolute price change (e.g. -1% would be sorted higher than +0.5%).
 
 ###### Properties for each stock
 | Name | Type | Required |

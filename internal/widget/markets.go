@@ -38,6 +38,10 @@ func (widget *Markets) Update(ctx context.Context) {
 		markets.SortByAbsChange()
 	}
 
+	if widget.Sort == "change" {
+		markets.SortByChange()
+	}
+
 	widget.Markets = markets
 }
 
