@@ -27,14 +27,6 @@ type HSLColorField struct {
 	Lightness  uint8
 }
 
-type IconSource uint8
-
-const (
-	IconURI IconSource = iota
-	SimpleIcon
-	DashboardIcon
-)
-
 func (c *HSLColorField) String() string {
 	return fmt.Sprintf("hsl(%d, %d%%, %d%%)", c.Hue, c.Saturation, c.Lightness)
 }
@@ -164,38 +156,49 @@ func (f *OptionalEnvString) String() string {
 	return string(*f)
 }
 
-func toIconURIIfPrefixed(icon string) (string, IconSource) {
-	var prefix, iconstr string
+type CustomIcon struct {
+	URL        string
+	IsFlatIcon bool
+	// TODO: along with whether the icon is flat, we also need to know
+	// whether the icon is black or white by default in order to properly
+	// invert the color based on the theme being light or dark
+}
 
-	prefix, iconstr, found := strings.Cut(icon, ":")
+func (i *CustomIcon) UnmarshalYAML(node *yaml.Node) error {
+	var value string
+	if err := node.Decode(&value); err != nil {
+		return err
+	}
 
+	prefix, icon, found := strings.Cut(value, ":")
 	if !found {
-		return icon, IconURI
+		i.URL = value
+		return nil
 	}
 
-	// syntax: si:<icon_name>
-	if prefix == "si" {
-		icon = "https://cdnjs.cloudflare.com/ajax/libs/simple-icons/11.14.0/" + iconstr + ".svg"
-		return icon, SimpleIcon
-	}
-
-	// syntax: di:<icon_name>[.svg|.png]
-	if prefix == "di" {
+	switch prefix {
+	case "si":
+		i.URL = "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + icon + ".svg"
+		i.IsFlatIcon = true
+	case "di":
+		// syntax: di:<icon_name>[.svg|.png]
 		// if the icon name is specified without extension, it is assumed to be wanting the SVG icon
 		// otherwise, specify the extension of either .svg or .png to use either of the CDN offerings
 		// any other extension will be interpreted as .svg
-		var basename, ext string
-
-		basename, ext, found := strings.Cut(iconstr, ".")
-
+		basename, ext, found := strings.Cut(icon, ".")
 		if !found {
 			ext = "svg"
-			basename = iconstr
+			basename = icon
 		}
 
-		icon = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/" + ext + "/" + basename + "." + ext
-		return icon, DashboardIcon
+		if ext != "svg" && ext != "png" {
+			ext = "svg"
+		}
+
+		i.URL = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/" + ext + "/" + basename + "." + ext
+	default:
+		i.URL = value
 	}
 
-	return icon, IconURI
+	return nil
 }

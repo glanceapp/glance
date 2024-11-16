@@ -21,8 +21,8 @@
 {{ end }}
 
 {{ define "site" }}
-{{ if .IconUrl }}
-<img class="monitor-site-icon{{ if .IsSimpleIcon }} simple-icon{{ end }}" src="{{ .IconUrl }}" alt="" loading="lazy">
+{{ if .Icon.URL }}
+<img class="monitor-site-icon{{ if .Icon.IsFlatIcon }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
 {{ end }}
 <div class="min-width-0">
     <a class="size-h3 color-highlight text-truncate block" href="{{ .URL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>

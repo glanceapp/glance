@@ -8,9 +8,9 @@
         <ul class="list list-gap-2">
         {{ range .Links }}
         <li class="flex items-center gap-10">
-            {{ if ne "" .Icon }}
+            {{ if ne "" .Icon.URL }}
             <div class="bookmarks-icon-container">
-                <img class="bookmarks-icon{{ if .IsSimpleIcon }} simple-icon{{ end }}" src="{{ .Icon }}" alt="" loading="lazy">
+                <img class="bookmarks-icon{{ if .Icon.IsFlatIcon }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
             </div>
             {{ end }}
             <a href="{{ .URL }}" class="bookmarks-link {{ if .HideArrow }}bookmarks-link-no-arrow {{ end }}color-highlight size-h4" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
