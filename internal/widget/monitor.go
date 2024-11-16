@@ -11,37 +11,6 @@ import (
 	"github.com/glanceapp/glance/internal/feed"
 )
 
-func statusCodeToText(status int, altStatusCodes []int) string {
-	if status == 200 || slices.Contains(altStatusCodes, status) {
-		return "OK"
-	}
-	if status == 404 {
-		return "Not Found"
-	}
-	if status == 403 {
-		return "Forbidden"
-	}
-	if status == 401 {
-		return "Unauthorized"
-	}
-	if status >= 400 {
-		return "Client Error"
-	}
-	if status >= 500 {
-		return "Server Error"
-	}
-
-	return strconv.Itoa(status)
-}
-
-func statusCodeToStyle(status int, altStatusCodes []int) string {
-	if status == 200 || slices.Contains(altStatusCodes, status) {
-		return "ok"
-	}
-
-	return "error"
-}
-
 type Monitor struct {
 	widgetBase `yaml:",inline"`
 	Sites      []struct {
@@ -54,8 +23,9 @@ type Monitor struct {
 		StatusStyle             string           `yaml:"-"`
 		AltStatusCodes          []int            `yaml:"alt-status-codes"`
 	} `yaml:"sites"`
-	ShowFailingOnly bool `yaml:"show-failing-only"`
-	HasFailing      bool `yaml:"-"`
+	Style           string `yaml:"style"`
+	ShowFailingOnly bool   `yaml:"show-failing-only"`
+	HasFailing      bool   `yaml:"-"`
 }
 
 func (widget *Monitor) Initialize() error {
@@ -96,5 +66,40 @@ func (widget *Monitor) Update(ctx context.Context) {
 }
 
 func (widget *Monitor) Render() template.HTML {
+	if widget.Style == "compact" {
+		return widget.render(widget, assets.MonitorCompactTemplate)
+	}
+
 	return widget.render(widget, assets.MonitorTemplate)
+}
+
+func statusCodeToText(status int, altStatusCodes []int) string {
+	if status == 200 || slices.Contains(altStatusCodes, status) {
+		return "OK"
+	}
+	if status == 404 {
+		return "Not Found"
+	}
+	if status == 403 {
+		return "Forbidden"
+	}
+	if status == 401 {
+		return "Unauthorized"
+	}
+	if status >= 400 {
+		return "Client Error"
+	}
+	if status >= 500 {
+		return "Server Error"
+	}
+
+	return strconv.Itoa(status)
+}
+
+func statusCodeToStyle(status int, altStatusCodes []int) string {
+	if status == 200 || slices.Contains(altStatusCodes, status) {
+		return "ok"
+	}
+
+	return "error"
 }

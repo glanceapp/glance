@@ -1149,10 +1149,18 @@ You can hover over the "ERROR" text to view more information.
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | sites | array | yes | |
+| style | string | no | |
 | show-failing-only | boolean | no | false |
 
 ##### `show-failing-only`
 Shows only a list of failing sites when set to `true`.
+
+##### `style`
+Used to change the appearance of the widget. Possible values are `compact`.
+
+Preview of `compact`:
+
+![](images/monitor-widget-compact-preview.png)
 
 ##### `sites`
 

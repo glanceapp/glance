@@ -1830,6 +1830,7 @@ details[open] .summary::after {
 .list               { --list-half-gap: 0rem; }
 .list-gap-2         { --list-half-gap: 0.1rem; }
 .list-gap-4         { --list-half-gap: 0.2rem; }
+.list-gap-8         { --list-half-gap: 0.4rem; }
 .list-gap-10        { --list-half-gap: 0.5rem; }
 .list-gap-14        { --list-half-gap: 0.7rem; }
 .list-gap-20        { --list-half-gap: 1rem; }

@@ -32,6 +32,7 @@ var (
 	RSSHorizontalCardsTemplate    = compileTemplate("rss-horizontal-cards.html", "widget-base.html")
 	RSSHorizontalCards2Template   = compileTemplate("rss-horizontal-cards-2.html", "widget-base.html")
 	MonitorTemplate               = compileTemplate("monitor.html", "widget-base.html")
+	MonitorCompactTemplate        = compileTemplate("monitor-compact.html", "widget-base.html")
 	TwitchGamesListTemplate       = compileTemplate("twitch-games-list.html", "widget-base.html")
 	TwitchChannelsTemplate        = compileTemplate("twitch-channels.html", "widget-base.html")
 	RepositoryTemplate            = compileTemplate("repository.html", "widget-base.html")
