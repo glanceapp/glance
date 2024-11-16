@@ -27,9 +27,10 @@ const (
 )
 
 type ExtensionRequestOptions struct {
-	URL        string            `yaml:"url"`
-	Parameters map[string]string `yaml:"parameters"`
-	AllowHtml  bool              `yaml:"allow-potentially-dangerous-html"`
+	URL                 string            `yaml:"url"`
+	FallbackContentType string            `yaml:"fallback-content-type"`
+	Parameters          map[string]string `yaml:"parameters"`
+	AllowHtml           bool              `yaml:"allow-potentially-dangerous-html"`
 }
 
 type Extension struct {
@@ -88,7 +89,11 @@ func FetchExtension(options ExtensionRequestOptions) (Extension, error) {
 	contentType, ok := ExtensionStringToType[response.Header.Get(ExtensionHeaderContentType)]
 
 	if !ok {
-		contentType = ExtensionContentUnknown
+		contentType, ok = ExtensionStringToType[options.FallbackContentType]
+
+		if !ok {
+			contentType = ExtensionContentUnknown
+		}
 	}
 
 	extension.Content = convertExtensionContent(options, body, contentType)

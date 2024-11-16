@@ -39,9 +39,11 @@ var (
 	ExtensionTemplate             = compileTemplate("extension.html", "widget-base.html")
 	GroupTemplate                 = compileTemplate("group.html", "widget-base.html")
 	DNSStatsTemplate              = compileTemplate("dns-stats.html", "widget-base.html")
+	SplitColumnTemplate           = compileTemplate("split-column.html", "widget-base.html")
+	CustomAPITemplate             = compileTemplate("custom-api.html", "widget-base.html")
 )
 
-var globalTemplateFunctions = template.FuncMap{
+var GlobalTemplateFunctions = template.FuncMap{
 	"relativeTime":      relativeTimeSince,
 	"formatViewerCount": formatViewerCount,
 	"formatNumber":      intl.Sprint,
@@ -58,7 +60,7 @@ var globalTemplateFunctions = template.FuncMap{
 
 func compileTemplate(primary string, dependencies ...string) *template.Template {
 	t, err := template.New(primary).
-		Funcs(globalTemplateFunctions).
+		Funcs(GlobalTemplateFunctions).
 		ParseFS(TemplateFS, append([]string{primary}, dependencies...)...)
 
 	if err != nil {

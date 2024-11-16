@@ -76,6 +76,7 @@ type Page struct {
 	HideDesktopNavigation      bool     `yaml:"hide-desktop-navigation"`
 	CenterVertically           bool     `yaml:"center-vertically"`
 	Columns                    []Column `yaml:"columns"`
+	PrimaryColumnIndex         int8     `yaml:"-"`
 	mu                         sync.Mutex
 }
 
@@ -141,15 +142,24 @@ func NewApplication(config *Config) (*Application, error) {
 	}
 
 	for p := range config.Pages {
-		if config.Pages[p].Slug == "" {
-			config.Pages[p].Slug = titleToSlug(config.Pages[p].Title)
+		page := &config.Pages[p]
+		page.PrimaryColumnIndex = -1
+
+		if page.Slug == "" {
+			page.Slug = titleToSlug(page.Title)
 		}
 
-		app.slugToPage[config.Pages[p].Slug] = &config.Pages[p]
+		app.slugToPage[page.Slug] = page
 
-		for c := range config.Pages[p].Columns {
-			for w := range config.Pages[p].Columns[c].Widgets {
-				widget := config.Pages[p].Columns[c].Widgets[w]
+		for c := range page.Columns {
+			column := &page.Columns[c]
+
+			if page.PrimaryColumnIndex == -1 && column.Size == "full" {
+				page.PrimaryColumnIndex = int8(c)
+			}
+
+			for w := range column.Widgets {
+				widget := column.Widgets[w]
 				app.widgetByID[widget.GetID()] = widget
 
 				widget.SetProviders(providers)
@@ -276,6 +286,9 @@ func (a *Application) Serve() error {
 
 	mux.HandleFunc("GET /api/pages/{page}/content/{$}", a.HandlePageContentRequest)
 	mux.HandleFunc("/api/widgets/{widget}/{path...}", a.HandleWidgetRequest)
+	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	mux.Handle(
 		fmt.Sprintf("GET /static/%s/{path...}", a.Config.Server.AssetsHash),

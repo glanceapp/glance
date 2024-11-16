@@ -440,6 +440,17 @@ kbd:active {
     box-shadow: 0 0 0 0 var(--color-widget-background-highlight);
 }
 
+.masonry {
+    display: flex;
+    gap: var(--widget-gap);
+}
+
+.masonry-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
 .popover-container, [data-popover-html] {
     display: none;
 }
@@ -851,6 +862,7 @@ details[open] .summary::after {
     border-bottom: 2px solid transparent;
     transition: color .3s, border-color .3s;
     font-size: var(--font-size-h3);
+    flex-shrink: 0;
 }
 
 .nav-item:not(.nav-item-current):hover {
@@ -1049,6 +1061,7 @@ details[open] .summary::after {
     border-radius: var(--border-radius);
     padding: 0.5rem;
     opacity: 0.7;
+    flex-shrink: 0;
 }
 
 .bookmarks-icon {
@@ -1057,7 +1070,7 @@ details[open] .summary::after {
     opacity: 0.8;
 }
 
-:root:not(.light-scheme) .simple-icon {
+:root:not(.light-scheme) .flat-icon {
     filter: invert(1);
 }
 
@@ -1337,6 +1350,10 @@ details[open] .summary::after {
     transform: translate(-50%, -50%);
 }
 
+.clock-time {
+    min-width: 8ch;
+}
+
 .clock-time span {
     color: var(--color-text-highlight);
 }
@@ -1353,7 +1370,7 @@ details[open] .summary::after {
     transition: filter 0.3s, opacity 0.3s;
 }
 
-.monitor-site-icon.simple-icon {
+.monitor-site-icon.flat-icon {
     opacity: 0.7;
 }
 
@@ -1361,7 +1378,7 @@ details[open] .summary::after {
     opacity: 1;
 }
 
-.monitor-site:hover .monitor-site-icon:not(.simple-icon) {
+.monitor-site:hover .monitor-site-icon:not(.flat-icon) {
     filter: grayscale(0);
 }
 
@@ -1489,6 +1506,14 @@ details[open] .summary::after {
     padding-inline: 0.3rem;
     transform: translate(-50%);
     border: 2px solid var(--color-widget-background);
+}
+
+.twitch-stream-preview {
+    max-width: 100%;
+    width: 400px;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--border-radius);
+    object-fit: cover;
 }
 
 .reddit-card-thumbnail {

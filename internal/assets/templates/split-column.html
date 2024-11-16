@@ -1,0 +1,11 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
+
+{{ define "widget-content" }}
+<div class="masonry" data-max-columns="{{ .MaxColumns }}">
+{{ range .Widgets }}
+    {{ .Render }}
+{{ end }}
+</div>
+{{ end }}

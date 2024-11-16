@@ -15,6 +15,8 @@
   - [Reddit](#reddit)
   - [Search](#search-widget)
   - [Group](#group)
+  - [Split Column](#split-column)
+  - [Custom API](#custom-api)
   - [Extension](#extension)
   - [Weather](#weather)
   - [Monitor](#monitor)
@@ -137,6 +139,10 @@ A number between 1 and 65,535, so long as that port isn't already used by anythi
 
 #### `base-url`
 The base URL that Glance is hosted under. No need to specify this unless you're using a reverse proxy and are hosting Glance under a directory. If that's the case then you can set this value to `/glance` or whatever the directory is called. Note that the forward slash (`/`) in the beginning is required unless you specify the full domain and path.
+
+> [!IMPORTANT]
+> You need to strip the `base-url` prefix before forwarding the request to the Glance server.
+> In Caddy you can do this using [`handle_path`](https://caddyserver.com/docs/caddyfile/directives/handle_path) or [`uri strip_prefix`](https://caddyserver.com/docs/caddyfile/directives/uri).
 
 #### `assets-path`
 The path to a directory that will be served by the server under the `/assets/` path. This is handy for widgets like the Monitor where you have to specify an icon URL and you want to self host all the icons rather than pointing to an external source.
@@ -307,6 +313,7 @@ pages:
 | title | string | yes | |
 | slug | string | no | |
 | width | string | no | |
+| center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
 | expand-mobile-page-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
@@ -329,6 +336,8 @@ The maximum width of the page on desktop. Possible values are `slim` and `wide`.
 >
 > When using `slim`, the maximum number of columns allowed for that page is `2`.
 
+#### `center-vertically`
+When set to `true`, vertically centers the content on the page. Has no effect if the content is taller than the height of the viewport.
 
 #### `hide-desktop-navigation`
 Whether to show the navigation links at the top of the page on desktop.
@@ -522,9 +531,21 @@ An array of RSS/atom feeds. The title can optionally be changed.
 | hide-categories | boolean | no | false | Only applicable for `detailed-list` style |
 | hide-description | boolean | no | false | Only applicable for `detailed-list` style |
 | item-link-prefix | string | no | | |
+| headers | key (string) & value (string) | no | | |
 
 ###### `item-link-prefix`
 If an RSS feed isn't returning item links with a base domain and Glance has failed to automatically detect the correct domain you can manually add a prefix to each link with this property.
+
+###### `headers`
+Optionally specify the headers that will be sent with the request. Example:
+
+```yaml
+- type: rss
+  feeds:
+    - url: https://domain.com/rss
+      headers:
+        User-Agent: Custom User Agent
+```
 
 ##### `limit`
 The maximum number of articles to show.
@@ -849,7 +870,7 @@ Either a value from the table below or a URL to a custom search engine. Use `{QU
 ##### `new-tab`
 When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
 
-##### `new-tab`
+##### `autofocus`
 When set to `true`, automatically focuses the search input on page load.
 
 ##### `bangs`
@@ -887,7 +908,7 @@ url: https://www.amazon.com/s?k={QUERY}
 ```
 
 ### Group
-Group multiple widgets into one using tabs. Widgets are defined using a `widgets` property exactly as you would on a page column. The only limitation is that you cannot place a group widget within a group widget.
+Group multiple widgets into one using tabs. Widgets are defined using a `widgets` property exactly as you would on a page column. The only limitation is that you cannot place a group widget or a split column widget within a group widget.
 
 Example:
 
@@ -930,6 +951,67 @@ Example:
       <<: *shared-properties
 ```
 
+### Split Column
+<!-- TODO: update -->
+Splits a full sized column in half, allowing you to place widgets side by side. This is converted to a single column on mobile devices or if not enough width is available. Widgets are defined using a `widgets` property exactly as you would on a page column.
+
+Example of a full page with an effective 4 column layout using two split column widgets inside of two full sized columns:
+
+<details>
+<summary>View config</summary>
+
+```yaml
+shared:
+  - &reddit-props
+    type: reddit
+    collapse-after: 4
+    show-thumbnails: true
+
+pages:
+  - name: Split Column Demo
+    width: wide
+    columns:
+      - size: full
+        widgets:
+          - type: split-column
+            widgets:
+              - subreddit: gaming
+                <<: *reddit-props
+              - subreddit: worldnews
+                <<: *reddit-props
+              - subreddit: lifeprotips
+                <<: *reddit-props
+                show-thumbnails: false
+              - subreddit: askreddit
+                <<: *reddit-props
+                show-thumbnails: false
+
+      - size: full
+        widgets:
+          - type: split-column
+            widgets:
+              - subreddit: todayilearned
+                <<: *reddit-props
+                collapse-after: 2
+              - subreddit: aww
+                <<: *reddit-props
+              - subreddit: science
+                <<: *reddit-props
+              - subreddit: showerthoughts
+                <<: *reddit-props
+                show-thumbnails: false
+```
+</details>
+
+<br>
+
+Preview:
+
+![](images/split-column-widget-preview.png)
+
+### Custom API
+<!-- TODO -->
+
 ### Extension
 Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
 
@@ -945,11 +1027,15 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | url | string | yes | |
+| fallback-content-type | string | no | |
 | allow-potentially-dangerous-html | boolean | no | false |
 | parameters | key & value | no | |
 
 ##### `url`
 The URL of the extension.
+
+##### `fallback-content-type`
+Optionally specify the fallback content type of the extension if the URL does not return a valid `Widget-Content-Type` header. Currently the only supported value for this property is `html`.
 
 ##### `allow-potentially-dangerous-html`
 Whether to allow the extension to display HTML.
@@ -1079,6 +1165,7 @@ Properties for each site:
 | icon | string | no | |
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
+| alt-status-codes | array | no | |
 
 `title`
 
@@ -1094,7 +1181,7 @@ The URL which will be requested and its response will determine the status of th
 
 `icon`
 
-Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path). You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix:
+Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path). You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix or [Dashboard Icons](https://github.com/walkxcode/dashboard-icons) via a `di:` prefix:
 
 ```yaml
 icon: si:jellyfin
@@ -1104,7 +1191,7 @@ icon: si:adguard
 
 > [!WARNING]
 >
-> Simple Icons are loaded externally and are hosted on `cdnjs.cloudflare.com`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+> Simple Icons are loaded externally and are hosted on `cdn.jsdelivr.net`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
 
 `allow-insecure`
 
@@ -1114,8 +1201,17 @@ Whether to ignore invalid/self-signed certificates.
 
 Whether to open the link in the same or a new tab.
 
+`alt-status-codes`
+
+Status codes other than 200 that you want to return "OK".
+
+```yaml
+alt-status-codes:
+  - 403
+```
+
 ### Releases
-Display a list of latest releases for specific repositories on Github, GitLab or Docker Hub.
+Display a list of latest releases for specific repositories on Github, GitLab, Codeberg or Docker Hub.
 
 Example:
 
@@ -1126,6 +1222,7 @@ Example:
     - go-gitea/gitea
     - jellyfin/jellyfin
     - glanceapp/glance
+    - codeberg:redict/redict
     - gitlab:fdroid/fdroidclient
     - dockerhub:gotify/server
 ```
@@ -1146,12 +1243,13 @@ Preview:
 | collapse-after | integer | no | 5 |
 
 ##### `repositories`
-A list of repositores to fetch the latest release for. Only the name/repo is required, not the full URL. A prefix can be specified for repositories hosted elsewhere such as GitLab and Docker Hub. Example:
+A list of repositores to fetch the latest release for. Only the name/repo is required, not the full URL. A prefix can be specified for repositories hosted elsewhere such as GitLab, Codeberg and Docker Hub. Example:
 
 ```yaml
 repositories:
   - gitlab:inkscape/inkscape
   - dockerhub:glanceapp/glance
+  - codeberg:redict/redict
 ```
 
 Official images on Docker Hub can be specified by ommiting the owner:
@@ -1173,7 +1271,7 @@ repositories:
 
 
 ##### `show-source-icon`
-Shows an icon of the source (GitHub/GitLab/Docker Hub) next to the repository name when set to `true`.
+Shows an icon of the source (GitHub/GitLab/Codeberg/Docker Hub) next to the repository name when set to `true`.
 
 ##### `token`
 Without authentication Github allows for up to 60 requests per hour. You can easily exceed this limit and start seeing errors if you're tracking lots of repositories or your cache time is low. To circumvent this you can [create a read only token from your Github account](https://github.com/settings/personal-access-tokens/new) and provide it here.
@@ -1370,7 +1468,7 @@ An array of groups which can optionally have a title and a custom color.
 
 `icon`
 
-URL pointing to an image. You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix:
+URL pointing to an image. You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix or [Dashboard Icons](https://github.com/walkxcode/dashboard-icons) via a `di:` prefix:
 
 ```yaml
 icon: si:gmail
@@ -1380,7 +1478,7 @@ icon: si:reddit
 
 > [!WARNING]
 >
-> Simple Icons are loaded externally and are hosted on `cdnjs.cloudflare.com`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+> Simple Icons are loaded externally and are hosted on `cdn.jsdelivr.net`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
 
 `same-tab`
 
@@ -1534,7 +1632,7 @@ Preview:
 An array of markets for which to display information about.
 
 ##### `sort-by`
-By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
+By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `change` for descending order based on the stock's percentage change (e.g. 1% would be sorted higher than -1%) or `absolute-change` for descending order based on the stock's absolute price change (e.g. -1% would be sorted higher than +0.5%).
 
 ###### Properties for each stock
 | Name | Type | Required |
