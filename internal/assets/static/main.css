@@ -1070,7 +1070,7 @@ details[open] .summary::after {
     opacity: 0.8;
 }
 
-:root:not(.light-scheme) .simple-icon {
+:root:not(.light-scheme) .flat-icon {
     filter: invert(1);
 }
 
@@ -1370,7 +1370,7 @@ details[open] .summary::after {
     transition: filter 0.3s, opacity 0.3s;
 }
 
-.monitor-site-icon.simple-icon {
+.monitor-site-icon.flat-icon {
     opacity: 0.7;
 }
 
@@ -1378,7 +1378,7 @@ details[open] .summary::after {
     opacity: 1;
 }
 
-.monitor-site:hover .monitor-site-icon:not(.simple-icon) {
+.monitor-site:hover .monitor-site-icon:not(.flat-icon) {
     filter: grayscale(0);
 }
 
