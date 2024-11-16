@@ -1389,6 +1389,12 @@ details[open] .summary::after {
     height: 2rem;
 }
 
+.monitor-site-status-icon-compact {
+    width: 1.8rem;
+    height: 1.8rem;
+    flex-shrink: 0;
+}
+
 .thumbnail {
     filter: grayscale(0.2) contrast(0.9);
     opacity: 0.8;
