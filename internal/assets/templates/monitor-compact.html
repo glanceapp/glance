@@ -5,7 +5,7 @@
 <ul class="dynamic-columns list-gap-8">
     {{ range .Sites }}
     {{ if and $.ShowFailingOnly (eq .StatusStyle "ok" ) }}{{ continue }}{{ end }}
-    <div class="flex items-center gap-15">
+    <div class="flex items-center gap-12">
         {{ template "site" . }}
     </div>
     {{ end }}

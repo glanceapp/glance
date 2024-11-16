@@ -1804,6 +1804,7 @@ details[open] .summary::after {
 .gap-5              { gap: 0.5rem; }
 .gap-7              { gap: 0.7rem; }
 .gap-10             { gap: 1rem; }
+.gap-12             { gap: 1.2rem; }
 .gap-15             { gap: 1.5rem; }
 .gap-20             { gap: 2rem; }
 .gap-25             { gap: 2.5rem; }
