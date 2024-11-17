@@ -257,7 +257,7 @@ function setupGroups() {
             const title = titles[t];
 
             if (title.dataset.titleUrl !== undefined) {
-                title.addEventListener("auxclick", (event) => {
+                title.addEventListener("mousedown", (event) => {
                     if (event.button != 1) {
                         return;
                     }
