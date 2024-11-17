@@ -1,6 +1,6 @@
 import { setupPopovers } from './popover.js';
 import { setupMasonries } from './masonry.js';
-import { throttledDebounce, isElementVisible } from './utils.js';
+import { throttledDebounce, isElementVisible, openURLInNewTab } from './utils.js';
 
 async function fetchPageContent(pageData) {
     // TODO: handle non 200 status codes/time outs
@@ -255,8 +255,23 @@ function setupGroups() {
 
         for (let t = 0; t < titles.length; t++) {
             const title = titles[t];
+
+            if (title.dataset.titleUrl !== undefined) {
+                title.addEventListener("auxclick", (event) => {
+                    if (event.button != 1) {
+                        return;
+                    }
+
+                    openURLInNewTab(title.dataset.titleUrl);
+                });
+            }
+
             title.addEventListener("click", () => {
                 if (t == current) {
+                    if (title.dataset.titleUrl !== undefined) {
+                        openURLInNewTab(title.dataset.titleUrl);
+                    }
+
                     return;
                 }
 
