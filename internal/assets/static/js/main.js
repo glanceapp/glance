@@ -263,6 +263,7 @@ function setupGroups() {
                     }
 
                     openURLInNewTab(title.dataset.titleUrl);
+                    event.preventDefault();
                 });
             }
 
