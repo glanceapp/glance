@@ -71,6 +71,8 @@ func New(widgetType string) (Widget, error) {
 		widget = &SplitColumn{}
 	case "custom-api":
 		widget = &CustomApi{}
+	case "docker":
+		widget = &Docker{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}

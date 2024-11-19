@@ -1545,6 +1545,37 @@ details[open] .summary::after {
     background: linear-gradient(0deg, var(--color-widget-background) 10%, transparent);
 }
 
+.docker-container-icon {
+    display: block;
+    opacity: 0.8;
+    filter: grayscale(0.4);
+    object-fit: contain;
+    aspect-ratio: 1 / 1;
+    width: 3.2rem;
+    position: relative;
+    top: -0.1rem;
+    transition: filter 0.3s, opacity 0.3s;
+}
+
+.docker-container-icon.simple-icon {
+    opacity: 0.7;
+}
+
+.docker-container:hover .docker-container-icon {
+    opacity: 1;
+}
+
+.docker-container:hover .docker-container-icon:not(.simple-icon) {
+    filter: grayscale(0);
+}
+
+.docker-container-status-icon {
+    flex-shrink: 0;
+    margin-left: auto;
+    width: 2rem;
+    height: 2rem;
+}
+
 @media (max-width: 1190px) {
     .header-container {
         display: none;

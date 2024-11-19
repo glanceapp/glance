@@ -185,15 +185,10 @@ type CustomIcon struct {
 	// invert the color based on the theme being light or dark
 }
 
-func (i *CustomIcon) UnmarshalYAML(node *yaml.Node) error {
-	var value string
-	if err := node.Decode(&value); err != nil {
-		return err
-	}
-
-	prefix, icon, found := strings.Cut(value, ":")
+func (i *CustomIcon) FromURL(url string) error {
+	prefix, icon, found := strings.Cut(url, ":")
 	if !found {
-		i.URL = value
+		i.URL = url
 		return nil
 	}
 
@@ -218,8 +213,16 @@ func (i *CustomIcon) UnmarshalYAML(node *yaml.Node) error {
 
 		i.URL = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/" + ext + "/" + basename + "." + ext
 	default:
-		i.URL = value
+		i.URL = url
 	}
 
 	return nil
+}
+
+func (i *CustomIcon) UnmarshalYAML(node *yaml.Node) error {
+	var value string
+	if err := node.Decode(&value); err != nil {
+		return err
+	}
+	return i.FromURL(value)
 }

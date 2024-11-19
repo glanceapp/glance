@@ -22,6 +22,7 @@
 * Repository overview
 * Site monitor
 * Search box
+* Docker
 
 #### Themeable
 ![multiple color schemes example](docs/images/themes-example.png)

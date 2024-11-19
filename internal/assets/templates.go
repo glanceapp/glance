@@ -42,6 +42,7 @@ var (
 	DNSStatsTemplate              = compileTemplate("dns-stats.html", "widget-base.html")
 	SplitColumnTemplate           = compileTemplate("split-column.html", "widget-base.html")
 	CustomAPITemplate             = compileTemplate("custom-api.html", "widget-base.html")
+	DockerTemplate                = compileTemplate("docker.html", "widget-base.html")
 )
 
 var GlobalTemplateFunctions = template.FuncMap{
