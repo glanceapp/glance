@@ -1780,7 +1780,7 @@ Note the use of `|` after `source:`, this allows you to insert a multi-line stri
 
 ### Docker
 The Docker widget allows you to monitor your Docker containers.
-To enable this feature, ensure that your setup provides access to the **docker.sock** file.
+To enable this feature, ensure that your setup provides access to the **docker.sock** file (also you may use a TCP connection).
 
 Add the following to your `docker-compose` or `docker run` command to enable the Docker widget:
 
@@ -1814,8 +1814,15 @@ To integrate the Docker widget into your dashboard, include the following snippe
 
 ```yaml
 - type: docker
+  host-url: tcp://localhost:2375
   cache: 1m
 ```
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| host-url | string | no | `unix:///var/run/docker.sock` |
 
 #### Leveraging Container Labels
 You can use container labels to control visibility, URLs, icons, and titles within the Docker widget. Add the following labels to your container configuration for enhanced customization:

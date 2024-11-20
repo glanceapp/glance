@@ -2,68 +2,80 @@ package feed
 
 import (
 	"context"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net"
+	"net/http"
+	"net/url"
 	"strings"
-)
-
-const (
-	dockerAPIVersion    = "1.24"
-	dockerGlanceEnable  = "glance.enable"
-	dockerGlanceTitle   = "glance.title"
-	dockerGlanceUrl     = "glance.url"
-	dockerGlanceIconUrl = "glance.iconUrl"
+	"time"
 )
 
 type DockerContainer struct {
-	Id      string
-	Image   string
-	Title   string
-	URL     string
-	IconURL string
-	Status  string
-	State   string
+	Id     string
+	Image  string
+	Names  []string
+	Status string
+	State  string
+	Labels map[string]string
 }
 
-func FetchDockerContainers(ctx context.Context) ([]DockerContainer, error) {
-	apiClient, err := client.NewClientWithOpts(client.WithVersion(dockerAPIVersion), client.FromEnv)
+func FetchDockerContainers(URL string) ([]DockerContainer, error) {
+	hostURL, err := parseHostURL(URL)
 	if err != nil {
 		return nil, err
 	}
-	defer apiClient.Close()
 
-	containers, err := apiClient.ContainerList(ctx, container.ListOptions{})
+	transport := &http.Transport{
+		MaxIdleConns:    6,
+		IdleConnTimeout: 30 * time.Second,
+		DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+			return net.Dial(hostURL.Scheme, hostURL.Host)
+		},
+	}
+
+	cli := &http.Client{
+		Transport:     transport,
+		CheckRedirect: checkRedirect,
+	}
+
+	resp, err := cli.Get("http://docker/containers/json")
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	var results []DockerContainer
-
-	for _, c := range containers {
-		isGlanceEnabled := getLabelValue(c.Labels, dockerGlanceEnable, "true")
-
-		if isGlanceEnabled != "true" {
-			continue
-		}
-
-		results = append(results, DockerContainer{
-			Id:      c.ID,
-			Image:   c.Image,
-			Title:   getLabelValue(c.Labels, dockerGlanceTitle, strings.Join(c.Names, "")),
-			URL:     getLabelValue(c.Labels, dockerGlanceUrl, ""),
-			IconURL: getLabelValue(c.Labels, dockerGlanceIconUrl, "si:docker"),
-			Status:  c.Status,
-			State:   c.State,
-		})
-	}
-
-	return results, nil
+	err = json.NewDecoder(resp.Body).Decode(&results)
+	return results, err
 }
 
-// getLabelValue get string value associated to a label.
-func getLabelValue(labels map[string]string, labelName, defaultValue string) string {
-	if value, ok := labels[labelName]; ok && len(value) > 0 {
-		return value
+func parseHostURL(host string) (*url.URL, error) {
+	proto, addr, ok := strings.Cut(host, "://")
+	if !ok || addr == "" {
+		return nil, fmt.Errorf("unable to parse docker host: %s", host)
 	}
-	return defaultValue
+
+	var basePath string
+	if proto == "tcp" {
+		parsed, err := url.Parse(host)
+		if err != nil {
+			return nil, err
+		}
+		addr = parsed.Host
+		basePath = parsed.Path
+	}
+	return &url.URL{
+		Scheme: proto,
+		Host:   addr,
+		Path:   basePath,
+	}, nil
+}
+
+func checkRedirect(_ *http.Request, via []*http.Request) error {
+	if via[0].Method == http.MethodGet {
+		return http.ErrUseLastResponse
+	}
+	return errors.New("unexpected redirect in response")
 }
