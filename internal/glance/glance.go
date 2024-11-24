@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
-	"log/slog"
+	"log"
 	"net/http"
 	"path/filepath"
 	"regexp"
@@ -122,11 +122,7 @@ func (a *Application) TransformUserDefinedAssetPath(path string) string {
 	return path
 }
 
-func NewApplication(config *Config) (*Application, error) {
-	if len(config.Pages) == 0 {
-		return nil, fmt.Errorf("no pages configured")
-	}
-
+func newApplication(config *Config) *Application {
 	app := &Application{
 		Version:    buildVersion,
 		Config:     *config,
@@ -180,7 +176,7 @@ func NewApplication(config *Config) (*Application, error) {
 
 	config.Branding.LogoURL = app.TransformUserDefinedAssetPath(config.Branding.LogoURL)
 
-	return app, nil
+	return app
 }
 
 func (a *Application) HandlePageRequest(w http.ResponseWriter, r *http.Request) {
@@ -276,7 +272,7 @@ func (a *Application) AssetPath(asset string) string {
 	return a.Config.Server.BaseURL + "/static/" + a.Config.Server.AssetsHash + "/" + asset
 }
 
-func (a *Application) Serve() error {
+func (a *Application) Server() (func() error, func() error) {
 	// TODO: add gzip support, static files must have their gzipped contents cached
 	// TODO: add HTTPS support
 	mux := http.NewServeMux()
@@ -295,14 +291,9 @@ func (a *Application) Serve() error {
 		http.StripPrefix("/static/"+a.Config.Server.AssetsHash, FileServerWithCache(http.FS(assets.PublicFS), 24*time.Hour)),
 	)
 
+	var absAssetsPath string
 	if a.Config.Server.AssetsPath != "" {
-		absAssetsPath, err := filepath.Abs(a.Config.Server.AssetsPath)
-
-		if err != nil {
-			return fmt.Errorf("invalid assets path: %s", a.Config.Server.AssetsPath)
-		}
-
-		slog.Info("Serving assets", "path", absAssetsPath)
+		absAssetsPath, _ = filepath.Abs(a.Config.Server.AssetsPath)
 		assetsFS := FileServerWithCache(http.Dir(a.Config.Server.AssetsPath), 2*time.Hour)
 		mux.Handle("/assets/{path...}", http.StripPrefix("/assets/", assetsFS))
 	}
@@ -312,8 +303,25 @@ func (a *Application) Serve() error {
 		Handler: mux,
 	}
 
-	a.Config.Server.StartedAt = time.Now()
-	slog.Info("Starting server", "host", a.Config.Server.Host, "port", a.Config.Server.Port, "base-url", a.Config.Server.BaseURL)
+	start := func() error {
+		a.Config.Server.StartedAt = time.Now()
+		log.Printf("Starting server on %s:%d (base-url: \"%s\", assets-path: \"%s\")\n",
+			a.Config.Server.Host,
+			a.Config.Server.Port,
+			a.Config.Server.BaseURL,
+			absAssetsPath,
+		)
 
-	return server.ListenAndServe()
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			return err
+		}
+
+		return nil
+	}
+
+	stop := func() error {
+		return server.Close()
+	}
+
+	return start, stop
 }

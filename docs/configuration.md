@@ -34,6 +34,7 @@
   - [HTML](#html)
 
 ## Intro
+<!-- TODO: update -->
 Configuration is done via a single YAML file and a server restart is required in order for any changes to take effect. Trying to start the server with an invalid config file will result in an error.
 
 ## Preconfigured page

@@ -1,9 +1,16 @@
 package glance
 
 import (
+	"bytes"
 	"fmt"
-	"io"
+	"log"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"time"
 
+	"github.com/fsnotify/fsnotify"
 	"gopkg.in/yaml.v3"
 )
 
@@ -14,22 +21,16 @@ type Config struct {
 	Pages    []Page   `yaml:"pages"`
 }
 
-func NewConfigFromYml(contents io.Reader) (*Config, error) {
-	config := NewConfig()
+func newConfigFromYAML(contents []byte) (*Config, error) {
+	config := &Config{}
+	config.Server.Port = 8080
 
-	contentBytes, err := io.ReadAll(contents)
-
+	err := yaml.Unmarshal(contents, config)
 	if err != nil {
 		return nil, err
 	}
 
-	err = yaml.Unmarshal(contentBytes, config)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if err = configIsValid(config); err != nil {
+	if err = isConfigStateValid(config); err != nil {
 		return nil, err
 	}
 
@@ -46,16 +47,179 @@ func NewConfigFromYml(contents io.Reader) (*Config, error) {
 	return config, nil
 }
 
-func NewConfig() *Config {
-	config := &Config{}
+var includePattern = regexp.MustCompile(`(?m)^(\s*)!include:\s*(.+)$`)
 
-	config.Server.Host = ""
-	config.Server.Port = 8080
+func parseYAMLIncludes(mainFilePath string) ([]byte, map[string]struct{}, error) {
+	mainFileContents, err := os.ReadFile(mainFilePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not read main YAML file: %w", err)
+	}
 
-	return config
+	mainFileAbsPath, err := filepath.Abs(mainFilePath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not get absolute path of main YAML file: %w", err)
+	}
+	mainFileDir := filepath.Dir(mainFileAbsPath)
+
+	includes := make(map[string]struct{})
+	var includesLastErr error
+
+	mainFileContents = includePattern.ReplaceAllFunc(mainFileContents, func(match []byte) []byte {
+		if includesLastErr != nil {
+			return nil
+		}
+
+		matches := includePattern.FindSubmatch(match)
+		if len(matches) != 3 {
+			includesLastErr = fmt.Errorf("invalid include match: %v", matches)
+			return nil
+		}
+
+		indent := string(matches[1])
+		includeFilePath := strings.TrimSpace(string(matches[2]))
+		if !filepath.IsAbs(includeFilePath) {
+			includeFilePath = filepath.Join(mainFileDir, includeFilePath)
+		}
+
+		var fileContents []byte
+		var err error
+
+		fileContents, err = os.ReadFile(includeFilePath)
+		if err != nil {
+			includesLastErr = fmt.Errorf("could not read included file: %w", err)
+			return nil
+		}
+
+		includes[includeFilePath] = struct{}{}
+		return []byte(prefixStringLines(indent, string(fileContents)))
+	})
+
+	if includesLastErr != nil {
+		return nil, nil, includesLastErr
+	}
+
+	return mainFileContents, includes, nil
 }
 
-func configIsValid(config *Config) error {
+func prefixStringLines(prefix string, s string) string {
+	lines := strings.Split(s, "\n")
+
+	for i, line := range lines {
+		lines[i] = prefix + line
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+func configFilesWatcher(
+	mainFilePath string,
+	lastContents []byte,
+	lastIncludes map[string]struct{},
+	onChange func(newContents []byte),
+	onErr func(error),
+) (func() error, error) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, fmt.Errorf("could not create watcher: %w", err)
+	}
+
+	if err = watcher.Add(mainFilePath); err != nil {
+		watcher.Close()
+		return nil, fmt.Errorf("could not add main file to watcher: %w", err)
+	}
+
+	updateWatchedIncludes := func(previousIncludes map[string]struct{}, newIncludes map[string]struct{}) {
+		for includePath := range previousIncludes {
+			if _, ok := newIncludes[includePath]; !ok {
+				watcher.Remove(includePath)
+			}
+		}
+
+		for includePath := range newIncludes {
+			if _, ok := previousIncludes[includePath]; !ok {
+				if err := watcher.Add(includePath); err != nil {
+					log.Printf(
+						"Could not add included config file to watcher, changes to this file will not trigger a reload. path: %s, error: %v",
+						includePath, err,
+					)
+				}
+			}
+		}
+	}
+
+	updateWatchedIncludes(nil, lastIncludes)
+
+	checkForContentChangesBeforeCallback := func() {
+		currentContents, currentIncludes, err := parseYAMLIncludes(mainFilePath)
+		if err != nil {
+			onErr(fmt.Errorf("could not parse main file contents for comparison: %w", err))
+			return
+		}
+
+		if !bytes.Equal(lastContents, currentContents) {
+			updateWatchedIncludes(lastIncludes, currentIncludes)
+			lastContents, lastIncludes = currentContents, currentIncludes
+			onChange(currentContents)
+		}
+	}
+
+	const debounceDuration = 500 * time.Millisecond
+	var debounceTimer *time.Timer
+	debouncedCallback := func() {
+		if debounceTimer != nil {
+			debounceTimer.Stop()
+			debounceTimer.Reset(debounceDuration)
+		} else {
+			debounceTimer = time.AfterFunc(debounceDuration, checkForContentChangesBeforeCallback)
+		}
+	}
+
+	go func() {
+		for {
+			select {
+			case event, isOpen := <-watcher.Events:
+				if !isOpen {
+					return
+				}
+				if event.Has(fsnotify.Write) {
+					debouncedCallback()
+				}
+				// maybe also handle .Remove event?
+				// from testing it appears that a removed file will stop triggering .Write events
+				// when it gets recreated, in which case we may need to watch the directory for the
+				// creation of that file and then re-add it to the watcher, though that's
+				// a lot of effort for a hopefully rare edge case
+			case err, isOpen := <-watcher.Errors:
+				if !isOpen {
+					return
+				}
+				onErr(fmt.Errorf("watcher error: %w", err))
+			}
+		}
+	}()
+
+	onChange(lastContents)
+
+	return func() error {
+		if debounceTimer != nil {
+			debounceTimer.Stop()
+		}
+
+		return watcher.Close()
+	}, nil
+}
+
+func isConfigStateValid(config *Config) error {
+	if len(config.Pages) == 0 {
+		return fmt.Errorf("no pages configured")
+	}
+
+	if config.Server.AssetsPath != "" {
+		if _, err := os.Stat(config.Server.AssetsPath); os.IsNotExist(err) {
+			return fmt.Errorf("assets directory does not exist: %s", config.Server.AssetsPath)
+		}
+	}
+
 	for i := range config.Pages {
 		if config.Pages[i].Title == "" {
 			return fmt.Errorf("Page %d has no title", i+1)
