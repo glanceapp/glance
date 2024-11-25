@@ -7,9 +7,8 @@ import "time"
 func NewCalendar(now time.Time, startSunday bool) *Calendar {
 	year, week := now.ISOWeek()
 	weekday := now.Weekday()
-
-	if weekday == 0 {
-		weekday = 7
+	if !startSunday {
+		weekday = (weekday + 6) % 7 // Shift Monday to 0
 	}
 
 	currentMonthDays := daysInMonth(now.Month(), year)
@@ -22,11 +21,7 @@ func NewCalendar(now time.Time, startSunday bool) *Calendar {
 		previousMonthDays = daysInMonth(previousMonthNumber, year)
 	}
 
-	var offset time.Weekday = 6
-	if startSunday {
-		offset = 7
-	}
-	startDaysFrom := now.Day() - int(weekday+offset)
+	startDaysFrom := now.Day() - int(weekday) - 7
 
 	days := make([]int, 21)
 
