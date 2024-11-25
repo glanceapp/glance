@@ -3,9 +3,8 @@ package feed
 import "time"
 
 // TODO: very inflexible, refactor to allow more customizability
-// TODO: allow changing first day of week
 // TODO: allow changing between showing the previous and next week and the entire month
-func NewCalendar(now time.Time) *Calendar {
+func NewCalendar(now time.Time, startSunday bool) *Calendar {
 	year, week := now.ISOWeek()
 	weekday := now.Weekday()
 
@@ -23,7 +22,11 @@ func NewCalendar(now time.Time) *Calendar {
 		previousMonthDays = daysInMonth(previousMonthNumber, year)
 	}
 
-	startDaysFrom := now.Day() - int(weekday+6)
+	var offset time.Weekday = 6
+	if startSunday {
+		offset = 7
+	}
+	startDaysFrom := now.Day() - int(weekday+offset)
 
 	days := make([]int, 21)
 
