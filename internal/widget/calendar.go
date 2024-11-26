@@ -10,8 +10,9 @@ import (
 )
 
 type Calendar struct {
-	widgetBase `yaml:",inline"`
-	Calendar   *feed.Calendar
+	widgetBase  `yaml:",inline"`
+	Calendar    *feed.Calendar
+	StartSunday bool `yaml:"start-sunday"`
 }
 
 func (widget *Calendar) Initialize() error {
@@ -21,7 +22,7 @@ func (widget *Calendar) Initialize() error {
 }
 
 func (widget *Calendar) Update(ctx context.Context) {
-	widget.Calendar = feed.NewCalendar(time.Now())
+	widget.Calendar = feed.NewCalendar(time.Now(), widget.StartSunday)
 	widget.withError(nil).scheduleNextUpdate()
 }
 

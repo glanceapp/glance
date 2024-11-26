@@ -11,13 +11,18 @@
     </div>
 
     <div class="flex flex-wrap size-h6 margin-top-10 color-subdue">
+        {{ if .StartSunday }}
+            <div class="calendar-day">Su</div>
+        {{ end }}
         <div class="calendar-day">Mo</div>
         <div class="calendar-day">Tu</div>
         <div class="calendar-day">We</div>
         <div class="calendar-day">Th</div>
         <div class="calendar-day">Fr</div>
         <div class="calendar-day">Sa</div>
-        <div class="calendar-day">Su</div>
+        {{ if not .StartSunday }}
+            <div class="calendar-day">Su</div>
+        {{ end }}
     </div>
 
     <div class="flex flex-wrap">

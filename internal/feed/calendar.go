@@ -3,14 +3,12 @@ package feed
 import "time"
 
 // TODO: very inflexible, refactor to allow more customizability
-// TODO: allow changing first day of week
 // TODO: allow changing between showing the previous and next week and the entire month
-func NewCalendar(now time.Time) *Calendar {
+func NewCalendar(now time.Time, startSunday bool) *Calendar {
 	year, week := now.ISOWeek()
 	weekday := now.Weekday()
-
-	if weekday == 0 {
-		weekday = 7
+	if !startSunday {
+		weekday = (weekday + 6) % 7 // Shift Monday to 0
 	}
 
 	currentMonthDays := daysInMonth(now.Month(), year)
@@ -23,7 +21,7 @@ func NewCalendar(now time.Time) *Calendar {
 		previousMonthDays = daysInMonth(previousMonthNumber, year)
 	}
 
-	startDaysFrom := now.Day() - int(weekday+6)
+	startDaysFrom := now.Day() - int(weekday) - 7
 
 	days := make([]int, 21)
 

@@ -1597,15 +1597,25 @@ Example:
 
 ```yaml
 - type: calendar
+  start-sunday: false
 ```
 
 Preview:
 
 ![](images/calendar-widget-preview.png)
 
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| start-sunday | boolean | no | false |
+
+##### `start-sunday`
+Whether calendar weeks start on Sunday or Monday.
+
 > [!NOTE]
 >
-> There is currently no customizability available for the calendar. Extra features will be added in the future.
+> There is currently little customizability available for the calendar. Extra features will be added in the future.
 
 ### Markets
 Display a list of markets, their current value, change for the day and a small 21d chart. Data is taken from Yahoo Finance.
