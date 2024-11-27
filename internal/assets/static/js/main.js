@@ -639,6 +639,10 @@ async function setupPage() {
         setupLazyImages();
     } finally {
         pageElement.classList.add("content-ready");
+        const inputElement = document.getElementsByClassName("search-input")[0];
+		if (inputElement.dataset.autofocus == 'autofocus'){
+			inputElement.focus()
+		}
 
         for (let i = 0; i < contentReadyCallbacks.length; i++) {
             contentReadyCallbacks[i]();
