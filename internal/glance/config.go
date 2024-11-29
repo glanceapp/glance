@@ -102,12 +102,12 @@ var includePattern = regexp.MustCompile(`(?m)^(\s*)!include:\s*(.+)$`)
 func parseYAMLIncludes(mainFilePath string) ([]byte, map[string]struct{}, error) {
 	mainFileContents, err := os.ReadFile(mainFilePath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not read main YAML file: %w", err)
+		return nil, nil, fmt.Errorf("reading main YAML file: %w", err)
 	}
 
 	mainFileAbsPath, err := filepath.Abs(mainFilePath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not get absolute path of main YAML file: %w", err)
+		return nil, nil, fmt.Errorf("getting absolute path of main YAML file: %w", err)
 	}
 	mainFileDir := filepath.Dir(mainFileAbsPath)
 
@@ -136,7 +136,7 @@ func parseYAMLIncludes(mainFilePath string) ([]byte, map[string]struct{}, error)
 
 		fileContents, err = os.ReadFile(includeFilePath)
 		if err != nil {
-			includesLastErr = fmt.Errorf("could not read included file: %w", err)
+			includesLastErr = fmt.Errorf("reading included file %s: %w", includeFilePath, err)
 			return nil
 		}
 
@@ -160,12 +160,12 @@ func configFilesWatcher(
 ) (func() error, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return nil, fmt.Errorf("could not create watcher: %w", err)
+		return nil, fmt.Errorf("creating watcher: %w", err)
 	}
 
 	if err = watcher.Add(mainFilePath); err != nil {
 		watcher.Close()
-		return nil, fmt.Errorf("could not add main file to watcher: %w", err)
+		return nil, fmt.Errorf("adding main file to watcher: %w", err)
 	}
 
 	updateWatchedIncludes := func(previousIncludes map[string]struct{}, newIncludes map[string]struct{}) {
@@ -192,7 +192,7 @@ func configFilesWatcher(
 	checkForContentChangesBeforeCallback := func() {
 		currentContents, currentIncludes, err := parseYAMLIncludes(mainFilePath)
 		if err != nil {
-			onErr(fmt.Errorf("could not parse main file contents for comparison: %w", err))
+			onErr(fmt.Errorf("parsing main file contents for comparison: %w", err))
 			return
 		}
 
