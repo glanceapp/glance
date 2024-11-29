@@ -32,18 +32,18 @@ func Main() int {
 	case cliIntentConfigValidate:
 		contents, _, err := parseYAMLIncludes(options.configPath)
 		if err != nil {
-			fmt.Printf("could not parse config file: %v\n", err)
+			fmt.Printf("Could not parse config file: %v\n", err)
 			return 1
 		}
 
 		if _, err := newConfigFromYAML(contents); err != nil {
-			fmt.Printf("config file is invalid: %v\n", err)
+			fmt.Printf("Config file is invalid: %v\n", err)
 			return 1
 		}
 	case cliIntentConfigPrint:
 		contents, _, err := parseYAMLIncludes(options.configPath)
 		if err != nil {
-			fmt.Printf("could not parse config file: %v\n", err)
+			fmt.Printf("Could not parse config file: %v\n", err)
 			return 1
 		}
 
