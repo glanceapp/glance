@@ -525,6 +525,7 @@ kbd:active {
     list-style: none;
     position: relative;
     display: flex;
+    z-index: 1;
 }
 
 .details[open] .summary {
@@ -1136,7 +1137,6 @@ details[open] .summary::after {
     content: '';
     position: absolute;
     inset: 1px 0;
-    z-index: -1;
     opacity: 0;
     background: var(--color-text-base);
     transition: opacity .2s;
@@ -1278,7 +1278,6 @@ details[open] .summary::after {
     overflow: hidden;
     mask-image: linear-gradient(0deg, transparent 40%, #000);
     -webkit-mask-image: linear-gradient(0deg, transparent 40%, #000);
-    z-index: -1;
 }
 
 .weather-column-rain::before {
