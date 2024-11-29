@@ -176,7 +176,7 @@ func fetchOpenMeteoPlaceFromName(location string) (*openMeteoPlaceResponseJson, 
 	responseJson, err := decodeJsonFromRequest[openMeteoPlacesResponseJson](defaultClient, request)
 
 	if err != nil {
-		return nil, fmt.Errorf("could not fetch places data: %v", err)
+		return nil, fmt.Errorf("fetching places data: %v", err)
 	}
 
 	if len(responseJson.Results) == 0 {
@@ -205,7 +205,7 @@ func fetchOpenMeteoPlaceFromName(location string) (*openMeteoPlaceResponseJson, 
 	loc, err := time.LoadLocation(place.Timezone)
 
 	if err != nil {
-		return nil, fmt.Errorf("could not load location: %v", err)
+		return nil, fmt.Errorf("loading location: %v", err)
 	}
 
 	place.location = loc
