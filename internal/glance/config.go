@@ -189,12 +189,18 @@ func configFilesWatcher(
 
 	updateWatchedIncludes(nil, lastIncludes)
 
+	// needed for lastContents and lastIncludes because they get updated in multiple goroutines
+	mu := sync.Mutex{}
+
 	checkForContentChangesBeforeCallback := func() {
 		currentContents, currentIncludes, err := parseYAMLIncludes(mainFilePath)
 		if err != nil {
 			onErr(fmt.Errorf("parsing main file contents for comparison: %w", err))
 			return
 		}
+
+		mu.Lock()
+		defer mu.Unlock()
 
 		if !bytes.Equal(lastContents, currentContents) {
 			updateWatchedIncludes(lastIncludes, currentIncludes)
@@ -223,17 +229,13 @@ func configFilesWatcher(
 				}
 				if event.Has(fsnotify.Write) {
 					debouncedCallback()
-				}
-				// maybe also handle .Remove event?
-				// from testing it appears that a removed file will stop triggering .Write events
-				// when it gets recreated, in which case we may need to watch the directory for the
-				// creation of that file and then re-add it to the watcher, though that's
-				// a lot of effort for a hopefully rare edge case
+				} else if event.Has(fsnotify.Remove) {
+					mu.Lock()
+					delete(lastIncludes, event.Name)
+					mu.Unlock()
 
-				// TODO: update - try and fix this for v0.7.0
-				// so, about that "rare edge case"... it's not so rare
-				// guess what happens when you run `git pull` and a file has changes?
-				// yeah, it gets removed and re-added ( :
+					debouncedCallback()
+				}
 			case err, isOpen := <-watcher.Errors:
 				if !isOpen {
 					return
