@@ -14,7 +14,11 @@ import (
 	"time"
 )
 
-var pageThemeStyleTemplate = mustParseTemplate("theme-style.gotmpl")
+var (
+	pageTemplate           = mustParseTemplate("page.html", "document.html")
+	pageContentTemplate    = mustParseTemplate("page-content.html")
+	pageThemeStyleTemplate = mustParseTemplate("theme-style.gotmpl")
+)
 
 type application struct {
 	Version          string

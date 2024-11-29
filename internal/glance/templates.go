@@ -11,11 +11,7 @@ import (
 	"golang.org/x/text/message"
 )
 
-var (
-	pageTemplate        = mustParseTemplate("page.html", "document.html")
-	pageContentTemplate = mustParseTemplate("page-content.html")
-	forumPostsTemplate  = mustParseTemplate("forum-posts.html", "widget-base.html")
-)
+var intl = message.NewPrinter(language.English)
 
 var globalTemplateFunctions = template.FuncMap{
 	"formatViewerCount": formatViewerCount,
@@ -42,8 +38,6 @@ func mustParseTemplate(primary string, dependencies ...string) *template.Templat
 
 	return t
 }
-
-var intl = message.NewPrinter(language.English)
 
 func formatViewerCount(count int) string {
 	if count < 1_000 {
