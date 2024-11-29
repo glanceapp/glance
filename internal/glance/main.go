@@ -154,6 +154,10 @@ func serveUpdateNoticeIfConfigLocationNotMigrated(configPath string) bool {
 	templateFile, _ := templateFS.Open("v0.7-update-notice-page.html")
 	bodyContents, _ := io.ReadAll(templateFile)
 
+	// TODO: update - add link
+	fmt.Println("!!! WARNING !!!")
+	fmt.Println("The default location of glance.yml in the Docker image has changed starting from v0.7.0, please see <link> for more information.")
+
 	mux := http.NewServeMux()
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
