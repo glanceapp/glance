@@ -267,7 +267,7 @@ func isConfigStateValid(config *config) error {
 
 	for i := range config.Pages {
 		if config.Pages[i].Title == "" {
-			return fmt.Errorf("page %d has no title", i+1)
+			return fmt.Errorf("page %d has no name", i+1)
 		}
 
 		if config.Pages[i].Width != "" && (config.Pages[i].Width != "wide" && config.Pages[i].Width != "slim") {
