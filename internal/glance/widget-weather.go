@@ -11,6 +11,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	_ "time/tzdata"
 )
 
 var weatherWidgetTemplate = mustParseTemplate("weather.html", "widget-base.html")
