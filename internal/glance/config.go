@@ -229,6 +229,11 @@ func configFilesWatcher(
 				// when it gets recreated, in which case we may need to watch the directory for the
 				// creation of that file and then re-add it to the watcher, though that's
 				// a lot of effort for a hopefully rare edge case
+
+				// TODO: update - try and fix this for v0.7.0
+				// so, about that "rare edge case"... it's not so rare
+				// guess what happens when you run `git pull` and a file has changes?
+				// yeah, it gets removed and re-added ( :
 			case err, isOpen := <-watcher.Errors:
 				if !isOpen {
 					return
