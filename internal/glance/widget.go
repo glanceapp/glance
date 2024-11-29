@@ -15,67 +15,67 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var uniqueID atomic.Uint64
+var widgetIDCounter atomic.Uint64
 
 func newWidget(widgetType string) (widget, error) {
-	var widget widget
+	var w widget
 
 	switch widgetType {
 	case "calendar":
-		widget = &calendarWidget{}
+		w = &calendarWidget{}
 	case "clock":
-		widget = &clockWidget{}
+		w = &clockWidget{}
 	case "weather":
-		widget = &weatherWidget{}
+		w = &weatherWidget{}
 	case "bookmarks":
-		widget = &bookmarksWidget{}
+		w = &bookmarksWidget{}
 	case "iframe":
-		widget = &iframeWidget{}
+		w = &iframeWidget{}
 	case "html":
-		widget = &htmlWidget{}
+		w = &htmlWidget{}
 	case "hacker-news":
-		widget = &hackerNewsWidget{}
+		w = &hackerNewsWidget{}
 	case "releases":
-		widget = &releasesWidget{}
+		w = &releasesWidget{}
 	case "videos":
-		widget = &videosWidget{}
+		w = &videosWidget{}
 	case "markets", "stocks":
-		widget = &marketsWidget{}
+		w = &marketsWidget{}
 	case "reddit":
-		widget = &redditWidget{}
+		w = &redditWidget{}
 	case "rss":
-		widget = &rssWidget{}
+		w = &rssWidget{}
 	case "monitor":
-		widget = &monitorWidget{}
+		w = &monitorWidget{}
 	case "twitch-top-games":
-		widget = &twitchGamesWidget{}
+		w = &twitchGamesWidget{}
 	case "twitch-channels":
-		widget = &twitchChannelsWidget{}
+		w = &twitchChannelsWidget{}
 	case "lobsters":
-		widget = &lobstersWidget{}
+		w = &lobstersWidget{}
 	case "change-detection":
-		widget = &changeDetectionWidget{}
+		w = &changeDetectionWidget{}
 	case "repository":
-		widget = &repositoryWidget{}
+		w = &repositoryWidget{}
 	case "search":
-		widget = &searchWidget{}
+		w = &searchWidget{}
 	case "extension":
-		widget = &extensionWidget{}
+		w = &extensionWidget{}
 	case "group":
-		widget = &groupWidget{}
+		w = &groupWidget{}
 	case "dns-stats":
-		widget = &dnsStatsWidget{}
+		w = &dnsStatsWidget{}
 	case "split-column":
-		widget = &splitColumnWidget{}
+		w = &splitColumnWidget{}
 	case "custom-api":
-		widget = &customAPIWidget{}
+		w = &customAPIWidget{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}
 
-	widget.setID(uniqueID.Add(1))
+	w.setID(widgetIDCounter.Add(1))
 
-	return widget, nil
+	return w, nil
 }
 
 type widgets []widget
