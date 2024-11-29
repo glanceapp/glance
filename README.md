@@ -51,6 +51,8 @@ Checkout the [releases page](https://github.com/glanceapp/glance/releases) for a
 ```
 
 #### Docker
+<!-- TODO: update -->
+
 > [!IMPORTANT]
 >
 > Make sure you have a valid `glance.yml` file in the same directory before running the container.

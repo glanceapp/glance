@@ -3,26 +3,72 @@ package glance
 import (
 	"bytes"
 	"fmt"
+	"html/template"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"gopkg.in/yaml.v3"
 )
 
-type Config struct {
-	Server   Server   `yaml:"server"`
-	Theme    Theme    `yaml:"theme"`
-	Branding Branding `yaml:"branding"`
-	Pages    []Page   `yaml:"pages"`
+type config struct {
+	Server struct {
+		Host       string    `yaml:"host"`
+		Port       uint16    `yaml:"port"`
+		AssetsPath string    `yaml:"assets-path"`
+		BaseURL    string    `yaml:"base-url"`
+		StartedAt  time.Time `yaml:"-"` // used in custom css file
+	} `yaml:"server"`
+
+	Document struct {
+		Head template.HTML `yaml:"head"`
+	} `yaml:"document"`
+
+	Theme struct {
+		BackgroundColor          *hslColorField `yaml:"background-color"`
+		PrimaryColor             *hslColorField `yaml:"primary-color"`
+		PositiveColor            *hslColorField `yaml:"positive-color"`
+		NegativeColor            *hslColorField `yaml:"negative-color"`
+		Light                    bool           `yaml:"light"`
+		ContrastMultiplier       float32        `yaml:"contrast-multiplier"`
+		TextSaturationMultiplier float32        `yaml:"text-saturation-multiplier"`
+		CustomCSSFile            string         `yaml:"custom-css-file"`
+	} `yaml:"theme"`
+
+	Branding struct {
+		HideFooter   bool          `yaml:"hide-footer"`
+		CustomFooter template.HTML `yaml:"custom-footer"`
+		LogoText     string        `yaml:"logo-text"`
+		LogoURL      string        `yaml:"logo-url"`
+		FaviconURL   string        `yaml:"favicon-url"`
+	} `yaml:"branding"`
+
+	Pages []page `yaml:"pages"`
 }
 
-func newConfigFromYAML(contents []byte) (*Config, error) {
-	config := &Config{}
+type page struct {
+	Title                      string `yaml:"name"`
+	Slug                       string `yaml:"slug"`
+	Width                      string `yaml:"width"`
+	ShowMobileHeader           bool   `yaml:"show-mobile-header"`
+	ExpandMobilePageNavigation bool   `yaml:"expand-mobile-page-navigation"`
+	HideDesktopNavigation      bool   `yaml:"hide-desktop-navigation"`
+	CenterVertically           bool   `yaml:"center-vertically"`
+	Columns                    []struct {
+		Size    string  `yaml:"size"`
+		Widgets widgets `yaml:"widgets"`
+	} `yaml:"columns"`
+	PrimaryColumnIndex int8       `yaml:"-"`
+	mu                 sync.Mutex `yaml:"-"`
+}
+
+func newConfigFromYAML(contents []byte) (*config, error) {
+	config := &config{}
 	config.Server.Port = 8080
 
 	err := yaml.Unmarshal(contents, config)
@@ -37,14 +83,18 @@ func newConfigFromYAML(contents []byte) (*Config, error) {
 	for p := range config.Pages {
 		for c := range config.Pages[p].Columns {
 			for w := range config.Pages[p].Columns[c].Widgets {
-				if err := config.Pages[p].Columns[c].Widgets[w].Initialize(); err != nil {
-					return nil, err
+				if err := config.Pages[p].Columns[c].Widgets[w].initialize(); err != nil {
+					return nil, formatWidgetInitError(err, config.Pages[p].Columns[c].Widgets[w])
 				}
 			}
 		}
 	}
 
 	return config, nil
+}
+
+func formatWidgetInitError(err error, w widget) error {
+	return fmt.Errorf("%s widget: %v", w.GetType(), err)
 }
 
 var includePattern = regexp.MustCompile(`(?m)^(\s*)!include:\s*(.+)$`)
@@ -99,16 +149,6 @@ func parseYAMLIncludes(mainFilePath string) ([]byte, map[string]struct{}, error)
 	}
 
 	return mainFileContents, includes, nil
-}
-
-func prefixStringLines(prefix string, s string) string {
-	lines := strings.Split(s, "\n")
-
-	for i, line := range lines {
-		lines[i] = prefix + line
-	}
-
-	return strings.Join(lines, "\n")
 }
 
 func configFilesWatcher(
@@ -209,7 +249,7 @@ func configFilesWatcher(
 	}, nil
 }
 
-func isConfigStateValid(config *Config) error {
+func isConfigStateValid(config *config) error {
 	if len(config.Pages) == 0 {
 		return fmt.Errorf("no pages configured")
 	}
@@ -222,24 +262,24 @@ func isConfigStateValid(config *Config) error {
 
 	for i := range config.Pages {
 		if config.Pages[i].Title == "" {
-			return fmt.Errorf("Page %d has no title", i+1)
+			return fmt.Errorf("page %d has no title", i+1)
 		}
 
 		if config.Pages[i].Width != "" && (config.Pages[i].Width != "wide" && config.Pages[i].Width != "slim") {
-			return fmt.Errorf("Page %d: width can only be either wide or slim", i+1)
+			return fmt.Errorf("page %d: width can only be either wide or slim", i+1)
 		}
 
 		if len(config.Pages[i].Columns) == 0 {
-			return fmt.Errorf("Page %d has no columns", i+1)
+			return fmt.Errorf("page %d has no columns", i+1)
 		}
 
 		if config.Pages[i].Width == "slim" {
 			if len(config.Pages[i].Columns) > 2 {
-				return fmt.Errorf("Page %d is slim and cannot have more than 2 columns", i+1)
+				return fmt.Errorf("page %d is slim and cannot have more than 2 columns", i+1)
 			}
 		} else {
 			if len(config.Pages[i].Columns) > 3 {
-				return fmt.Errorf("Page %d has more than 3 columns: %d", i+1, len(config.Pages[i].Columns))
+				return fmt.Errorf("page %d has more than 3 columns", i+1)
 			}
 		}
 
@@ -247,7 +287,7 @@ func isConfigStateValid(config *Config) error {
 
 		for j := range config.Pages[i].Columns {
 			if config.Pages[i].Columns[j].Size != "small" && config.Pages[i].Columns[j].Size != "full" {
-				return fmt.Errorf("Column %d of page %d: size can only be either small or full", j+1, i+1)
+				return fmt.Errorf("column %d of page %d: size can only be either small or full", j+1, i+1)
 			}
 
 			columnSizesCount[config.Pages[i].Columns[j].Size]++
@@ -256,7 +296,7 @@ func isConfigStateValid(config *Config) error {
 		full := columnSizesCount["full"]
 
 		if full > 2 || full == 0 {
-			return fmt.Errorf("Page %d must have either 1 or 2 full width columns", i+1)
+			return fmt.Errorf("page %d must have either 1 or 2 full width columns", i+1)
 		}
 	}
 

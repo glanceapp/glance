@@ -114,6 +114,8 @@ This will give you a page that looks like the following:
 
 Configure the widgets, add more of them, add extra pages, etc. Make it your own!
 
+<!-- TODO: update - add information about top level document key -->
+
 ## Server
 Server configuration is done through a top level `server` property. Example:
 

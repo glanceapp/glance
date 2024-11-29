@@ -6,7 +6,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -149,19 +148,6 @@ type diagnosticStep struct {
 	extraInfo string
 	err       error
 	elapsed   time.Duration
-}
-
-func boolToString(b bool, trueValue, falseValue string) string {
-	if b {
-		return trueValue
-	}
-
-	return falseValue
-}
-
-func isRunningInsideDockerContainer() bool {
-	_, err := os.Stat("/.dockerenv")
-	return err == nil
 }
 
 func testHttpRequest(method, url string, expectedStatusCode int) (string, error) {
