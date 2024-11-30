@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -202,9 +203,13 @@ func configFilesWatcher(
 		mu.Lock()
 		defer mu.Unlock()
 
-		if !bytes.Equal(lastContents, currentContents) {
+		if !maps.Equal(currentIncludes, lastIncludes) {
 			updateWatchedIncludes(lastIncludes, currentIncludes)
-			lastContents, lastIncludes = currentContents, currentIncludes
+			lastIncludes = currentIncludes
+		}
+
+		if !bytes.Equal(lastContents, currentContents) {
+			lastContents = currentContents
 			onChange(currentContents)
 		}
 	}
@@ -230,9 +235,12 @@ func configFilesWatcher(
 				if event.Has(fsnotify.Write) {
 					debouncedCallback()
 				} else if event.Has(fsnotify.Remove) {
-					mu.Lock()
-					delete(lastIncludes, event.Name)
-					mu.Unlock()
+					func() {
+						mu.Lock()
+						defer mu.Unlock()
+						fileAbsPath, _ := filepath.Abs(event.Name)
+						delete(lastIncludes, fileAbsPath)
+					}()
 
 					debouncedCallback()
 				}
