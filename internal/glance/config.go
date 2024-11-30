@@ -172,11 +172,6 @@ func configFilesWatcher(
 		return nil, fmt.Errorf("creating watcher: %w", err)
 	}
 
-	if err = watcher.Add(mainFilePath); err != nil {
-		watcher.Close()
-		return nil, fmt.Errorf("adding main file to watcher: %w", err)
-	}
-
 	updateWatchedFiles := func(previousWatched map[string]struct{}, newWatched map[string]struct{}) {
 		for filePath := range previousWatched {
 			if _, ok := newWatched[filePath]; !ok {
@@ -208,12 +203,13 @@ func configFilesWatcher(
 			return
 		}
 
+		// TODO: refactor, flaky
+		currentIncludes[mainFileAbsPath] = struct{}{}
+
 		mu.Lock()
 		defer mu.Unlock()
 
 		if !maps.Equal(currentIncludes, lastIncludes) {
-			// TODO: refactor, flaky
-			currentIncludes[mainFileAbsPath] = struct{}{}
 			updateWatchedFiles(lastIncludes, currentIncludes)
 			lastIncludes = currentIncludes
 		}
