@@ -144,7 +144,6 @@ type releaseRequest struct {
 func fetchLatestReleases(requests []*releaseRequest) (appReleaseList, error) {
 	job := newJob(fetchLatestReleaseTask, requests).withWorkers(20)
 	results, errs, err := workerPoolDo(job)
-
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +215,6 @@ func fetchLatestGithubRelease(request *releaseRequest) (*appRelease, error) {
 	}
 
 	response, err := decodeJsonFromRequest[githubReleaseLatestResponseJson](defaultClient, httpRequest)
-
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +264,6 @@ func fetchLatestDockerHubRelease(request *releaseRequest) (*appRelease, error) {
 	}
 
 	httpRequest, err := http.NewRequest("GET", requestURL, nil)
-
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +276,6 @@ func fetchLatestDockerHubRelease(request *releaseRequest) (*appRelease, error) {
 
 	if len(tagParts) == 1 {
 		response, err := decodeJsonFromRequest[dockerHubRepositoryTagsResponse](defaultClient, httpRequest)
-
 		if err != nil {
 			return nil, err
 		}
@@ -291,7 +287,6 @@ func fetchLatestDockerHubRelease(request *releaseRequest) (*appRelease, error) {
 		tag = &response.Results[0]
 	} else {
 		response, err := decodeJsonFromRequest[dockerHubRepositoryTagResponse](defaultClient, httpRequest)
-
 		if err != nil {
 			return nil, err
 		}
@@ -343,7 +338,6 @@ func fetchLatestGitLabRelease(request *releaseRequest) (*appRelease, error) {
 		),
 		nil,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -353,7 +347,6 @@ func fetchLatestGitLabRelease(request *releaseRequest) (*appRelease, error) {
 	}
 
 	response, err := decodeJsonFromRequest[gitlabReleaseResponseJson](defaultClient, httpRequest)
-
 	if err != nil {
 		return nil, err
 	}
@@ -387,10 +380,10 @@ func fetchLatestCodebergRelease(request *releaseRequest) (*appRelease, error) {
 	}
 
 	response, err := decodeJsonFromRequest[codebergReleaseResponseJson](defaultClient, httpRequest)
-
 	if err != nil {
 		return nil, err
 	}
+
 	return &appRelease{
 		Source:       releaseSourceCodeberg,
 		Name:         request.repository,

@@ -185,7 +185,6 @@ func fetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate
 	}
 
 	request, err := http.NewRequest("GET", requestUrl, nil)
-
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +192,6 @@ func fetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate
 	// Required to increase rate limit, otherwise Reddit randomly returns 429 even after just 2 requests
 	setBrowserUserAgentHeader(request)
 	responseJson, err := decodeJsonFromRequest[subredditResponseJson](defaultClient, request)
-
 	if err != nil {
 		return nil, err
 	}

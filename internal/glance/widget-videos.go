@@ -84,7 +84,6 @@ type youtubeFeedResponseXml struct {
 
 func parseYoutubeFeedTime(t string) time.Time {
 	parsedTime, err := time.Parse("2006-01-02T15:04:05-07:00", t)
-
 	if err != nil {
 		return time.Now()
 	}
@@ -130,7 +129,6 @@ func FetchYoutubeChannelUploads(channelIds []string, videoUrlTemplate string, in
 	job := newJob(decodeXmlFromRequestTask[youtubeFeedResponseXml](defaultClient), requests).withWorkers(30)
 
 	responses, errs, err := workerPoolDo(job)
-
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errNoContent, err)
 	}

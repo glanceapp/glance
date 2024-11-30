@@ -103,7 +103,6 @@ func fetchWatchUUIDsFromChangeDetection(instanceURL string, token string) ([]str
 	}
 
 	uuidsMap, err := decodeJsonFromRequest[map[string]struct{}](defaultClient, request)
-
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch list of watch UUIDs: %v", err)
 	}
@@ -139,7 +138,6 @@ func fetchWatchesFromChangeDetection(instanceURL string, requestedWatchIDs []str
 	task := decodeJsonFromRequestTask[changeDetectionResponseJson](defaultClient)
 	job := newJob(task, requests).withWorkers(15)
 	responses, errs, err := workerPoolDo(job)
-
 	if err != nil {
 		return nil, err
 	}

@@ -40,17 +40,15 @@ func setBrowserUserAgentHeader(request *http.Request) {
 }
 
 func decodeJsonFromRequest[T any](client RequestDoer, request *http.Request) (T, error) {
-	response, err := client.Do(request)
 	var result T
 
+	response, err := client.Do(request)
 	if err != nil {
 		return result, err
 	}
-
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
-
 	if err != nil {
 		return result, err
 	}
@@ -67,7 +65,6 @@ func decodeJsonFromRequest[T any](client RequestDoer, request *http.Request) (T,
 	}
 
 	err = json.Unmarshal(body, &result)
-
 	if err != nil {
 		return result, err
 	}
@@ -83,17 +80,15 @@ func decodeJsonFromRequestTask[T any](client RequestDoer) func(*http.Request) (T
 
 // TODO: tidy up, these are a copy of the above but with a line changed
 func decodeXmlFromRequest[T any](client RequestDoer, request *http.Request) (T, error) {
-	response, err := client.Do(request)
 	var result T
 
+	response, err := client.Do(request)
 	if err != nil {
 		return result, err
 	}
-
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
-
 	if err != nil {
 		return result, err
 	}
@@ -110,7 +105,6 @@ func decodeXmlFromRequest[T any](client RequestDoer, request *http.Request) (T, 
 	}
 
 	err = xml.Unmarshal(body, &result)
-
 	if err != nil {
 		return result, err
 	}

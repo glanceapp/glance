@@ -114,7 +114,6 @@ func fetchAdguardStats(instanceURL, username, password string) (*dnsStats, error
 	requestURL := strings.TrimRight(instanceURL, "/") + "/control/stats"
 
 	request, err := http.NewRequest("GET", requestURL, nil)
-
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +121,6 @@ func fetchAdguardStats(instanceURL, username, password string) (*dnsStats, error
 	request.SetBasicAuth(username, password)
 
 	responseJson, err := decodeJsonFromRequest[adguardStatsResponse](defaultClient, request)
-
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +233,6 @@ func (p *piholeTopBlockedDomains) UnmarshalJSON(data []byte) error {
 	temp := make(map[string]int)
 
 	err := json.Unmarshal(data, &temp)
-
 	if err != nil {
 		*p = make(piholeTopBlockedDomains)
 	} else {
@@ -254,13 +251,11 @@ func fetchPiholeStats(instanceURL, token string) (*dnsStats, error) {
 		"/admin/api.php?summaryRaw&topItems&overTimeData10mins&auth=" + token
 
 	request, err := http.NewRequest("GET", requestURL, nil)
-
 	if err != nil {
 		return nil, err
 	}
 
 	responseJson, err := decodeJsonFromRequest[piholeStatsResponse](defaultClient, request)
-
 	if err != nil {
 		return nil, err
 	}

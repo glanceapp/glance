@@ -140,7 +140,6 @@ func fetchChannelFromTwitchTask(channel string) (twitchChannel, error) {
 	request.Header.Add("Client-ID", twitchGqlClientId)
 
 	response, err := decodeJsonFromRequest[[]twitchOperationResponse](defaultClient, request)
-
 	if err != nil {
 		return result, err
 	}
@@ -155,16 +154,12 @@ func fetchChannelFromTwitchTask(channel string) (twitchChannel, error) {
 	for i := range response {
 		switch response[i].Extensions.OperationName {
 		case "ChannelShell":
-			err = json.Unmarshal(response[i].Data, &channelShell)
-
-			if err != nil {
-				return result, fmt.Errorf("failed to unmarshal channel shell: %w", err)
+			if err = json.Unmarshal(response[i].Data, &channelShell); err != nil {
+				return result, fmt.Errorf("unmarshalling channel shell: %w", err)
 			}
 		case "StreamMetadata":
-			err = json.Unmarshal(response[i].Data, &streamMetadata)
-
-			if err != nil {
-				return result, fmt.Errorf("failed to unmarshal stream metadata: %w", err)
+			if err = json.Unmarshal(response[i].Data, &streamMetadata); err != nil {
+				return result, fmt.Errorf("unmarshalling stream metadata: %w", err)
 			}
 		default:
 			return result, fmt.Errorf("unknown operation name: %s", response[i].Extensions.OperationName)
@@ -211,7 +206,6 @@ func fetchChannelsFromTwitch(channelLogins []string) (twitchChannelList, error) 
 
 	job := newJob(fetchChannelFromTwitchTask, channelLogins).withWorkers(10)
 	channels, errs, err := workerPoolDo(job)
-
 	if err != nil {
 		return result, err
 	}

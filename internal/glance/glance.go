@@ -147,7 +147,6 @@ func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) 
 
 	var responseBytes bytes.Buffer
 	err := pageTemplate.Execute(&responseBytes, pageData)
-
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -173,7 +172,6 @@ func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Re
 
 	var responseBytes bytes.Buffer
 	err := pageContentTemplate.Execute(&responseBytes, pageData)
-
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -193,7 +191,6 @@ func (a *application) handleWidgetRequest(w http.ResponseWriter, r *http.Request
 	widgetValue := r.PathValue("widget")
 
 	widgetID, err := strconv.ParseUint(widgetValue, 10, 64)
-
 	if err != nil {
 		a.handleNotFound(w, r)
 		return

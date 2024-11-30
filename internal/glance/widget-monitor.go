@@ -129,7 +129,6 @@ func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (SiteStatus, error) {
 		url = statusRequest.URL
 	}
 	request, err := http.NewRequest(http.MethodGet, url, nil)
-
 	if err != nil {
 		return SiteStatus{
 			Error: err,
@@ -169,7 +168,6 @@ func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (SiteStatus, error) {
 func fetchStatusForSites(requests []*SiteStatusRequest) ([]SiteStatus, error) {
 	job := newJob(fetchSiteStatusTask, requests).withWorkers(20)
 	results, _, err := workerPoolDo(job)
-
 	if err != nil {
 		return nil, err
 	}

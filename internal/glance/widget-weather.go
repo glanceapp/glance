@@ -59,7 +59,6 @@ func (widget *weatherWidget) initialize() error {
 func (widget *weatherWidget) update(ctx context.Context) {
 	if widget.Place == nil {
 		place, err := fetchOpenMeteoPlaceFromName(widget.Location)
-
 		if err != nil {
 			widget.withError(err).scheduleEarlyUpdate()
 			return
@@ -174,7 +173,6 @@ func fetchOpenMeteoPlaceFromName(location string) (*openMeteoPlaceResponseJson, 
 	requestUrl := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?name=%s&count=10&language=en&format=json", url.QueryEscape(location))
 	request, _ := http.NewRequest("GET", requestUrl, nil)
 	responseJson, err := decodeJsonFromRequest[openMeteoPlacesResponseJson](defaultClient, request)
-
 	if err != nil {
 		return nil, fmt.Errorf("fetching places data: %v", err)
 	}
@@ -203,7 +201,6 @@ func fetchOpenMeteoPlaceFromName(location string) (*openMeteoPlaceResponseJson, 
 	}
 
 	loc, err := time.LoadLocation(place.Timezone)
-
 	if err != nil {
 		return nil, fmt.Errorf("loading location: %v", err)
 	}
@@ -236,7 +233,6 @@ func fetchWeatherForOpenMeteoPlace(place *openMeteoPlaceResponseJson, units stri
 	requestUrl := "https://api.open-meteo.com/v1/forecast?" + query.Encode()
 	request, _ := http.NewRequest("GET", requestUrl, nil)
 	responseJson, err := decodeJsonFromRequest[openMeteoWeatherResponseJson](defaultClient, request)
-
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errNoContent, err)
 	}

@@ -186,7 +186,6 @@ func fetchItemsFromRSSFeedTask(request RSSFeedRequest) ([]rssFeedItem, error) {
 	}
 
 	feed, err := feedParser.ParseString(string(body))
-
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +205,6 @@ func fetchItemsFromRSSFeedTask(request RSSFeedRequest) ([]rssFeedItem, error) {
 			rssItem.Link = item.Link
 		} else {
 			parsedUrl, err := url.Parse(feed.Link)
-
 			if err != nil {
 				parsedUrl, err = url.Parse(request.Url)
 			}
@@ -317,7 +315,6 @@ func findThumbnailInItemExtensions(item *gofeed.Item) string {
 func fetchItemsFromRSSFeeds(requests []RSSFeedRequest) (rssFeedItemList, error) {
 	job := newJob(fetchItemsFromRSSFeedTask, requests).withWorkers(10)
 	feeds, errs, err := workerPoolDo(job)
-
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errNoContent, err)
 	}

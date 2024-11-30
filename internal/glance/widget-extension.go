@@ -32,10 +32,8 @@ func (widget *extensionWidget) initialize() error {
 		return errors.New("URL is required")
 	}
 
-	_, err := url.Parse(widget.URL)
-
-	if err != nil {
-		return err
+	if _, err := url.Parse(widget.URL); err != nil {
+		return fmt.Errorf("parsing URL: %v", err)
 	}
 
 	return nil
@@ -117,7 +115,6 @@ func fetchExtension(options extensionRequestOptions) (extension, error) {
 	request.URL.RawQuery = query.Encode()
 
 	response, err := http.DefaultClient.Do(request)
-
 	if err != nil {
 		slog.Error("Failed fetching extension", "url", options.URL, "error", err)
 		return extension{}, fmt.Errorf("%w: request failed: %w", errNoContent, err)
@@ -126,7 +123,6 @@ func fetchExtension(options extensionRequestOptions) (extension, error) {
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
-
 	if err != nil {
 		slog.Error("Failed reading response body of extension", "url", options.URL, "error", err)
 		return extension{}, fmt.Errorf("%w: could not read body: %w", errNoContent, err)

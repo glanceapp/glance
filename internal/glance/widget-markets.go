@@ -114,7 +114,6 @@ func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, erro
 
 	job := newJob(decodeJsonFromRequestTask[marketResponseJson](defaultClient), requests)
 	responses, errs, err := workerPoolDo(job)
-
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errNoContent, err)
 	}

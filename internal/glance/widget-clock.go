@@ -33,9 +33,7 @@ func (widget *clockWidget) initialize() error {
 			return errors.New("missing timezone value")
 		}
 
-		_, err := time.LoadLocation(widget.Timezones[t].Timezone)
-
-		if err != nil {
+		if _, err := time.LoadLocation(widget.Timezones[t].Timezone); err != nil {
 			return fmt.Errorf("invalid timezone '%s': %v", widget.Timezones[t].Timezone, err)
 		}
 	}

@@ -25,7 +25,6 @@ func extractDomainFromUrl(u string) string {
 	}
 
 	parsed, err := url.Parse(u)
-
 	if err != nil {
 		return ""
 	}

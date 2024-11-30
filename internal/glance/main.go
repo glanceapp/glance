@@ -12,7 +12,6 @@ var buildVersion = "dev"
 
 func Main() int {
 	options, err := parseCliOptions()
-
 	if err != nil {
 		fmt.Println(err)
 		return 1

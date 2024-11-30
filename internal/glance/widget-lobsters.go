@@ -76,13 +76,11 @@ type lobstersFeedResponseJson []lobstersPostResponseJson
 
 func fetchLobstersPostsFromFeed(feedUrl string) (forumPostList, error) {
 	request, err := http.NewRequest("GET", feedUrl, nil)
-
 	if err != nil {
 		return nil, err
 	}
 
 	feed, err := decodeJsonFromRequest[lobstersFeedResponseJson](defaultClient, request)
-
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +136,6 @@ func fetchLobstersPosts(customURL string, instanceURL string, sortBy string, tag
 	}
 
 	posts, err := fetchLobstersPostsFromFeed(feedUrl)
-
 	if err != nil {
 		return nil, err
 	}

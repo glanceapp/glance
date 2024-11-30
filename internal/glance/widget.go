@@ -97,7 +97,6 @@ func (w *widgets) UnmarshalYAML(node *yaml.Node) error {
 		}
 
 		widget, err := newWidget(meta.Type)
-
 		if err != nil {
 			return err
 		}
@@ -201,7 +200,6 @@ func (w *widgetBase) setProviders(providers *widgetProviders) {
 func (w *widgetBase) renderTemplate(data any, t *template.Template) template.HTML {
 	w.templateBuffer.Reset()
 	err := t.Execute(&w.templateBuffer, data)
-
 	if err != nil {
 		w.ContentAvailable = false
 		w.Error = err

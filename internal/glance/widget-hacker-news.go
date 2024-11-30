@@ -78,7 +78,6 @@ type hackerNewsPostResponseJson struct {
 func fetchHackerNewsPostIds(sort string) ([]int, error) {
 	request, _ := http.NewRequest("GET", fmt.Sprintf("https://hacker-news.firebaseio.com/v0/%sstories.json", sort), nil)
 	response, err := decodeJsonFromRequest[[]int](defaultClient, request)
-
 	if err != nil {
 		return nil, fmt.Errorf("%w: could not fetch list of post IDs", errNoContent)
 	}
@@ -97,7 +96,6 @@ func fetchHackerNewsPostsFromIds(postIds []int, commentsUrlTemplate string) (for
 	task := decodeJsonFromRequestTask[hackerNewsPostResponseJson](defaultClient)
 	job := newJob(task, requests).withWorkers(30)
 	results, errs, err := workerPoolDo(job)
-
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +140,6 @@ func fetchHackerNewsPostsFromIds(postIds []int, commentsUrlTemplate string) (for
 
 func fetchHackerNewsPosts(sort string, limit int, commentsUrlTemplate string) (forumPostList, error) {
 	postIds, err := fetchHackerNewsPostIds(sort)
-
 	if err != nil {
 		return nil, err
 	}

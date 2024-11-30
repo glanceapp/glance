@@ -39,7 +39,6 @@ func (widget *customAPIWidget) initialize() error {
 	}
 
 	compiledTemplate, err := template.New("").Funcs(customAPITemplateFuncs).Parse(widget.Template)
-
 	if err != nil {
 		return fmt.Errorf("parsing template: %w", err)
 	}

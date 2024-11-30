@@ -99,7 +99,6 @@ func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	duration, err := strconv.Atoi(matches[1])
-
 	if err != nil {
 		return err
 	}

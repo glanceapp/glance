@@ -23,9 +23,7 @@ func (widget *iframeWidget) initialize() error {
 		return errors.New("source is required")
 	}
 
-	_, err := url.Parse(widget.Source)
-
-	if err != nil {
+	if _, err := url.Parse(widget.Source); err != nil {
 		return fmt.Errorf("parsing URL: %v", err)
 	}
 
