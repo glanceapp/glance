@@ -142,14 +142,14 @@ func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, max
 	wg.Add(1)
 	go (func() {
 		defer wg.Done()
-		repositoryResponse, detailsErr = decodeJsonFromRequest[githubRepositoryResponseJson](defaultClient, repositoryRequest)
+		repositoryResponse, detailsErr = decodeJsonFromRequest[githubRepositoryResponseJson](defaultHTTPClient, repositoryRequest)
 	})()
 
 	if maxPRs > 0 {
 		wg.Add(1)
 		go (func() {
 			defer wg.Done()
-			PRsResponse, PRsErr = decodeJsonFromRequest[githubTicketResponseJson](defaultClient, PRsRequest)
+			PRsResponse, PRsErr = decodeJsonFromRequest[githubTicketResponseJson](defaultHTTPClient, PRsRequest)
 		})()
 	}
 
@@ -157,7 +157,7 @@ func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, max
 		wg.Add(1)
 		go (func() {
 			defer wg.Done()
-			issuesResponse, issuesErr = decodeJsonFromRequest[githubTicketResponseJson](defaultClient, issuesRequest)
+			issuesResponse, issuesErr = decodeJsonFromRequest[githubTicketResponseJson](defaultHTTPClient, issuesRequest)
 		})()
 	}
 
@@ -165,7 +165,7 @@ func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, max
 		wg.Add(1)
 		go (func() {
 			defer wg.Done()
-			commitsResponse, CommitsErr = decodeJsonFromRequest[[]gitHubCommitResponseJson](defaultClient, CommitsRequest)
+			commitsResponse, CommitsErr = decodeJsonFromRequest[[]gitHubCommitResponseJson](defaultHTTPClient, CommitsRequest)
 		})()
 	}
 

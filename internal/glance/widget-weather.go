@@ -172,7 +172,7 @@ func fetchOpenMeteoPlaceFromName(location string) (*openMeteoPlaceResponseJson, 
 	location, area := parsePlaceName(location)
 	requestUrl := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?name=%s&count=10&language=en&format=json", url.QueryEscape(location))
 	request, _ := http.NewRequest("GET", requestUrl, nil)
-	responseJson, err := decodeJsonFromRequest[openMeteoPlacesResponseJson](defaultClient, request)
+	responseJson, err := decodeJsonFromRequest[openMeteoPlacesResponseJson](defaultHTTPClient, request)
 	if err != nil {
 		return nil, fmt.Errorf("fetching places data: %v", err)
 	}
@@ -232,7 +232,7 @@ func fetchWeatherForOpenMeteoPlace(place *openMeteoPlaceResponseJson, units stri
 
 	requestUrl := "https://api.open-meteo.com/v1/forecast?" + query.Encode()
 	request, _ := http.NewRequest("GET", requestUrl, nil)
-	responseJson, err := decodeJsonFromRequest[openMeteoWeatherResponseJson](defaultClient, request)
+	responseJson, err := decodeJsonFromRequest[openMeteoWeatherResponseJson](defaultHTTPClient, request)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errNoContent, err)
 	}

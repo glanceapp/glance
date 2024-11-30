@@ -214,7 +214,7 @@ func fetchLatestGithubRelease(request *releaseRequest) (*appRelease, error) {
 		httpRequest.Header.Add("Authorization", "Bearer "+(*request.token))
 	}
 
-	response, err := decodeJsonFromRequest[githubReleaseLatestResponseJson](defaultClient, httpRequest)
+	response, err := decodeJsonFromRequest[githubReleaseLatestResponseJson](defaultHTTPClient, httpRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +275,7 @@ func fetchLatestDockerHubRelease(request *releaseRequest) (*appRelease, error) {
 	var tag *dockerHubRepositoryTagResponse
 
 	if len(tagParts) == 1 {
-		response, err := decodeJsonFromRequest[dockerHubRepositoryTagsResponse](defaultClient, httpRequest)
+		response, err := decodeJsonFromRequest[dockerHubRepositoryTagsResponse](defaultHTTPClient, httpRequest)
 		if err != nil {
 			return nil, err
 		}
@@ -286,7 +286,7 @@ func fetchLatestDockerHubRelease(request *releaseRequest) (*appRelease, error) {
 
 		tag = &response.Results[0]
 	} else {
-		response, err := decodeJsonFromRequest[dockerHubRepositoryTagResponse](defaultClient, httpRequest)
+		response, err := decodeJsonFromRequest[dockerHubRepositoryTagResponse](defaultHTTPClient, httpRequest)
 		if err != nil {
 			return nil, err
 		}
@@ -346,7 +346,7 @@ func fetchLatestGitLabRelease(request *releaseRequest) (*appRelease, error) {
 		httpRequest.Header.Add("PRIVATE-TOKEN", *request.token)
 	}
 
-	response, err := decodeJsonFromRequest[gitlabReleaseResponseJson](defaultClient, httpRequest)
+	response, err := decodeJsonFromRequest[gitlabReleaseResponseJson](defaultHTTPClient, httpRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -379,7 +379,7 @@ func fetchLatestCodebergRelease(request *releaseRequest) (*appRelease, error) {
 		return nil, err
 	}
 
-	response, err := decodeJsonFromRequest[codebergReleaseResponseJson](defaultClient, httpRequest)
+	response, err := decodeJsonFromRequest[codebergReleaseResponseJson](defaultHTTPClient, httpRequest)
 	if err != nil {
 		return nil, err
 	}

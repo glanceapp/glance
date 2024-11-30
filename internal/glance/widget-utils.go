@@ -20,18 +20,18 @@ var (
 
 const defaultClientTimeout = 5 * time.Second
 
-var defaultClient = &http.Client{
+var defaultHTTPClient = &http.Client{
 	Timeout: defaultClientTimeout,
 }
 
-var defaultInsecureClient = &http.Client{
+var defaultInsecureHTTPClient = &http.Client{
 	Timeout: defaultClientTimeout,
 	Transport: &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	},
 }
 
-type RequestDoer interface {
+type requestDoer interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
@@ -39,7 +39,7 @@ func setBrowserUserAgentHeader(request *http.Request) {
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0")
 }
 
-func decodeJsonFromRequest[T any](client RequestDoer, request *http.Request) (T, error) {
+func decodeJsonFromRequest[T any](client requestDoer, request *http.Request) (T, error) {
 	var result T
 
 	response, err := client.Do(request)
@@ -72,14 +72,14 @@ func decodeJsonFromRequest[T any](client RequestDoer, request *http.Request) (T,
 	return result, nil
 }
 
-func decodeJsonFromRequestTask[T any](client RequestDoer) func(*http.Request) (T, error) {
+func decodeJsonFromRequestTask[T any](client requestDoer) func(*http.Request) (T, error) {
 	return func(request *http.Request) (T, error) {
 		return decodeJsonFromRequest[T](client, request)
 	}
 }
 
 // TODO: tidy up, these are a copy of the above but with a line changed
-func decodeXmlFromRequest[T any](client RequestDoer, request *http.Request) (T, error) {
+func decodeXmlFromRequest[T any](client requestDoer, request *http.Request) (T, error) {
 	var result T
 
 	response, err := client.Do(request)
@@ -112,7 +112,7 @@ func decodeXmlFromRequest[T any](client RequestDoer, request *http.Request) (T, 
 	return result, nil
 }
 
-func decodeXmlFromRequestTask[T any](client RequestDoer) func(*http.Request) (T, error) {
+func decodeXmlFromRequestTask[T any](client requestDoer) func(*http.Request) (T, error) {
 	return func(request *http.Request) (T, error) {
 		return decodeXmlFromRequest[T](client, request)
 	}

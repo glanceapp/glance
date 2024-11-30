@@ -82,7 +82,7 @@ func fetchTopGamesFromTwitch(exclude []string, limit int) ([]twitchCategory, err
 	reader := strings.NewReader(fmt.Sprintf(twitchDirectoriesOperationRequestBody, len(exclude)+limit))
 	request, _ := http.NewRequest("POST", twitchGqlEndpoint, reader)
 	request.Header.Add("Client-ID", twitchGqlClientId)
-	response, err := decodeJsonFromRequest[[]twitchDirectoriesOperationResponse](defaultClient, request)
+	response, err := decodeJsonFromRequest[[]twitchDirectoriesOperationResponse](defaultHTTPClient, request)
 	if err != nil {
 		return nil, err
 	}

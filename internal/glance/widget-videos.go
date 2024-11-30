@@ -126,7 +126,7 @@ func FetchYoutubeChannelUploads(channelIds []string, videoUrlTemplate string, in
 		requests = append(requests, request)
 	}
 
-	job := newJob(decodeXmlFromRequestTask[youtubeFeedResponseXml](defaultClient), requests).withWorkers(30)
+	job := newJob(decodeXmlFromRequestTask[youtubeFeedResponseXml](defaultHTTPClient), requests).withWorkers(30)
 
 	responses, errs, err := workerPoolDo(job)
 	if err != nil {

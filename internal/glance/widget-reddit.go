@@ -191,7 +191,7 @@ func fetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate
 
 	// Required to increase rate limit, otherwise Reddit randomly returns 429 even after just 2 requests
 	setBrowserUserAgentHeader(request)
-	responseJson, err := decodeJsonFromRequest[subredditResponseJson](defaultClient, request)
+	responseJson, err := decodeJsonFromRequest[subredditResponseJson](defaultHTTPClient, request)
 	if err != nil {
 		return nil, err
 	}

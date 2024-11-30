@@ -139,7 +139,7 @@ func fetchChannelFromTwitchTask(channel string) (twitchChannel, error) {
 	request, _ := http.NewRequest("POST", twitchGqlEndpoint, reader)
 	request.Header.Add("Client-ID", twitchGqlClientId)
 
-	response, err := decodeJsonFromRequest[[]twitchOperationResponse](defaultClient, request)
+	response, err := decodeJsonFromRequest[[]twitchOperationResponse](defaultHTTPClient, request)
 	if err != nil {
 		return result, err
 	}

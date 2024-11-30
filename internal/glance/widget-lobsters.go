@@ -80,7 +80,7 @@ func fetchLobstersPostsFromFeed(feedUrl string) (forumPostList, error) {
 		return nil, err
 	}
 
-	feed, err := decodeJsonFromRequest[lobstersFeedResponseJson](defaultClient, request)
+	feed, err := decodeJsonFromRequest[lobstersFeedResponseJson](defaultHTTPClient, request)
 	if err != nil {
 		return nil, err
 	}

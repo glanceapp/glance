@@ -170,7 +170,7 @@ func fetchItemsFromRSSFeedTask(request RSSFeedRequest) ([]rssFeedItem, error) {
 		req.Header.Add(key, value)
 	}
 
-	resp, err := defaultClient.Do(req)
+	resp, err := defaultHTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

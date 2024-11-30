@@ -102,7 +102,7 @@ func fetchWatchUUIDsFromChangeDetection(instanceURL string, token string) ([]str
 		request.Header.Add("x-api-key", token)
 	}
 
-	uuidsMap, err := decodeJsonFromRequest[map[string]struct{}](defaultClient, request)
+	uuidsMap, err := decodeJsonFromRequest[map[string]struct{}](defaultHTTPClient, request)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch list of watch UUIDs: %v", err)
 	}
@@ -135,7 +135,7 @@ func fetchWatchesFromChangeDetection(instanceURL string, requestedWatchIDs []str
 		requests[i] = request
 	}
 
-	task := decodeJsonFromRequestTask[changeDetectionResponseJson](defaultClient)
+	task := decodeJsonFromRequestTask[changeDetectionResponseJson](defaultHTTPClient)
 	job := newJob(task, requests).withWorkers(15)
 	responses, errs, err := workerPoolDo(job)
 	if err != nil {

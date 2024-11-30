@@ -75,7 +75,7 @@ func (widget *customAPIWidget) Render() template.HTML {
 func fetchAndParseCustomAPI(req *http.Request, tmpl *template.Template) (template.HTML, error) {
 	emptyBody := template.HTML("")
 
-	resp, err := defaultClient.Do(req)
+	resp, err := defaultHTTPClient.Do(req)
 	if err != nil {
 		return emptyBody, err
 	}

@@ -142,9 +142,9 @@ func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (SiteStatus, error) {
 	var response *http.Response
 
 	if !statusRequest.AllowInsecure {
-		response, err = defaultClient.Do(request)
+		response, err = defaultHTTPClient.Do(request)
 	} else {
-		response, err = defaultInsecureClient.Do(request)
+		response, err = defaultInsecureHTTPClient.Do(request)
 	}
 
 	status := SiteStatus{ResponseTime: time.Since(requestSentAt)}
