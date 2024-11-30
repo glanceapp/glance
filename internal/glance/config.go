@@ -159,6 +159,14 @@ func configFilesWatcher(
 	onChange func(newContents []byte),
 	onErr func(error),
 ) (func() error, error) {
+	mainFileAbsPath, err := filepath.Abs(mainFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("getting absolute path of main file: %w", err)
+	}
+
+	// TODO: refactor, flaky
+	lastIncludes[mainFileAbsPath] = struct{}{}
+
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, fmt.Errorf("creating watcher: %w", err)
@@ -169,26 +177,26 @@ func configFilesWatcher(
 		return nil, fmt.Errorf("adding main file to watcher: %w", err)
 	}
 
-	updateWatchedIncludes := func(previousIncludes map[string]struct{}, newIncludes map[string]struct{}) {
-		for includePath := range previousIncludes {
-			if _, ok := newIncludes[includePath]; !ok {
-				watcher.Remove(includePath)
+	updateWatchedFiles := func(previousWatched map[string]struct{}, newWatched map[string]struct{}) {
+		for filePath := range previousWatched {
+			if _, ok := newWatched[filePath]; !ok {
+				watcher.Remove(filePath)
 			}
 		}
 
-		for includePath := range newIncludes {
-			if _, ok := previousIncludes[includePath]; !ok {
-				if err := watcher.Add(includePath); err != nil {
+		for filePath := range newWatched {
+			if _, ok := previousWatched[filePath]; !ok {
+				if err := watcher.Add(filePath); err != nil {
 					log.Printf(
-						"Could not add included config file to watcher, changes to this file will not trigger a reload. path: %s, error: %v",
-						includePath, err,
+						"Could not add file to watcher, changes to this file will not trigger a reload. path: %s, error: %v",
+						filePath, err,
 					)
 				}
 			}
 		}
 	}
 
-	updateWatchedIncludes(nil, lastIncludes)
+	updateWatchedFiles(nil, lastIncludes)
 
 	// needed for lastContents and lastIncludes because they get updated in multiple goroutines
 	mu := sync.Mutex{}
@@ -204,7 +212,9 @@ func configFilesWatcher(
 		defer mu.Unlock()
 
 		if !maps.Equal(currentIncludes, lastIncludes) {
-			updateWatchedIncludes(lastIncludes, currentIncludes)
+			// TODO: refactor, flaky
+			currentIncludes[mainFileAbsPath] = struct{}{}
+			updateWatchedFiles(lastIncludes, currentIncludes)
 			lastIncludes = currentIncludes
 		}
 
