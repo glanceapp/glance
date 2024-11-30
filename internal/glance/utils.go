@@ -147,10 +147,11 @@ func titleToSlug(s string) string {
 
 func fileServerWithCache(fs http.FileSystem, cacheDuration time.Duration) http.Handler {
 	server := http.FileServer(fs)
+	cacheControlValue := fmt.Sprintf("public, max-age=%d", int(cacheDuration.Seconds()))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// TODO: fix always setting cache control even if the file doesn't exist
-		w.Header().Set("Cache-Control", fmt.Sprintf("public, max-age=%d", int(cacheDuration.Seconds())))
+		w.Header().Set("Cache-Control", cacheControlValue)
 		server.ServeHTTP(w, r)
 	})
 }
