@@ -20,12 +20,13 @@ type dnsStatsWidget struct {
 	TimeLabels [8]string `yaml:"-"`
 	Stats      *dnsStats `yaml:"-"`
 
-	HourFormat string           `yaml:"hour-format"`
-	Service    string           `yaml:"service"`
-	URL        optionalEnvField `yaml:"url"`
-	Token      optionalEnvField `yaml:"token"`
-	Username   optionalEnvField `yaml:"username"`
-	Password   optionalEnvField `yaml:"password"`
+	HourFormat    string           `yaml:"hour-format"`
+	Service       string           `yaml:"service"`
+	AllowInsecure bool             `yaml:"allow-insecure"`
+	URL           optionalEnvField `yaml:"url"`
+	Token         optionalEnvField `yaml:"token"`
+	Username      optionalEnvField `yaml:"username"`
+	Password      optionalEnvField `yaml:"password"`
 }
 
 func makeDNSWidgetTimeLabels(format string) [8]string {
@@ -57,9 +58,9 @@ func (widget *dnsStatsWidget) update(ctx context.Context) {
 	var err error
 
 	if widget.Service == "adguard" {
-		stats, err = fetchAdguardStats(string(widget.URL), string(widget.Username), string(widget.Password))
+		stats, err = fetchAdguardStats(string(widget.URL), widget.AllowInsecure, string(widget.Username), string(widget.Password))
 	} else {
-		stats, err = fetchPiholeStats(string(widget.URL), string(widget.Token))
+		stats, err = fetchPiholeStats(string(widget.URL), widget.AllowInsecure, string(widget.Token))
 	}
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
@@ -110,7 +111,7 @@ type adguardStatsResponse struct {
 	TopBlockedDomains []map[string]int `json:"top_blocked_domains"`
 }
 
-func fetchAdguardStats(instanceURL, username, password string) (*dnsStats, error) {
+func fetchAdguardStats(instanceURL string, allowInsecure bool, username, password string) (*dnsStats, error) {
 	requestURL := strings.TrimRight(instanceURL, "/") + "/control/stats"
 
 	request, err := http.NewRequest("GET", requestURL, nil)
@@ -120,7 +121,14 @@ func fetchAdguardStats(instanceURL, username, password string) (*dnsStats, error
 
 	request.SetBasicAuth(username, password)
 
-	responseJson, err := decodeJsonFromRequest[adguardStatsResponse](defaultClient, request)
+	var client requestDoer
+	if !allowInsecure {
+		client = defaultHTTPClient
+	} else {
+		client = defaultInsecureHTTPClient
+	}
+
+	responseJson, err := decodeJsonFromRequest[adguardStatsResponse](client, request)
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +250,7 @@ func (p *piholeTopBlockedDomains) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func fetchPiholeStats(instanceURL, token string) (*dnsStats, error) {
+func fetchPiholeStats(instanceURL string, allowInsecure bool, token string) (*dnsStats, error) {
 	if token == "" {
 		return nil, errors.New("missing API token")
 	}
@@ -255,7 +263,14 @@ func fetchPiholeStats(instanceURL, token string) (*dnsStats, error) {
 		return nil, err
 	}
 
-	responseJson, err := decodeJsonFromRequest[piholeStatsResponse](defaultClient, request)
+	var client requestDoer
+	if !allowInsecure {
+		client = defaultHTTPClient
+	} else {
+		client = defaultInsecureHTTPClient
+	}
+
+	responseJson, err := decodeJsonFromRequest[piholeStatsResponse](client, request)
 	if err != nil {
 		return nil, err
 	}

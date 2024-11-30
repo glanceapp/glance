@@ -1343,6 +1343,7 @@ Preview:
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | service | string | no | pihole |
+| allow-insecure | bool | no | false |
 | url | string | yes |  |
 | username | string | when service is `adguard` |  |
 | password | string | when service is `adguard` |  |
@@ -1351,6 +1352,9 @@ Preview:
 
 ##### `service`
 Either `adguard` or `pihole`.
+
+##### `allow-insecure`
+Whether to allow invalid/self-signed certificates when making the request to the service.
 
 ##### `url`
 The base URL of the service. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
