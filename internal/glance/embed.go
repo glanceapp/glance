@@ -20,9 +20,17 @@ var _templateFS embed.FS
 var staticFS, _ = fs.Sub(_staticFS, "static")
 var templateFS, _ = fs.Sub(_templateFS, "templates")
 
-var staticFSHash = computeFSHash(staticFS)
+var staticFSHash = func() string {
+	hash, err := computeFSHash(staticFS)
+	if err != nil {
+		log.Printf("Could not compute static assets cache key: %v", err)
+		return strconv.FormatInt(time.Now().Unix(), 10)
+	}
 
-func computeFSHash(files fs.FS) string {
+	return hash
+}()
+
+func computeFSHash(files fs.FS) (string, error) {
 	hash := md5.New()
 
 	err := fs.WalkDir(files, ".", func(path string, d fs.DirEntry, err error) error {
@@ -46,10 +54,9 @@ func computeFSHash(files fs.FS) string {
 		return nil
 	})
 
-	if err == nil {
-		return hex.EncodeToString(hash.Sum(nil))[:10]
+	if err != nil {
+		return "", err
 	}
 
-	log.Printf("Could not compute assets cache: %v", err)
-	return strconv.FormatInt(time.Now().Unix(), 10)
+	return hex.EncodeToString(hash.Sum(nil))[:10], nil
 }
