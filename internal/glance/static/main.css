@@ -723,6 +723,7 @@ details[open] .summary::after {
     justify-content: space-between;
     position: relative;
     margin-bottom: 1.8rem;
+    z-index: 1;
 }
 
 .widget-error-header::before {
@@ -738,17 +739,9 @@ details[open] .summary::after {
 .widget-error-icon {
     width: 2.4rem;
     height: 2.4rem;
-    border: 0.2rem solid var(--color-negative);
-    border-radius: 50%;
-    text-align: center;
-    line-height: 2rem;
     flex-shrink: 0;
+    stroke: var(--color-negative);
     opacity: 0.6;
-}
-
-.widget-error-icon::before {
-    content: '!';
-    color: var(--color-text-highlight);
 }
 
 .widget-content {
