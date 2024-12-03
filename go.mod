@@ -3,9 +3,10 @@ module github.com/glanceapp/glance
 go 1.23.1
 
 require (
+	github.com/fsnotify/fsnotify v1.8.0
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/tidwall/gjson v1.18.0
-	golang.org/x/text v0.18.0
+	golang.org/x/text v0.20.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -18,5 +19,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
-	golang.org/x/net v0.29.0 // indirect
+	golang.org/x/net v0.31.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
 )

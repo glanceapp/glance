@@ -35,6 +35,7 @@
   - [Docker](#docker)
 
 ## Intro
+<!-- TODO: update -->
 Configuration is done via a single YAML file and a server restart is required in order for any changes to take effect. Trying to start the server with an invalid config file will result in an error.
 
 ## Preconfigured page
@@ -113,6 +114,8 @@ This will give you a page that looks like the following:
 ![](images/preconfigured-page-preview.png)
 
 Configure the widgets, add more of them, add extra pages, etc. Make it your own!
+
+<!-- TODO: update - add information about top level document key -->
 
 ## Server
 Server configuration is done through a top level `server` property. Example:
@@ -1341,6 +1344,7 @@ Preview:
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | service | string | no | pihole |
+| allow-insecure | bool | no | false |
 | url | string | yes |  |
 | username | string | when service is `adguard` |  |
 | password | string | when service is `adguard` |  |
@@ -1349,6 +1353,9 @@ Preview:
 
 ##### `service`
 Either `adguard` or `pihole`.
+
+##### `allow-insecure`
+Whether to allow invalid/self-signed certificates when making the request to the service.
 
 ##### `url`
 The base URL of the service. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
@@ -1597,15 +1604,25 @@ Example:
 
 ```yaml
 - type: calendar
+  start-sunday: false
 ```
 
 Preview:
 
 ![](images/calendar-widget-preview.png)
 
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| start-sunday | boolean | no | false |
+
+##### `start-sunday`
+Whether calendar weeks start on Sunday or Monday.
+
 > [!NOTE]
 >
-> There is currently no customizability available for the calendar. Extra features will be added in the future.
+> There is currently little customizability available for the calendar. Extra features will be added in the future.
 
 ### Markets
 Display a list of markets, their current value, change for the day and a small 21d chart. Data is taken from Yahoo Finance.
