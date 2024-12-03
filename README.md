@@ -20,9 +20,9 @@
 * Twitch channels & top games
 * GitHub releases
 * Repository overview
+* Docker containers
 * Site monitor
 * Search box
-* Docker
 
 #### Themeable
 ![multiple color schemes example](docs/images/themes-example.png)

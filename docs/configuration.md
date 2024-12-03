@@ -1795,7 +1795,8 @@ Example:
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
 
-### Docker
+### Docker Containers
+<!-- TODO: update -->
 The Docker widget allows you to monitor your Docker containers.
 To enable this feature, ensure that your setup provides access to the **docker.sock** file (also you may use a TCP connection).
 

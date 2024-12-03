@@ -1390,6 +1390,33 @@ details[open] .summary::after {
     flex-shrink: 0;
 }
 
+.docker-container-icon {
+    display: block;
+    filter: grayscale(0.4);
+    object-fit: contain;
+    aspect-ratio: 1 / 1;
+    width: 2.7rem;
+    opacity: 0.8;
+    transition: filter 0.3s, opacity 0.3s;
+}
+
+.docker-container-icon.flat-icon {
+    opacity: 0.7;
+}
+
+.docker-container:hover .docker-container-icon {
+    opacity: 1;
+}
+
+.docker-container:hover .docker-container-icon:not(.flat-icon) {
+    filter: grayscale(0);
+}
+
+.docker-container-status-icon {
+    width: 2rem;
+    height: 2rem;
+}
+
 .thumbnail {
     filter: grayscale(0.2) contrast(0.9);
     opacity: 0.8;
@@ -1538,37 +1565,6 @@ details[open] .summary::after {
     position: absolute;
     inset: 0;
     background: linear-gradient(0deg, var(--color-widget-background) 10%, transparent);
-}
-
-.docker-container-icon {
-    display: block;
-    opacity: 0.8;
-    filter: grayscale(0.4);
-    object-fit: contain;
-    aspect-ratio: 1 / 1;
-    width: 3.2rem;
-    position: relative;
-    top: -0.1rem;
-    transition: filter 0.3s, opacity 0.3s;
-}
-
-.docker-container-icon.simple-icon {
-    opacity: 0.7;
-}
-
-.docker-container:hover .docker-container-icon {
-    opacity: 1;
-}
-
-.docker-container:hover .docker-container-icon:not(.simple-icon) {
-    filter: grayscale(0);
-}
-
-.docker-container-status-icon {
-    flex-shrink: 0;
-    margin-left: auto;
-    width: 2rem;
-    height: 2rem;
 }
 
 @media (max-width: 1190px) {
@@ -1837,6 +1833,7 @@ details[open] .summary::after {
 .gap-35             { gap: 3.5rem; }
 .gap-45             { gap: 4.5rem; }
 .gap-55             { gap: 5.5rem; }
+.margin-left-auto   { margin-left: auto; }
 .margin-top-3       { margin-top: 0.3rem; }
 .margin-top-5       { margin-top: 0.5rem; }
 .margin-top-7       { margin-top: 0.7rem; }

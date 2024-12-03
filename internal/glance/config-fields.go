@@ -180,22 +180,19 @@ type customIconField struct {
 	// invert the color based on the theme being light or dark
 }
 
-func (i *customIconField) UnmarshalYAML(node *yaml.Node) error {
-	var value string
-	if err := node.Decode(&value); err != nil {
-		return err
-	}
+func newCustomIconField(value string) customIconField {
+	field := customIconField{}
 
 	prefix, icon, found := strings.Cut(value, ":")
 	if !found {
-		i.URL = url
-		return nil
+		field.URL = value
+		return field
 	}
 
 	switch prefix {
 	case "si":
-		i.URL = "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + icon + ".svg"
-		i.IsFlatIcon = true
+		field.URL = "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + icon + ".svg"
+		field.IsFlatIcon = true
 	case "di":
 		// syntax: di:<icon_name>[.svg|.png]
 		// if the icon name is specified without extension, it is assumed to be wanting the SVG icon
@@ -211,18 +208,20 @@ func (i *customIconField) UnmarshalYAML(node *yaml.Node) error {
 			ext = "svg"
 		}
 
-		i.URL = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/" + ext + "/" + basename + "." + ext
+		field.URL = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/" + ext + "/" + basename + "." + ext
 	default:
-		i.URL = url
+		field.URL = value
 	}
 
-	return nil
+	return field
 }
 
-func (i *CustomIcon) UnmarshalYAML(node *yaml.Node) error {
+func (i *customIconField) UnmarshalYAML(node *yaml.Node) error {
 	var value string
 	if err := node.Decode(&value); err != nil {
 		return err
 	}
-	return i.FromURL(value)
+
+	*i = newCustomIconField(value)
+	return nil
 }

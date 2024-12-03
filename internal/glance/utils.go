@@ -166,3 +166,15 @@ func executeTemplateToHTML(t *template.Template, data interface{}) (template.HTM
 
 	return template.HTML(b.String()), nil
 }
+
+func stringToBool(s string) bool {
+	return s == "true" || s == "yes"
+}
+
+func itemAtIndexOrDefault[T any](items []T, index int, def T) T {
+	if index >= len(items) {
+		return def
+	}
+
+	return items[index]
+}
