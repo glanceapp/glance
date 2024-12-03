@@ -123,11 +123,11 @@ function repositionContainer() {
     } else if (left + containerBounds.width > window.innerWidth) {
         containerElement.style.removeProperty("left");
         containerElement.style.right = 0;
-        containerElement.style.setProperty("--triangle-offset", containerBounds.width - containerInlinePadding - (window.innerWidth - targetBounds.left - targetBoundsWidthOffset) + "px");
+        containerElement.style.setProperty("--triangle-offset", containerBounds.width - containerInlinePadding - (window.innerWidth - targetBounds.left - targetBoundsWidthOffset) + -1 + "px");
     } else {
         containerElement.style.removeProperty("right");
         containerElement.style.left = left + "px";
-        containerElement.style.setProperty("--triangle-offset", ((targetBounds.left + targetBoundsWidthOffset) - left - containerInlinePadding) + "px");
+        containerElement.style.setProperty("--triangle-offset", ((targetBounds.left + targetBoundsWidthOffset) - left - containerInlinePadding) + -1 + "px");
     }
 
     const distanceFromTarget = activeTarget.dataset.popoverMargin || defaultDistanceFromTarget;
