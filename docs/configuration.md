@@ -32,6 +32,7 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
+  - [Docker](#docker)
 
 ## Intro
 <!-- TODO: update -->
@@ -1793,3 +1794,75 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+### Docker Containers
+<!-- TODO: update -->
+The Docker widget allows you to monitor your Docker containers.
+To enable this feature, ensure that your setup provides access to the **docker.sock** file (also you may use a TCP connection).
+
+Add the following to your `docker-compose` or `docker run` command to enable the Docker widget:
+
+**Docker Example:**
+```bash
+docker run -d -p 8080:8080 \
+  -v ./glance.yml:/app/glance.yml \
+  -v /etc/timezone:/etc/timezone:ro \
+  -v /etc/localtime:/etc/localtime:ro \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  glanceapp/glance
+```
+
+**Docker Compose Example:**
+```yaml
+services:
+  glance:
+    image: glanceapp/glance
+    volumes:
+      - ./glance.yml:/app/glance.yml
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+```
+
+#### Configuration
+To integrate the Docker widget into your dashboard, include the following snippet in your `glance.yml` file:
+
+```yaml
+- type: docker
+  host-url: tcp://localhost:2375
+  cache: 1m
+```
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| host-url | string | no | `unix:///var/run/docker.sock` |
+
+#### Leveraging Container Labels
+You can use container labels to control visibility, URLs, icons, and titles within the Docker widget. Add the following labels to your container configuration for enhanced customization:
+
+```yaml
+labels:
+  - "glance.enable=true"       # Enable or disable visibility of the container (default: true)
+  - "glance.title=Glance"      # Optional friendly name (defaults to container name)
+  - "glance.url=https://app.example.com"  # Optional URL associated with the container
+  - "glance.iconUrl=si:docker" # Optional URL to an image which will be used as the icon for the site
+
+```
+
+**Default Values:**
+
+| Name           | Default    |
+|----------------|------------|
+| glance.enable  | true       |
+| glance.title   | Container name |
+| glance.url     | (none)     |
+| glance.iconUrl | si:docker  |
+
+Preview:
+
+![](images/docker-widget-preview.png)

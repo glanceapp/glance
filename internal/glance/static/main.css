@@ -723,6 +723,7 @@ details[open] .summary::after {
     justify-content: space-between;
     position: relative;
     margin-bottom: 1.8rem;
+    z-index: 1;
 }
 
 .widget-error-header::before {
@@ -738,17 +739,9 @@ details[open] .summary::after {
 .widget-error-icon {
     width: 2.4rem;
     height: 2.4rem;
-    border: 0.2rem solid var(--color-negative);
-    border-radius: 50%;
-    text-align: center;
-    line-height: 2rem;
     flex-shrink: 0;
+    stroke: var(--color-negative);
     opacity: 0.6;
-}
-
-.widget-error-icon::before {
-    content: '!';
-    color: var(--color-text-highlight);
 }
 
 .widget-content {
@@ -1397,6 +1390,33 @@ details[open] .summary::after {
     flex-shrink: 0;
 }
 
+.docker-container-icon {
+    display: block;
+    filter: grayscale(0.4);
+    object-fit: contain;
+    aspect-ratio: 1 / 1;
+    width: 2.7rem;
+    opacity: 0.8;
+    transition: filter 0.3s, opacity 0.3s;
+}
+
+.docker-container-icon.flat-icon {
+    opacity: 0.7;
+}
+
+.docker-container:hover .docker-container-icon {
+    opacity: 1;
+}
+
+.docker-container:hover .docker-container-icon:not(.flat-icon) {
+    filter: grayscale(0);
+}
+
+.docker-container-status-icon {
+    width: 2rem;
+    height: 2rem;
+}
+
 .thumbnail {
     filter: grayscale(0.2) contrast(0.9);
     opacity: 0.8;
@@ -1813,6 +1833,7 @@ details[open] .summary::after {
 .gap-35             { gap: 3.5rem; }
 .gap-45             { gap: 4.5rem; }
 .gap-55             { gap: 5.5rem; }
+.margin-left-auto   { margin-left: auto; }
 .margin-top-3       { margin-top: 0.3rem; }
 .margin-top-5       { margin-top: 0.5rem; }
 .margin-top-7       { margin-top: 0.7rem; }

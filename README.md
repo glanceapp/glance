@@ -20,6 +20,7 @@
 * Twitch channels & top games
 * GitHub releases
 * Repository overview
+* Docker containers
 * Site monitor
 * Search box
 
