@@ -71,12 +71,11 @@ var dockerContainerStateIconPriorities = map[string]int{
 }
 
 type dockerContainerJsonResponse struct {
-	Names   []string              `json:"Names"`
-	Image   string                `json:"Image"`
-	State   string                `json:"State"`
-	Status  string                `json:"Status"`
-	Labels  dockerContainerLabels `json:"Labels"`
-	Created int64                 `json:"Created"`
+	Names  []string              `json:"Names"`
+	Image  string                `json:"Image"`
+	State  string                `json:"State"`
+	Status string                `json:"Status"`
+	Labels dockerContainerLabels `json:"Labels"`
 }
 
 type dockerContainerLabels map[string]string
@@ -109,7 +108,6 @@ type dockerContainer struct {
 	Description string
 	Icon        customIconField
 	Children    dockerContainerList
-	Created     time.Time
 }
 
 type dockerContainerList []dockerContainer
@@ -159,7 +157,6 @@ func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContain
 			State:       strings.ToLower(container.State),
 			StateText:   strings.ToLower(container.Status),
 			Icon:        newCustomIconField(container.Labels.getOrDefault(dockerContainerLabelIcon, "si:docker")),
-			Created:     time.Unix(container.Created, 0),
 		}
 
 		if idValue := container.Labels.getOrDefault(dockerContainerLabelID, ""); idValue != "" {
