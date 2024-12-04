@@ -193,8 +193,9 @@ func newCustomIconField(value string) customIconField {
 	case "si":
 		field.URL = "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + icon + ".svg"
 		field.IsFlatIcon = true
-	case "di":
+	case "di", "sh":
 		// syntax: di:<icon_name>[.svg|.png]
+		// syntax: sh:<icon_name>[.svg|.png]
 		// if the icon name is specified without extension, it is assumed to be wanting the SVG icon
 		// otherwise, specify the extension of either .svg or .png to use either of the CDN offerings
 		// any other extension will be interpreted as .svg
@@ -208,7 +209,11 @@ func newCustomIconField(value string) customIconField {
 			ext = "svg"
 		}
 
-		field.URL = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/" + ext + "/" + basename + "." + ext
+		if prefix == "di" {
+			field.URL = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/" + ext + "/" + basename + "." + ext
+		} else {
+			field.URL = "https://cdn.jsdelivr.net/gh/selfhst/icons@main/" + ext + "/" + basename + "." + ext
+		}
 	default:
 		field.URL = value
 	}
