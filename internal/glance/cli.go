@@ -2,41 +2,66 @@ package glance
 
 import (
 	"flag"
+	"fmt"
 	"os"
+	"strings"
 )
 
-type CliIntent uint8
+type cliIntent uint8
 
 const (
-	CliIntentServe       CliIntent = iota
-	CliIntentCheckConfig           = iota
+	cliIntentServe          cliIntent = iota
+	cliIntentConfigValidate           = iota
+	cliIntentConfigPrint              = iota
+	cliIntentDiagnose                 = iota
 )
 
-type CliOptions struct {
-	Intent     CliIntent
-	ConfigPath string
+type cliOptions struct {
+	intent     cliIntent
+	configPath string
 }
 
-func ParseCliOptions() (*CliOptions, error) {
+func parseCliOptions() (*cliOptions, error) {
 	flags := flag.NewFlagSet("", flag.ExitOnError)
+	flags.Usage = func() {
+		fmt.Println("Usage: glance [options] command")
 
-	checkConfig := flags.Bool("check-config", false, "Check whether the config is valid")
+		fmt.Println("\nOptions:")
+		flags.PrintDefaults()
+
+		fmt.Println("\nCommands:")
+		fmt.Println("  config:validate     Validate the config file")
+		fmt.Println("  config:print        Print the parsed config file with embedded includes")
+		fmt.Println("  diagnose            Run diagnostic checks")
+	}
 	configPath := flags.String("config", "glance.yml", "Set config path")
-
 	err := flags.Parse(os.Args[1:])
-
 	if err != nil {
 		return nil, err
 	}
 
-	intent := CliIntentServe
+	var intent cliIntent
+	var args = flags.Args()
+	unknownCommandErr := fmt.Errorf("unknown command: %s", strings.Join(args, " "))
 
-	if *checkConfig {
-		intent = CliIntentCheckConfig
+	if len(args) == 0 {
+		intent = cliIntentServe
+	} else if len(args) == 1 {
+		if args[0] == "config:validate" {
+			intent = cliIntentConfigValidate
+		} else if args[0] == "config:print" {
+			intent = cliIntentConfigPrint
+		} else if args[0] == "diagnose" {
+			intent = cliIntentDiagnose
+		} else {
+			return nil, unknownCommandErr
+		}
+	} else {
+		return nil, unknownCommandErr
 	}
 
-	return &CliOptions{
-		Intent:     intent,
-		ConfigPath: *configPath,
+	return &cliOptions{
+		intent:     intent,
+		configPath: *configPath,
 	}, nil
 }
