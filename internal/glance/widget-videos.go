@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+const videosWidgetPlaylistPrefix = "playlist:"
+
 var (
 	videosWidgetTemplate     = mustParseTemplate("videos.html", "widget-base.html", "video-card-contents.html")
 	videosWidgetGridTemplate = mustParseTemplate("videos-grid.html", "widget-base.html", "video-card-contents.html")
@@ -43,7 +45,7 @@ func (widget *videosWidget) initialize() error {
 }
 
 func (widget *videosWidget) update(ctx context.Context) {
-	videos, err := FetchYoutubeChannelUploads(widget.Channels, widget.VideoUrlTemplate, widget.IncludeShorts)
+	videos, err := fetchYoutubeChannelUploads(widget.Channels, widget.VideoUrlTemplate, widget.IncludeShorts)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
@@ -110,16 +112,19 @@ func (v videoList) sortByNewest() videoList {
 	return v
 }
 
-func FetchYoutubeChannelUploads(channelIds []string, videoUrlTemplate string, includeShorts bool) (videoList, error) {
-	requests := make([]*http.Request, 0, len(channelIds))
+func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate string, includeShorts bool) (videoList, error) {
+	requests := make([]*http.Request, 0, len(channelOrPlaylistIDs))
 
-	for i := range channelIds {
+	for i := range channelOrPlaylistIDs {
 		var feedUrl string
-		if !includeShorts && strings.HasPrefix(channelIds[i], "UC") {
-			playlistId := strings.Replace(channelIds[i], "UC", "UULF", 1)
+		if strings.HasPrefix(channelOrPlaylistIDs[i], videosWidgetPlaylistPrefix) {
+			feedUrl = "https://www.youtube.com/feeds/videos.xml?playlist_id=" +
+				strings.TrimPrefix(channelOrPlaylistIDs[i], videosWidgetPlaylistPrefix)
+		} else if !includeShorts && strings.HasPrefix(channelOrPlaylistIDs[i], "UC") {
+			playlistId := strings.Replace(channelOrPlaylistIDs[i], "UC", "UULF", 1)
 			feedUrl = "https://www.youtube.com/feeds/videos.xml?playlist_id=" + playlistId
 		} else {
-			feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=" + channelIds[i]
+			feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=" + channelOrPlaylistIDs[i]
 		}
 
 		request, _ := http.NewRequest("GET", feedUrl, nil)
@@ -127,20 +132,18 @@ func FetchYoutubeChannelUploads(channelIds []string, videoUrlTemplate string, in
 	}
 
 	job := newJob(decodeXmlFromRequestTask[youtubeFeedResponseXml](defaultHTTPClient), requests).withWorkers(30)
-
 	responses, errs, err := workerPoolDo(job)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errNoContent, err)
 	}
 
-	videos := make(videoList, 0, len(channelIds)*15)
-
+	videos := make(videoList, 0, len(channelOrPlaylistIDs)*15)
 	var failed int
 
 	for i := range responses {
 		if errs[i] != nil {
 			failed++
-			slog.Error("Failed to fetch youtube feed", "channel", channelIds[i], "error", errs[i])
+			slog.Error("Failed to fetch youtube feed", "channel", channelOrPlaylistIDs[i], "error", errs[i])
 			continue
 		}
 

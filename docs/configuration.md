@@ -587,7 +587,15 @@ Preview:
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
-A list of channel IDs. One way of getting the ID of a channel is going to the channel's page and clicking on its description:
+A list of channel or playlist IDs. To specify a playlist, use the `playlist:` prefix like such:
+
+```yaml
+channels:
+  - playlist:PL8mG-RkN2uTyZZ00ObwZxxoG_nJbs3qec
+  - playlist:PL8mG-RkN2uTxTK4m_Vl2dYR9yE41kRdBg
+```
+
+One way of getting the ID of a channel is going to the channel's page and clicking on its description:
 
 ![](images/videos-channel-description-example.png)
 
