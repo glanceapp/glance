@@ -313,7 +313,7 @@ func findThumbnailInItemExtensions(item *gofeed.Item) string {
 }
 
 func fetchItemsFromRSSFeeds(requests []RSSFeedRequest) (rssFeedItemList, error) {
-	job := newJob(fetchItemsFromRSSFeedTask, requests).withWorkers(10)
+	job := newJob(fetchItemsFromRSSFeedTask, requests).withWorkers(30)
 	feeds, errs, err := workerPoolDo(job)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errNoContent, err)
