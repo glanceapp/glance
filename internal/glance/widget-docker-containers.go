@@ -113,8 +113,9 @@ type dockerContainer struct {
 type dockerContainerList []dockerContainer
 
 func (containers dockerContainerList) sortByStateIconThenTitle() {
+	p := &dockerContainerStateIconPriorities
+
 	sort.SliceStable(containers, func(a, b int) bool {
-		p := &dockerContainerStateIconPriorities
 		if containers[a].StateIcon != containers[b].StateIcon {
 			return (*p)[containers[a].StateIcon] < (*p)[containers[b].StateIcon]
 		}
