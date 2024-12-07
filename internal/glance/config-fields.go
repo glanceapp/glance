@@ -117,7 +117,7 @@ func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
-var optionalEnvFieldPattern = regexp.MustCompile(`(^|.)\$\{([A-Z_]+)\}`)
+var optionalEnvFieldPattern = regexp.MustCompile(`(^|.)\$\{([A-Z0-9_]+)\}`)
 
 type optionalEnvField string
 
