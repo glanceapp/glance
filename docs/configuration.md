@@ -281,6 +281,7 @@ theme:
 > .widget-type-rss a {
 >     font-size: 1.5rem;
 > }
+> ```
 >
 > In addition, you can also use the `css-class` property which is available on every widget to set custom class names for individual widgets.
 
