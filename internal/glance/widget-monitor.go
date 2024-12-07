@@ -19,7 +19,7 @@ type monitorWidget struct {
 	widgetBase `yaml:",inline"`
 	Sites      []struct {
 		*SiteStatusRequest `yaml:",inline"`
-		Status             *SiteStatus     `yaml:"-"`
+		Status             *siteStatus     `yaml:"-"`
 		Title              string          `yaml:"title"`
 		Icon               customIconField `yaml:"icon"`
 		SameTab            bool            `yaml:"same-tab"`
@@ -109,28 +109,28 @@ func statusCodeToStyle(status int, altStatusCodes []int) string {
 }
 
 type SiteStatusRequest struct {
-	URL           string `yaml:"url"`
-	CheckURL      string `yaml:"check-url"`
-	AllowInsecure bool   `yaml:"allow-insecure"`
+	URL           optionalEnvField `yaml:"url"`
+	CheckURL      optionalEnvField `yaml:"check-url"`
+	AllowInsecure bool             `yaml:"allow-insecure"`
 }
 
-type SiteStatus struct {
+type siteStatus struct {
 	Code         int
 	TimedOut     bool
 	ResponseTime time.Duration
 	Error        error
 }
 
-func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (SiteStatus, error) {
+func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (siteStatus, error) {
 	var url string
-	if statusRequest.CheckURL != "" {
-		url = statusRequest.CheckURL
+	if statusRequest.CheckURL.String() != "" {
+		url = statusRequest.CheckURL.String()
 	} else {
-		url = statusRequest.URL
+		url = statusRequest.URL.String()
 	}
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return SiteStatus{
+		return siteStatus{
 			Error: err,
 		}, nil
 	}
@@ -147,7 +147,7 @@ func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (SiteStatus, error) {
 		response, err = defaultInsecureHTTPClient.Do(request)
 	}
 
-	status := SiteStatus{ResponseTime: time.Since(requestSentAt)}
+	status := siteStatus{ResponseTime: time.Since(requestSentAt)}
 
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
@@ -165,7 +165,7 @@ func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (SiteStatus, error) {
 	return status, nil
 }
 
-func fetchStatusForSites(requests []*SiteStatusRequest) ([]SiteStatus, error) {
+func fetchStatusForSites(requests []*SiteStatusRequest) ([]siteStatus, error) {
 	job := newJob(fetchSiteStatusTask, requests).withWorkers(20)
 	results, _, err := workerPoolDo(job)
 	if err != nil {
