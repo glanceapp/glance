@@ -92,9 +92,6 @@ func newApplication(config *config) (*application, error) {
 }
 
 func (p *page) updateOutdatedWidgets() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
 	now := time.Now()
 
 	var wg sync.WaitGroup
@@ -168,10 +165,17 @@ func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Re
 		Page: page,
 	}
 
-	page.updateOutdatedWidgets()
-
+	var err error
 	var responseBytes bytes.Buffer
-	err := pageContentTemplate.Execute(&responseBytes, pageData)
+
+	func() {
+		page.mu.Lock()
+		defer page.mu.Unlock()
+
+		page.updateOutdatedWidgets()
+		err = pageContentTemplate.Execute(&responseBytes, pageData)
+	}()
+
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
