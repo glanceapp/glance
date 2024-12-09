@@ -1588,6 +1588,9 @@ Preview:
 | ---- | ---- | -------- | ------- |
 | channels | array | yes | |
 | collapse-after | integer | no | 5 |
+| collapse-after-rows | integer | no | 4 |
+| style | string | no | |
+| show-offline | boolean | no | false |
 | sort-by | string | no | viewers |
 
 ##### `channels`
@@ -1595,6 +1598,15 @@ A list of channels to display.
 
 ##### `collapse-after`
 How many channels are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+##### `collapse-after-rows`
+Specify the number of rows to show when using the `grid-cards` style before the "SHOW MORE" button appears.
+
+##### `style`
+Used to change the appearance of the widget. Possible values are `grid-cards`.
+
+##### `show-offline`
+
 
 ##### `sort-by`
 Can be used to specify the order in which the channels are displayed. Possible values are `viewers` and `live`.
