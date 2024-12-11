@@ -514,6 +514,7 @@ kbd:active {
     list-style: none;
     position: relative;
     display: flex;
+    z-index: 1;
 }
 
 .details[open] .summary {
@@ -533,6 +534,10 @@ kbd:active {
 
 .details[open] .summary::before, .summary:hover::before {
     opacity: 1;
+}
+
+.details:not([open]) .list-with-transition {
+    display: none;
 }
 
 .summary::after {
@@ -707,6 +712,7 @@ details[open] .summary::after {
     justify-content: space-between;
     position: relative;
     margin-bottom: 1.8rem;
+    z-index: 1;
 }
 
 .widget-error-header::before {
@@ -1095,7 +1101,6 @@ details[open] .summary::after {
 
 .dns-stats-graph-gridlines-container {
     position: absolute;
-    z-index: -1;
     inset: 0;
 }
 
@@ -1122,7 +1127,6 @@ details[open] .summary::after {
     content: '';
     position: absolute;
     inset: 1px 0;
-    z-index: -1;
     opacity: 0;
     background: var(--color-text-base);
     transition: opacity .2s;
@@ -1264,7 +1268,6 @@ details[open] .summary::after {
     overflow: hidden;
     mask-image: linear-gradient(0deg, transparent 40%, #000);
     -webkit-mask-image: linear-gradient(0deg, transparent 40%, #000);
-    z-index: -1;
 }
 
 .weather-column-rain::before {
