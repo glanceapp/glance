@@ -162,7 +162,7 @@ func toSimpleIconIfPrefixed(icon string) (string, bool) {
 	}
 
 	icon = strings.TrimPrefix(icon, "si:")
-	icon = "https://cdnjs.cloudflare.com/ajax/libs/simple-icons/11.14.0/" + icon + ".svg"
+	icon = "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + icon + ".svg"
 
 	return icon, true
 }
