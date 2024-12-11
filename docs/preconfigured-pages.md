@@ -4,6 +4,10 @@ Don't want to spend time configuring pages from scratch? No problem! Simply copy
 
 Pull requests with your page configurations are welcome!
 
+> [!NOTE]
+>
+> Pages must be placed under a top level `pages:` key, you can read more about that [here](configuration.md#pages).
+
 ## Startpage
 
 ![](images/startpage-preview.png)
