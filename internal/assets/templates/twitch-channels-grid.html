@@ -1,0 +1,29 @@
+{{ template "widget-base.html" . }}
+{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
+{{ define "widget-content" }}
+  <div class="flex flex-column">
+    <div>
+        <div class="cards-grid collapsible-container" data-collapse-after-rows="{{ .CollapseAfterRows }}">
+            {{ range .Groups.Online }}
+            <div class="card widget-content-frame thumbnail-parent">
+                {{ template "twitch-channels-card-contents" . }}
+            </div>
+            {{ end }}
+        </div>
+    </div>
+    {{ if .ShowOffline }}
+    <div class="margin-top-25">
+        <div class="widget-header">
+            <div class="uppercase">Offline Channels</div> 
+        </div>
+        <div class="cards-grid collapsible-container" data-collapse-after-rows="1">
+            {{ range .Groups.Offline }}
+            <div class="card widget-content-frame thumbnail-parent">
+              {{ template "twitch-channels-card-contents" . }}
+            </div>
+            {{ end }}
+        </div>
+    </div>
+    {{ end }}
+  </div>
+{{ end }}

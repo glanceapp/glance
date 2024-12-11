@@ -1,0 +1,32 @@
+{{ define "twitch-channels-card-contents" }}
+    {{ if .IsLive }}
+    <img class="video-thumbnail thumbnail" loading="lazy" src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{{ .Login }}-440x248.jpg" alt="" />
+    {{ end }}
+    <div class="flex flex-column grow padding-widget">
+        <div class="{{ if .IsLive }}twitch-channel-live {{ end }}flex gap-10 items-start thumbnail-parent">
+            <div class="twitch-channel-avatar-container">
+                <a href="https://twitch.tv/{{ .Login }}" class="twitch-channel-avatar-link" target="_blank" rel="noreferrer" >
+                    <img class="twitch-channel-avatar thumbnail" src="{{ .AvatarUrl }}" alt="{{ .Login }}" loading="lazy"/>
+                </a>
+            </div>
+            <div class="min-width-0">
+                <a href="https://twitch.tv/{{ .Login }}" class="size-h3{{ if .IsLive }} color-highlight{{ end }} block text-truncate" target="_blank" rel="noreferrer">{{ .Name }}</a>
+                {{ if .Exists }}
+                    {{ if .IsLive }}
+                        {{ if .Category }}
+                        <a class="text-truncate block" href="https://www.twitch.tv/directory/category/{{ .CategorySlug }}" target="_blank" rel="noreferrer">{{ .Category }}</a>
+                        {{ end }}
+                        <ul class="list-horizontal-text">
+                            <li {{ dynamicRelativeTimeAttrs .LiveSince }}></li>
+                            <li>{{ .ViewersCount | formatViewerCount }} viewers</li>
+                        </ul>
+                    {{ else }}
+                        <div>Offline</div>
+                    {{ end }}
+                {{ else }}
+                    <div class="color-negative">Not found</div>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+{{ end }}
