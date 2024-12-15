@@ -953,7 +953,7 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | parameters | key & value | no | |
 
 ##### `url`
-The URL of the extension.
+The URL of the extension. **Note that the query gets stripped from this URL and the one defined by `parameters` gets used instead.**
 
 ##### `allow-potentially-dangerous-html`
 Whether to allow the extension to display HTML.
