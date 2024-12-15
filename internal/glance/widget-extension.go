@@ -15,6 +15,8 @@ import (
 
 var extensionWidgetTemplate = mustParseTemplate("extension.html", "widget-base.html")
 
+const extensionWidgetDefaultTitle = "Extension"
+
 type extensionWidget struct {
 	widgetBase          `yaml:",inline"`
 	URL                 string            `yaml:"url"`
@@ -26,7 +28,7 @@ type extensionWidget struct {
 }
 
 func (widget *extensionWidget) initialize() error {
-	widget.withTitle("Extension").withCacheDuration(time.Minute * 30)
+	widget.withTitle(extensionWidgetDefaultTitle).withCacheDuration(time.Minute * 30)
 
 	if widget.URL == "" {
 		return errors.New("URL is required")
@@ -51,7 +53,7 @@ func (widget *extensionWidget) update(ctx context.Context) {
 
 	widget.Extension = extension
 
-	if extension.Title != "" {
+	if widget.Title == extensionWidgetDefaultTitle && extension.Title != "" {
 		widget.Title = extension.Title
 	}
 
