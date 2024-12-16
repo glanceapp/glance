@@ -2,7 +2,6 @@ package glance
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -110,61 +109,6 @@ func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	return nil
-}
-
-var optionalEnvFieldPattern = regexp.MustCompile(`(^|.)\$\{([A-Z0-9_]+)\}`)
-
-type optionalEnvField string
-
-func (f *optionalEnvField) UnmarshalYAML(node *yaml.Node) error {
-	var value string
-
-	err := node.Decode(&value)
-	if err != nil {
-		return err
-	}
-
-	replaced := optionalEnvFieldPattern.ReplaceAllStringFunc(value, func(match string) string {
-		if err != nil {
-			return ""
-		}
-
-		groups := optionalEnvFieldPattern.FindStringSubmatch(match)
-
-		if len(groups) != 3 {
-			return match
-		}
-
-		prefix, key := groups[1], groups[2]
-
-		if prefix == `\` {
-			if len(match) >= 2 {
-				return match[1:]
-			} else {
-				return ""
-			}
-		}
-
-		value, found := os.LookupEnv(key)
-		if !found {
-			err = fmt.Errorf("environment variable %s not found", key)
-			return ""
-		}
-
-		return prefix + value
-	})
-
-	if err != nil {
-		return err
-	}
-
-	*f = optionalEnvField(replaced)
-
-	return nil
-}
-
-func (f *optionalEnvField) String() string {
-	return string(*f)
 }
 
 type customIconField struct {

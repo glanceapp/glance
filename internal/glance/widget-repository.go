@@ -14,12 +14,12 @@ var repositoryWidgetTemplate = mustParseTemplate("repository.html", "widget-base
 
 type repositoryWidget struct {
 	widgetBase          `yaml:",inline"`
-	RequestedRepository string           `yaml:"repository"`
-	Token               optionalEnvField `yaml:"token"`
-	PullRequestsLimit   int              `yaml:"pull-requests-limit"`
-	IssuesLimit         int              `yaml:"issues-limit"`
-	CommitsLimit        int              `yaml:"commits-limit"`
-	Repository          repository       `yaml:"-"`
+	RequestedRepository string     `yaml:"repository"`
+	Token               string     `yaml:"token"`
+	PullRequestsLimit   int        `yaml:"pull-requests-limit"`
+	IssuesLimit         int        `yaml:"issues-limit"`
+	CommitsLimit        int        `yaml:"commits-limit"`
+	Repository          repository `yaml:"-"`
 }
 
 func (widget *repositoryWidget) initialize() error {

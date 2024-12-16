@@ -139,7 +139,7 @@ func shortenFeedDescriptionLen(description string, maxLen int) string {
 }
 
 type rssFeedRequest struct {
-	URL             optionalEnvField  `yaml:"url"`
+	URL             string            `yaml:"url"`
 	Title           string            `yaml:"title"`
 	HideCategories  bool              `yaml:"hide-categories"`
 	HideDescription bool              `yaml:"hide-description"`
@@ -161,7 +161,7 @@ func (f rssFeedItemList) sortByNewest() rssFeedItemList {
 var feedParser = gofeed.NewParser()
 
 func fetchItemsFromRSSFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
-	req, err := http.NewRequest("GET", request.URL.String(), nil)
+	req, err := http.NewRequest("GET", request.URL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,7 @@ func fetchItemsFromRSSFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
 		} else {
 			parsedUrl, err := url.Parse(feed.Link)
 			if err != nil {
-				parsedUrl, err = url.Parse(request.URL.String())
+				parsedUrl, err = url.Parse(request.URL)
 			}
 
 			if err == nil {

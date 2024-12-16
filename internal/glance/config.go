@@ -69,10 +69,15 @@ type page struct {
 }
 
 func newConfigFromYAML(contents []byte) (*config, error) {
+	contents, err := parseConfigEnvVariables(contents)
+	if err != nil {
+		return nil, err
+	}
+
 	config := &config{}
 	config.Server.Port = 8080
 
-	err := yaml.Unmarshal(contents, config)
+	err = yaml.Unmarshal(contents, config)
 	if err != nil {
 		return nil, err
 	}
@@ -92,6 +97,46 @@ func newConfigFromYAML(contents []byte) (*config, error) {
 	}
 
 	return config, nil
+}
+
+var configEnvVariablePattern = regexp.MustCompile(`(^|.)\$\{([A-Z0-9_]+)\}`)
+
+func parseConfigEnvVariables(contents []byte) ([]byte, error) {
+	var err error
+
+	replaced := configEnvVariablePattern.ReplaceAllFunc(contents, func(match []byte) []byte {
+		if err != nil {
+			return nil
+		}
+
+		groups := configEnvVariablePattern.FindSubmatch(match)
+		if len(groups) != 3 {
+			return match
+		}
+
+		prefix, key := string(groups[1]), string(groups[2])
+		if prefix == `\` {
+			if len(match) >= 2 {
+				return match[1:]
+			} else {
+				return nil
+			}
+		}
+
+		value, found := os.LookupEnv(key)
+		if !found {
+			err = fmt.Errorf("environment variable %s not found", key)
+			return nil
+		}
+
+		return []byte(prefix + value)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return replaced, nil
 }
 
 func formatWidgetInitError(err error, w widget) error {

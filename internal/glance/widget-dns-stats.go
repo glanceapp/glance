@@ -20,13 +20,13 @@ type dnsStatsWidget struct {
 	TimeLabels [8]string `yaml:"-"`
 	Stats      *dnsStats `yaml:"-"`
 
-	HourFormat    string           `yaml:"hour-format"`
-	Service       string           `yaml:"service"`
-	AllowInsecure bool             `yaml:"allow-insecure"`
-	URL           optionalEnvField `yaml:"url"`
-	Token         optionalEnvField `yaml:"token"`
-	Username      optionalEnvField `yaml:"username"`
-	Password      optionalEnvField `yaml:"password"`
+	HourFormat    string `yaml:"hour-format"`
+	Service       string `yaml:"service"`
+	AllowInsecure bool   `yaml:"allow-insecure"`
+	URL           string `yaml:"url"`
+	Token         string `yaml:"token"`
+	Username      string `yaml:"username"`
+	Password      string `yaml:"password"`
 }
 
 func makeDNSWidgetTimeLabels(format string) [8]string {

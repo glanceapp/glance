@@ -18,13 +18,13 @@ var customAPIWidgetTemplate = mustParseTemplate("custom-api.html", "widget-base.
 
 type customAPIWidget struct {
 	widgetBase       `yaml:",inline"`
-	URL              optionalEnvField            `yaml:"url"`
-	Template         string                      `yaml:"template"`
-	Frameless        bool                        `yaml:"frameless"`
-	Headers          map[string]optionalEnvField `yaml:"headers"`
-	APIRequest       *http.Request               `yaml:"-"`
-	compiledTemplate *template.Template          `yaml:"-"`
-	CompiledHTML     template.HTML               `yaml:"-"`
+	URL              string             `yaml:"url"`
+	Template         string             `yaml:"template"`
+	Frameless        bool               `yaml:"frameless"`
+	Headers          map[string]string  `yaml:"headers"`
+	APIRequest       *http.Request      `yaml:"-"`
+	compiledTemplate *template.Template `yaml:"-"`
+	CompiledHTML     template.HTML      `yaml:"-"`
 }
 
 func (widget *customAPIWidget) initialize() error {
@@ -45,13 +45,13 @@ func (widget *customAPIWidget) initialize() error {
 
 	widget.compiledTemplate = compiledTemplate
 
-	req, err := http.NewRequest(http.MethodGet, widget.URL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, widget.URL, nil)
 	if err != nil {
 		return err
 	}
 
 	for key, value := range widget.Headers {
-		req.Header.Add(key, value.String())
+		req.Header.Add(key, value)
 	}
 
 	widget.APIRequest = req

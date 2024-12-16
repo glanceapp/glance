@@ -18,7 +18,7 @@ type changeDetectionWidget struct {
 	ChangeDetections changeDetectionWatchList `yaml:"-"`
 	WatchUUIDs       []string                 `yaml:"watches"`
 	InstanceURL      string                   `yaml:"instance-url"`
-	Token            optionalEnvField         `yaml:"token"`
+	Token            string                   `yaml:"token"`
 	Limit            int                      `yaml:"limit"`
 	CollapseAfter    int                      `yaml:"collapse-after"`
 }

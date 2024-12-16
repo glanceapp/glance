@@ -21,7 +21,7 @@
 {{ end }}
 
 {{ define "site" }}
-<a class="size-title-dynamic color-highlight text-truncate block grow" href="{{ .URL.String | safeURL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
+<a class="size-title-dynamic color-highlight text-truncate block grow" href="{{ .URL | safeURL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
 {{ if not .Status.TimedOut }}<div>{{ .Status.ResponseTime.Milliseconds | formatNumber }}ms</div>{{ end }}
 {{ if eq .StatusStyle "ok" }}
 <div class="monitor-site-status-icon-compact" title="{{ .Status.Code }}">

@@ -20,8 +20,8 @@ type releasesWidget struct {
 	Releases        appReleaseList    `yaml:"-"`
 	releaseRequests []*releaseRequest `yaml:"-"`
 	Repositories    []string          `yaml:"repositories"`
-	Token           optionalEnvField  `yaml:"token"`
-	GitLabToken     optionalEnvField  `yaml:"gitlab-token"`
+	Token           string            `yaml:"token"`
+	GitLabToken     string            `yaml:"gitlab-token"`
 	Limit           int               `yaml:"limit"`
 	CollapseAfter   int               `yaml:"collapse-after"`
 	ShowSourceIcon  bool              `yaml:"show-source-icon"`
@@ -38,8 +38,8 @@ func (widget *releasesWidget) initialize() error {
 		widget.CollapseAfter = 5
 	}
 
-	var tokenAsString = widget.Token.String()
-	var gitLabTokenAsString = widget.GitLabToken.String()
+	var tokenAsString = widget.Token
+	var gitLabTokenAsString = widget.GitLabToken
 
 	for _, repository := range widget.Repositories {
 		parts := strings.SplitN(repository, ":", 2)

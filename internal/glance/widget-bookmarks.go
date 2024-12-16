@@ -13,11 +13,11 @@ type bookmarksWidget struct {
 		Title string         `yaml:"title"`
 		Color *hslColorField `yaml:"color"`
 		Links []struct {
-			Title     string           `yaml:"title"`
-			URL       optionalEnvField `yaml:"url"`
-			Icon      customIconField  `yaml:"icon"`
-			SameTab   bool             `yaml:"same-tab"`
-			HideArrow bool             `yaml:"hide-arrow"`
+			Title     string          `yaml:"title"`
+			URL       string          `yaml:"url"`
+			Icon      customIconField `yaml:"icon"`
+			SameTab   bool            `yaml:"same-tab"`
+			HideArrow bool            `yaml:"hide-arrow"`
 		} `yaml:"links"`
 	} `yaml:"groups"`
 }

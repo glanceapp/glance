@@ -109,9 +109,9 @@ func statusCodeToStyle(status int, altStatusCodes []int) string {
 }
 
 type SiteStatusRequest struct {
-	URL           optionalEnvField `yaml:"url"`
-	CheckURL      optionalEnvField `yaml:"check-url"`
-	AllowInsecure bool             `yaml:"allow-insecure"`
+	URL           string `yaml:"url"`
+	CheckURL      string `yaml:"check-url"`
+	AllowInsecure bool   `yaml:"allow-insecure"`
 }
 
 type siteStatus struct {
@@ -123,10 +123,10 @@ type siteStatus struct {
 
 func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (siteStatus, error) {
 	var url string
-	if statusRequest.CheckURL.String() != "" {
-		url = statusRequest.CheckURL.String()
+	if statusRequest.CheckURL != "" {
+		url = statusRequest.CheckURL
 	} else {
-		url = statusRequest.URL.String()
+		url = statusRequest.URL
 	}
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
