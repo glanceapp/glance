@@ -1,7 +1,7 @@
 <div class="widget widget-type-{{ .GetType }}{{ if ne "" .CSSClass }} {{ .CSSClass }}{{ end }}">
     {{ if not .HideHeader}}
     <div class="widget-header">
-        {{ if ne "" .TitleURL}}<a href="{{ .TitleURL }}" target="_blank" rel="noreferrer" class="uppercase">{{ .Title }}</a>{{ else }}<div class="uppercase">{{ .Title }}</div>{{ end }}
+        {{ if ne "" .TitleURL }}<a href="{{ .TitleURL | safeURL }}" target="_blank" rel="noreferrer" class="uppercase">{{ .Title }}</a>{{ else }}<div class="uppercase">{{ .Title }}</div>{{ end }}
         {{ if and .Error .ContentAvailable }}
         <div class="notice-icon notice-icon-major" title="{{ .Error }}"></div>
         {{ else if .Notice }}

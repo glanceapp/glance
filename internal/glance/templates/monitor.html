@@ -25,7 +25,7 @@
 <img class="monitor-site-icon{{ if .Icon.IsFlatIcon }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
 {{ end }}
 <div class="min-width-0">
-    <a class="size-h3 color-highlight text-truncate block" href="{{ .URL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
+    <a class="size-h3 color-highlight text-truncate block" href="{{ .URL.String | safeURL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
     <ul class="list-horizontal-text">
         {{ if not .Status.Error }}
         <li title="{{ .Status.Code }}">{{ .StatusText }}</li>
