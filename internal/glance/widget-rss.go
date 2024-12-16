@@ -139,7 +139,7 @@ func shortenFeedDescriptionLen(description string, maxLen int) string {
 }
 
 type rssFeedRequest struct {
-	Url             string            `yaml:"url"`
+	URL             optionalEnvField  `yaml:"url"`
 	Title           string            `yaml:"title"`
 	HideCategories  bool              `yaml:"hide-categories"`
 	HideDescription bool              `yaml:"hide-description"`
@@ -161,7 +161,7 @@ func (f rssFeedItemList) sortByNewest() rssFeedItemList {
 var feedParser = gofeed.NewParser()
 
 func fetchItemsFromRSSFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
-	req, err := http.NewRequest("GET", request.Url, nil)
+	req, err := http.NewRequest("GET", request.URL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func fetchItemsFromRSSFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code %d from %s", resp.StatusCode, request.Url)
+		return nil, fmt.Errorf("unexpected status code %d from %s", resp.StatusCode, request.URL)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -206,7 +206,7 @@ func fetchItemsFromRSSFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
 		} else {
 			parsedUrl, err := url.Parse(feed.Link)
 			if err != nil {
-				parsedUrl, err = url.Parse(request.Url)
+				parsedUrl, err = url.Parse(request.URL.String())
 			}
 
 			if err == nil {
@@ -326,7 +326,7 @@ func fetchItemsFromRSSFeeds(requests []rssFeedRequest) (rssFeedItemList, error) 
 	for i := range feeds {
 		if errs[i] != nil {
 			failed++
-			slog.Error("Failed to get RSS feed", "url", requests[i].Url, "error", errs[i])
+			slog.Error("Failed to get RSS feed", "url", requests[i].URL, "error", errs[i])
 			continue
 		}
 
