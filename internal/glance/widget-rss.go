@@ -27,7 +27,7 @@ var (
 
 type rssWidget struct {
 	widgetBase       `yaml:",inline"`
-	FeedRequests     []RSSFeedRequest `yaml:"feeds"`
+	FeedRequests     []rssFeedRequest `yaml:"feeds"`
 	Style            string           `yaml:"style"`
 	ThumbnailHeight  float64          `yaml:"thumbnail-height"`
 	CardHeight       float64          `yaml:"card-height"`
@@ -138,7 +138,7 @@ func shortenFeedDescriptionLen(description string, maxLen int) string {
 	return description
 }
 
-type RSSFeedRequest struct {
+type rssFeedRequest struct {
 	Url             string            `yaml:"url"`
 	Title           string            `yaml:"title"`
 	HideCategories  bool              `yaml:"hide-categories"`
@@ -160,7 +160,7 @@ func (f rssFeedItemList) sortByNewest() rssFeedItemList {
 
 var feedParser = gofeed.NewParser()
 
-func fetchItemsFromRSSFeedTask(request RSSFeedRequest) ([]rssFeedItem, error) {
+func fetchItemsFromRSSFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
 	req, err := http.NewRequest("GET", request.Url, nil)
 	if err != nil {
 		return nil, err
@@ -312,7 +312,7 @@ func findThumbnailInItemExtensions(item *gofeed.Item) string {
 	return recursiveFindThumbnailInExtensions(media)
 }
 
-func fetchItemsFromRSSFeeds(requests []RSSFeedRequest) (rssFeedItemList, error) {
+func fetchItemsFromRSSFeeds(requests []rssFeedRequest) (rssFeedItemList, error) {
 	job := newJob(fetchItemsFromRSSFeedTask, requests).withWorkers(30)
 	feeds, errs, err := workerPoolDo(job)
 	if err != nil {
