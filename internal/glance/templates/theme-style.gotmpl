@@ -7,8 +7,8 @@
     {{ end }}
     {{ if ne 0.0 .ContrastMultiplier }}--cm: {{ .ContrastMultiplier }};{{ end }}
     {{ if ne 0.0 .TextSaturationMultiplier }}--tsm: {{ .TextSaturationMultiplier }};{{ end }}
-    {{ if .PrimaryColor }}--color-primary: {{ .PrimaryColor.AsCSSValue }};{{ end }}
-    {{ if .PositiveColor }}--color-positive: {{ .PositiveColor.AsCSSValue }};{{ end }}
-    {{ if .NegativeColor }}--color-negative: {{ .NegativeColor.AsCSSValue }};{{ end }}
+    {{ if .PrimaryColor }}--color-primary: {{ .PrimaryColor.String | safeCSS }};{{ end }}
+    {{ if .PositiveColor }}--color-positive: {{ .PositiveColor.String | safeCSS }};{{ end }}
+    {{ if .NegativeColor }}--color-negative: {{ .NegativeColor.String | safeCSS }};{{ end }}
 }
 </style>

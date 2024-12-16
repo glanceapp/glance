@@ -2,7 +2,6 @@ package glance
 
 import (
 	"fmt"
-	"html/template"
 	"os"
 	"regexp"
 	"strconv"
@@ -28,10 +27,6 @@ type hslColorField struct {
 
 func (c *hslColorField) String() string {
 	return fmt.Sprintf("hsl(%d, %d%%, %d%%)", c.Hue, c.Saturation, c.Lightness)
-}
-
-func (c *hslColorField) AsCSSValue() template.CSS {
-	return template.CSS(c.String())
 }
 
 func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {

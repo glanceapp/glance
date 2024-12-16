@@ -16,6 +16,12 @@ var intl = message.NewPrinter(language.English)
 var globalTemplateFunctions = template.FuncMap{
 	"formatViewerCount": formatViewerCount,
 	"formatNumber":      intl.Sprint,
+	"safeCSS": func(str string) template.CSS {
+		return template.CSS(str)
+	},
+	"safeURL": func(str string) template.URL {
+		return template.URL(str)
+	},
 	"absInt": func(i int) int {
 		return int(math.Abs(float64(i)))
 	},
