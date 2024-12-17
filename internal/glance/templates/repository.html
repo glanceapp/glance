@@ -35,7 +35,7 @@
     </ul>
     <ul class="list list-gap-2 min-width-0">
         {{ range .Repository.PullRequests }}
-        <li><a class="color-primary-if-not-visited text-truncate block" title="{{ .Title }}" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/pull/{{ .Number }}">{{ .Title }}</a></li>
+        <li><a class="color-primary-if-not-visited text-truncate block" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/pull/{{ .Number }}">{{ .Title }}</a></li>
         {{ end }}
     </ul>
 </div>
@@ -52,7 +52,7 @@
     </ul>
     <ul class="list list-gap-2 min-width-0">
         {{ range .Repository.Issues }}
-        <li><a class="color-primary-if-not-visited text-truncate block" title="{{ .Title }}" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/issues/{{ .Number }}">{{ .Title }}</a></li>
+        <li><a class="color-primary-if-not-visited text-truncate block" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/issues/{{ .Number }}">{{ .Title }}</a></li>
         {{ end }}
     </ul>
 </div>

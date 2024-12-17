@@ -619,6 +619,20 @@ function setupClocks() {
     updateClocks();
 }
 
+function setupTruncatedElementTitles() {
+    const elements = document.querySelectorAll(".text-truncate, .single-line-titles .title, .text-truncate-2-lines, .text-truncate-3-lines");
+
+    if (elements.length == 0) {
+        return;
+    }
+
+    for (let i = 0; i < elements.length; i++) {
+        const element = elements[i];
+        console.log(element.title);
+        if (element.title === "") element.title = element.textContent;
+    }
+}
+
 async function setupPage() {
     const pageElement = document.getElementById("page");
     const pageContentElement = document.getElementById("page-content");
@@ -643,6 +657,10 @@ async function setupPage() {
         for (let i = 0; i < contentReadyCallbacks.length; i++) {
             contentReadyCallbacks[i]();
         }
+
+        setTimeout(() => {
+            setupTruncatedElementTitles();
+        }, 50);
 
         setTimeout(() => {
             document.body.classList.add("page-columns-transitioned");

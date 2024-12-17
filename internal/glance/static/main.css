@@ -931,17 +931,6 @@ details[open] .summary::after {
     border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
-.video-title {
-    margin-bottom: auto;
-    overflow: hidden;
-    display: block;
-    text-overflow: ellipsis;
-    line-clamp: 2;
-    -webkit-line-clamp: 2;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-}
-
 .search-icon {
     width: 2.3rem;
 }
