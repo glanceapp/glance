@@ -38,9 +38,6 @@ func (widget *releasesWidget) initialize() error {
 		widget.CollapseAfter = 5
 	}
 
-	var tokenAsString = widget.Token
-	var gitLabTokenAsString = widget.GitLabToken
-
 	for _, repository := range widget.Repositories {
 		parts := strings.SplitN(repository, ":", 2)
 		var request *releaseRequest
@@ -51,7 +48,7 @@ func (widget *releasesWidget) initialize() error {
 			}
 
 			if widget.Token != "" {
-				request.token = &tokenAsString
+				request.token = &widget.Token
 			}
 		} else if len(parts) == 2 {
 			if parts[0] == string(releaseSourceGitlab) {
@@ -61,7 +58,7 @@ func (widget *releasesWidget) initialize() error {
 				}
 
 				if widget.GitLabToken != "" {
-					request.token = &gitLabTokenAsString
+					request.token = &widget.GitLabToken
 				}
 			} else if parts[0] == string(releaseSourceDockerHub) {
 				request = &releaseRequest{
