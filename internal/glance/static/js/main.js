@@ -49,29 +49,35 @@ function setupCarousels() {
 const minuteInSeconds = 60;
 const hourInSeconds = minuteInSeconds * 60;
 const dayInSeconds = hourInSeconds * 24;
-const monthInSeconds = dayInSeconds * 30;
-const yearInSeconds = monthInSeconds * 12;
+const monthInSeconds = dayInSeconds * 30.4;
+const yearInSeconds = dayInSeconds * 365;
 
-function relativeTimeSince(timestamp) {
-    const delta = Math.round((Date.now() / 1000) - timestamp);
+function timestampToRelativeTime(timestamp) {
+    let delta = Math.round((Date.now() / 1000) - timestamp);
+    let prefix = "";
+
+    if (delta < 0) {
+        delta = -delta;
+        prefix = "in ";
+    }
 
     if (delta < minuteInSeconds) {
-        return "1m";
+        return prefix + "1m";
     }
     if (delta < hourInSeconds) {
-        return Math.floor(delta / minuteInSeconds) + "m";
+        return prefix + Math.floor(delta / minuteInSeconds) + "m";
     }
     if (delta < dayInSeconds) {
-        return Math.floor(delta / hourInSeconds) + "h";
+        return prefix + Math.floor(delta / hourInSeconds) + "h";
     }
     if (delta < monthInSeconds) {
-        return Math.floor(delta / dayInSeconds) + "d";
+        return prefix + Math.floor(delta / dayInSeconds) + "d";
     }
     if (delta < yearInSeconds) {
-        return Math.floor(delta / monthInSeconds) + "mo";
+        return prefix + Math.floor(delta / monthInSeconds) + "mo";
     }
 
-    return Math.floor(delta / yearInSeconds) + "y";
+    return prefix + Math.floor(delta / yearInSeconds) + "y";
 }
 
 function updateRelativeTimeForElements(elements)
@@ -84,7 +90,7 @@ function updateRelativeTimeForElements(elements)
         if (timestamp === undefined)
             continue
 
-        element.textContent = relativeTimeSince(timestamp);
+        element.textContent = timestampToRelativeTime(timestamp);
     }
 }
 
