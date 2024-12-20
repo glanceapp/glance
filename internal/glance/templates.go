@@ -29,7 +29,7 @@ var globalTemplateFunctions = template.FuncMap{
 		return intl.Sprintf("%.2f", price)
 	},
 	"dynamicRelativeTimeAttrs": func(t time.Time) template.HTMLAttr {
-		return template.HTMLAttr(fmt.Sprintf(`data-dynamic-relative-time="%d"`, t.Unix()))
+		return template.HTMLAttr(`data-dynamic-relative-time="` + strconv.FormatInt(t.Unix(), 10) + `"`)
 	},
 }
 
