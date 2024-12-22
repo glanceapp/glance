@@ -287,6 +287,7 @@ theme:
 > .widget-type-rss a {
 >     font-size: 1.5rem;
 > }
+> ```
 >
 > In addition, you can also use the `css-class` property which is available on every widget to set custom class names for individual widgets.
 
@@ -1045,7 +1046,7 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | parameters | key & value | no | |
 
 ##### `url`
-The URL of the extension.
+The URL of the extension. **Note that the query gets stripped from this URL and the one defined by `parameters` gets used instead.**
 
 ##### `fallback-content-type`
 Optionally specify the fallback content type of the extension if the URL does not return a valid `Widget-Content-Type` header. Currently the only supported value for this property is `html`.
