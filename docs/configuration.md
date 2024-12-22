@@ -1481,6 +1481,12 @@ An array of groups which can optionally have a title and a custom color.
 | title | string | no | |
 | color | HSL | no | the primary color of the theme |
 | links | array | yes | |
+| same-tab | boolean | no | false |
+| hide-arrow | boolean | no | false |
+
+> [!TIP]
+>
+> You can set `same-tab` and `hide-arrow` either on the group which will apply them to all links in that group, or on each individual link which will override the value set on the group.
 
 ###### Properties for each link
 | Name | Type | Required | Default |
