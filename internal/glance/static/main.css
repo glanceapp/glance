@@ -273,6 +273,10 @@
     background-color: var(--color-separator);
 }
 
+pre {
+    font: inherit;
+}
+
 ::selection {
     background-color: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 20%)));
     color: var(--color-text-highlight);

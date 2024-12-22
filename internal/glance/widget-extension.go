@@ -103,7 +103,7 @@ func convertExtensionContent(options extensionRequestOptions, content []byte, co
 
 		fallthrough
 	default:
-		return template.HTML(html.EscapeString(string(content)))
+		return template.HTML("<pre>" + html.EscapeString(string(content)) + "</pre>")
 	}
 }
 
