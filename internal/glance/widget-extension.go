@@ -76,8 +76,9 @@ var extensionStringToType = map[string]extensionType{
 }
 
 const (
-	extensionHeaderTitle       = "Widget-Title"
-	extensionHeaderContentType = "Widget-Content-Type"
+	extensionHeaderTitle            = "Widget-Title"
+	extensionHeaderContentType      = "Widget-Content-Type"
+	extensionHeaderContentFrameless = "Widget-Content-Frameless"
 )
 
 type extensionRequestOptions struct {
@@ -88,8 +89,9 @@ type extensionRequestOptions struct {
 }
 
 type extension struct {
-	Title   string
-	Content template.HTML
+	Title     string
+	Content   template.HTML
+	Frameless bool
 }
 
 func convertExtensionContent(options extensionRequestOptions, content []byte, contentType extensionType) template.HTML {
@@ -146,6 +148,10 @@ func fetchExtension(options extensionRequestOptions) (extension, error) {
 		if !ok {
 			contentType = extensionContentUnknown
 		}
+	}
+
+	if stringToBool(response.Header.Get(extensionHeaderContentFrameless)) {
+		extension.Frameless = true
 	}
 
 	extension.Content = convertExtensionContent(options, body, contentType)
