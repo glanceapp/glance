@@ -111,8 +111,8 @@ func FetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate
 			TimePosted:      time.Unix(int64(post.Time), 0),
 		}
 
-		if post.Thumbnail != "" && post.Thumbnail != "self" && post.Thumbnail != "default" {
-			forumPost.ThumbnailUrl = post.Thumbnail
+		if post.Thumbnail != "" && post.Thumbnail != "self" && post.Thumbnail != "default" && post.Thumbnail != "nsfw" {
+			forumPost.ThumbnailUrl = html.UnescapeString(post.Thumbnail)
 		}
 
 		if !post.IsSelf {
