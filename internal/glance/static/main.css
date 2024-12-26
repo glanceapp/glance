@@ -330,7 +330,7 @@ html {
     scroll-behavior: smooth;
 }
 
-html, body {
+html, body, .body-content {
     height: 100%;
 }
 
@@ -1701,6 +1701,11 @@ details[open] .summary::after {
     .weather-column-rain::before {
         background-size: 7px 7px;
     }
+
+    .ios .search-input {
+        /* so that iOS Safari does not zoom the page when the input is focused */
+        font-size: 16px;
+    }
 }
 
 @media (max-width: 1190px) and (display-mode: standalone) {
@@ -1708,7 +1713,11 @@ details[open] .summary::after {
         --safe-area-inset-bottom: env(safe-area-inset-bottom, 0);
     }
 
-    .list-collapsible-label:has(.list-collapsible-input:checked) {
+    .ios .body-content {
+        height: 100dvh;
+    }
+
+    .expand-toggle-button.container-expanded {
         bottom: calc(var(--mobile-navigation-height) + var(--safe-area-inset-bottom));
     }
 
@@ -1720,6 +1729,10 @@ details[open] .summary::after {
     .mobile-navigation-icons {
         padding-bottom: var(--safe-area-inset-bottom);
         transition: padding-bottom .3s;
+    }
+
+    .mobile-navigation-offset {
+        height: calc(var(--mobile-navigation-height) + var(--safe-area-inset-bottom));
     }
 
     .mobile-navigation-icons:has(.mobile-navigation-page-links-input:checked) {
@@ -1798,7 +1811,6 @@ details[open] .summary::after {
 .shrink-0           { flex-shrink: 0; }
 .min-width-0        { min-width: 0; }
 .max-width-100      { max-width: 100%; }
-.height-100         { height: 100%; }
 .block              { display: block; }
 .inline-block       { display: inline-block; }
 .overflow-hidden    { overflow: hidden; }
