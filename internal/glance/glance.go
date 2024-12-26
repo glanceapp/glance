@@ -3,6 +3,7 @@ package glance
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log/slog"
@@ -55,6 +56,7 @@ type Branding struct {
 	LogoText     string        `yaml:"logo-text"`
 	LogoURL      string        `yaml:"logo-url"`
 	FaviconURL   string        `yaml:"favicon-url"`
+	PwaText      string        `yaml:"pwa-text"`
 }
 
 type Column struct {
@@ -279,6 +281,8 @@ func (a *Application) Serve() error {
 		w.WriteHeader(http.StatusOK)
 	})
 
+    mux.HandleFunc(fmt.Sprintf("GET /static/%s/manifest.json", a.Config.Server.AssetsHash), a.HandleManifestRequest)
+
 	mux.Handle(
 		fmt.Sprintf("GET /static/%s/{path...}", a.Config.Server.AssetsHash),
 		http.StripPrefix("/static/"+a.Config.Server.AssetsHash, FileServerWithCache(http.FS(assets.PublicFS), 24*time.Hour)),
@@ -305,4 +309,34 @@ func (a *Application) Serve() error {
 	slog.Info("Starting server", "host", a.Config.Server.Host, "port", a.Config.Server.Port, "base-url", a.Config.Server.BaseURL)
 
 	return server.ListenAndServe()
+}
+
+func (a *Application) HandleManifestRequest(w http.ResponseWriter, r *http.Request) {
+    manifest := map[string]interface{}{
+        "name": func() string {
+            if a.Config.Branding.PwaText != "" {
+                return a.Config.Branding.PwaText
+            }
+            return "Glance"
+        }(),
+        "display": "standalone",
+        "background_color": "#151519",
+        "scope": "/",
+        "start_url": "/",
+        "icons": []map[string]string{
+            {
+                "src": func() string {
+                    if a.Config.Branding.FaviconURL != "" {
+                        return a.Config.Branding.FaviconURL
+                    }
+                    return "app-icon.png"
+                }(),
+                "type": "image/png",
+                "sizes": "512x512",
+            },
+        },
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(manifest)
 }
