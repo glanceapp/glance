@@ -38,6 +38,16 @@ type TwitchChannel struct {
 
 type TwitchChannels []TwitchChannel
 
+func (channels TwitchChannels) GroupByLive() map[string][]TwitchChannel {
+	grouped := make(map[string][]TwitchChannel)
+	statusMap := map[bool]string{true: "Online", false: "Offline"}
+	for _, channel := range channels {
+		IsLive := statusMap[channel.IsLive]
+		grouped[IsLive] = append(grouped[IsLive], channel)
+	}
+	return grouped
+}
+
 func (channels TwitchChannels) SortByViewers() {
 	sort.Slice(channels, func(i, j int) bool {
 		return channels[i].ViewersCount > channels[j].ViewersCount

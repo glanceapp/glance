@@ -34,6 +34,7 @@ var (
 	MonitorTemplate               = compileTemplate("monitor.html", "widget-base.html")
 	TwitchGamesListTemplate       = compileTemplate("twitch-games-list.html", "widget-base.html")
 	TwitchChannelsTemplate        = compileTemplate("twitch-channels.html", "widget-base.html")
+	TwitchChannelsGridTemplate    = compileTemplate("twitch-channels-grid.html", "widget-base.html", "twitch-channels-card-contents.html")
 	RepositoryTemplate            = compileTemplate("repository.html", "widget-base.html")
 	SearchTemplate                = compileTemplate("search.html", "widget-base.html")
 	ExtensionTemplate             = compileTemplate("extension.html", "widget-base.html")
