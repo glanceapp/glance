@@ -113,6 +113,7 @@ type DNSStatsBlockedDomain struct {
 type MarketRequest struct {
 	Name       string `yaml:"name"`
 	Symbol     string `yaml:"symbol"`
+	Currency   string `yaml:"currency"`
 	ChartLink  string `yaml:"chart-link"`
 	SymbolLink string `yaml:"symbol-link"`
 }
