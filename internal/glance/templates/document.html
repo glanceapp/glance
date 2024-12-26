@@ -3,6 +3,7 @@
 <head>
     {{ block "document-head-before" . }}{{ end }}
     <title>{{ block "document-title" . }}{{ end }}</title>
+    <script>if (navigator.platform === 'iPhone') document.documentElement.classList.add('ios');</script>
     <meta charset="UTF-8">
     <meta name="color-scheme" content="dark">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
