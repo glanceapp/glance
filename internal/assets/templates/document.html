@@ -20,5 +20,28 @@
 </head>
 <body>
 {{ template "document-body" . }}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        function createWebSocket() {
+            let host = window.location.hostname;
+            let port = window.location.protocol === "https:" ? (window.location.port || 443) : (window.location.port || 80);
+            let protocol = window.location.protocol === "https:" ? "wss" : "ws";
+            let ws = new WebSocket(protocol + "://" + host + ":" + port + "/ws");
+            console.log("WebSocket connection established");
+            ws.onmessage = function(event) {
+                if (event.data === "reload") {
+                    location.reload();
+                }
+            };
+    
+            ws.onclose = function() {
+                console.log("WebSocket connection closed, attempting to reconnect...");
+                setTimeout(createWebSocket, 1000);
+            };
+        }
+    
+        createWebSocket();
+    });
+</script>
 </body>
 </html>
