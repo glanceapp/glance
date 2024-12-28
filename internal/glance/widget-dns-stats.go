@@ -20,13 +20,15 @@ type dnsStatsWidget struct {
 	TimeLabels [8]string `yaml:"-"`
 	Stats      *dnsStats `yaml:"-"`
 
-	HourFormat    string `yaml:"hour-format"`
-	Service       string `yaml:"service"`
-	AllowInsecure bool   `yaml:"allow-insecure"`
-	URL           string `yaml:"url"`
-	Token         string `yaml:"token"`
-	Username      string `yaml:"username"`
-	Password      string `yaml:"password"`
+	HourFormat     string `yaml:"hour-format"`
+	HideGraph      bool   `yaml:"hide-graph"`
+	HideTopDomains bool   `yaml:"hide-top-domains"`
+	Service        string `yaml:"service"`
+	AllowInsecure  bool   `yaml:"allow-insecure"`
+	URL            string `yaml:"url"`
+	Token          string `yaml:"token"`
+	Username       string `yaml:"username"`
+	Password       string `yaml:"password"`
 }
 
 func makeDNSWidgetTimeLabels(format string) [8]string {
@@ -58,9 +60,9 @@ func (widget *dnsStatsWidget) update(ctx context.Context) {
 	var err error
 
 	if widget.Service == "adguard" {
-		stats, err = fetchAdguardStats(string(widget.URL), widget.AllowInsecure, string(widget.Username), string(widget.Password))
+		stats, err = fetchAdguardStats(widget.URL, widget.AllowInsecure, widget.Username, widget.Password, widget.HideGraph)
 	} else {
-		stats, err = fetchPiholeStats(string(widget.URL), widget.AllowInsecure, string(widget.Token))
+		stats, err = fetchPiholeStats(widget.URL, widget.AllowInsecure, widget.Token, widget.HideGraph)
 	}
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
@@ -111,7 +113,7 @@ type adguardStatsResponse struct {
 	TopBlockedDomains []map[string]int `json:"top_blocked_domains"`
 }
 
-func fetchAdguardStats(instanceURL string, allowInsecure bool, username, password string) (*dnsStats, error) {
+func fetchAdguardStats(instanceURL string, allowInsecure bool, username, password string, noGraph bool) (*dnsStats, error) {
 	requestURL := strings.TrimRight(instanceURL, "/") + "/control/stats"
 
 	request, err := http.NewRequest("GET", requestURL, nil)
@@ -170,6 +172,10 @@ func fetchAdguardStats(instanceURL string, allowInsecure bool, username, passwor
 		}
 	}
 
+	if noGraph {
+		return stats, nil
+	}
+
 	queriesSeries := responseJson.QueriesSeries
 	blockedSeries := responseJson.BlockedSeries
 
@@ -223,12 +229,31 @@ func fetchAdguardStats(instanceURL string, allowInsecure bool, username, passwor
 
 type piholeStatsResponse struct {
 	TotalQueries      int                     `json:"dns_queries_today"`
-	QueriesSeries     map[int64]int           `json:"domains_over_time"`
+	QueriesSeries     piholeQueriesSeries     `json:"domains_over_time"`
 	BlockedQueries    int                     `json:"ads_blocked_today"`
 	BlockedSeries     map[int64]int           `json:"ads_over_time"`
 	BlockedPercentage float64                 `json:"ads_percentage_today"`
 	TopBlockedDomains piholeTopBlockedDomains `json:"top_ads"`
 	DomainsBlocked    int                     `json:"domains_being_blocked"`
+}
+
+// If the user has query logging disabled it's possible for domains_over_time to be returned as an
+// empty array rather than a map which will prevent unmashalling the rest of the data so we use
+// custom unmarshal behavior to fallback to an empty map.
+// See https://github.com/glanceapp/glance/issues/289
+type piholeQueriesSeries map[int64]int
+
+func (p *piholeQueriesSeries) UnmarshalJSON(data []byte) error {
+	temp := make(map[int64]int)
+
+	err := json.Unmarshal(data, &temp)
+	if err != nil {
+		*p = make(piholeQueriesSeries)
+	} else {
+		*p = temp
+	}
+
+	return nil
 }
 
 // If user has some level of privacy enabled on Pihole, `json:"top_ads"` is an empty array
@@ -250,7 +275,7 @@ func (p *piholeTopBlockedDomains) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func fetchPiholeStats(instanceURL string, allowInsecure bool, token string) (*dnsStats, error) {
+func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGraph bool) (*dnsStats, error) {
 	if token == "" {
 		return nil, errors.New("missing API token")
 	}
@@ -297,6 +322,10 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string) (*dn
 		})
 
 		stats.TopBlockedDomains = domains[:min(len(domains), 5)]
+	}
+
+	if noGraph {
+		return stats, nil
 	}
 
 	// Pihole _should_ return data for the last 24 hours in a 10 minute interval, 6*24 = 144

@@ -24,6 +24,8 @@
         {{ end }}
     </div>
 
+    {{ $showGraph := not (or .HideGraph (eq (len .Stats.Series) 0)) }}
+    {{ if $showGraph }}
     <div class="dns-stats-graph margin-top-15">
         <div class="dns-stats-graph-gridlines-container">
             <svg class="dns-stats-graph-gridlines" shape-rendering="crispEdges" viewBox="0 0 1 100" preserveAspectRatio="none">
@@ -67,9 +69,10 @@
             {{ end }}
         </div>
     </div>
+    {{ end }}
 
-    {{ if .Stats.TopBlockedDomains }}
-    <details class="details margin-top-40">
+    {{ if and (not .HideTopDomains) .Stats.TopBlockedDomains }}
+    <details class="details {{ if $showGraph }}margin-top-40{{ else }}margin-top-15{{ end }}">
         <summary class="summary">Top blocked domains</summary>
         <ul class="list list-gap-4 list-with-transition size-h5">
             {{ range .Stats.TopBlockedDomains }}

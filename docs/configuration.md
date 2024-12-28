@@ -1358,6 +1358,8 @@ Preview:
 | username | string | when service is `adguard` |  |
 | password | string | when service is `adguard` |  |
 | token | string | when service is `pihole` |  |
+| hide-graph | bool | no | false |
+| hide-top-domains | bool | no | false |
 | hour-format | string | no | 12h |
 
 ##### `service`
@@ -1377,6 +1379,12 @@ Only required when using AdGuard Home. The password used to log into the admin d
 
 ##### `token`
 Only required when using Pi-hole. The API token which can be found in `Settings -> API -> Show API token`. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+
+##### `hide-graph`
+Whether to hide the graph showing the number of queries over time.
+
+##### `hide-top-domains`
+Whether to hide the list of top blocked domains.
 
 ##### `hour-format`
 Whether to display the relative time in the graph in `12h` or `24h` format.
