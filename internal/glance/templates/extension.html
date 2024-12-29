@@ -1,0 +1,7 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content-classes" }}{{ if .Extension.Frameless }}widget-content-frameless{{ end }}{{ end }}
+
+{{ define "widget-content" }}
+{{ .Extension.Content }}
+{{ end }}
