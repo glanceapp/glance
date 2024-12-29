@@ -60,7 +60,7 @@ type calendar struct {
 // TODO: very inflexible, refactor to allow more customizability
 // TODO: allow changing between showing the previous and next week and the entire month
 func newCalendar(now time.Time, startSunday bool, icsurl string) *calendar {
-	year, week := now.ISOWeek()
+	year, week := now.Year(), int(now.Weekday())
 	weekday := now.Weekday()
 	if !startSunday {
 		weekday = (weekday + 6) % 7 // Shift Monday to 0
