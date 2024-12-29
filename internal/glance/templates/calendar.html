@@ -30,7 +30,12 @@
 		<div class="calendar-day{{ if eq .Day $.Calendar.CurrentDay }} calendar-day-today{{ end }} {{ if .IsEvent}} calendar-isevent{{ end }}">
 		{{ if .IsEvent}}
 			<div class="tooltip">
-				<span class="tooltiptext">{{ .Event.EventHover }}</span>
+				<span class="tooltiptext">
+					{{ range .Events }}
+						{{ .EventHover }}
+						<br>
+					{{ end }}
+				</span>
 			</div>
 		{{ end }}
 		<span>{{ .Day }}</span>
