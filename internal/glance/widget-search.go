@@ -21,6 +21,7 @@ type searchWidget struct {
 	Bangs        []SearchBang  `yaml:"bangs"`
 	NewTab       bool          `yaml:"new-tab"`
 	Autofocus    bool          `yaml:"autofocus"`
+	Placeholder  string        `yaml:"placeholder"`
 }
 
 func convertSearchUrl(url string) string {
@@ -39,6 +40,10 @@ func (widget *searchWidget) initialize() error {
 
 	if widget.SearchEngine == "" {
 		widget.SearchEngine = "duckduckgo"
+	}
+
+	if widget.Placeholder == "" {
+		widget.Placeholder = "Type here to search…"
 	}
 
 	if url, ok := searchEngines[widget.SearchEngine]; ok {
