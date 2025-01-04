@@ -228,25 +228,41 @@ Example:
 
 ```yaml
 theme:
-  background-color: 100 20 10
-  primary-color: 40 90 40
-  contrast-multiplier: 1.1
+  background-color: 186 21 20
+  contrast-multiplier: 1.2
+  primary-color: 97 13 80
+
+  presets:
+    my-custom-dark-theme:
+      background-color: 229 19 23
+      contrast-multiplier: 1.2
+      primary-color: 222 74 74
+      positive-color: 96 44 68
+      negative-color: 359 68 71
+    my-custom-light-theme:
+      light: true
+      background-color: 220 23 95
+      contrast-multiplier: 1.0
+      primary-color: 220 91 54
+      positive-color: 109 58 40
+      negative-color: 347 87 44
 ```
 
 ### Themes
 If you don't want to spend time configuring your own theme, there are [several available themes](themes.md) which you can simply copy the values for.
 
 ### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| light | boolean | no | false |
-| background-color | HSL | no | 240 8 9 |
-| primary-color | HSL | no | 43 50 70 |
-| positive-color | HSL | no | same as `primary-color` |
-| negative-color | HSL | no | 0 70 70 |
-| contrast-multiplier | number | no | 1 |
-| text-saturation-multiplier | number | no | 1 |
-| custom-css-file | string | no | |
+| Name | Type  | Required | Default |
+| ---- |-------|----------| ------- |
+| light | boolean | no       | false |
+| background-color | HSL   | no       | 240 8 9 |
+| primary-color | HSL   | no       | 43 50 70 |
+| positive-color | HSL   | no       | same as `primary-color` |
+| negative-color | HSL   | no       | 0 70 70 |
+| contrast-multiplier | number | no       | 1 |
+| text-saturation-multiplier | number | no       | 1 |
+| custom-css-file | string | no       | |
+| presets | array | no       | |
 
 #### `light`
 Whether the scheme is light or dark. This does not change the background color, it inverts the text colors so that they look appropriately on a light background.
@@ -277,6 +293,26 @@ Path to a custom CSS file, either external or one from within the server configu
 ```yaml
 theme:
   custom-css-file: /assets/my-style.css
+```
+
+#### `presets`
+Define theme presets that can be selected from a dropdown menu in the webpage. Example:
+```yaml
+theme:
+  presets:
+    my-custom-dark-theme: # This will be displayed in the dropdown menu to select this theme
+      background-color: 229 19 23
+      contrast-multiplier: 1.2
+      primary-color: 222 74 74
+      positive-color: 96 44 68
+      negative-color: 359 68 71
+    my-custom-light-theme: # This will be displayed in the dropdown menu to select this theme
+      light: true
+      background-color: 220 23 95
+      contrast-multiplier: 1.0
+      primary-color: 220 91 54
+      positive-color: 109 58 40
+      negative-color: 347 87 44
 ```
 
 > [!TIP]

@@ -2,6 +2,30 @@ import { setupPopovers } from './popover.js';
 import { setupMasonries } from './masonry.js';
 import { throttledDebounce, isElementVisible, openURLInNewTab } from './utils.js';
 
+document.addEventListener('DOMContentLoaded', () => {
+    const theme = localStorage.getItem('theme');
+
+    if (!theme) {
+        return;
+    }
+
+    const html = document.querySelector('html');
+    const jsonTheme = JSON.parse(theme);
+    if (jsonTheme.themeScheme === 'light') {
+        html.classList.remove('dark-scheme');
+        html.classList.add('light-scheme');
+    } else if (jsonTheme.themeScheme === 'dark') {
+        html.classList.add('dark-scheme');
+        html.classList.remove('light-scheme');
+    }
+
+    html.classList.add(jsonTheme.theme);
+    document.querySelector('[name=color-scheme]').setAttribute('content', jsonTheme.themeScheme);
+    Array.from(document.querySelectorAll('.dropdown-button span')).forEach((button) => {
+        button.textContent = jsonTheme.theme;
+    })
+})
+
 async function fetchPageContent(pageData) {
     // TODO: handle non 200 status codes/time outs
     // TODO: add retries
@@ -638,6 +662,101 @@ function setupTruncatedElementTitles() {
     }
 }
 
+/**
+ * @typedef {Object} HslColorField
+ * @property {number} Hue
+ * @property {number} Saturation
+ * @property {number} Lightness
+ */
+
+/**
+ * @typedef {Object} Theme
+ * @property {HslColorField} BackgroundColor
+ * @property {HslColorField} PrimaryColor
+ * @property {HslColorField} PositiveColor
+ * @property {HslColorField} NegativeColor
+ * @property {boolean} Light
+ * @property {number} ContrastMultiplier
+ * @property {number} TextSaturationMultiplier
+ */
+
+/**
+ * @typedef {Record<string, Theme>} ThemeCollection
+ */
+function setupThemeSwitcher() {
+    const presetsContainers = Array.from(document.querySelectorAll('.custom-presets'));
+    const userThemesKeys = Object.keys(userThemes);
+
+    presetsContainers.forEach((presetsContainer) => {
+        userThemesKeys.forEach(preset => {
+            const presetElement = document.createElement('div');
+            presetElement.className = 'theme-option';
+            presetElement.setAttribute('data-theme', preset);
+            presetElement.setAttribute('data-scheme', userThemes[preset].Light ? 'light' : 'dark');
+            presetElement.textContent = preset;
+            presetsContainer.appendChild(presetElement);
+        });
+    });
+
+    const dropdownButtons = Array.from(document.querySelectorAll('.dropdown-button'));
+    const dropdownContents = Array.from(document.querySelectorAll('.dropdown-content'));
+
+    dropdownButtons.forEach((dropdownButton) => {
+        dropdownButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdownContents.forEach((dropdownContent) => {
+                dropdownContent.classList.toggle('show');
+            });
+            dropdownButton.classList.toggle('active');
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.theme-dropdown')) {
+            dropdownContents.forEach((dropdownContent) => {
+                dropdownContent.classList.remove('show');
+            });
+            dropdownButtons.forEach((dropdownButton) => {
+                dropdownButton.classList.remove('active');
+            });
+        }
+    });
+
+    document.querySelectorAll('.theme-option').forEach(option => {
+        option.addEventListener('click', () => {
+            const selectedTheme = option.getAttribute('data-theme');
+            const selectedThemeScheme = option.getAttribute('data-scheme');
+            const previousTheme = localStorage.getItem('theme');
+            dropdownContents.forEach((dropdownContent) => {
+                dropdownContent.classList.remove('show');
+            });
+            dropdownButtons.forEach((dropdownButton) => {
+                const html = document.querySelector('html');
+                if (previousTheme) {
+                    html.classList.remove(JSON.parse(previousTheme).theme);
+                }
+                dropdownButton.classList.remove('active');
+                dropdownButton.querySelector('span').textContent = option.textContent;
+                html.classList.add(selectedTheme);
+
+                if (selectedThemeScheme === 'light') {
+                    html.classList.remove('dark-scheme');
+                    html.classList.add('light-scheme');
+                } else if (selectedThemeScheme === 'dark') {
+                    html.classList.add('dark-scheme');
+                    html.classList.remove('light-scheme');
+                }
+
+                document.querySelector('[name=color-scheme]').setAttribute('content', selectedThemeScheme);
+                localStorage.setItem('theme', JSON.stringify({
+                    theme: selectedTheme,
+                    themeScheme: selectedThemeScheme
+                }));
+            });
+        });
+    });
+}
+
 async function setupPage() {
     const pageElement = document.getElementById("page");
     const pageContentElement = document.getElementById("page-content");
@@ -646,6 +765,7 @@ async function setupPage() {
     pageContentElement.innerHTML = pageContent;
 
     try {
+        setupThemeSwitcher();
         setupPopovers();
         setupClocks()
         setupCarousels();

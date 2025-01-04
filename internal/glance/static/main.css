@@ -55,6 +55,28 @@
     --font-size-h6: 1.1rem;
 }
 
+.dark {
+    --scheme: ;
+    --bgh: 240;
+    --bgs: 8%;
+    --bgl: 9%;
+    --bghs: var(--bgh), var(--bgs);
+    --cm: 1;
+    --tsm: 1;
+}
+
+.light {
+    --scheme: 100% -;
+    --bgh: 240;
+    --bgs: 50%;
+    --bgl: 98%;
+    --bghs: var(--bgh), var(--bgs);
+    --cm: 1;
+    --tsm: 1;
+    --color-primary: hsl(43, 50%, 70%);
+}
+
+
 .light-scheme {
     --scheme: 100% -;
 }
@@ -1625,7 +1647,6 @@ details[open] .summary::after {
         padding: 15px var(--content-bounds-padding);
         display: flex;
         align-items: center;
-        overflow-x: auto;
         scrollbar-width: thin;
         gap: 2.5rem;
     }
@@ -1872,3 +1893,83 @@ details[open] .summary::after {
 .list-gap-20        { --list-half-gap: 1rem; }
 .list-gap-24        { --list-half-gap: 1.2rem; }
 .list-gap-34        { --list-half-gap: 1.7rem; }
+
+/*
+### Theme Dropdown ###
+*/
+.theme-dropdown {
+    position: relative;
+    display: inline-block;
+    right: 0;
+}
+
+.dropdown-button {
+    padding: 10px 15px;
+    background: var(--color-widget-background);
+    border: 1px solid var(--color-widget-content-border);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 150px;
+    transition: border-color .2s;
+    color: var(--color-text-highlight);
+}
+
+.dropdown-button:hover {
+    border-color: var(--color-text-subdue);
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: var(--color-widget-content-border);
+    min-width: 150px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border-radius: 4px;
+    z-index: 1000;
+}
+
+.mobile-navigation-page-links .dropdown-content {
+    top: unset;
+    bottom: 38px;
+}
+
+.dropdown-content.show {
+    display: block;
+}
+
+.theme-option {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.theme-option:hover {
+    background-color: #f8f9fa;
+}
+
+.separator {
+    height: 1px;
+    background-color: #dee2e6;
+    margin: 5px 0;
+}
+
+.arrow {
+    border: solid #666;
+    border-width: 0 2px 2px 0;
+    display: inline-block;
+    padding: 3px;
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+    margin-left: auto;
+    position: relative;
+    top: -1px;
+}
+
+.dropdown-button.active .arrow {
+    transform: rotate(-135deg);
+}

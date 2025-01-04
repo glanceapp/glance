@@ -3,6 +3,7 @@ package glance
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
@@ -125,8 +126,9 @@ func (a *application) transformUserDefinedAssetPath(path string) string {
 }
 
 type pageTemplateData struct {
-	App  *application
-	Page *page
+	App     *application
+	Page    *page
+	Presets string
 }
 
 func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) {
@@ -137,9 +139,20 @@ func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	presets := a.Config.Theme.Presets
+	keys := make([]string, 0, len(presets))
+	for key := range presets {
+		keys = append(keys, key)
+	}
+	presetsAsJSON, jsonErr := json.Marshal(presets)
+	if jsonErr != nil {
+		log.Fatalf("Erreur lors de la conversion en JSON : %v", jsonErr)
+	}
+
 	pageData := pageTemplateData{
-		Page: page,
-		App:  a,
+		App:     a,
+		Page:    page,
+		Presets: string(presetsAsJSON),
 	}
 
 	var responseBytes bytes.Buffer
