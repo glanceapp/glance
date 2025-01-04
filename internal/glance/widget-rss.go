@@ -223,7 +223,7 @@ func fetchItemsFromRSSFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
 		}
 
 		if item.Title != "" {
-			rssItem.Title = item.Title
+			rssItem.Title = html.UnescapeString(item.Title)
 		} else {
 			rssItem.Title = shortenFeedDescriptionLen(item.Description, 100)
 		}
