@@ -822,7 +822,7 @@ https://your.proxy/?url={REQUEST-URL}
 ##### `proxy`
 A custom HTTP/HTTPS proxy URL that will be used to fetch the data. This is useful when you're hosting Glance on a VPS where Reddit is blocking the requests and you want to bypass the restriction by routing the requests through a proxy. Example:
 
-```
+```yaml
 proxy: http://user:pass@proxy.com:8080
 proxy: https://user:pass@proxy.com:443
 ```
