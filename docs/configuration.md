@@ -746,6 +746,7 @@ Example:
 | collapse-after | integer | no | 5 |
 | comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
 | request-url-template | string | no |  |
+| proxy | string or multiple parameters | no |  |
 | sort-by | string | no | hot |
 | top-period | string | no | day |
 | search | string | no | |
@@ -807,7 +808,7 @@ r/selfhosted/comments/bsp01i/welcome_to_rselfhosted_please_read_this_first/
 `{SUBREDDIT}` - the subreddit name
 
 ##### `request-url-template`
-A custom request url that will be used to fetch the data instead. This is useful when you're hosting Glance on a VPS and Reddit is blocking the requests, and you want to route it through an HTTP proxy.
+A custom request URL that will be used to fetch the data. This is useful when you're hosting Glance on a VPS where Reddit is blocking the requests and you want to route them through a proxy that accepts the URL as either a part of the path or a query parameter.
 
 Placeholders:
 
@@ -817,6 +818,29 @@ Placeholders:
 https://proxy/{REQUEST-URL}
 https://your.proxy/?url={REQUEST-URL}
 ```
+
+##### `proxy`
+A custom HTTP/HTTPS proxy URL that will be used to fetch the data. This is useful when you're hosting Glance on a VPS where Reddit is blocking the requests and you want to bypass the restriction by routing the requests through a proxy. Example:
+
+```
+proxy: http://user:pass@proxy.com:8080
+proxy: https://user:pass@proxy.com:443
+```
+
+Alternatively, you can specify the proxy URL as well as additional options by using multiple parameters:
+
+```yaml
+proxy:
+  url: http://proxy.com:8080
+  allow-insecure: true
+  timeout: 10s
+```
+
+###### `allow-insecure`
+When set to `true`, allows the use of insecure connections such as when the proxy has a self-signed certificate.
+
+###### `timeout`
+The maximum time to wait for a response from the proxy. The value is a string and must be a number followed by one of s, m, h, d. Example: `10s` for 10 seconds, `1m` for 1 minute, etc
 
 ##### `sort-by`
 Can be used to specify the order in which the posts should get returned. Possible values are `hot`, `new`, `top` and `rising`.

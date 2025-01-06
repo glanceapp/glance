@@ -19,19 +19,20 @@ var (
 
 type redditWidget struct {
 	widgetBase          `yaml:",inline"`
-	Posts               forumPostList `yaml:"-"`
-	Subreddit           string        `yaml:"subreddit"`
-	Style               string        `yaml:"style"`
-	ShowThumbnails      bool          `yaml:"show-thumbnails"`
-	ShowFlairs          bool          `yaml:"show-flairs"`
-	SortBy              string        `yaml:"sort-by"`
-	TopPeriod           string        `yaml:"top-period"`
-	Search              string        `yaml:"search"`
-	ExtraSortBy         string        `yaml:"extra-sort-by"`
-	CommentsUrlTemplate string        `yaml:"comments-url-template"`
-	Limit               int           `yaml:"limit"`
-	CollapseAfter       int           `yaml:"collapse-after"`
-	RequestUrlTemplate  string        `yaml:"request-url-template"`
+	Posts               forumPostList     `yaml:"-"`
+	Subreddit           string            `yaml:"subreddit"`
+	Proxy               proxyOptionsField `yaml:"proxy"`
+	Style               string            `yaml:"style"`
+	ShowThumbnails      bool              `yaml:"show-thumbnails"`
+	ShowFlairs          bool              `yaml:"show-flairs"`
+	SortBy              string            `yaml:"sort-by"`
+	TopPeriod           string            `yaml:"top-period"`
+	Search              string            `yaml:"search"`
+	ExtraSortBy         string            `yaml:"extra-sort-by"`
+	CommentsUrlTemplate string            `yaml:"comments-url-template"`
+	Limit               int               `yaml:"limit"`
+	CollapseAfter       int               `yaml:"collapse-after"`
+	RequestUrlTemplate  string            `yaml:"request-url-template"`
 }
 
 func (widget *redditWidget) initialize() error {
@@ -94,6 +95,7 @@ func (widget *redditWidget) update(ctx context.Context) {
 		widget.Search,
 		widget.CommentsUrlTemplate,
 		widget.RequestUrlTemplate,
+		widget.Proxy.client,
 		widget.ShowFlairs,
 	)
 
@@ -161,7 +163,16 @@ func templateRedditCommentsURL(template, subreddit, postId, postPath string) str
 	return template
 }
 
-func fetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate, requestUrlTemplate string, showFlairs bool) (forumPostList, error) {
+func fetchSubredditPosts(
+	subreddit,
+	sort,
+	topPeriod,
+	search,
+	commentsUrlTemplate,
+	requestUrlTemplate string,
+	proxyClient *http.Client,
+	showFlairs bool,
+) (forumPostList, error) {
 	query := url.Values{}
 	var requestUrl string
 
@@ -180,8 +191,12 @@ func fetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate
 		requestUrl = fmt.Sprintf("https://www.reddit.com/r/%s/%s.json?%s", subreddit, sort, query.Encode())
 	}
 
+	var client requestDoer = defaultHTTPClient
+
 	if requestUrlTemplate != "" {
 		requestUrl = strings.ReplaceAll(requestUrlTemplate, "{REQUEST-URL}", requestUrl)
+	} else if proxyClient != nil {
+		client = proxyClient
 	}
 
 	request, err := http.NewRequest("GET", requestUrl, nil)
@@ -191,7 +206,7 @@ func fetchSubredditPosts(subreddit, sort, topPeriod, search, commentsUrlTemplate
 
 	// Required to increase rate limit, otherwise Reddit randomly returns 429 even after just 2 requests
 	setBrowserUserAgentHeader(request)
-	responseJson, err := decodeJsonFromRequest[subredditResponseJson](defaultHTTPClient, request)
+	responseJson, err := decodeJsonFromRequest[subredditResponseJson](client, request)
 	if err != nil {
 		return nil, err
 	}
