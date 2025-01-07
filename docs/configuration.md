@@ -1520,10 +1520,11 @@ An array of groups which can optionally have a title and a custom color.
 | links | array | yes | |
 | same-tab | boolean | no | false |
 | hide-arrow | boolean | no | false |
+| target | string | no | |
 
 > [!TIP]
 >
-> You can set `same-tab` and `hide-arrow` either on the group which will apply them to all links in that group, or on each individual link which will override the value set on the group.
+> You can set `same-tab`, `hide-arrow` and `target` either on the group which will apply them to all links in that group, or on each individual link which will override the value set on the group.
 
 ###### Properties for each link
 | Name | Type | Required | Default |
@@ -1533,6 +1534,7 @@ An array of groups which can optionally have a title and a custom color.
 | icon | string | no | |
 | same-tab | boolean | no | false |
 | hide-arrow | boolean | no | false |
+| target | string | no | |
 
 `icon`
 
@@ -1555,6 +1557,10 @@ Whether to open the link in the same tab or a new one.
 `hide-arrow`
 
 Whether to hide the colored arrow on each link.
+
+`target`
+
+Set a custom value for the link's `target` attribute. Possible values are `_blank`, `_self`, `_parent` and `_top`, you can read more about what they do [here](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target). This property has precedence over `same-tab`.
 
 ### ChangeDetection.io
 Display a list watches from changedetection.io.
