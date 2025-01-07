@@ -41,9 +41,10 @@
     --color-graph-gridlines: hsl(var(--bghs), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 6% * var(--cm))));
 
     --ths: var(--bgh), calc(var(--bgs) * var(--tsm));
+    --color-text-highlight: hsl(var(--ths), calc(var(--scheme) var(--cm) * 85%));
+    --color-text-paragraph: hsl(var(--ths), calc(var(--scheme) var(--cm) * 73%));
     --color-text-base: hsl(var(--ths), calc(var(--scheme) var(--cm) * 58%));
     --color-text-base-muted: hsl(var(--ths), calc(var(--scheme) var(--cm) * 52%));
-    --color-text-highlight: hsl(var(--ths), calc(var(--scheme) var(--cm) * 85%));
     --color-text-subdue: hsl(var(--ths), calc(var(--scheme) var(--cm) * 35%));
 
     --font-size-h1: 1.7rem;
@@ -1793,6 +1794,7 @@ details[open] .summary::after {
 .size-h6   { font-size: var(--font-size-h6); }
 
 .color-highlight    { color: var(--color-text-highlight); }
+.color-paragraph    { color: var(--color-text-paragraph); }
 .color-base         { color: var(--color-text-base); }
 .color-subdue       { color: var(--color-text-subdue); }
 .color-negative     { color: var(--color-negative); }
