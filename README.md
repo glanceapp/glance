@@ -73,7 +73,6 @@ services:
       - type: bind
         source: ./glance.yml
         target: /app/glance.yml
-      - ./glance.yml:/app/glance.yml
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     ports:
