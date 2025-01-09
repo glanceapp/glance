@@ -1302,7 +1302,7 @@ repositories:
   - codeberg:redict/redict
 ```
 
-Official images on Docker Hub can be specified by ommiting the owner:
+Official images on Docker Hub can be specified by omitting the owner:
 
 ```yaml
 repositories:
@@ -1311,7 +1311,7 @@ repositories:
   - dockerhub:alpine
 ```
 
-You can also specify specific tags for Docker Hub images:
+You can also specify exact tags for Docker Hub images:
 
 ```yaml
 repositories:
