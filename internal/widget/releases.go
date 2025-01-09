@@ -12,15 +12,16 @@ import (
 )
 
 type Releases struct {
-	widgetBase      `yaml:",inline"`
-	Releases        feed.AppReleases       `yaml:"-"`
-	releaseRequests []*feed.ReleaseRequest `yaml:"-"`
-	Repositories    []string               `yaml:"repositories"`
-	Token           OptionalEnvString      `yaml:"token"`
-	GitLabToken     OptionalEnvString      `yaml:"gitlab-token"`
-	Limit           int                    `yaml:"limit"`
-	CollapseAfter   int                    `yaml:"collapse-after"`
-	ShowSourceIcon  bool                   `yaml:"show-source-icon"`
+	widgetBase               `yaml:",inline"`
+	Releases                 feed.AppReleases       `yaml:"-"`
+	releaseRequests          []*feed.ReleaseRequest `yaml:"-"`
+	Repositories             []string               `yaml:"repositories"`
+	Token                    OptionalEnvString      `yaml:"token"`
+	GitLabToken              OptionalEnvString      `yaml:"gitlab-token"`
+	Limit                    int                    `yaml:"limit"`
+	CollapseAfter            int                    `yaml:"collapse-after"`
+	ShowSourceIcon           bool                   `yaml:"show-source-icon"`
+	IncludeGithubPreReleases bool                   `yaml:"include-github-prereleases"`
 }
 
 func (widget *Releases) Initialize() error {
@@ -42,8 +43,9 @@ func (widget *Releases) Initialize() error {
 		var request *feed.ReleaseRequest
 		if len(parts) == 1 {
 			request = &feed.ReleaseRequest{
-				Source:     feed.ReleaseSourceGithub,
-				Repository: repository,
+				Source:                   feed.ReleaseSourceGithub,
+				Repository:               repository,
+				IncludeGithubPreReleases: widget.IncludeGithubPreReleases,
 			}
 
 			if widget.Token != "" {

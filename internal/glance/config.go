@@ -49,7 +49,7 @@ func NewConfigFromYml(contents io.Reader) (*Config, error) {
 func NewConfig() *Config {
 	config := &Config{}
 
-	config.Server.Host = ""
+	config.Server.Host = "127.0.0.1"
 	config.Server.Port = 8080
 
 	return config

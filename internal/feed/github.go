@@ -18,11 +18,23 @@ type githubReleaseLatestResponseJson struct {
 }
 
 func fetchLatestGithubRelease(request *ReleaseRequest) (*AppRelease, error) {
-	httpRequest, err := http.NewRequest(
-		"GET",
-		fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", request.Repository),
-		nil,
-	)
+	var httpRequest *http.Request
+	var err error
+	var response githubReleaseLatestResponseJson
+
+	if request.IncludeGithubPreReleases {
+		httpRequest, err = http.NewRequest(
+			"GET",
+			fmt.Sprintf("https://api.github.com/repos/%s/releases", request.Repository),
+			nil,
+		)
+	} else {
+		httpRequest, err = http.NewRequest(
+			"GET",
+			fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", request.Repository),
+			nil,
+		)
+	}
 
 	if err != nil {
 		return nil, err
@@ -32,10 +44,19 @@ func fetchLatestGithubRelease(request *ReleaseRequest) (*AppRelease, error) {
 		httpRequest.Header.Add("Authorization", "Bearer "+(*request.Token))
 	}
 
-	response, err := decodeJsonFromRequest[githubReleaseLatestResponseJson](defaultClient, httpRequest)
+	if request.IncludeGithubPreReleases {
+		releases, err := decodeJsonFromRequest[[]githubReleaseLatestResponseJson](defaultClient, httpRequest)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
+		response = releases[0]
+	} else {
+		response, err = decodeJsonFromRequest[githubReleaseLatestResponseJson](defaultClient, httpRequest)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &AppRelease{

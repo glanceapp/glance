@@ -16,9 +16,10 @@ const (
 )
 
 type ReleaseRequest struct {
-	Source     ReleaseSource
-	Repository string
-	Token      *string
+	Source                   ReleaseSource
+	Repository               string
+	Token                    *string
+	IncludeGithubPreReleases bool
 }
 
 func FetchLatestReleases(requests []*ReleaseRequest) (AppReleases, error) {
