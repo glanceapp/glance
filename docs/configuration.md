@@ -583,6 +583,7 @@ Preview:
 | channels | array | yes | |
 | limit | integer | no | 25 |
 | style | string | no | horizontal-cards |
+| collapse-after | integer | no | 7 |
 | collapse-after-rows | integer | no | 4 |
 | include-shorts | boolean | no | false |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
@@ -607,11 +608,18 @@ Then scroll down and click on "Share channel", then "Copy channel ID":
 ##### `limit`
 The maximum number of videos to show.
 
+##### `collapse-after`
+Specify the number of videos to show when using the `vertical-list` style before the "SHOW MORE" button appears.
+
 ##### `collapse-after-rows`
 Specify the number of rows to show when using the `grid-cards` style before the "SHOW MORE" button appears.
 
 ##### `style`
-Used to change the appearance of the widget. Possible values are `horizontal-cards` and `grid-cards`.
+Used to change the appearance of the widget. Possible values are `horizontal-cards`, `vertical-list` and `grid-cards`.
+
+Preview of `vertical-list`:
+
+![](images/videos-widget-vertical-list-preview.png)
 
 Preview of `grid-cards`:
 

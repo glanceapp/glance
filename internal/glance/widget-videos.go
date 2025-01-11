@@ -15,8 +15,9 @@ import (
 const videosWidgetPlaylistPrefix = "playlist:"
 
 var (
-	videosWidgetTemplate     = mustParseTemplate("videos.html", "widget-base.html", "video-card-contents.html")
-	videosWidgetGridTemplate = mustParseTemplate("videos-grid.html", "widget-base.html", "video-card-contents.html")
+	videosWidgetTemplate             = mustParseTemplate("videos.html", "widget-base.html", "video-card-contents.html")
+	videosWidgetGridTemplate         = mustParseTemplate("videos-grid.html", "widget-base.html", "video-card-contents.html")
+	videosWidgetVerticalListTemplate = mustParseTemplate("videos-vertical-list.html", "widget-base.html")
 )
 
 type videosWidget struct {
@@ -24,6 +25,7 @@ type videosWidget struct {
 	Videos            videoList `yaml:"-"`
 	VideoUrlTemplate  string    `yaml:"video-url-template"`
 	Style             string    `yaml:"style"`
+	CollapseAfter     int       `yaml:"collapse-after"`
 	CollapseAfterRows int       `yaml:"collapse-after-rows"`
 	Channels          []string  `yaml:"channels"`
 	Limit             int       `yaml:"limit"`
@@ -39,6 +41,10 @@ func (widget *videosWidget) initialize() error {
 
 	if widget.CollapseAfterRows == 0 || widget.CollapseAfterRows < -1 {
 		widget.CollapseAfterRows = 4
+	}
+
+	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
+		widget.CollapseAfter = 7
 	}
 
 	return nil
@@ -59,11 +65,18 @@ func (widget *videosWidget) update(ctx context.Context) {
 }
 
 func (widget *videosWidget) Render() template.HTML {
-	if widget.Style == "grid-cards" {
-		return widget.renderTemplate(widget, videosWidgetGridTemplate)
+	var template *template.Template
+
+	switch widget.Style {
+	case "grid-cards":
+		template = videosWidgetGridTemplate
+	case "vertical-list":
+		template = videosWidgetVerticalListTemplate
+	default:
+		template = videosWidgetTemplate
 	}
 
-	return widget.renderTemplate(widget, videosWidgetTemplate)
+	return widget.renderTemplate(widget, template)
 }
 
 type youtubeFeedResponseXml struct {

@@ -936,6 +936,13 @@ details[open] .summary::after {
     border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
+.video-horizontal-list-thumbnail {
+    height: 4rem;
+    aspect-ratio: 16 / 8.9;
+    object-fit: cover;
+    border-radius: var(--border-radius);
+}
+
 .search-icon {
     width: 2.3rem;
 }
