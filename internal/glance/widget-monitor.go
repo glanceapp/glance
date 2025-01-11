@@ -62,10 +62,8 @@ func (widget *monitorWidget) update(ctx context.Context) {
 			widget.HasFailing = true
 		}
 
-		if !status.TimedOut {
-			site.StatusText = statusCodeToText(status.Code, site.AltStatusCodes)
-			site.StatusStyle = statusCodeToStyle(status.Code, site.AltStatusCodes)
-		}
+		site.StatusText = statusCodeToText(status.Code, site.AltStatusCodes)
+		site.StatusStyle = statusCodeToStyle(status.Code, site.AltStatusCodes)
 	}
 }
 
