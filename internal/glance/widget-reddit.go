@@ -63,7 +63,7 @@ func (widget *redditWidget) initialize() error {
 	}
 
 	widget.
-		withTitle("/r/" + widget.Subreddit).
+		withTitle("r/" + widget.Subreddit).
 		withTitleURL("https://www.reddit.com/r/" + widget.Subreddit + "/").
 		withCacheDuration(30 * time.Minute)
 
