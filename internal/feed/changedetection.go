@@ -35,11 +35,17 @@ type changeDetectionResponseJson struct {
 	PreviousHash string `json:"previous_md5"`
 }
 
-func FetchWatchUUIDsFromChangeDetection(instanceURL string, token string) ([]string, error) {
+func FetchWatchUUIDsFromChangeDetection(instanceURL string, token string, tag string) ([]string, error) {
 	request, _ := http.NewRequest("GET", fmt.Sprintf("%s/api/v1/watch", instanceURL), nil)
 
 	if token != "" {
 		request.Header.Add("x-api-key", token)
+	}
+
+	if tag != "" {
+		query := request.URL.Query()
+		query.Add("tag", tag)
+		request.URL.RawQuery = query.Encode()
 	}
 
 	uuidsMap, err := decodeJsonFromRequest[map[string]struct{}](defaultClient, request)

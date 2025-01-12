@@ -1420,6 +1420,7 @@ Preview:
 | limit | integer | no | 10 |
 | collapse-after | integer | no | 5 |
 | watches | array of strings | no |  |
+| tags | array of strings | no |  |
 
 ##### `instance-url`
 The URL pointing to your instance of `changedetection.io`.
@@ -1434,7 +1435,7 @@ The maximum number of watches to show.
 How many watches are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
 ##### `watches`
-By default all of the configured watches will be shown. Optionally, you can specify a list of UUIDs for the specific watches you want to have listed:
+By default, when no tags nor watches are defined, all of the configured watches will be shown. Optionally, you can specify a list of UUIDs for the specific watches you want to have listed:
 
 ```yaml
   - type: change-detection
@@ -1442,6 +1443,10 @@ By default all of the configured watches will be shown. Optionally, you can spec
       - 1abca041-6d4f-4554-aa19-809147f538d3
       - 705ed3e4-ea86-4d25-a064-822a6425be2c
 ```
+
+##### `tags`
+A list of tags to be watched.
+
 
 ### Clock
 Display a clock showing the current time and date. Optionally, also display the the time in other timezones.

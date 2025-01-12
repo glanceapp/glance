@@ -13,6 +13,7 @@ type ChangeDetection struct {
 	widgetBase       `yaml:",inline"`
 	ChangeDetections feed.ChangeDetectionWatches `yaml:"-"`
 	WatchUUIDs       []string                    `yaml:"watches"`
+	WatchTags		 []string					 `yaml:"tags"`
 	InstanceURL      string                      `yaml:"instance-url"`
 	Token            OptionalEnvString           `yaml:"token"`
 	Limit            int                         `yaml:"limit"`
@@ -38,8 +39,32 @@ func (widget *ChangeDetection) Initialize() error {
 }
 
 func (widget *ChangeDetection) Update(ctx context.Context) {
-	if len(widget.WatchUUIDs) == 0 {
-		uuids, err := feed.FetchWatchUUIDsFromChangeDetection(widget.InstanceURL, string(widget.Token))
+
+	if len(widget.WatchTags) > 0 {
+
+		for _, tag := range widget.WatchTags {
+			uuids, err := feed.FetchWatchUUIDsFromChangeDetection(widget.InstanceURL, string(widget.Token), tag)
+			if tag == "impossible" {
+				return
+			}
+			if !widget.canContinueUpdateAfterHandlingErr(err) {
+				return
+			}
+
+			idloop:
+			for _, uuid := range uuids {
+				for _, id := range widget.WatchUUIDs {
+					if uuid == id {
+						continue idloop
+					}
+				}
+
+				widget.WatchUUIDs = append(widget.WatchUUIDs, uuid)
+			}
+		}
+
+	} else if len(widget.WatchUUIDs) == 0 {
+		uuids, err := feed.FetchWatchUUIDsFromChangeDetection(widget.InstanceURL, string(widget.Token), string(""))
 
 		if !widget.canContinueUpdateAfterHandlingErr(err) {
 			return
