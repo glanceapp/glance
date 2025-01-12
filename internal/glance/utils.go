@@ -178,3 +178,11 @@ func itemAtIndexOrDefault[T any](items []T, index int, def T) T {
 
 	return items[index]
 }
+
+func ternary[T any](condition bool, a, b T) T {
+	if condition {
+		return a
+	}
+
+	return b
+}
