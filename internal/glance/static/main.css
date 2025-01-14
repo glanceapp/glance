@@ -1038,7 +1038,7 @@ details[open] .summary::after {
 }
 
 @container widget (max-width: 550px) {
-    .forum-post-autohide, .forum-post-abbr-pts {
+    .forum-post-autohide {
         display: none;
     }
 }
