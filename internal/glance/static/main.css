@@ -804,7 +804,7 @@ details[open] .summary::after {
 .list-horizontal-text > *:not(:last-child)::after {
     content: '•';
     color: var(--color-text-subdue);
-    margin: 0 0.5rem;
+    margin: 0 0.4rem;
     position: relative;
     top: 0.1rem;
 }
@@ -1023,11 +1023,6 @@ details[open] .summary::after {
     display: none;
 }
 
-.forum-post-list-item {
-    display: flex;
-    gap: 1.2rem;
-}
-
 .forum-post-list-thumbnail {
     flex-shrink: 0;
     width: 6rem;
@@ -1040,6 +1035,21 @@ details[open] .summary::after {
 
 .forum-post-tags-container {
     transform: translateY(-0.15rem);
+}
+
+@container widget (max-width: 550px) {
+    .forum-post-comment-count {
+        display: none;
+    }
+
+    .forum-post-points-word {
+        font-size: 0;
+    }
+
+    .forum-post-points-word::after {
+        content: "pts";
+        font-size: var(--font-size-base);
+    }
 }
 
 .bookmarks-group {

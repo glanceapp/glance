@@ -33,10 +33,10 @@
                     </ul>
                 </div>
                 {{ end }}
-                <ul class="list-horizontal-text">
+                <ul class="list-horizontal-text flex-nowrap text-compact">
                     <li {{ dynamicRelativeTimeAttrs .TimePosted }}></li>
-                    <li>{{ .Score | formatNumber }} points</li>
-                    <li>{{ .CommentCount | formatNumber }} comments</li>
+                    <li class="shrink-0">{{ .Score | formatApproxNumber }} <span class="forum-post-points-word">points</span></li>
+                    <li class="forum-post-comment-count shrink-0">{{ .CommentCount | formatApproxNumber }} comments</li>
                     {{ if ne "" .TargetUrl }}
                     <li class="min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ .TargetUrlDomain }}</a></li>
                     {{ end }}

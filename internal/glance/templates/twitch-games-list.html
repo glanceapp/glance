@@ -9,7 +9,7 @@
             <div class="min-width-0">
                 <a class="size-h3 color-highlight text-truncate block" href="https://www.twitch.tv/directory/category/{{ .Slug }}" target="_blank" rel="noreferrer">{{ .Name }}</a>
                 <ul class="list-horizontal-text">
-                    <li>{{ .ViewersCount | formatViewerCount }} viewers</li>
+                    <li>{{ .ViewersCount | formatApproxNumber }} viewers</li>
                     {{ if .IsNew }}
                     <li class="color-primary">NEW</li>
                     {{ end }}

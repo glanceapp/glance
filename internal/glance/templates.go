@@ -1,7 +1,6 @@
 package glance
 
 import (
-	"fmt"
 	"html/template"
 	"math"
 	"strconv"
@@ -14,8 +13,8 @@ import (
 var intl = message.NewPrinter(language.English)
 
 var globalTemplateFunctions = template.FuncMap{
-	"formatViewerCount": formatViewerCount,
-	"formatNumber":      intl.Sprint,
+	"formatApproxNumber": formatApproxNumber,
+	"formatNumber":       intl.Sprint,
 	"safeCSS": func(str string) template.CSS {
 		return template.CSS(str)
 	},
@@ -45,18 +44,18 @@ func mustParseTemplate(primary string, dependencies ...string) *template.Templat
 	return t
 }
 
-func formatViewerCount(count int) string {
+func formatApproxNumber(count int) string {
 	if count < 1_000 {
 		return strconv.Itoa(count)
 	}
 
 	if count < 10_000 {
-		return fmt.Sprintf("%.1fk", float64(count)/1_000)
+		return strconv.FormatFloat(float64(count)/1_000, 'f', 1, 64) + "k"
 	}
 
 	if count < 1_000_000 {
-		return fmt.Sprintf("%dk", count/1_000)
+		return strconv.Itoa(count/1_000) + "k"
 	}
 
-	return fmt.Sprintf("%.1fm", float64(count)/1_000_000)
+	return strconv.FormatFloat(float64(count)/1_000_000, 'f', 1, 64) + "m"
 }
