@@ -1038,17 +1038,8 @@ details[open] .summary::after {
 }
 
 @container widget (max-width: 550px) {
-    .forum-post-autohide {
+    .forum-post-autohide, .forum-post-abbr-pts {
         display: none;
-    }
-
-    .forum-post-points-word {
-        font-size: 0;
-    }
-
-    .forum-post-points-word::after {
-        content: "pts";
-        font-size: var(--font-size-base);
     }
 }
 
