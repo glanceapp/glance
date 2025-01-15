@@ -35,7 +35,7 @@
                 {{- end }}
                 <ul class="list-horizontal-text flex-nowrap text-compact">
                     <li {{ dynamicRelativeTimeAttrs .TimePosted }}></li>
-                    <li class="shrink-0">{{ .Score | formatApproxNumber }} p<span class="forum-post-autohide">oin</span>ts</li>
+                    <li class="shrink-0">{{ .Score | formatApproxNumber }} points</li>
                     <li class="shrink-0{{ if .TargetUrl }} forum-post-autohide{{ end }}">{{ .CommentCount | formatApproxNumber }} comments</li>
                     {{- if .TargetUrl }}
                     <li class="min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ .TargetUrlDomain }}</a></li>
