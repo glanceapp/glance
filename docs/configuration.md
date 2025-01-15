@@ -1220,6 +1220,7 @@ Properties for each site:
 | title | string | yes | |
 | url | string | yes | |
 | check-url | string | no | |
+| error-url | string | no | |
 | icon | string | no | |
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
@@ -1236,6 +1237,10 @@ The public facing URL of a monitored service, the user will be redirected here. 
 `check-url`
 
 The URL which will be requested and its response will determine the status of the site. If not specified, the `url` property is used.
+
+`error-url`
+
+If the monitored service returns an error, the user will be redirected here. If not specified, the `url` property is used.
 
 `icon`
 

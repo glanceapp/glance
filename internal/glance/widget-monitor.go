@@ -20,6 +20,7 @@ type monitorWidget struct {
 	Sites      []struct {
 		*SiteStatusRequest `yaml:",inline"`
 		Status             *siteStatus     `yaml:"-"`
+		ErrorURL           string          `yaml:"error-url"`
 		Title              string          `yaml:"title"`
 		Icon               customIconField `yaml:"icon"`
 		SameTab            bool            `yaml:"same-tab"`
