@@ -29,6 +29,9 @@ Used to specify the title of the widget. If not provided, the widget's title wil
 ### `Widget-Content-Type`
 Used to specify the content type that will be returned by the extension. If not provided, the content will be shown as plain text.
 
+### `Widget-Content-Frameless`
+When set to `true`, the widget's content will be displayed without the default background or "frame".
+
 ## Content Types
 
 > [!NOTE]

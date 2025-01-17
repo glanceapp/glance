@@ -15,6 +15,8 @@
   - [Reddit](#reddit)
   - [Search](#search-widget)
   - [Group](#group)
+  - [Split Column](#split-column)
+  - [Custom API](#custom-api)
   - [Extension](#extension)
   - [Weather](#weather)
   - [Monitor](#monitor)
@@ -30,8 +32,10 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
+  - [Docker](#docker)
 
 ## Intro
+<!-- TODO: update -->
 Configuration is done via a single YAML file and a server restart is required in order for any changes to take effect. Trying to start the server with an invalid config file will result in an error.
 
 ## Preconfigured page
@@ -110,6 +114,8 @@ This will give you a page that looks like the following:
 ![](images/preconfigured-page-preview.png)
 
 Configure the widgets, add more of them, add extra pages, etc. Make it your own!
+
+<!-- TODO: update - add information about top level document key -->
 
 ## Server
 Server configuration is done through a top level `server` property. Example:
@@ -314,6 +320,7 @@ pages:
 | width | string | no | |
 | center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
+| expand-mobile-page-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
 
@@ -339,6 +346,9 @@ When set to `true`, vertically centers the content on the page. Has no effect if
 
 #### `hide-desktop-navigation`
 Whether to show the navigation links at the top of the page on desktop.
+
+#### `expand-mobile-page-navigation`
+Whether the mobile page navigation should be expanded by default.
 
 #### `show-mobile-header`
 Whether to show a header displaying the name of the page on mobile. The header purposefully has a lot of vertical whitespace in order to push the content down and make it easier to reach on tall devices.
@@ -526,9 +536,21 @@ An array of RSS/atom feeds. The title can optionally be changed.
 | hide-categories | boolean | no | false | Only applicable for `detailed-list` style |
 | hide-description | boolean | no | false | Only applicable for `detailed-list` style |
 | item-link-prefix | string | no | | |
+| headers | key (string) & value (string) | no | | |
 
 ###### `item-link-prefix`
 If an RSS feed isn't returning item links with a base domain and Glance has failed to automatically detect the correct domain you can manually add a prefix to each link with this property.
+
+###### `headers`
+Optionally specify the headers that will be sent with the request. Example:
+
+```yaml
+- type: rss
+  feeds:
+    - url: https://domain.com/rss
+      headers:
+        User-Agent: Custom User Agent
+```
 
 ##### `limit`
 The maximum number of articles to show.
@@ -561,12 +583,21 @@ Preview:
 | channels | array | yes | |
 | limit | integer | no | 25 |
 | style | string | no | horizontal-cards |
+| collapse-after | integer | no | 7 |
 | collapse-after-rows | integer | no | 4 |
 | include-shorts | boolean | no | false |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
-A list of channel IDs. One way of getting the ID of a channel is going to the channel's page and clicking on its description:
+A list of channel or playlist IDs. To specify a playlist, use the `playlist:` prefix like such:
+
+```yaml
+channels:
+  - playlist:PL8mG-RkN2uTyZZ00ObwZxxoG_nJbs3qec
+  - playlist:PL8mG-RkN2uTxTK4m_Vl2dYR9yE41kRdBg
+```
+
+One way of getting the ID of a channel is going to the channel's page and clicking on its description:
 
 ![](images/videos-channel-description-example.png)
 
@@ -577,11 +608,18 @@ Then scroll down and click on "Share channel", then "Copy channel ID":
 ##### `limit`
 The maximum number of videos to show.
 
+##### `collapse-after`
+Specify the number of videos to show when using the `vertical-list` style before the "SHOW MORE" button appears.
+
 ##### `collapse-after-rows`
 Specify the number of rows to show when using the `grid-cards` style before the "SHOW MORE" button appears.
 
 ##### `style`
-Used to change the appearance of the widget. Possible values are `horizontal-cards` and `grid-cards`.
+Used to change the appearance of the widget. Possible values are `horizontal-cards`, `vertical-list` and `grid-cards`.
+
+Preview of `vertical-list`:
+
+![](images/videos-widget-vertical-list-preview.png)
 
 Preview of `grid-cards`:
 
@@ -716,6 +754,7 @@ Example:
 | collapse-after | integer | no | 5 |
 | comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
 | request-url-template | string | no |  |
+| proxy | string or multiple parameters | no |  |
 | sort-by | string | no | hot |
 | top-period | string | no | day |
 | search | string | no | |
@@ -777,7 +816,7 @@ r/selfhosted/comments/bsp01i/welcome_to_rselfhosted_please_read_this_first/
 `{SUBREDDIT}` - the subreddit name
 
 ##### `request-url-template`
-A custom request url that will be used to fetch the data instead. This is useful when you're hosting Glance on a VPS and Reddit is blocking the requests, and you want to route it through an HTTP proxy.
+A custom request URL that will be used to fetch the data. This is useful when you're hosting Glance on a VPS where Reddit is blocking the requests and you want to route them through a proxy that accepts the URL as either a part of the path or a query parameter.
 
 Placeholders:
 
@@ -787,6 +826,29 @@ Placeholders:
 https://proxy/{REQUEST-URL}
 https://your.proxy/?url={REQUEST-URL}
 ```
+
+##### `proxy`
+A custom HTTP/HTTPS proxy URL that will be used to fetch the data. This is useful when you're hosting Glance on a VPS where Reddit is blocking the requests and you want to bypass the restriction by routing the requests through a proxy. Example:
+
+```yaml
+proxy: http://user:pass@proxy.com:8080
+proxy: https://user:pass@proxy.com:443
+```
+
+Alternatively, you can specify the proxy URL as well as additional options by using multiple parameters:
+
+```yaml
+proxy:
+  url: http://proxy.com:8080
+  allow-insecure: true
+  timeout: 10s
+```
+
+###### `allow-insecure`
+When set to `true`, allows the use of insecure connections such as when the proxy has a self-signed certificate.
+
+###### `timeout`
+The maximum time to wait for a response from the proxy. The value is a string and must be a number followed by one of s, m, h, d. Example: `10s` for 10 seconds, `1m` for 1 minute, etc
 
 ##### `sort-by`
 Can be used to specify the order in which the posts should get returned. Possible values are `hot`, `new`, `top` and `rising`.
@@ -829,6 +891,7 @@ Preview:
 | <kbd>Enter</kbd> | Perform search in the same tab | Search input is focused and not empty |
 | <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Perform search in a new tab | Search input is focused and not empty |
 | <kbd>Escape</kbd> | Leave focus | Search input is focused |
+| <kbd>Up</kbd> | Insert the last search query since the page was opened into the input field | Search input is focused |
 
 > [!TIP]
 >
@@ -840,6 +903,7 @@ Preview:
 | search-engine | string | no | duckduckgo |
 | new-tab | boolean | no | false |
 | autofocus | boolean | no | false |
+| placeholder | string | no | Type here to search… |
 | bangs | array | no | |
 
 ##### `search-engine`
@@ -855,6 +919,9 @@ When set to `true`, swaps the shortcuts for showing results in the same or new t
 
 ##### `autofocus`
 When set to `true`, automatically focuses the search input on page load.
+
+##### `placeholder`
+When set, modifies the text displayed in the input field before typing.
 
 ##### `bangs`
 What now? [Bangs](https://duckduckgo.com/bangs). They're shortcuts that allow you to use the same search box for many different sites. Assuming you have it configured, if for example you start your search input with `!yt` you'd be able to perform a search on YouTube:
@@ -891,7 +958,7 @@ url: https://www.amazon.com/s?k={QUERY}
 ```
 
 ### Group
-Group multiple widgets into one using tabs. Widgets are defined using a `widgets` property exactly as you would on a page column. The only limitation is that you cannot place a group widget within a group widget.
+Group multiple widgets into one using tabs. Widgets are defined using a `widgets` property exactly as you would on a page column. The only limitation is that you cannot place a group widget or a split column widget within a group widget.
 
 Example:
 
@@ -934,6 +1001,67 @@ Example:
       <<: *shared-properties
 ```
 
+### Split Column
+<!-- TODO: update -->
+Splits a full sized column in half, allowing you to place widgets side by side. This is converted to a single column on mobile devices or if not enough width is available. Widgets are defined using a `widgets` property exactly as you would on a page column.
+
+Example of a full page with an effective 4 column layout using two split column widgets inside of two full sized columns:
+
+<details>
+<summary>View config</summary>
+
+```yaml
+shared:
+  - &reddit-props
+    type: reddit
+    collapse-after: 4
+    show-thumbnails: true
+
+pages:
+  - name: Split Column Demo
+    width: wide
+    columns:
+      - size: full
+        widgets:
+          - type: split-column
+            widgets:
+              - subreddit: gaming
+                <<: *reddit-props
+              - subreddit: worldnews
+                <<: *reddit-props
+              - subreddit: lifeprotips
+                <<: *reddit-props
+                show-thumbnails: false
+              - subreddit: askreddit
+                <<: *reddit-props
+                show-thumbnails: false
+
+      - size: full
+        widgets:
+          - type: split-column
+            widgets:
+              - subreddit: todayilearned
+                <<: *reddit-props
+                collapse-after: 2
+              - subreddit: aww
+                <<: *reddit-props
+              - subreddit: science
+                <<: *reddit-props
+              - subreddit: showerthoughts
+                <<: *reddit-props
+                show-thumbnails: false
+```
+</details>
+
+<br>
+
+Preview:
+
+![](images/split-column-widget-preview.png)
+
+### Custom API
+<!-- TODO -->
+
 ### Extension
 Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
 
@@ -949,11 +1077,15 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | url | string | yes | |
+| fallback-content-type | string | no | |
 | allow-potentially-dangerous-html | boolean | no | false |
 | parameters | key & value | no | |
 
 ##### `url`
 The URL of the extension. **Note that the query gets stripped from this URL and the one defined by `parameters` gets used instead.**
+
+##### `fallback-content-type`
+Optionally specify the fallback content type of the extension if the URL does not return a valid `Widget-Content-Type` header. Currently the only supported value for this property is `html`.
 
 ##### `allow-potentially-dangerous-html`
 Whether to allow the extension to display HTML.
@@ -1066,10 +1198,18 @@ You can hover over the "ERROR" text to view more information.
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | sites | array | yes | |
+| style | string | no | |
 | show-failing-only | boolean | no | false |
 
 ##### `show-failing-only`
 Shows only a list of failing sites when set to `true`.
+
+##### `style`
+Used to change the appearance of the widget. Possible values are `compact`.
+
+Preview of `compact`:
+
+![](images/monitor-widget-compact-preview.png)
 
 ##### `sites`
 
@@ -1080,9 +1220,11 @@ Properties for each site:
 | title | string | yes | |
 | url | string | yes | |
 | check-url | string | no | |
+| error-url | string | no | |
 | icon | string | no | |
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
+| alt-status-codes | array | no | |
 
 `title`
 
@@ -1096,9 +1238,13 @@ The public facing URL of a monitored service, the user will be redirected here. 
 
 The URL which will be requested and its response will determine the status of the site. If not specified, the `url` property is used.
 
+`error-url`
+
+If the monitored service returns an error, the user will be redirected here. If not specified, the `url` property is used.
+
 `icon`
 
-Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path). You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix:
+Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path). You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix or [Dashboard Icons](https://github.com/walkxcode/dashboard-icons) via a `di:` prefix:
 
 ```yaml
 icon: si:jellyfin
@@ -1108,7 +1254,7 @@ icon: si:adguard
 
 > [!WARNING]
 >
-> Simple Icons are loaded externally and are hosted on `cdnjs.cloudflare.com`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+> Simple Icons are loaded externally and are hosted on `cdn.jsdelivr.net`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
 
 `allow-insecure`
 
@@ -1117,6 +1263,15 @@ Whether to ignore invalid/self-signed certificates.
 `same-tab`
 
 Whether to open the link in the same or a new tab.
+
+`alt-status-codes`
+
+Status codes other than 200 that you want to return "OK".
+
+```yaml
+alt-status-codes:
+  - 403
+```
 
 ### Releases
 Display a list of latest releases for specific repositories on Github, GitLab, Codeberg or Docker Hub.
@@ -1160,7 +1315,7 @@ repositories:
   - codeberg:redict/redict
 ```
 
-Official images on Docker Hub can be specified by ommiting the owner:
+Official images on Docker Hub can be specified by omitting the owner:
 
 ```yaml
 repositories:
@@ -1169,7 +1324,7 @@ repositories:
   - dockerhub:alpine
 ```
 
-You can also specify specific tags for Docker Hub images:
+You can also specify exact tags for Docker Hub images:
 
 ```yaml
 repositories:
@@ -1239,14 +1394,20 @@ Preview:
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | service | string | no | pihole |
+| allow-insecure | bool | no | false |
 | url | string | yes |  |
 | username | string | when service is `adguard` |  |
 | password | string | when service is `adguard` |  |
 | token | string | when service is `pihole` |  |
+| hide-graph | bool | no | false |
+| hide-top-domains | bool | no | false |
 | hour-format | string | no | 12h |
 
 ##### `service`
 Either `adguard` or `pihole`.
+
+##### `allow-insecure`
+Whether to allow invalid/self-signed certificates when making the request to the service.
 
 ##### `url`
 The base URL of the service. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
@@ -1259,6 +1420,12 @@ Only required when using AdGuard Home. The password used to log into the admin d
 
 ##### `token`
 Only required when using Pi-hole. The API token which can be found in `Settings -> API -> Show API token`. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+
+##### `hide-graph`
+Whether to hide the graph showing the number of queries over time.
+
+##### `hide-top-domains`
+Whether to hide the list of top blocked domains.
 
 ##### `hour-format`
 Whether to display the relative time in the graph in `12h` or `24h` format.
@@ -1364,6 +1531,13 @@ An array of groups which can optionally have a title and a custom color.
 | title | string | no | |
 | color | HSL | no | the primary color of the theme |
 | links | array | yes | |
+| same-tab | boolean | no | false |
+| hide-arrow | boolean | no | false |
+| target | string | no | |
+
+> [!TIP]
+>
+> You can set `same-tab`, `hide-arrow` and `target` either on the group which will apply them to all links in that group, or on each individual link which will override the value set on the group.
 
 ###### Properties for each link
 | Name | Type | Required | Default |
@@ -1373,10 +1547,11 @@ An array of groups which can optionally have a title and a custom color.
 | icon | string | no | |
 | same-tab | boolean | no | false |
 | hide-arrow | boolean | no | false |
+| target | string | no | |
 
 `icon`
 
-URL pointing to an image. You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix:
+URL pointing to an image. You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix or [Dashboard Icons](https://github.com/walkxcode/dashboard-icons) via a `di:` prefix:
 
 ```yaml
 icon: si:gmail
@@ -1386,7 +1561,7 @@ icon: si:reddit
 
 > [!WARNING]
 >
-> Simple Icons are loaded externally and are hosted on `cdnjs.cloudflare.com`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+> Simple Icons are loaded externally and are hosted on `cdn.jsdelivr.net`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
 
 `same-tab`
 
@@ -1395,6 +1570,10 @@ Whether to open the link in the same tab or a new one.
 `hide-arrow`
 
 Whether to hide the colored arrow on each link.
+
+`target`
+
+Set a custom value for the link's `target` attribute. Possible values are `_blank`, `_self`, `_parent` and `_top`, you can read more about what they do [here](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target). This property has precedence over `same-tab`.
 
 ### ChangeDetection.io
 Display a list watches from changedetection.io.
@@ -1495,15 +1674,25 @@ Example:
 
 ```yaml
 - type: calendar
+  start-sunday: false
 ```
 
 Preview:
 
 ![](images/calendar-widget-preview.png)
 
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| start-sunday | boolean | no | false |
+
+##### `start-sunday`
+Whether calendar weeks start on Sunday or Monday.
+
 > [!NOTE]
 >
-> There is currently no customizability available for the calendar. Extra features will be added in the future.
+> There is currently little customizability available for the calendar. Extra features will be added in the future.
 
 ### Markets
 Display a list of markets, their current value, change for the day and a small 21d chart. Data is taken from Yahoo Finance.
@@ -1535,14 +1724,30 @@ Preview:
 | ---- | ---- | -------- |
 | markets | array | yes |
 | sort-by | string | no |
+| chart-link-template | string | no |
+| symbol-link-template | string | no |
 
 ##### `markets`
 An array of markets for which to display information about.
 
 ##### `sort-by`
-By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `absolute-change` for descending order based on the stock's absolute price change.
+By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `change` for descending order based on the stock's percentage change (e.g. 1% would be sorted higher than -1%) or `absolute-change` for descending order based on the stock's absolute price change (e.g. -1% would be sorted higher than +0.5%).
 
-###### Properties for each stock
+##### `chart-link-template`
+A template for the link to go to when clicking on the chart that will be applied to all markets. The value `{SYMBOL}` will be replaced with the symbol of the market. You can override this on a per-market basis by specifying a `chart-link` property. Example:
+
+```yaml
+chart-link-template: https://www.tradingview.com/chart/?symbol={SYMBOL}
+```
+
+##### `symbol-link-template`
+A template for the link to go to when clicking on the symbol that will be applied to all markets. The value `{SYMBOL}` will be replaced with the symbol of the market. You can override this on a per-market basis by specifying a `symbol-link` property. Example:
+
+```yaml
+symbol-link-template: https://www.google.com/search?tbm=nws&q={SYMBOL}
+```
+
+###### Properties for each market
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | symbol | string | yes |
@@ -1559,9 +1764,11 @@ The symbol, as seen in Yahoo Finance.
 The name that will be displayed under the symbol.
 
 `symbol-link`
+
 The link to go to when clicking on the symbol.
 
 `chart-link`
+
 The link to go to when clicking on the chart.
 
 ### Twitch Channels
@@ -1675,3 +1882,75 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+### Docker Containers
+<!-- TODO: update -->
+The Docker widget allows you to monitor your Docker containers.
+To enable this feature, ensure that your setup provides access to the **docker.sock** file (also you may use a TCP connection).
+
+Add the following to your `docker-compose` or `docker run` command to enable the Docker widget:
+
+**Docker Example:**
+```bash
+docker run -d -p 8080:8080 \
+  -v ./glance.yml:/app/glance.yml \
+  -v /etc/timezone:/etc/timezone:ro \
+  -v /etc/localtime:/etc/localtime:ro \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  glanceapp/glance
+```
+
+**Docker Compose Example:**
+```yaml
+services:
+  glance:
+    image: glanceapp/glance
+    volumes:
+      - ./glance.yml:/app/glance.yml
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+```
+
+#### Configuration
+To integrate the Docker widget into your dashboard, include the following snippet in your `glance.yml` file:
+
+```yaml
+- type: docker
+  host-url: tcp://localhost:2375
+  cache: 1m
+```
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| host-url | string | no | `unix:///var/run/docker.sock` |
+
+#### Leveraging Container Labels
+You can use container labels to control visibility, URLs, icons, and titles within the Docker widget. Add the following labels to your container configuration for enhanced customization:
+
+```yaml
+labels:
+  - "glance.enable=true"       # Enable or disable visibility of the container (default: true)
+  - "glance.title=Glance"      # Optional friendly name (defaults to container name)
+  - "glance.url=https://app.example.com"  # Optional URL associated with the container
+  - "glance.iconUrl=si:docker" # Optional URL to an image which will be used as the icon for the site
+
+```
+
+**Default Values:**
+
+| Name           | Default    |
+|----------------|------------|
+| glance.enable  | true       |
+| glance.title   | Container name |
+| glance.url     | (none)     |
+| glance.iconUrl | si:docker  |
+
+Preview:
+
+![](images/docker-widget-preview.png)

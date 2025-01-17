@@ -1,0 +1,19 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<ul class="list list-gap-14 collapsible-container{{ if .SingleLineTitles }} single-line-titles{{ end }}" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .Items }}
+    <li>
+        <a class="title size-title-dynamic color-primary-if-not-visited" href="{{ .Link }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
+        <ul class="list-horizontal-text flex-nowrap">
+            <li {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
+            <li class="min-width-0">
+                <a class="block text-truncate" href="{{ .ChannelURL }}" target="_blank" rel="noreferrer">{{ .ChannelName }}</a>
+            </li>
+        </ul>
+    </li>
+    {{ else }}
+    <li>{{ .NoItemsMessage }}</li>
+    {{ end }}
+</ul>
+{{ end }}

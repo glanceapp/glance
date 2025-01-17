@@ -1,0 +1,64 @@
+{{ template "widget-base.html" . }}
+
+{{- define "widget-content" }}
+<div class="dynamic-columns list-gap-20 list-with-separator">
+    {{- range .Containers }}
+    <div class="docker-container flex items-center gap-15">
+        <div class="shrink-0" data-popover-type="html" data-popover-position="above" data-popover-offset="0.25" data-popover-margin="0.1rem" data-popover-max-width="400px">
+            <img class="docker-container-icon{{ if .Icon.IsFlatIcon }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
+            <div data-popover-html>
+                <div class="color-highlight text-truncate block">{{ .Image }}</div>
+                <div>{{ .StateText }}</div>
+                {{- if .Children }}
+                <ul class="list list-gap-4 margin-top-10">
+                    {{- range .Children }}
+                    <li class="flex gap-7 items-center">
+                        <div class="margin-bottom-3">{{ template "state-icon" .StateIcon }}</div>
+                        <div class="color-highlight">{{ .Title }} <span class="size-h5 color-base">{{ .StateText }}</span></div>
+                    </li>
+                    {{- end }}
+                </ul>
+                {{- end }}
+            </div>
+        </div>
+
+        <div class="min-width-0">
+            {{- if .URL }}
+            <a href="{{ .URL | safeURL }}" class="color-highlight size-title-dynamic block text-truncate" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
+            {{- else }}
+            <div class="color-highlight text-truncate size-title-dynamic">{{ .Title }}</div>
+            {{- end }}
+            {{- if .Description }}
+            <div class="text-truncate">{{ .Description }}</div>
+            {{- end }}
+        </div>
+
+        <div class="margin-left-auto shrink-0" data-popover-type="text" data-popover-position="above" data-popover-text="{{ .State }}">
+        {{ template "state-icon" .StateIcon }}
+        </div>
+    </div>
+    {{- else }}
+    <div class="text-center">No containers available to show.</div>
+    {{- end }}
+</div>
+{{- end }}
+
+{{- define "state-icon" }}
+{{- if eq . "ok" }}
+<svg class="docker-container-status-icon" fill="var(--color-positive)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+    <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
+</svg>
+{{- else if eq . "warn" }}
+<svg class="docker-container-status-icon" fill="var(--color-negative)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+    <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" />
+</svg>
+{{- else if eq . "paused" }}
+<svg class="docker-container-status-icon" fill="var(--color-text-base)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+    <path fill-rule="evenodd" d="M2 10a8 8 0 1 1 16 0 8 8 0 0 1-16 0Zm5-2.25A.75.75 0 0 1 7.75 7h.5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-.75.75h-.5a.75.75 0 0 1-.75-.75v-4.5Zm4 0a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-.75.75h-.5a.75.75 0 0 1-.75-.75v-4.5Z" clip-rule="evenodd" />
+</svg>
+{{- else }}
+<svg class="docker-container-status-icon" fill="var(--color-text-base)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+    <path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0ZM8.94 6.94a.75.75 0 1 1-1.061-1.061 3 3 0 1 1 2.871 5.026v.345a.75.75 0 0 1-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 1 0 8.94 6.94ZM10 15a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" />
+</svg>
+{{- end }}
+{{- end }}
