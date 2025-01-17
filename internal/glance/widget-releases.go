@@ -11,20 +11,21 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 var releasesWidgetTemplate = mustParseTemplate("releases.html", "widget-base.html")
 
 type releasesWidget struct {
-	widgetBase      `yaml:",inline"`
-	Releases        appReleaseList    `yaml:"-"`
-	releaseRequests []*releaseRequest `yaml:"-"`
-	Repositories    []string          `yaml:"repositories"`
-	Token           string            `yaml:"token"`
-	GitLabToken     string            `yaml:"gitlab-token"`
-	Limit           int               `yaml:"limit"`
-	CollapseAfter   int               `yaml:"collapse-after"`
-	ShowSourceIcon  bool              `yaml:"show-source-icon"`
+	widgetBase     `yaml:",inline"`
+	Releases       appReleaseList    `yaml:"-"`
+	Repositories   []*releaseRequest `yaml:"repositories"`
+	Token          string            `yaml:"token"`
+	GitLabToken    string            `yaml:"gitlab-token"`
+	Limit          int               `yaml:"limit"`
+	CollapseAfter  int               `yaml:"collapse-after"`
+	ShowSourceIcon bool              `yaml:"show-source-icon"`
 }
 
 func (widget *releasesWidget) initialize() error {
@@ -38,51 +39,21 @@ func (widget *releasesWidget) initialize() error {
 		widget.CollapseAfter = 5
 	}
 
-	for _, repository := range widget.Repositories {
-		parts := strings.SplitN(repository, ":", 2)
-		var request *releaseRequest
-		if len(parts) == 1 {
-			request = &releaseRequest{
-				source:     releaseSourceGithub,
-				repository: repository,
-			}
+	for i := range widget.Repositories {
+		r := widget.Repositories[i]
 
-			if widget.Token != "" {
-				request.token = &widget.Token
-			}
-		} else if len(parts) == 2 {
-			if parts[0] == string(releaseSourceGitlab) {
-				request = &releaseRequest{
-					source:     releaseSourceGitlab,
-					repository: parts[1],
-				}
-
-				if widget.GitLabToken != "" {
-					request.token = &widget.GitLabToken
-				}
-			} else if parts[0] == string(releaseSourceDockerHub) {
-				request = &releaseRequest{
-					source:     releaseSourceDockerHub,
-					repository: parts[1],
-				}
-			} else if parts[0] == string(releaseSourceCodeberg) {
-				request = &releaseRequest{
-					source:     releaseSourceCodeberg,
-					repository: parts[1],
-				}
-			} else {
-				return errors.New("invalid repository source " + parts[0])
-			}
+		if r.source == releaseSourceGithub && widget.Token != "" {
+			r.token = &widget.Token
+		} else if r.source == releaseSourceGitlab && widget.GitLabToken != "" {
+			r.token = &widget.GitLabToken
 		}
-
-		widget.releaseRequests = append(widget.releaseRequests, request)
 	}
 
 	return nil
 }
 
 func (widget *releasesWidget) update(ctx context.Context) {
-	releases, err := fetchLatestReleases(widget.releaseRequests)
+	releases, err := fetchLatestReleases(widget.Repositories)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
@@ -133,9 +104,53 @@ func (r appReleaseList) sortByNewest() appReleaseList {
 }
 
 type releaseRequest struct {
-	source     releaseSource
-	repository string
-	token      *string
+	IncludePreleases bool   `yaml:"include-prereleases"`
+	Repository       string `yaml:"repository"`
+
+	source releaseSource
+	token  *string
+}
+
+func (r *releaseRequest) UnmarshalYAML(node *yaml.Node) error {
+	type releaseRequestAlias releaseRequest
+	alias := (*releaseRequestAlias)(r)
+	var repository string
+
+	if err := node.Decode(&repository); err != nil {
+		if err := node.Decode(alias); err != nil {
+			return fmt.Errorf("could not umarshal repository into string or struct: %v", err)
+		}
+	}
+
+	if r.Repository == "" {
+		if repository == "" {
+			return errors.New("repository is required")
+		} else {
+			r.Repository = repository
+		}
+	}
+
+	parts := strings.SplitN(repository, ":", 2)
+	if len(parts) == 1 {
+		r.source = releaseSourceGithub
+	} else if len(parts) == 2 {
+		r.Repository = parts[1]
+
+		switch parts[0] {
+		case string(releaseSourceGithub):
+			r.source = releaseSourceGithub
+		case string(releaseSourceGitlab):
+			r.source = releaseSourceGitlab
+		case string(releaseSourceDockerHub):
+			r.source = releaseSourceDockerHub
+		case string(releaseSourceCodeberg):
+			r.source = releaseSourceCodeberg
+		default:
+			return errors.New("invalid source")
+		}
+	}
+
+	return nil
 }
 
 func fetchLatestReleases(requests []*releaseRequest) (appReleaseList, error) {
@@ -152,7 +167,7 @@ func fetchLatestReleases(requests []*releaseRequest) (appReleaseList, error) {
 	for i := range results {
 		if errs[i] != nil {
 			failed++
-			slog.Error("Failed to fetch release", "source", requests[i].source, "repository", requests[i].repository, "error", errs[i])
+			slog.Error("Failed to fetch release", "source", requests[i].source, "repository", requests[i].Repository, "error", errs[i])
 			continue
 		}
 
@@ -187,7 +202,7 @@ func fetchLatestReleaseTask(request *releaseRequest) (*appRelease, error) {
 	return nil, errors.New("unsupported source")
 }
 
-type githubReleaseLatestResponseJson struct {
+type githubReleaseResponseJson struct {
 	TagName     string `json:"tag_name"`
 	PublishedAt string `json:"published_at"`
 	HtmlUrl     string `json:"html_url"`
@@ -197,12 +212,17 @@ type githubReleaseLatestResponseJson struct {
 }
 
 func fetchLatestGithubRelease(request *releaseRequest) (*appRelease, error) {
-	httpRequest, err := http.NewRequest(
-		"GET",
-		fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", request.repository),
-		nil,
-	)
+	var requestURL string
 
+	if !request.IncludePreleases {
+		requestURL = fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", request.Repository)
+	} else {
+		requestURL = fmt.Sprintf("https://api.github.com/repos/%s/releases", request.Repository)
+	}
+
+	fmt.Println(requestURL)
+
+	httpRequest, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -211,14 +231,29 @@ func fetchLatestGithubRelease(request *releaseRequest) (*appRelease, error) {
 		httpRequest.Header.Add("Authorization", "Bearer "+(*request.token))
 	}
 
-	response, err := decodeJsonFromRequest[githubReleaseLatestResponseJson](defaultHTTPClient, httpRequest)
-	if err != nil {
-		return nil, err
+	var response githubReleaseResponseJson
+
+	if !request.IncludePreleases {
+		response, err = decodeJsonFromRequest[githubReleaseResponseJson](defaultHTTPClient, httpRequest)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		responses, err := decodeJsonFromRequest[[]githubReleaseResponseJson](defaultHTTPClient, httpRequest)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(responses) == 0 {
+			return nil, fmt.Errorf("no releases found for repository %s", request.Repository)
+		}
+
+		response = responses[0]
 	}
 
 	return &appRelease{
 		Source:       releaseSourceGithub,
-		Name:         request.repository,
+		Name:         request.Repository,
 		Version:      normalizeVersionFormat(response.TagName),
 		NotesUrl:     response.HtmlUrl,
 		TimeReleased: parseRFC3339Time(response.PublishedAt),
@@ -242,10 +277,10 @@ const dockerHubSpecificTagURLFormat = "https://hub.docker.com/v2/namespaces/%s/r
 
 func fetchLatestDockerHubRelease(request *releaseRequest) (*appRelease, error) {
 
-	nameParts := strings.Split(request.repository, "/")
+	nameParts := strings.Split(request.Repository, "/")
 
 	if len(nameParts) > 2 {
-		return nil, fmt.Errorf("invalid repository name: %s", request.repository)
+		return nil, fmt.Errorf("invalid repository name: %s", request.Repository)
 	} else if len(nameParts) == 1 {
 		nameParts = []string{"library", nameParts[0]}
 	}
@@ -278,7 +313,7 @@ func fetchLatestDockerHubRelease(request *releaseRequest) (*appRelease, error) {
 		}
 
 		if len(response.Results) == 0 {
-			return nil, fmt.Errorf("no tags found for repository: %s", request.repository)
+			return nil, fmt.Errorf("no tags found for repository: %s", request.Repository)
 		}
 
 		tag = &response.Results[0]
@@ -331,7 +366,7 @@ func fetchLatestGitLabRelease(request *releaseRequest) (*appRelease, error) {
 		"GET",
 		fmt.Sprintf(
 			"https://gitlab.com/api/v4/projects/%s/releases/permalink/latest",
-			url.QueryEscape(request.repository),
+			url.QueryEscape(request.Repository),
 		),
 		nil,
 	)
@@ -350,7 +385,7 @@ func fetchLatestGitLabRelease(request *releaseRequest) (*appRelease, error) {
 
 	return &appRelease{
 		Source:       releaseSourceGitlab,
-		Name:         request.repository,
+		Name:         request.Repository,
 		Version:      normalizeVersionFormat(response.TagName),
 		NotesUrl:     response.Links.Self,
 		TimeReleased: parseRFC3339Time(response.ReleasedAt),
@@ -368,7 +403,7 @@ func fetchLatestCodebergRelease(request *releaseRequest) (*appRelease, error) {
 		"GET",
 		fmt.Sprintf(
 			"https://codeberg.org/api/v1/repos/%s/releases/latest",
-			request.repository,
+			request.Repository,
 		),
 		nil,
 	)
@@ -383,7 +418,7 @@ func fetchLatestCodebergRelease(request *releaseRequest) (*appRelease, error) {
 
 	return &appRelease{
 		Source:       releaseSourceCodeberg,
-		Name:         request.repository,
+		Name:         request.Repository,
 		Version:      normalizeVersionFormat(response.TagName),
 		NotesUrl:     response.HtmlUrl,
 		TimeReleased: parseRFC3339Time(response.PublishedAt),

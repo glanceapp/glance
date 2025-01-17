@@ -1332,6 +1332,19 @@ repositories:
   - dockerhub:nginx:stable-alpine
 ```
 
+To include prereleases you can specify the repository as an object and use the `include-prereleases` property:
+
+**Note: This feature is currently only available for GitHub repositories.**
+
+```yaml
+repositories:
+  - gitlab:inkscape/inkscape
+  - repository: glanceapp/glance
+    include-prereleases: true
+  - codeberg:redict/redict
+```
+
+
 
 ##### `show-source-icon`
 Shows an icon of the source (GitHub/GitLab/Codeberg/Docker Hub) next to the repository name when set to `true`.
