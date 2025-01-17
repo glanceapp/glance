@@ -213,7 +213,6 @@ type githubReleaseResponseJson struct {
 
 func fetchLatestGithubRelease(request *releaseRequest) (*appRelease, error) {
 	var requestURL string
-
 	if !request.IncludePreleases {
 		requestURL = fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", request.Repository)
 	} else {
@@ -276,7 +275,6 @@ const dockerHubTagsURLFormat = "https://hub.docker.com/v2/namespaces/%s/reposito
 const dockerHubSpecificTagURLFormat = "https://hub.docker.com/v2/namespaces/%s/repositories/%s/tags/%s"
 
 func fetchLatestDockerHubRelease(request *releaseRequest) (*appRelease, error) {
-
 	nameParts := strings.Split(request.Repository, "/")
 
 	if len(nameParts) > 2 {
@@ -286,7 +284,6 @@ func fetchLatestDockerHubRelease(request *releaseRequest) (*appRelease, error) {
 	}
 
 	tagParts := strings.SplitN(nameParts[1], ":", 2)
-
 	var requestURL string
 
 	if len(tagParts) == 2 {

@@ -1344,8 +1344,6 @@ repositories:
   - codeberg:redict/redict
 ```
 
-
-
 ##### `show-source-icon`
 Shows an icon of the source (GitHub/GitLab/Codeberg/Docker Hub) next to the repository name when set to `true`.
 
