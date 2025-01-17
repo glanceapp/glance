@@ -20,6 +20,8 @@ type monitorWidget struct {
 	Sites      []struct {
 		*SiteStatusRequest `yaml:",inline"`
 		Status             *siteStatus     `yaml:"-"`
+		URL                string          `yaml:"-"`
+		ErrorURL           string          `yaml:"error-url"`
 		Title              string          `yaml:"title"`
 		Icon               customIconField `yaml:"icon"`
 		SameTab            bool            `yaml:"same-tab"`
@@ -58,8 +60,14 @@ func (widget *monitorWidget) update(ctx context.Context) {
 		status := &statuses[i]
 		site.Status = status
 
-		if !slices.Contains(site.AltStatusCodes, status.Code) && (status.Code >= 400 || status.TimedOut || status.Error != nil) {
+		if !slices.Contains(site.AltStatusCodes, status.Code) && (status.Code >= 400 || status.Error != nil) {
 			widget.HasFailing = true
+		}
+
+		if status.Error != nil && site.ErrorURL != "" {
+			site.URL = site.ErrorURL
+		} else {
+			site.URL = site.DefaultURL
 		}
 
 		site.StatusText = statusCodeToText(status.Code, site.AltStatusCodes)
@@ -88,11 +96,11 @@ func statusCodeToText(status int, altStatusCodes []int) string {
 	if status == 401 {
 		return "Unauthorized"
 	}
-	if status >= 400 {
-		return "Client Error"
-	}
 	if status >= 500 {
 		return "Server Error"
+	}
+	if status >= 400 {
+		return "Client Error"
 	}
 
 	return strconv.Itoa(status)
@@ -107,7 +115,7 @@ func statusCodeToStyle(status int, altStatusCodes []int) string {
 }
 
 type SiteStatusRequest struct {
-	URL           string `yaml:"url"`
+	DefaultURL    string `yaml:"url"`
 	CheckURL      string `yaml:"check-url"`
 	AllowInsecure bool   `yaml:"allow-insecure"`
 }
@@ -124,7 +132,7 @@ func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (siteStatus, error) {
 	if statusRequest.CheckURL != "" {
 		url = statusRequest.CheckURL
 	} else {
-		url = statusRequest.URL
+		url = statusRequest.DefaultURL
 	}
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
