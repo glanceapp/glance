@@ -25,10 +25,22 @@
         {{ end }}
     </div>
 
-    <div class="flex flex-wrap">
-        {{ range .Calendar.Days }}
-        <div class="calendar-day{{ if eq . $.Calendar.CurrentDay }} calendar-day-today{{ end }}">{{ . }}</div>
-        {{ end }}
+	<div class="flex flex-wrap justify-center items-center">
+		{{ range .Calendar.Days }}
+		<div class="calendar-day{{ if eq .Day $.Calendar.CurrentDay }} calendar-day-today{{ end }} {{ if .IsEvent}} calendar-isevent{{ end }}">
+		{{ if .IsEvent}}
+			<div class="tooltip">
+				<span class="tooltiptext">
+					{{ range .Events }}
+						{{ .EventHover }}
+						<br>
+					{{ end }}
+				</span>
+			</div>
+		{{ end }}
+		<span>{{ .Day }}</span>
+	</div>
+	{{ end }}
     </div>
 </div>
 {{ end }}
