@@ -439,7 +439,7 @@ function setupCollapsibleGrids() {
 
         let cardsPerRow;
 
-        const resolveCollapsibleItems = () => {
+        const resolveCollapsibleItems = () => requestAnimationFrame(() => {
             const hideItemsAfterIndex = cardsPerRow * collapseAfterRows;
 
             if (hideItemsAfterIndex >= gridElement.children.length) {
@@ -465,7 +465,7 @@ function setupCollapsibleGrids() {
                     child.style.removeProperty("animation-delay");
                 }
             }
-        };
+        });
 
         const observer = new ResizeObserver(() => {
             if (!isElementVisible(gridElement)) {
