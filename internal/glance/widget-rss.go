@@ -140,6 +140,7 @@ func shortenFeedDescriptionLen(description string, maxLen int) string {
 
 type rssFeedRequest struct {
 	URL             string            `yaml:"url"`
+	PublicURL       string            `yaml:"public-url"`
 	Title           string            `yaml:"title"`
 	HideCategories  bool              `yaml:"hide-categories"`
 	HideDescription bool              `yaml:"hide-description"`
@@ -197,6 +198,10 @@ func fetchItemsFromRSSFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
 
 		rssItem := rssFeedItem{
 			ChannelURL: feed.Link,
+		}
+
+		if request.PublicURL != "" {
+			rssItem.ChannelURL = request.PublicURL
 		}
 
 		if request.ItemLinkPrefix != "" {
