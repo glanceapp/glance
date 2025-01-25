@@ -1444,7 +1444,7 @@ By default all of the configured watches will be shown. Optionally, you can spec
 ```
 
 ### Clock
-Display a clock showing the current time and date. Optionally, also display the the time in other timezones.
+Display a clock showing the current time and date. Optionally, also display the time in other timezones.
 
 Example:
 
