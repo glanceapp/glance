@@ -219,8 +219,6 @@ func fetchLatestGithubRelease(request *releaseRequest) (*appRelease, error) {
 		requestURL = fmt.Sprintf("https://api.github.com/repos/%s/releases", request.Repository)
 	}
 
-	fmt.Println(requestURL)
-
 	httpRequest, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
 		return nil, err
