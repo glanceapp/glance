@@ -39,7 +39,7 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
-
+  - [Media Requests](#media-requests)
 
 ## Preconfigured page
 If you don't want to spend time reading through all the available configuration options and just want something to get you going quickly you can use [this `glance.yml` file](glance.yml) and make changes to it as you see fit. It will give you a page that looks like the following:
@@ -2377,3 +2377,36 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+### Media Requests
+The Media Requests widget displays a list of media requests done through Jellyseerr/Overseerr and their availability status.
+
+Example:
+
+```yaml
+- type: media-requests
+  url: https://jellyseerr.domain.com
+  api-key: ${JELLYSEERR_API_KEY}
+  service: jellyseerr
+```
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| url | string | yes | |
+| api-key | string | yes | |
+| service | string | no | jellyseerr |
+| limit | integer | no | 20 |
+| collapse-after | integer | no | 5 |
+
+##### `api-key`
+Required for both `jellyseerr` and `overseerr`. The API token which can be found in `Settings -> General -> API Key`. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+
+##### `service`
+Either `jellyseerr` or `overseerr`.
+
+##### `limit`
+The maximum number of articles to show.
+
+##### `collapse-after`
+How many articles are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.

@@ -1,0 +1,37 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .MediaRequests }}
+    <li class="media-requests thumbnail-parent">
+        <div class="flex gap-10 items-start">
+            <img class="media-requests-thumbnail thumbnail" loading="lazy" src="{{ .PosterImageUrl }}" alt="">
+            <div class="min-width-0">
+                <a class="title size-h3 color-highlight text-truncate block" href="{{.Href}}" target="_blank" rel="noreferrer" title="{{ .Name }}">
+                    {{ .Name }}
+                </a>
+                <ul class="list-horizontal-text">
+                    {{ if eq .Availability 5}}
+                    <li class="color-positive">Available</li>
+                    {{ else if eq .Availability 4}}
+                    <li class="color-yellow">Partial</li>
+                    {{ else if eq .Availability 3}}
+                    <li class="color-blue">Processing</li>
+                    {{ else if eq .Availability 2}}
+                    <li class="color-purple">Pending Approval</li>
+                    {{ else}}
+                    <li class="color-negative">Unknown</li>
+                    {{ end }}
+                </ul>
+                <ul class="list-horizontal-text flex-nowrap">
+                    <li>{{ .AirDate }}</li>
+                    <li class="min-width-0">
+                        <a href="{{.RequestedBy.Link}}" target="_blank" rel="noreferrer">{{.RequestedBy.DisplayName}}</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </li>
+    {{ end }}
+</ul>
+{{ end }}
