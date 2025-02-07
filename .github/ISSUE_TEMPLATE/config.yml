@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions
+    url: https://github.com/glanceapp/glance/discussions
+    about: For help, feedback, guides, resources and more
+  - name: Discord
+    url: https://discord.com/invite/7KQ7Xa9kJd
+    about: Much like the discussions but more chatty
