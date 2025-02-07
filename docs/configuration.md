@@ -490,8 +490,21 @@ Example:
 | thumbnail-height | float | no | 10 |
 | card-height | float | no | 27 |
 | limit | integer | no | 25 |
+| preserve-order | bool | no | false |
 | single-line-titles | boolean | no | false |
 | collapse-after | integer | no | 5 |
+
+##### `limit`
+The maximum number of articles to show.
+
+##### `collapse-after`
+How many articles are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+##### `preserve-order`
+When set to `true`, the order of the articles will be preserved as they are in the feeds. Useful if a feed uses its own sorting order which denotes the importance of the articles. If you use this property while having a lot of feeds, it's recommended to set a `limit` to each individual feed since if the first defined feed has 15 articles, the articles from the second feed will start after the 15th article in the list.
+
+##### `single-line-titles`
+When set to `true`, truncates the title of each post if it exceeds one line. Only applies when the style is set to `vertical-list`.
 
 ##### `style`
 Used to change the appearance of the widget. Possible values are:
@@ -535,8 +548,12 @@ An array of RSS/atom feeds. The title can optionally be changed.
 | title | string | no | the title provided by the feed | |
 | hide-categories | boolean | no | false | Only applicable for `detailed-list` style |
 | hide-description | boolean | no | false | Only applicable for `detailed-list` style |
+| limit | integer | no | | |
 | item-link-prefix | string | no | | |
 | headers | key (string) & value (string) | no | | |
+
+###### `limit`
+The maximum number of articles to show from that specific feed. Useful if you have a feed which posts a lot of articles frequently and you want to prevent it from excessively pushing down articles from other feeds.
 
 ###### `item-link-prefix`
 If an RSS feed isn't returning item links with a base domain and Glance has failed to automatically detect the correct domain you can manually add a prefix to each link with this property.
@@ -551,15 +568,6 @@ Optionally specify the headers that will be sent with the request. Example:
       headers:
         User-Agent: Custom User Agent
 ```
-
-##### `limit`
-The maximum number of articles to show.
-
-##### `single-line-titles`
-When set to `true`, truncates the title of each post if it exceeds one line. Only applies when the style is set to `vertical-list`.
-
-##### `collapse-after`
-How many articles are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
 ### Videos
 Display a list of the latest videos from specific YouTube channels.
