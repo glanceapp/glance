@@ -264,21 +264,21 @@ The following functions are available on the `JSON` object:
 
 - `String(key string) string`: Returns the value of the key as a string.
 - `Int(key string) int`: Returns the value of the key as an integer.
-- `Float(key string) float64`: Returns the value of the key as a float.
+- `Float(key string) float`: Returns the value of the key as a float.
 - `Bool(key string) bool`: Returns the value of the key as a boolean.
 - `Array(key string) []JSON`: Returns the value of the key as an array of `JSON` objects.
 - `Exists(key string) bool`: Returns true if the key exists in the JSON object.
 
 The following helper functions provided by Glance are available:
 
-- `toFloat(i int) float64`: Converts an integer to a float.
-- `toInt(f float64) int`: Converts a float to an integer.
-- `add(a, b float64) float64`: Adds two numbers.
-- `sub(a, b float64) float64`: Subtracts two numbers.
-- `mul(a, b float64) float64`: Multiplies two numbers.
-- `div(a, b float64) float64`: Divides two numbers.
-- `formatApproxNumber(n float64) string`: Formats a number to be more human-readable, e.g. 1000 -> 1k.
-- `formatNumber(n float64) string`: Formats a number with commas, e.g. 1000 -> 1,000.
+- `toFloat(i int) float`: Converts an integer to a float.
+- `toInt(f float) int`: Converts a float to an integer.
+- `add(a, b float) float`: Adds two numbers.
+- `sub(a, b float) float`: Subtracts two numbers.
+- `mul(a, b float) float`: Multiplies two numbers.
+- `div(a, b float) float`: Divides two numbers.
+- `formatApproxNumber(n int) string`: Formats a number to be more human-readable, e.g. 1000 -> 1k.
+- `formatNumber(n float|int) string`: Formats a number with commas, e.g. 1000 -> 1,000.
 
 The following helper functions provided by Go's `text/template` are available:
 
