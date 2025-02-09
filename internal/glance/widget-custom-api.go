@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"io"
 	"log/slog"
+	"math"
 	"net/http"
 	"time"
 
@@ -191,7 +192,7 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		},
 		"div": func(a, b float64) float64 {
 			if b == 0 {
-				return 0
+				return math.NaN()
 			}
 
 			return a / b
