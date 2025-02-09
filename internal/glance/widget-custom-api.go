@@ -133,6 +133,10 @@ func gJsonResultArrayToDecoratedResultArray(results []gjson.Result) []decoratedG
 	return decoratedResults
 }
 
+func (r *decoratedGJSONResult) Exists(key string) bool {
+	return r.Get(key).Exists()
+}
+
 func (r *decoratedGJSONResult) Array(key string) []decoratedGJSONResult {
 	if key == "" {
 		return gJsonResultArrayToDecoratedResultArray(r.Result.Array())
