@@ -1,0 +1,32 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
+
+{{ define "widget-content" }}
+{{ if gt (len .Items) 0 }}
+<div class="carousel-container">
+    <div class="cards-horizontal carousel-items-container"{{ if ne 0.0 .ThumbnailHeight }} style="--rss-thumbnail-height: {{ .ThumbnailHeight }}rem;"{{ end }}>
+        {{ range .Items }}
+        <div class="card widget-content-frame thumbnail-parent">
+            {{ if ne "" .ImageURL }}
+            <img class="rss-card-image thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
+            {{ else }}
+            <svg class="rss-card-image" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--color-text-subdue)">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            </svg>
+            {{ end }}
+            <div class="margin-bottom-widget padding-inline-widget flex flex-column grow">
+                <a href="{{ .Link }}" class="text-truncate-3-lines color-primary-if-not-visited margin-top-10 margin-bottom-auto" target="_blank" rel="noreferrer">{{ .Title }}</a>
+                <ul class="list-horizontal-text flex-nowrap margin-top-7">
+                    <li class="shrink-0" {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
+                    <li class="min-width-0 text-truncate">{{ .ChannelName }}</li>
+                </ul>
+            </div>
+        </div>
+        {{ end }}
+    </div>
+</div>
+{{ else }}
+<div class="widget-content-frame padding-widget">{{ .NoItemsMessage }}</div>
+{{ end }}
+{{ end }}

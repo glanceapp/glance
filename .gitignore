@@ -1,4 +1,5 @@
 /assets
 /build
 /playground
-glance*.yml
+/.idea
+/glance*.yml

@@ -1,0 +1,47 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .Channels }}
+    <li>
+        <div class="{{ if .IsLive }}twitch-channel-live {{ end }}flex gap-10 items-start thumbnail-parent">
+            <div class="twitch-channel-avatar-container"{{ if .IsLive }} data-popover-type="html" data-popover-position="above" data-popover-margin="0.15rem" data-popover-offset="0.2"{{ end }}>
+                {{ if .IsLive }}
+                <div data-popover-html>
+                    <img class="twitch-stream-preview" src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{{ .Login }}-440x248.jpg" loading="lazy" alt="">
+                    <p class="margin-top-10 color-highlight text-truncate-3-lines">{{ .StreamTitle }}</p>
+                </div>
+                {{ end }}
+                {{ if .Exists }}
+                <a href="https://twitch.tv/{{ .Login }}" target="_blank" rel="noreferrer">
+                    <img class="twitch-channel-avatar thumbnail" src="{{ .AvatarUrl }}" alt="" loading="lazy">
+                </a>
+                {{ else }}
+                <svg class="twitch-channel-avatar thumbnail" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+                {{ end }}
+            </div>
+            <div class="min-width-0">
+                <a href="https://twitch.tv/{{ .Login }}" class="size-h3{{ if .IsLive }} color-highlight{{ end }} block text-truncate" target="_blank" rel="noreferrer">{{ .Name }}</a>
+                {{ if .Exists }}
+                    {{ if .IsLive }}
+                        {{ if .Category }}
+                            <a class="text-truncate block" href="https://www.twitch.tv/directory/category/{{ .CategorySlug }}" target="_blank" rel="noreferrer">{{ .Category }}</a>
+                        {{ end }}
+                    <ul class="list-horizontal-text">
+                        <li {{ dynamicRelativeTimeAttrs .LiveSince }}></li>
+                        <li>{{ .ViewersCount | formatApproxNumber }} viewers</li>
+                    </ul>
+                    {{ else }}
+                    <div>Offline</div>
+                    {{ end }}
+                {{ else }}
+                <div class="color-negative">Not found</div>
+                {{ end }}
+            </div>
+        </div>
+    </li>
+    {{ end }}
+</ul>
+{{ end }}

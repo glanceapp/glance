@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="static/main.css">
+    <title>Update notice</title>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .content-bounds {
+            max-width: 700px;
+            margin-top: -10rem;
+        }
+
+        .comfy-line-height {
+            line-height: 1.9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="content-bounds color-paragraph">
+    <p class="uppercase size-h5 color-negative padding-inline-widget">UPDATE NOTICE</p>
+    <div class="widget-content-frame margin-top-10 padding-widget">
+        <p class="comfy-line-height">
+            The default location of glance.yml in the Docker image has
+            changed since v0.7.0, please see the <a class="color-primary" href="https://github.com/glanceapp/glance/blob/main/docs/v0.7.0-upgrade.md" target="_blank">migration guide</a>
+            for instructions or visit the <a class="color-primary" href="https://github.com/glanceapp/glance/releases/tag/v0.7.0" target="_blank">release notes</a>
+            to find out more about why this change was necessary. Sorry for the inconvenience.
+        </p>
+
+        <p class="margin-top-15 color-base">Migration should take around 5 minutes.</p>
+    </div>
+</div>
+
+</body>
+</html>

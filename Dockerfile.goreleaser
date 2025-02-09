@@ -1,8 +1,10 @@
-FROM alpine:3.20
+FROM alpine:3.21
 
 WORKDIR /app
 COPY glance .
 
-EXPOSE 8080/tcp
+HEALTHCHECK --timeout=10s --start-period=60s --interval=60s \
+  CMD wget --spider -q http://localhost:8080/api/healthz
 
-ENTRYPOINT ["/app/glance"]
+EXPOSE 8080/tcp
+ENTRYPOINT ["/app/glance", "--config", "/app/config/glance.yml"]

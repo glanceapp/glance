@@ -1,0 +1,61 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<a class="size-h4 color-highlight" href="https://github.com/{{ $.Repository.Name }}" target="_blank" rel="noreferrer">{{ .Repository.Name }}</a>
+<ul class="list-horizontal-text">
+    <li>{{ .Repository.Stars | formatNumber }} stars</li>
+    <li>{{ .Repository.Forks | formatNumber }} forks</li>
+</ul>
+
+{{ if gt (len .Repository.Commits) 0 }}
+<hr class="margin-block-8">
+<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/commits" target="_blank" rel="noreferrer">Last {{ .CommitsLimit }} commits</a>
+<div class="flex gap-7 size-h5 margin-top-3">
+    <ul class="list list-gap-2">
+        {{ range .Repository.Commits }}
+        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
+        {{ end }}
+    </ul>
+    <ul class="list list-gap-2 min-width-0">
+        {{ range .Repository.Commits }}
+        <li><a class="color-primary-if-not-visited text-truncate block" title="{{ .Author }}" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/commit/{{ .Sha }}">{{ .Message }}</a></li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+
+{{ if gt (len .Repository.PullRequests) 0 }}
+<hr class="margin-block-8">
+<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/pulls" target="_blank" rel="noreferrer">Open pull requests ({{ .Repository.OpenPullRequests | formatNumber }} total)</a>
+<div class="flex gap-7 size-h5 margin-top-3">
+    <ul class="list list-gap-2">
+        {{ range .Repository.PullRequests }}
+        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
+        {{ end }}
+    </ul>
+    <ul class="list list-gap-2 min-width-0">
+        {{ range .Repository.PullRequests }}
+        <li><a class="color-primary-if-not-visited text-truncate block" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/pull/{{ .Number }}">{{ .Title }}</a></li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+
+{{ if gt (len .Repository.Issues) 0 }}
+<hr class="margin-block-10">
+<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/issues" target="_blank" rel="noreferrer">Open issues ({{ .Repository.OpenIssues | formatNumber }} total)</a>
+<div class="flex gap-7 size-h5 margin-top-3">
+    <ul class="list list-gap-2">
+        {{ range .Repository.Issues }}
+        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
+        {{ end }}
+    </ul>
+    <ul class="list list-gap-2 min-width-0">
+        {{ range .Repository.Issues }}
+        <li><a class="color-primary-if-not-visited text-truncate block" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/issues/{{ .Number }}">{{ .Title }}</a></li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+
+{{ end }}
