@@ -73,6 +73,8 @@ func newWidget(widgetType string) (widget, error) {
 		w = &customAPIWidget{}
 	case "docker-containers":
 		w = &dockerContainersWidget{}
+	case "server-stats":
+		w = &serverStatsWidget{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}
@@ -147,6 +149,7 @@ type widgetBase struct {
 	CSSClass            string           `yaml:"css-class"`
 	CustomCacheDuration durationField    `yaml:"cache"`
 	ContentAvailable    bool             `yaml:"-"`
+	WIP                 bool             `yaml:"-"`
 	Error               error            `yaml:"-"`
 	Notice              error            `yaml:"-"`
 	templateBuffer      bytes.Buffer     `yaml:"-"`
@@ -171,6 +174,10 @@ func (w *widgetBase) requiresUpdate(now *time.Time) bool {
 	}
 
 	return now.After(w.nextUpdate)
+}
+
+func (w *widgetBase) IsWIP() bool {
+	return w.WIP
 }
 
 func (w *widgetBase) update(ctx context.Context) {

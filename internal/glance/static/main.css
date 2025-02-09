@@ -37,7 +37,7 @@
     --color-popover-background: hsl(var(--bgh), calc(var(--bgs) + 3%), calc(var(--bgl) + 3%));
     --color-popover-border: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 12%)));
     --color-progress-border: hsl(var(--bghs), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 10% * var(--cm))));
-    --color-progress-value: hsl(var(--bgh), calc(var(--bgs) * var(--tsm)), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 27% * var(--cm))));
+    --color-progress-value: hsl(var(--bgh), calc(var(--bgs) * var(--tsm)), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 30% * var(--cm))));
     --color-graph-gridlines: hsl(var(--bghs), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 6% * var(--cm))));
 
     --ths: var(--bgh), calc(var(--bgs) * var(--tsm));
@@ -796,6 +796,20 @@ details[open] .summary::after {
     gap: 1rem;
 }
 
+.widget-beta-icon {
+    width: 1.6rem;
+    height: 1.6rem;
+    flex-shrink: 0;
+    transition: transform .45s, opacity .45s, stroke .45s;
+    opacity: 0.7;
+}
+
+.widget-beta-icon:hover, .widget-header .popover-active > .widget-beta-icon {
+    fill: var(--color-text-highlight);
+    transform: translateY(-10%) scale(1.3);
+    opacity: 1;
+}
+
 .widget + .widget {
     margin-top: var(--widget-gap);
 }
@@ -1484,6 +1498,137 @@ details[open] .summary::after {
     height: 2rem;
 }
 
+.widget-type-server-info {
+    position: relative;
+}
+
+.server + .server {
+    margin-top: 3rem;
+}
+
+.server {
+    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.server-info {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.server-details {
+    min-width: 0;
+}
+
+.server-icon {
+    height: 3rem;
+    width: 3rem;
+}
+
+.server-spicy-cpu-icon {
+    height: 1em;
+    align-self: center;
+    margin-left: 0.4em;
+    margin-bottom: 0.2rem;
+}
+
+.server-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.server-stat-unavailable {
+    opacity: 0.5;
+}
+
+.progress-bar {
+    border: 1px solid var(--color-progress-border);
+    border-radius: var(--border-radius);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 2px;
+    height: 1.5rem;
+    margin-inline: -3px; /* naughty, but oh so beautiful */
+}
+
+.progress-bar-combined {
+    height: 3rem;
+}
+
+.popover-active > .progress-bar {
+    transition: border-color .3s;
+    border-color: var(--color-text-subdue);
+}
+
+.progress-value {
+    --half-border-radius: calc(var(--border-radius) / 2);
+    border-radius: 0 var(--half-border-radius) var(--half-border-radius) 0;
+    background: var(--color-progress-value);
+    width: calc(var(--percent) * 1%);
+    min-width: 1px;
+    flex: 1;
+}
+
+.progress-value:first-child {
+    border-top-left-radius: var(--half-border-radius);
+}
+
+.progress-value:last-child {
+    border-bottom-left-radius: var(--half-border-radius);
+}
+
+.progress-value-notice {
+    background: linear-gradient(to right, var(--color-progress-value) 65%, var(--color-negative));
+}
+
+.value-separator {
+    min-width: 2rem;
+    margin-inline: 0.8rem;
+    flex: 1;
+    height: calc(1em * 1.1);
+    border-bottom: 1px dotted var(--color-text-subdue);
+}
+
+@container widget (min-width: 650px) {
+    .server {
+        gap: 2rem;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .server + .server {
+        margin-top: 1rem;
+    }
+
+    .server-info {
+        flex-direction: row-reverse;
+        justify-content: unset;
+        margin-right: auto;
+        z-index: 1;
+    }
+
+    .server-stats {
+        flex-direction: row;
+        justify-content: right;
+        min-width: 450px;
+        margin-top: 0;
+        gap: 2rem;
+        padding-bottom: 0.8rem;
+        z-index: 1;
+    }
+
+    .server-stats > * {
+        max-width: 200px;
+    }
+}
+
 .thumbnail {
     filter: grayscale(0.2) contrast(0.9);
     opacity: 0.8;
@@ -1881,6 +2026,7 @@ details[open] .summary::after {
 .text-center        { text-align: center; }
 .text-elevate       { margin-top: -0.2em; }
 .text-compact       { word-spacing: -0.18em; }
+.text-very-compact  { word-spacing: -0.35em; }
 .rtl                { direction: rtl; }
 .shrink             { flex-shrink: 1; }
 .shrink-0           { flex-shrink: 0; }
@@ -1891,6 +2037,7 @@ details[open] .summary::after {
 .overflow-hidden    { overflow: hidden; }
 .relative           { position: relative; }
 .flex               { display: flex; }
+.flex-1             { flex: 1; }
 .flex-wrap          { flex-wrap: wrap; }
 .flex-nowrap        { flex-wrap: nowrap; }
 .justify-between    { justify-content: space-between; }
@@ -1903,6 +2050,7 @@ details[open] .summary::after {
 .flex-column        { flex-direction: column; }
 .items-center       { align-items: center; }
 .items-start        { align-items: start; }
+.items-end          { align-items: end; }
 .gap-5              { gap: 0.5rem; }
 .gap-7              { gap: 0.7rem; }
 .gap-10             { gap: 1rem; }
