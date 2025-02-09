@@ -151,7 +151,6 @@ func serveUpdateNoticeIfConfigLocationNotMigrated(configPath string) bool {
 	templateFile, _ := templateFS.Open("v0.7-update-notice-page.html")
 	bodyContents, _ := io.ReadAll(templateFile)
 
-	// TODO: update - add link
 	fmt.Println("!!! WARNING !!!")
 	fmt.Println("The default location of glance.yml in the Docker image has changed starting from v0.7.0.")
 	fmt.Println("Please see https://github.com/glanceapp/glance/blob/main/docs/v0.7.0-upgrade.md for more information.")
