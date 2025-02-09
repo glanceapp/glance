@@ -324,7 +324,7 @@ docker push owner/glance:latest
 ## FAQ
 <details>
 <summary><strong>Does the information on the page update automatically?</strong></summary>
-No, a page refresh is required to update the information.
+No, a page refresh is required to update the information. Some things do dynamically update where it makes sense, like the clock widget and the relative time showing how long ago something happened.
 </details>
 
 <details>
