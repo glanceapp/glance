@@ -17,6 +17,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type CssProperties struct {
+	BackgroundColor          *hslColorField `yaml:"background-color"`
+	PrimaryColor             *hslColorField `yaml:"primary-color"`
+	PositiveColor            *hslColorField `yaml:"positive-color"`
+	NegativeColor            *hslColorField `yaml:"negative-color"`
+	Light                    bool           `yaml:"light"`
+	ContrastMultiplier       float32        `yaml:"contrast-multiplier"`
+	TextSaturationMultiplier float32        `yaml:"text-saturation-multiplier"`
+}
+
 type config struct {
 	Server struct {
 		Host       string    `yaml:"host"`
@@ -31,6 +41,7 @@ type config struct {
 	} `yaml:"document"`
 
 	Theme struct {
+		// Todo : Find a way to use CssProperties struct to avoid duplicates
 		BackgroundColor          *hslColorField `yaml:"background-color"`
 		PrimaryColor             *hslColorField `yaml:"primary-color"`
 		PositiveColor            *hslColorField `yaml:"positive-color"`
@@ -39,6 +50,8 @@ type config struct {
 		ContrastMultiplier       float32        `yaml:"contrast-multiplier"`
 		TextSaturationMultiplier float32        `yaml:"text-saturation-multiplier"`
 		CustomCSSFile            string         `yaml:"custom-css-file"`
+
+		Presets map[string]CssProperties `yaml:"presets"`
 	} `yaml:"theme"`
 
 	Branding struct {
