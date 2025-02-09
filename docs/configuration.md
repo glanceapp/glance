@@ -589,6 +589,7 @@ Preview:
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | channels | array | yes | |
+| playlists | array | no | |
 | limit | integer | no | 25 |
 | style | string | no | horizontal-cards |
 | collapse-after | integer | no | 7 |
@@ -597,13 +598,7 @@ Preview:
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
-A list of channel or playlist IDs. To specify a playlist, use the `playlist:` prefix like such:
-
-```yaml
-channels:
-  - playlist:PL8mG-RkN2uTyZZ00ObwZxxoG_nJbs3qec
-  - playlist:PL8mG-RkN2uTxTK4m_Vl2dYR9yE41kRdBg
-```
+A list of channels IDs.
 
 One way of getting the ID of a channel is going to the channel's page and clicking on its description:
 
@@ -612,6 +607,17 @@ One way of getting the ID of a channel is going to the channel's page and clicki
 Then scroll down and click on "Share channel", then "Copy channel ID":
 
 ![](images/videos-copy-channel-id-example.png)
+
+##### `playlists`
+
+A list of playlist IDs:
+
+```yaml
+- type: videos
+  playlists:
+    - PL8mG-RkN2uTyZZ00ObwZxxoG_nJbs3qec
+    - PL8mG-RkN2uTxTK4m_Vl2dYR9yE41kRdBg
+```
 
 ##### `limit`
 The maximum number of videos to show.

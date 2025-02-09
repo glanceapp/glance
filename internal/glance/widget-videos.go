@@ -28,6 +28,7 @@ type videosWidget struct {
 	CollapseAfter     int       `yaml:"collapse-after"`
 	CollapseAfterRows int       `yaml:"collapse-after-rows"`
 	Channels          []string  `yaml:"channels"`
+	Playlists         []string  `yaml:"playlists"`
 	Limit             int       `yaml:"limit"`
 	IncludeShorts     bool      `yaml:"include-shorts"`
 }
@@ -45,6 +46,17 @@ func (widget *videosWidget) initialize() error {
 
 	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
 		widget.CollapseAfter = 7
+	}
+
+	// A bit cheeky, but from a user's perspective it makes more sense when channels and
+	// playlists are separate things rather than specifying a list of channels and some of
+	// them awkwardly have a "playlist:" prefix
+	if len(widget.Playlists) > 0 {
+		widget.Channels = append(widget.Channels, make([]string, len(widget.Playlists))...)
+
+		for i := range widget.Playlists {
+			widget.Channels[len(widget.Channels)-1+i] = "playlist:" + widget.Playlists[i]
+		}
 	}
 
 	return nil
