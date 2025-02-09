@@ -99,6 +99,7 @@ func newConfigFromYAML(contents []byte) (*config, error) {
 	return config, nil
 }
 
+// TODO: change the pattern so that it doesn't match commented out lines
 var configEnvVariablePattern = regexp.MustCompile(`(^|.)\$\{([A-Z0-9_]+)\}`)
 
 func parseConfigEnvVariables(contents []byte) ([]byte, error) {
