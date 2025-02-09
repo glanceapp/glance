@@ -625,6 +625,17 @@ function setupClocks() {
     updateClocks();
 }
 
+async function setupCalendars() {
+    const elems = document.getElementsByClassName("calendar");
+    if (elems.length == 0) return;
+
+    // TODO: implement prefetching, currently loads as a nasty waterfall of requests
+    const calendar = await import ('./calendar.js');
+
+    for (let i = 0; i < elems.length; i++)
+        calendar.default(elems[i]);
+}
+
 function setupTruncatedElementTitles() {
     const elements = document.querySelectorAll(".text-truncate, .single-line-titles .title, .text-truncate-2-lines, .text-truncate-3-lines");
 
@@ -648,6 +659,7 @@ async function setupPage() {
     try {
         setupPopovers();
         setupClocks()
+        await setupCalendars();
         setupCarousels();
         setupSearchBoxes();
         setupCollapsibleLists();

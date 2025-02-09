@@ -23,6 +23,8 @@ func newWidget(widgetType string) (widget, error) {
 	switch widgetType {
 	case "calendar":
 		w = &calendarWidget{}
+	case "calendar-legacy":
+		w = &oldCalendarWidget{}
 	case "clock":
 		w = &clockWidget{}
 	case "weather":

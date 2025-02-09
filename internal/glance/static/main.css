@@ -17,7 +17,7 @@
     --cm: 1;
     --tsm: 1;
 
-    --widget-gap: 25px;
+    --widget-gap: 23px;
     --widget-content-vertical-padding: 15px;
     --widget-content-horizontal-padding: 17px;
     --widget-content-padding: var(--widget-content-vertical-padding) var(--widget-content-horizontal-padding);
@@ -292,6 +292,12 @@ pre {
     background: var(--color-background);
     height: 5px;
     width: 10px;
+}
+
+*:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 0.1rem;
+    border-radius: var(--border-radius);
 }
 
 *, *::before, *::after {
@@ -1074,17 +1080,76 @@ details[open] .summary::after {
     filter: invert(1);
 }
 
-.calendar-day {
+.old-calendar-day {
     width: calc(100% / 7);
     text-align: center;
     padding: 0.6rem 0;
 }
 
-
-.calendar-day-today {
+.old-calendar-day-today {
     border-radius: var(--border-radius);
     background-color: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) (var(--bgl)) + 6%)));
     color: var(--color-text-highlight);
+}
+
+.calendar-dates {
+    text-align: center;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.calendar-date {
+    padding: 0.4rem 0;
+    color: var(--color-text-paragraph);
+    position: relative;
+    border-radius: var(--border-radius);
+    background: none;
+    border: none;
+    font: inherit;
+}
+
+.calendar-current-date {
+    border-radius: var(--border-radius);
+    background-color: var(--color-popover-border);
+    color: var(--color-text-highlight);
+}
+
+.calendar-spillover-date {
+    color: var(--color-text-subdue);
+}
+
+.calendar-header-button {
+    position: relative;
+    cursor: pointer;
+    width: 2rem;
+    height: 2rem;
+    z-index: 1;
+    background: none;
+    border: none;
+}
+
+.calendar-header-button::before {
+    content: '';
+    position: absolute;
+    inset: -0.2rem;
+    border-radius: var(--border-radius);
+    background-color: var(--color-text-subdue);
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: -1;
+}
+
+.calendar-header-button:hover::before {
+    opacity: 0.4;
+}
+
+.calendar-undo-button {
+    display: inline-block;
+    vertical-align: text-top;
+    width: 2rem;
+    height: 2rem;
+    margin-left: 0.7rem;
 }
 
 .dns-stats-totals {
