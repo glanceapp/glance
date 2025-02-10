@@ -1672,7 +1672,7 @@ For services with multiple containers you can specify a `glance.id` on the "main
 <br>
 
 ```yaml
-servies:
+services:
   immich-server:
     image: ghcr.io/immich-app/immich-server
     labels:
