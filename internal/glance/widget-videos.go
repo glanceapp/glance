@@ -52,10 +52,11 @@ func (widget *videosWidget) initialize() error {
 	// playlists are separate things rather than specifying a list of channels and some of
 	// them awkwardly have a "playlist:" prefix
 	if len(widget.Playlists) > 0 {
+		initialLen := len(widget.Channels)
 		widget.Channels = append(widget.Channels, make([]string, len(widget.Playlists))...)
 
 		for i := range widget.Playlists {
-			widget.Channels[len(widget.Channels)-1+i] = "playlist:" + widget.Playlists[i]
+			widget.Channels[initialLen+i] = "playlist:" + widget.Playlists[i]
 		}
 	}
 
