@@ -97,9 +97,9 @@ Including config files from within your main config file is supported. This is d
 
 ```yaml
 pages:
-  !include home.yml
-  !include videos.yml
-  !include homelab.yml
+  !include: home.yml
+  !include: videos.yml
+  !include: homelab.yml
 ```
 
 The file you are including should not have any additional indentation, its values should be at the top level and the appropriate amount of indentation will be added automatically depending on where the file is included. Example:
@@ -112,14 +112,14 @@ pages:
     columns:
       - size: full
         widgets:
-          !include rss.yml
+          !include: rss.yml
   - name: News
     columns:
       - size: full
         widgets:
           - type: group
             widgets:
-              !include rss.yml
+              !include: rss.yml
               - type: reddit
                 subreddit: news
 ```
