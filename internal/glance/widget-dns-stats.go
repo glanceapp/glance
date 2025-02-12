@@ -392,6 +392,8 @@ type technitiumStatsResponse struct {
 		Stats struct {
 			TotalQueries   int `json:"totalQueries"`
 			BlockedQueries int `json:"totalBlocked"`
+			BlockedZones   int `json:"blockedZones"`
+			BlockListZones int `json:"blockListZones"`
 		} `json:"stats"`
 		MainChartData struct {
 			Datasets []struct {
@@ -437,6 +439,7 @@ func fetchTechnitiumStats(instanceUrl string, allowInsecure bool, token string, 
 		TotalQueries:      responseJson.Response.Stats.TotalQueries,
 		BlockedQueries:    responseJson.Response.Stats.BlockedQueries,
 		TopBlockedDomains: make([]dnsStatsBlockedDomain, 0, topBlockedDomainsCount),
+		DomainsBlocked:    responseJson.Response.Stats.BlockedZones + responseJson.Response.Stats.BlockListZones,
 	}
 
 	if stats.TotalQueries <= 0 {
