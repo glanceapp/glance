@@ -39,6 +39,7 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
+  - [Authentication](#authentication)
 
 
 ## Preconfigured page
@@ -1254,7 +1255,6 @@ Examples:
       <div>
           <div class="color-highlight size-h3">{{ div (.JSON.Int "usage" | toFloat) 1073741824 | toInt | formatNumber }}GB</div>
           <div class="size-h6">USAGE</div>
-      </div>
     </div>
 ```
 </details>
@@ -1513,7 +1513,7 @@ Whether to ignore invalid/self-signed certificates.
 
 `same-tab`
 
-Whether to open the link in the same or a new tab.
+Whether to open the link in the same tab or a new one.
 
 `alt-status-codes`
 
@@ -2377,3 +2377,27 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+### Authentication
+Configure authentication for Glance using external services like Authelia or KeyCloak.
+
+Example:
+
+```yaml
+auth:
+  login-redirect-url: https://auth.example.com/login
+  is-authenticated-url: https://auth.example.com/is-authenticated
+```
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| login-redirect-url | string | yes | |
+| is-authenticated-url | string | yes | |
+
+##### `login-redirect-url`
+The URL to redirect the user to when they need to log in.
+
+##### `is-authenticated-url`
+The URL to check if the user is authenticated.

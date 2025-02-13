@@ -24,6 +24,7 @@ type application struct {
 	Version          string
 	Config           config
 	ParsedThemeStyle template.HTML
+	auth             Auth
 
 	slugToPage map[string]*page
 	widgetByID map[uint64]widget
@@ -88,6 +89,11 @@ func newApplication(config *config) (*application, error) {
 
 	config.Branding.LogoURL = app.transformUserDefinedAssetPath(config.Branding.LogoURL)
 
+	// Initialize authentication instance
+	app.auth = &authInstance{
+		config: config.Auth,
+	}
+
 	return app, nil
 }
 
@@ -137,13 +143,21 @@ func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Check authentication before serving the page
+	macAddress := r.Header.Get("X-Mac-Address")
+	isAuthenticated, err := a.auth.IsAuthenticated(macAddress)
+	if err != nil || !isAuthenticated {
+		a.auth.JumpToLogin(macAddress)
+		return
+	}
+
 	pageData := pageTemplateData{
 		Page: page,
 		App:  a,
 	}
 
 	var responseBytes bytes.Buffer
-	err := pageTemplate.Execute(&responseBytes, pageData)
+	err = pageTemplate.Execute(&responseBytes, pageData)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -158,6 +172,14 @@ func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Re
 
 	if !exists {
 		a.handleNotFound(w, r)
+		return
+	}
+
+	// Check authentication before serving the page content
+	macAddress := r.Header.Get("X-Mac-Address")
+	isAuthenticated, err := a.auth.IsAuthenticated(macAddress)
+	if err != nil || !isAuthenticated {
+		a.auth.JumpToLogin(macAddress)
 		return
 	}
 
@@ -204,6 +226,14 @@ func (a *application) handleWidgetRequest(w http.ResponseWriter, r *http.Request
 
 	if !exists {
 		a.handleNotFound(w, r)
+		return
+	}
+
+	// Check authentication before serving the widget request
+	macAddress := r.Header.Get("X-Mac-Address")
+	isAuthenticated, err := a.auth.IsAuthenticated(macAddress)
+	if err != nil || !isAuthenticated {
+		a.auth.JumpToLogin(macAddress)
 		return
 	}
 

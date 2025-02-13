@@ -49,7 +49,19 @@ type config struct {
 		FaviconURL   string        `yaml:"favicon-url"`
 	} `yaml:"branding"`
 
+	Auth AuthConfig `yaml:"auth"`
+
 	Pages []page `yaml:"pages"`
+}
+
+type AuthConfig struct {
+	LoginRedirectURL    string `yaml:"login-redirect-url"`
+	IsAuthenticatedURL  string `yaml:"is-authenticated-url"`
+}
+
+type Auth interface {
+	IsAuthenticated(macAddress string) (bool, error)
+	JumpToLogin(macAddress string) error
 }
 
 type page struct {
@@ -325,6 +337,14 @@ func isConfigStateValid(config *config) error {
 		if _, err := os.Stat(config.Server.AssetsPath); os.IsNotExist(err) {
 			return fmt.Errorf("assets directory does not exist: %s", config.Server.AssetsPath)
 		}
+	}
+
+	if config.Auth.LoginRedirectURL == "" {
+		return fmt.Errorf("auth login-redirect-url is not configured")
+	}
+
+	if config.Auth.IsAuthenticatedURL == "" {
+		return fmt.Errorf("auth is-authenticated-url is not configured")
 	}
 
 	for i := range config.Pages {
