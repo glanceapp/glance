@@ -6,14 +6,14 @@
 <div class="widget-group-header">
     <div class="widget-header gap-20">
         {{ range $i, $widget := .Widgets }}
-            <button class="widget-group-title{{ if eq $i 0 }} widget-group-title-current{{ end }}"{{ if ne "" .TitleURL }} data-title-url="{{ .TitleURL }}"{{ end }}>{{ $widget.Title }}</button>
+            <button class="widget-group-title{{ if eq $i $.DefaultTab }} widget-group-title-current{{ end }}"{{ if ne "" .TitleURL }} data-title-url="{{ .TitleURL }}"{{ end }}>{{ $widget.Title }}</button>
         {{ end }}
     </div>
 </div>
 
 <div class="widget-group-contents">
 {{ range $i, $widget := .Widgets }}
-    <div class="widget-group-content{{ if eq $i 0 }} widget-group-content-current{{ end }}">{{ .Render }}</div>
+    <div class="widget-group-content{{ if eq $i $.DefaultTab }} widget-group-content-current{{ end }}">{{ .Render }}</div>
 {{ end }}
 </div>
 

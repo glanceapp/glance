@@ -12,11 +12,20 @@ var groupWidgetTemplate = mustParseTemplate("group.html", "widget-base.html")
 type groupWidget struct {
 	widgetBase          `yaml:",inline"`
 	containerWidgetBase `yaml:",inline"`
+	DefaultTab          int `yaml:"default-tab"`
 }
 
 func (widget *groupWidget) initialize() error {
 	widget.withError(nil)
 	widget.HideHeader = true
+
+	if widget.DefaultTab > 0 {
+		widget.DefaultTab = widget.DefaultTab - 1
+	}
+
+	if widget.DefaultTab > (len(widget.Widgets) - 1) {
+		widget.DefaultTab = len(widget.Widgets) - 1
+	}
 
 	for i := range widget.Widgets {
 		widget.Widgets[i].setHideHeader(true)
