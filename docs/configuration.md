@@ -1035,6 +1035,11 @@ Preview:
 
 ![](images/group-widget-preview.png)
 
+#### Property
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| default-tab | int | no | 1 |
+
 #### Sharing properties
 
 To avoid repetition you can use [YAML anchors](https://support.atlassian.com/bitbucket-cloud/docs/yaml-anchors/) and share properties between widgets.
