@@ -3,6 +3,7 @@ package sysinfo
 import (
 	"fmt"
 	"math"
+	"os"
 	"runtime"
 	"sort"
 	"strconv"
@@ -85,12 +86,39 @@ type MointpointRequest struct {
 // Currently caches hostname indefinitely which isn't ideal
 // Potential issue with caching boot time as it may not initially get reported correctly:
 // https://github.com/shirou/gopsutil/issues/842#issuecomment-1908972344
-var cachedHostInfo = struct {
+type cacheableHostInfo struct {
 	available bool
 	hostname  string
 	platform  string
 	bootTime  timestampJSON
-}{}
+}
+
+var cachedHostInfo cacheableHostInfo
+
+func getHostInfo() (cacheableHostInfo, error) {
+	var err error
+	info := cacheableHostInfo{}
+
+	info.hostname, err = os.Hostname()
+	if err != nil {
+		return info, err
+	}
+
+	info.platform, _, _, err = host.PlatformInformation()
+	if err != nil {
+		return info, err
+	}
+
+	bootTime, err := host.BootTime()
+	if err != nil {
+		return info, err
+	}
+
+	info.bootTime = timestampJSON{time.Unix(int64(bootTime), 0)}
+	info.available = true
+
+	return info, nil
+}
 
 func Collect(req *SystemInfoRequest) (*SystemInfo, []error) {
 	if req == nil {
@@ -117,13 +145,9 @@ func Collect(req *SystemInfoRequest) (*SystemInfo, []error) {
 	if cachedHostInfo.available {
 		applyCachedHostInfo()
 	} else {
-		hostInfo, err := host.Info()
+		hostInfo, err := getHostInfo()
 		if err == nil {
-			cachedHostInfo.available = true
-			cachedHostInfo.bootTime = timestampJSON{time.Unix(int64(hostInfo.BootTime), 0)}
-			cachedHostInfo.hostname = hostInfo.Hostname
-			cachedHostInfo.platform = hostInfo.Platform
-
+			cachedHostInfo = hostInfo
 			applyCachedHostInfo()
 		} else {
 			addErr(fmt.Errorf("getting host info: %v", err))
