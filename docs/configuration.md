@@ -1852,10 +1852,28 @@ Whether to hide the swap usage.
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | cpu-temp-sensor | string | no |  |
+| hide-mointpoints-by-default | boolean | no | false |
 | mountpoints | map\[string\]object | no |  |
 
 ###### `cpu-temp-sensor`
 The name of the sensor to use for the CPU temperature. When not provided the widget will attempt to find the correct one, if it fails to do so the temperature will not be displayed. To view the available sensors you can use `sensors` command.
+
+###### `hide-mountpoints-by-default`
+If set to `true` you'll have to manually make each mountpoint visible by adding a `hide: false` property to it like so:
+
+```yaml
+- type: server-stats
+  servers:
+    - type: local
+      hide-mountpoints-by-default: true
+      mountpoints:
+        "/":
+          hide: false
+        "/mnt/data":
+          hide: false
+```
+
+This is useful if you're running Glance inside of a container which usually mounts a lot of irrelevant filesystems.
 
 ###### `mountpoints`
 A map of mountpoints to display disk usage for. The key is the path to the mountpoint and the value is an object with optional properties. Example:

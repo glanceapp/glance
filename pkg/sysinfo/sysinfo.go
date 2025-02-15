@@ -74,13 +74,14 @@ type MountpointInfo struct {
 }
 
 type SystemInfoRequest struct {
-	CPUTempSensor string                       `yaml:"cpu-temp-sensor"`
-	Mountpoints   map[string]MointpointRequest `yaml:"mountpoints"`
+	CPUTempSensor            string                       `yaml:"cpu-temp-sensor"`
+	HideMountpointsByDefault bool                         `yaml:"hide-mountpoints-by-default"`
+	Mountpoints              map[string]MointpointRequest `yaml:"mountpoints"`
 }
 
 type MointpointRequest struct {
 	Name string `yaml:"name"`
-	Hide bool   `yaml:"hide"`
+	Hide *bool  `yaml:"hide"`
 }
 
 // Currently caches hostname indefinitely which isn't ideal
@@ -229,7 +230,11 @@ func Collect(req *SystemInfoRequest) (*SystemInfo, []error) {
 	if err == nil {
 		for _, fs := range filesystems {
 			mpReq, ok := req.Mountpoints[fs.Mountpoint]
-			if ok && mpReq.Hide {
+			isHidden := req.HideMountpointsByDefault
+			if ok && mpReq.Hide != nil {
+				isHidden = *mpReq.Hide
+			}
+			if isHidden {
 				continue
 			}
 
