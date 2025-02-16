@@ -107,3 +107,13 @@ theme:
   primary-color: 0 0 10
   negative-color: 0 90 50
 ```
+
+### Nord
+![screenshot](images/themes/nord.png)
+```yaml
+theme:
+  background-color: 220 16 22
+  contrast-multiplier: 1.2
+  primary-color: 222 74 74
+  positive-color: 96 44 68
+  negative-color: 222 16 71
