@@ -1778,16 +1778,16 @@ Either `adguard`, `pihole`, or `technitium`.
 Whether to allow invalid/self-signed certificates when making the request to the service.
 
 ##### `url`
-The base URL of the service. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+The base URL of the service.
 
 ##### `username`
-Only required when using AdGuard Home. The username used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Only required when using AdGuard Home. The username used to log into the admin dashboard.
 
 ##### `password`
-Only required when using AdGuard Home. The password used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Only required when using AdGuard Home. The password used to log into the admin dashboard.
 
 ##### `token`
-Only required when using Pi-hole or Technitium. For Pi-hole, the API token which can be found in `Settings -> API -> Show API token`; for Technitium, an API token can be generated at `Administration -> Sessions -> Create Token`. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Only required when using Pi-hole or Technitium. For Pi-hole, the API token which can be found in `Settings -> API -> Show API token`; for Technitium, an API token can be generated at `Administration -> Sessions -> Create Token`.
 
 ##### `hide-graph`
 Whether to hide the graph showing the number of queries over time.
