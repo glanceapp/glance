@@ -242,7 +242,7 @@ func configFilesWatcher(
 	// needed for lastContents and lastIncludes because they get updated in multiple goroutines
 	mu := sync.Mutex{}
 
-	checkForContentChangesBeforeCallback := func() {
+	parseAndCompareBeforeCallback := func() {
 		currentContents, currentIncludes, err := parseYAMLIncludes(mainFilePath)
 		if err != nil {
 			onErr(fmt.Errorf("parsing main file contents for comparison: %w", err))
@@ -268,13 +268,20 @@ func configFilesWatcher(
 
 	const debounceDuration = 500 * time.Millisecond
 	var debounceTimer *time.Timer
-	debouncedCallback := func() {
+	debouncedParseAndCompareBeforeCallback := func() {
 		if debounceTimer != nil {
 			debounceTimer.Stop()
 			debounceTimer.Reset(debounceDuration)
 		} else {
-			debounceTimer = time.AfterFunc(debounceDuration, checkForContentChangesBeforeCallback)
+			debounceTimer = time.AfterFunc(debounceDuration, parseAndCompareBeforeCallback)
 		}
+	}
+
+	deleteLastInclude := func(filePath string) {
+		mu.Lock()
+		defer mu.Unlock()
+		fileAbsPath, _ := filepath.Abs(filePath)
+		delete(lastIncludes, fileAbsPath)
 	}
 
 	go func() {
@@ -285,33 +292,33 @@ func configFilesWatcher(
 					return
 				}
 				if event.Has(fsnotify.Write) {
-					debouncedCallback()
+					debouncedParseAndCompareBeforeCallback()
 				} else if event.Has(fsnotify.Rename) {
-					// wait for file to be available
-					for i := 0; i < 20; i++ {
-						_, err := os.Stat(mainFileAbsPath)
-						if err == nil {
+					// on linux the file will no longer be watched after a rename, on windows
+					// it will continue to be watched with the new name but we have no access to
+					// the new name in this event in order to stop watching it manually and match the
+					// behavior in linux, may lead to weird unintended behaviors on windows as we're
+					// only handling renames from linux's perspective
+					// see https://github.com/fsnotify/fsnotify/issues/255
+
+					// remove the old file from our manually tracked includes, calling
+					// debouncedParseAndCompareBeforeCallback will re-add it if it's still
+					// required after it triggers
+					deleteLastInclude(event.Name)
+
+					// wait for file to maybe get created again
+					// see https://github.com/glanceapp/glance/pull/358
+					for i := 0; i < 10; i++ {
+						if _, err := os.Stat(event.Name); err == nil {
 							break
 						}
-						time.Sleep(100 * time.Millisecond)
+						time.Sleep(200 * time.Millisecond)
 					}
-					// fsnotify removes the file from the watch list on rename events,
-					// add it back.
-					// See https://github.com/fsnotify/fsnotify/issues/214
-					err := watcher.Add(mainFileAbsPath)
-					if err != nil {
-						onErr(fmt.Errorf("watching file:", err))
-					}
-					debouncedCallback()
-				} else if event.Has(fsnotify.Remove) {
-					func() {
-						mu.Lock()
-						defer mu.Unlock()
-						fileAbsPath, _ := filepath.Abs(event.Name)
-						delete(lastIncludes, fileAbsPath)
-					}()
 
-					debouncedCallback()
+					debouncedParseAndCompareBeforeCallback()
+				} else if event.Has(fsnotify.Remove) {
+					deleteLastInclude(event.Name)
+					debouncedParseAndCompareBeforeCallback()
 				}
 			case err, isOpen := <-watcher.Errors:
 				if !isOpen {
