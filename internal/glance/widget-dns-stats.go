@@ -14,6 +14,12 @@ import (
 
 var dnsStatsWidgetTemplate = mustParseTemplate("dns-stats.html", "widget-base.html")
 
+const (
+	dnsStatsBars            = 8
+	dnsStatsHoursSpan       = 24
+	dnsStatsHoursPerBar int = dnsStatsHoursSpan / dnsStatsBars
+)
+
 type dnsStatsWidget struct {
 	widgetBase `yaml:",inline"`
 
@@ -186,31 +192,27 @@ func fetchAdguardStats(instanceURL string, allowInsecure bool, username, passwor
 	queriesSeries := responseJson.QueriesSeries
 	blockedSeries := responseJson.BlockedSeries
 
-	const bars = 8
-	const hoursSpan = 24
-	const hoursPerBar int = hoursSpan / bars
-
-	if len(queriesSeries) > hoursSpan {
-		queriesSeries = queriesSeries[len(queriesSeries)-hoursSpan:]
-	} else if len(queriesSeries) < hoursSpan {
-		queriesSeries = append(make([]int, hoursSpan-len(queriesSeries)), queriesSeries...)
+	if len(queriesSeries) > dnsStatsHoursSpan {
+		queriesSeries = queriesSeries[len(queriesSeries)-dnsStatsHoursSpan:]
+	} else if len(queriesSeries) < dnsStatsHoursSpan {
+		queriesSeries = append(make([]int, dnsStatsHoursSpan-len(queriesSeries)), queriesSeries...)
 	}
 
-	if len(blockedSeries) > hoursSpan {
-		blockedSeries = blockedSeries[len(blockedSeries)-hoursSpan:]
-	} else if len(blockedSeries) < hoursSpan {
-		blockedSeries = append(make([]int, hoursSpan-len(blockedSeries)), blockedSeries...)
+	if len(blockedSeries) > dnsStatsHoursSpan {
+		blockedSeries = blockedSeries[len(blockedSeries)-dnsStatsHoursSpan:]
+	} else if len(blockedSeries) < dnsStatsHoursSpan {
+		blockedSeries = append(make([]int, dnsStatsHoursSpan-len(blockedSeries)), blockedSeries...)
 	}
 
 	maxQueriesInSeries := 0
 
-	for i := 0; i < bars; i++ {
+	for i := 0; i < dnsStatsBars; i++ {
 		queries := 0
 		blocked := 0
 
-		for j := 0; j < hoursPerBar; j++ {
-			queries += queriesSeries[i*hoursPerBar+j]
-			blocked += blockedSeries[i*hoursPerBar+j]
+		for j := 0; j < dnsStatsHoursPerBar; j++ {
+			queries += queriesSeries[i*dnsStatsHoursPerBar+j]
+			blocked += blockedSeries[i*dnsStatsHoursPerBar+j]
 		}
 
 		stats.Series[i] = dnsStatsSeries{
@@ -227,7 +229,7 @@ func fetchAdguardStats(instanceURL string, allowInsecure bool, username, passwor
 		}
 	}
 
-	for i := 0; i < bars; i++ {
+	for i := 0; i < dnsStatsBars; i++ {
 		stats.Series[i].PercentTotal = int(float64(stats.Series[i].Queries) / float64(maxQueriesInSeries) * 100)
 	}
 
@@ -409,7 +411,6 @@ type technitiumStatsResponse struct {
 }
 
 func fetchTechnitiumStats(instanceUrl string, allowInsecure bool, token string, noGraph bool) (*dnsStats, error) {
-
 	if token == "" {
 		return nil, errors.New("missing API token")
 	}
@@ -480,31 +481,27 @@ func fetchTechnitiumStats(instanceUrl string, allowInsecure bool, token string, 
 		}
 	}
 
-	const bars = 8
-	const hoursSpan = 24
-	const hoursPerBar int = hoursSpan / bars
-
-	if len(queriesSeries) > hoursSpan {
-		queriesSeries = queriesSeries[len(queriesSeries)-hoursSpan:]
-	} else if len(queriesSeries) < hoursSpan {
-		queriesSeries = append(make([]int, hoursSpan-len(queriesSeries)), queriesSeries...)
+	if len(queriesSeries) > dnsStatsHoursSpan {
+		queriesSeries = queriesSeries[len(queriesSeries)-dnsStatsHoursSpan:]
+	} else if len(queriesSeries) < dnsStatsHoursSpan {
+		queriesSeries = append(make([]int, dnsStatsHoursSpan-len(queriesSeries)), queriesSeries...)
 	}
 
-	if len(blockedSeries) > hoursSpan {
-		blockedSeries = blockedSeries[len(blockedSeries)-hoursSpan:]
-	} else if len(blockedSeries) < hoursSpan {
-		blockedSeries = append(make([]int, hoursSpan-len(blockedSeries)), blockedSeries...)
+	if len(blockedSeries) > dnsStatsHoursSpan {
+		blockedSeries = blockedSeries[len(blockedSeries)-dnsStatsHoursSpan:]
+	} else if len(blockedSeries) < dnsStatsHoursSpan {
+		blockedSeries = append(make([]int, dnsStatsHoursSpan-len(blockedSeries)), blockedSeries...)
 	}
 
 	maxQueriesInSeries := 0
 
-	for i := 0; i < bars; i++ {
+	for i := 0; i < dnsStatsBars; i++ {
 		queries := 0
 		blocked := 0
 
-		for j := 0; j < hoursPerBar; j++ {
-			queries += queriesSeries[i*hoursPerBar+j]
-			blocked += blockedSeries[i*hoursPerBar+j]
+		for j := 0; j < dnsStatsHoursPerBar; j++ {
+			queries += queriesSeries[i*dnsStatsHoursPerBar+j]
+			blocked += blockedSeries[i*dnsStatsHoursPerBar+j]
 		}
 
 		stats.Series[i] = dnsStatsSeries{
@@ -521,10 +518,9 @@ func fetchTechnitiumStats(instanceUrl string, allowInsecure bool, token string, 
 		}
 	}
 
-	for i := 0; i < bars; i++ {
+	for i := 0; i < dnsStatsBars; i++ {
 		stats.Series[i].PercentTotal = int(float64(stats.Series[i].Queries) / float64(maxQueriesInSeries) * 100)
 	}
 
 	return stats, nil
-
 }
