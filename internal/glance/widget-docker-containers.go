@@ -241,7 +241,7 @@ func isDockerContainerHidden(container *dockerContainerJsonResponse, hideByDefau
 
 func fetchAllDockerContainersFromSock(socketPath string) ([]dockerContainerJsonResponse, error) {
 	client := &http.Client{
-		Timeout: 3 * time.Second,
+		Timeout: 5 * time.Second,
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
 				return net.Dial("unix", socketPath)
