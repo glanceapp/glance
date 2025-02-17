@@ -295,6 +295,9 @@ func configFilesWatcher(
 						}
 						time.Sleep(100 * time.Millisecond)
 					}
+					// fsnotify removes the file from the watch list on rename events,
+					// add it back.
+					// See https://github.com/fsnotify/fsnotify/issues/214
 					err := watcher.Add(mainFileAbsPath)
 					if err != nil {
 						onErr(fmt.Errorf("watching file:", err))
