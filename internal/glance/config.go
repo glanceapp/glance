@@ -286,6 +286,20 @@ func configFilesWatcher(
 				}
 				if event.Has(fsnotify.Write) {
 					debouncedCallback()
+				} else if event.Has(fsnotify.Rename) {
+					// wait for file to be available
+					for i := 0; i < 20; i++ {
+						_, err := os.Stat(mainFileAbsPath)
+						if err == nil {
+							break
+						}
+						time.Sleep(100 * time.Millisecond)
+					}
+					err := watcher.Add(mainFileAbsPath)
+					if err != nil {
+						onErr(fmt.Errorf("watching file:", err))
+					}
+					debouncedCallback()
 				} else if event.Has(fsnotify.Remove) {
 					func() {
 						mu.Lock()
