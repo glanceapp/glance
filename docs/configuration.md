@@ -1737,7 +1737,7 @@ The path to the Docker socket.
 | glance.parent | The ID of the parent container. Used to group containers under a single parent. |
 
 ### DNS Stats
-Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home or Pi-hole.
+Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home, Pi-hole, or Technitium.
 
 Example:
 
@@ -1755,7 +1755,7 @@ Preview:
 
 > [!NOTE]
 >
-> When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole it will be the total number of blocked domains from all adlists.
+> When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole or Technitium it will be the total number of blocked domains from all adlists.
 
 #### Properties
 
@@ -1772,22 +1772,22 @@ Preview:
 | hour-format | string | no | 12h |
 
 ##### `service`
-Either `adguard` or `pihole`.
+Either `adguard`, `pihole`, or `technitium`.
 
 ##### `allow-insecure`
 Whether to allow invalid/self-signed certificates when making the request to the service.
 
 ##### `url`
-The base URL of the service. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+The base URL of the service.
 
 ##### `username`
-Only required when using AdGuard Home. The username used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Only required when using AdGuard Home. The username used to log into the admin dashboard.
 
 ##### `password`
-Only required when using AdGuard Home. The password used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Only required when using AdGuard Home. The password used to log into the admin dashboard.
 
 ##### `token`
-Only required when using Pi-hole. The API token which can be found in `Settings -> API -> Show API token`. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Only required when using Pi-hole or Technitium. For Pi-hole, the API token which can be found in `Settings -> API -> Show API token`; for Technitium, an API token can be generated at `Administration -> Sessions -> Create Token`.
 
 ##### `hide-graph`
 Whether to hide the graph showing the number of queries over time.
