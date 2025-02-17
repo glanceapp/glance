@@ -152,9 +152,9 @@ func newCustomIconField(value string) customIconField {
 		}
 
 		if prefix == "di" {
-			field.URL = "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/" + ext + "/" + basename + "." + ext
+			field.URL = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/" + ext + "/" + basename + "." + ext
 		} else {
-			field.URL = "https://cdn.jsdelivr.net/gh/selfhst/icons@main/" + ext + "/" + basename + "." + ext
+			field.URL = "https://cdn.jsdelivr.net/gh/selfhst/icons/" + ext + "/" + basename + "." + ext
 		}
 	default:
 		field.URL = value

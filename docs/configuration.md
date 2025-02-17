@@ -97,9 +97,9 @@ Including config files from within your main config file is supported. This is d
 
 ```yaml
 pages:
-  !include home.yml
-  !include videos.yml
-  !include homelab.yml
+  !include: home.yml
+  !include: videos.yml
+  !include: homelab.yml
 ```
 
 The file you are including should not have any additional indentation, its values should be at the top level and the appropriate amount of indentation will be added automatically depending on where the file is included. Example:
@@ -112,14 +112,14 @@ pages:
     columns:
       - size: full
         widgets:
-          !include rss.yml
+          !include: rss.yml
   - name: News
     columns:
       - size: full
         widgets:
           - type: group
             widgets:
-              !include rss.yml
+              !include: rss.yml
               - type: reddit
                 subreddit: news
 ```
@@ -1672,7 +1672,7 @@ For services with multiple containers you can specify a `glance.id` on the "main
 <br>
 
 ```yaml
-servies:
+services:
   immich-server:
     image: ghcr.io/immich-app/immich-server
     labels:
@@ -1852,10 +1852,28 @@ Whether to hide the swap usage.
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | cpu-temp-sensor | string | no |  |
+| hide-mointpoints-by-default | boolean | no | false |
 | mountpoints | map\[string\]object | no |  |
 
 ###### `cpu-temp-sensor`
 The name of the sensor to use for the CPU temperature. When not provided the widget will attempt to find the correct one, if it fails to do so the temperature will not be displayed. To view the available sensors you can use `sensors` command.
+
+###### `hide-mountpoints-by-default`
+If set to `true` you'll have to manually make each mountpoint visible by adding a `hide: false` property to it like so:
+
+```yaml
+- type: server-stats
+  servers:
+    - type: local
+      hide-mountpoints-by-default: true
+      mountpoints:
+        "/":
+          hide: false
+        "/mnt/data":
+          hide: false
+```
+
+This is useful if you're running Glance inside of a container which usually mounts a lot of irrelevant filesystems.
 
 ###### `mountpoints`
 A map of mountpoints to display disk usage for. The key is the path to the mountpoint and the value is an object with optional properties. Example:
