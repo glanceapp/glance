@@ -59,7 +59,7 @@ func (widget *dnsStatsWidget) initialize() error {
 	case "pihole":
 	case "technitium":
 	default:
-		return errors.New("service must be either 'adguard' or 'pihole'")
+		return errors.New("service must be either 'adguard', 'pihole', or 'technitium'")
 	}
 
 	return nil
