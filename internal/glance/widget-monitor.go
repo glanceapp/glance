@@ -28,6 +28,10 @@ type monitorWidget struct {
 		StatusText         string          `yaml:"-"`
 		StatusStyle        string          `yaml:"-"`
 		AltStatusCodes     []int           `yaml:"alt-status-codes"`
+		BasicAuth          struct {
+			Username string `yaml:"username"`
+			Password string `yaml:"password"`
+		} `yaml:"basic-auth"`
 	} `yaml:"sites"`
 	Style           string `yaml:"style"`
 	ShowFailingOnly bool   `yaml:"show-failing-only"`
@@ -45,6 +49,10 @@ func (widget *monitorWidget) update(ctx context.Context) {
 
 	for i := range widget.Sites {
 		requests[i] = widget.Sites[i].SiteStatusRequest
+		if widget.Sites[i].BasicAuth.Username != "" || widget.Sites[i].BasicAuth.Password != "" {
+			requests[i].Username = widget.Sites[i].BasicAuth.Username
+			requests[i].Password = widget.Sites[i].BasicAuth.Password
+		}
 	}
 
 	statuses, err := fetchStatusForSites(requests)
@@ -118,6 +126,8 @@ type SiteStatusRequest struct {
 	DefaultURL    string `yaml:"url"`
 	CheckURL      string `yaml:"check-url"`
 	AllowInsecure bool   `yaml:"allow-insecure"`
+	Username      string `yaml:"-"`
+	Password      string `yaml:"-"`
 }
 
 type siteStatus struct {
@@ -139,6 +149,10 @@ func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (siteStatus, error) {
 		return siteStatus{
 			Error: err,
 		}, nil
+	}
+
+	if statusRequest.Username != "" || statusRequest.Password != "" {
+		request.SetBasicAuth(statusRequest.Username, statusRequest.Password)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
