@@ -1786,8 +1786,14 @@ Only required when using AdGuard Home. The username used to log into the admin d
 ##### `password`
 Only required when using AdGuard Home. The password used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
 
-##### `token`
-Only required when using Pi-hole. The API token which can be found in `Settings -> API -> Show API token`. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+##### `token` (Deprecated)
+Only required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+
+##### `app-password`
+Only required when using Pi-hole. The App Password can be found in `Settings -> Web Interface / API -> Configure app password`.
+
+##### `version`
+Only required if using an older version of PiHole (major version 5 or earlier).
 
 ##### `hide-graph`
 Whether to hide the graph showing the number of queries over time.
