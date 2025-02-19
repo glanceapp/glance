@@ -1471,6 +1471,12 @@ details[open] .summary::after {
     flex-shrink: 0;
 }
 
+.media-requests-thumbnail {
+    width: 5rem;
+    aspect-ratio: 3 / 4;
+    border-radius: var(--border-radius);
+}
+
 .docker-container-icon {
     display: block;
     filter: grayscale(0.4);
@@ -2018,6 +2024,9 @@ details[open] .summary::after {
 .color-negative     { color: var(--color-negative); }
 .color-positive     { color: var(--color-positive); }
 .color-primary      { color: var(--color-primary); }
+.color-purple       { color: hsl(267deg, 84%, 81%); }
+.color-yellow       { color: hsl(41deg, 86%, 83%); }
+.color-blue         { color: hsl(217deg, 92%, 76%); }
 
 .cursor-help        { cursor: help; }
 .break-all          { word-break: break-all; }
