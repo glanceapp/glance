@@ -326,71 +326,6 @@ func piholeGetSID(instanceURL, appPassword string) (string, error) {
 	return jsonResponse.Session.SID, nil
 }
 
-// piholeCheckAndRefreshSID ensures the SID is valid, refreshing it if necessary.
-func piholeCheckAndRefreshSID(instanceURL, appPassword string) (string, error) {
-	sid := os.Getenv("SID")
-	if sid == "" {
-		newSID, err := piholeGetSID(instanceURL, appPassword)
-		if err != nil {
-			return "", err
-		}
-		os.Setenv("SID", newSID)
-		return newSID, nil
-	}
-
-	requestURL := strings.TrimRight(instanceURL, "/") + "/api/auth?sid=" + sid
-	requestBody := []byte(`{"password":"` + appPassword + `"}`)
-
-	request, err := http.NewRequest("GET", requestURL, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return "", errors.New("failed to create SID validation request: " + err.Error())
-	}
-	request.Header.Set("Content-Type", "application/json")
-
-	response, err := httpClient.Do(request)
-	if err != nil {
-		return "", errors.New("failed to send SID validation request: " + err.Error())
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusOK {
-		// Fetch a new SID if validation request fails
-		newSID, err := piholeGetSID(instanceURL, appPassword)
-		if err != nil {
-			return "", err
-		}
-		os.Setenv("SID", newSID)
-		return newSID, nil
-	}
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		return "", errors.New("failed to read SID validation response: " + err.Error())
-	}
-
-	var jsonResponse struct {
-		Session struct {
-			Valid bool   `json:"valid"`
-			SID   string `json:"sid"`
-		} `json:"session"`
-	}
-
-	if err := json.Unmarshal(body, &jsonResponse); err != nil {
-		return "", errors.New("failed to parse SID validation response: " + err.Error())
-	}
-
-	if !jsonResponse.Session.Valid {
-		newSID, err := piholeGetSID(instanceURL, appPassword)
-		if err != nil {
-			return "", err
-		}
-		os.Setenv("SID", newSID)
-		return newSID, nil
-	}
-
-	return sid, nil
-}
-
 func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGraph bool, version, appPassword string) (*dnsStats, error) {
 	var requestURL string
 
@@ -399,11 +334,15 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGr
 		if appPassword == "" {
 			return nil, errors.New("missing app password")
 		}
-
-		sid, err := piholeCheckAndRefreshSID(instanceURL, appPassword)
-		if err != nil {
-			return nil, err
+		// If SID env var is not set, get a new SID
+		if os.Getenv("SID") == "" {
+			sid, err := piholeGetSID(instanceURL, appPassword)
+			os.Setenv("SID", sid)
+			if err != nil {
+				return nil, err
+			}
 		}
+		sid := os.Getenv("SID")
 
 		requestURL = strings.TrimRight(instanceURL, "/") + "/api/stats/summary?sid=" + sid
 	} else {
