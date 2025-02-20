@@ -1792,8 +1792,8 @@ Only required when using Pi-hole major version 5 or earlier. The API token which
 ##### `app-password`
 Only required when using Pi-hole. The App Password can be found in `Settings -> Web Interface / API -> Configure app password`.
 
-##### `version`
-Only required if using an older version of PiHole (major version 5 or earlier).
+##### `pihole-version`
+Only required if using an older version of Pi-hole (major version 5 or earlier).
 
 ##### `hide-graph`
 Whether to hide the graph showing the number of queries over time.
