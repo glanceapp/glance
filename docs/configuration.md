@@ -1608,7 +1608,7 @@ services:
   glance:
     image: glanceapp/glance
     environment:
-      - GITHUB_TOKEN: <your token>
+      - GITHUB_TOKEN=<your token>
 ```
 
 and then use it in your `glance.yml` like this:
