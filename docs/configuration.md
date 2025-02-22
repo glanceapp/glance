@@ -1476,6 +1476,7 @@ Properties for each site:
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
 | alt-status-codes | array | no | |
+| basic-auth | object | no | |
 
 `title`
 
@@ -1522,6 +1523,16 @@ Status codes other than 200 that you want to return "OK".
 ```yaml
 alt-status-codes:
   - 403
+```
+
+`basic-auth`
+
+HTTP Basic Authentication credentials for protected sites.
+
+```yaml
+basic-auth:
+  usename: your-username
+  password: your-password
 ```
 
 ### Releases
