@@ -76,7 +76,7 @@
         <summary class="summary">Top blocked domains</summary>
         <ul class="list list-gap-4 list-with-transition size-h5">
             {{ range .Stats.TopBlockedDomains }}
-            <li class="flex justify-between">
+            <li class="flex justify-between gap-10">
                 <div class="text-truncate rtl">{{ .Domain }}</div>
                 <div class="text-right" style="width: 4rem;"><span class="color-highlight">{{ .PercentBlocked }}</span>%</div>
             </li>
