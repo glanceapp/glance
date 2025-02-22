@@ -124,6 +124,7 @@ func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, erro
 
 	for i := range marketRequests {
 		request, _ := http.NewRequest("GET", fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=1mo&interval=1d", marketRequests[i].Symbol), nil)
+		setBrowserUserAgentHeader(request)
 		requests = append(requests, request)
 	}
 

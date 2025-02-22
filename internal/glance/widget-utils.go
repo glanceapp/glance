@@ -8,8 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
+	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -35,8 +38,15 @@ type requestDoer interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
+var userAgentPersistentVersion atomic.Int32
+
 func setBrowserUserAgentHeader(request *http.Request) {
-	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0")
+	if rand.IntN(2000) == 0 {
+		userAgentPersistentVersion.Store(rand.Int32N(5))
+	}
+
+	version := strconv.Itoa(130 + int(userAgentPersistentVersion.Load()))
+	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:"+version+".0) Gecko/20100101 Firefox/"+version+".0")
 }
 
 func decodeJsonFromRequest[T any](client requestDoer, request *http.Request) (T, error) {
