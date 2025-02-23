@@ -12,6 +12,7 @@ require (
 )
 
 require (
+	github.com/arran4/golang-ical v0.3.1 // indirect
 	github.com/PuerkitoBio/goquery v1.10.1 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/ebitengine/purego v0.8.2 // indirect
