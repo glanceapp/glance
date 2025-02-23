@@ -2,6 +2,7 @@ package glance
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log/slog"
@@ -22,6 +23,42 @@ type marketsWidget struct {
 	SymbolLinkTemplate string          `yaml:"symbol-link-template"`
 	Sort               string          `yaml:"sort-by"`
 	Markets            marketList      `yaml:"-"`
+}
+
+func FetchUSDExchangeRate(currency string) (float64, error) {
+	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/USD%s=X?range=1d&interval=1d", currency)
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create request: %w", err)
+	}
+	setBrowserUserAgentHeader(request)
+
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	if err != nil {
+		return 0, fmt.Errorf("failed to fetch exchange rate: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if err != nil {
+		return 0, fmt.Errorf("failed to fetch exchange rate: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var response marketResponseJson
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return 0, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if len(response.Chart.Result) == 0 {
+		return 0, fmt.Errorf("no result in response")
+	}
+
+	return response.Chart.Result[0].Meta.RegularMarketPrice, nil
 }
 
 func (widget *marketsWidget) initialize() error {
@@ -70,6 +107,7 @@ func (widget *marketsWidget) Render() template.HTML {
 type marketRequest struct {
 	CustomName string `yaml:"name"`
 	Symbol     string `yaml:"symbol"`
+	Currency   string `yaml:"currency"`
 	ChartLink  string `yaml:"chart-link"`
 	SymbolLink string `yaml:"symbol-link"`
 }
@@ -170,6 +208,19 @@ func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, erro
 
 		if !exists {
 			currency = response.Chart.Result[0].Meta.Currency
+		}
+
+		if marketRequests[i].Currency != "" {
+			exchangeRate, err := FetchUSDExchangeRate(marketRequests[i].Currency)
+			if err != nil {
+				slog.Error("Failed to fetch USD/EUR exchange rate", "error", err)
+				continue
+			}
+
+			if response.Chart.Result[0].Meta.Currency == "USD" {
+				response.Chart.Result[0].Meta.RegularMarketPrice *= exchangeRate
+				currency = currencyToSymbol[marketRequests[i].Currency]
+			}
 		}
 
 		markets = append(markets, market{
