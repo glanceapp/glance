@@ -3,6 +3,7 @@ package glance
 import (
 	"context"
 	"fmt"
+	"errors"
 	"html/template"
 	"log"
 	"net/http"
@@ -70,10 +71,10 @@ func newCalendar(now time.Time, startSunday bool, icsurl string) *calendar {
 
 	var previousMonthDays int
 
-	if previousMonthNumber := now.Month() - 1; previousMonthNumber < 1 {
-		previousMonthDays = daysInMonth(12, year-1)
-	} else {
-		previousMonthDays = daysInMonth(previousMonthNumber, year)
+	if widget.FirstDayOfWeek == "" {
+		widget.FirstDayOfWeek = "monday"
+	} else if _, ok := calendarWeekdaysToInt[widget.FirstDayOfWeek]; !ok {
+		return errors.New("invalid first day of week")
 	}
 
 	startDaysFrom := now.Day() - int(weekday) - 7
@@ -123,8 +124,8 @@ func newCalendar(now time.Time, startSunday bool, icsurl string) *calendar {
 	}
 }
 
-func daysInMonth(m time.Month, year int) int {
-	return time.Date(year, m+1, 0, 0, 0, 0, 0, time.UTC).Day()
+func (widget *calendarWidget) Render() template.HTML {
+	return widget.cachedHTML
 }
 
 func ParseEventsFromFile(file string) []*ics.VEvent {

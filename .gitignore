@@ -2,4 +2,4 @@
 /build
 /playground
 /.idea
-glance*.yml
+/glance*.yml

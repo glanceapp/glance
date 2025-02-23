@@ -25,7 +25,8 @@ frameElement.append(contentElement);
 containerElement.append(frameElement);
 document.body.append(containerElement);
 
-const observer = new ResizeObserver(repositionContainer);
+const queueRepositionContainer = () => requestAnimationFrame(repositionContainer);
+const observer = new ResizeObserver(queueRepositionContainer);
 
 function handleMouseEnter(event) {
     clearTogglePopoverTimeout();
@@ -100,7 +101,7 @@ function showPopover() {
     containerElement.style.display = "block";
     activeTarget.classList.add("popover-active");
     document.addEventListener("keydown", handleHidePopoverOnEscape);
-    window.addEventListener("resize", repositionContainer);
+    window.addEventListener("resize", queueRepositionContainer);
     observer.observe(containerElement);
 }
 
@@ -156,7 +157,7 @@ function hidePopover() {
     activeTarget.classList.remove("popover-active");
     containerElement.style.display = "none";
     document.removeEventListener("keydown", handleHidePopoverOnEscape);
-    window.removeEventListener("resize", repositionContainer);
+    window.removeEventListener("resize", queueRepositionContainer);
     observer.unobserve(containerElement);
 
     if (cleanupOnHidePopover !== null) {

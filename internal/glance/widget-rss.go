@@ -35,6 +35,7 @@ type rssWidget struct {
 	Limit            int              `yaml:"limit"`
 	CollapseAfter    int              `yaml:"collapse-after"`
 	SingleLineTitles bool             `yaml:"single-line-titles"`
+	PreserveOrder    bool             `yaml:"preserve-order"`
 	NoItemsMessage   string           `yaml:"-"`
 }
 
@@ -73,6 +74,10 @@ func (widget *rssWidget) update(ctx context.Context) {
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
+	}
+
+	if !widget.PreserveOrder {
+		items.sortByNewest()
 	}
 
 	if len(items) > widget.Limit {
@@ -143,6 +148,7 @@ type rssFeedRequest struct {
 	Title           string            `yaml:"title"`
 	HideCategories  bool              `yaml:"hide-categories"`
 	HideDescription bool              `yaml:"hide-description"`
+	Limit           int               `yaml:"limit"`
 	ItemLinkPrefix  string            `yaml:"item-link-prefix"`
 	Headers         map[string]string `yaml:"headers"`
 	IsDetailed      bool              `yaml:"-"`
@@ -190,6 +196,10 @@ func fetchItemsFromRSSFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
 		return nil, err
 	}
 
+	if request.Limit > 0 && len(feed.Items) > request.Limit {
+		feed.Items = feed.Items[:request.Limit]
+	}
+
 	items := make(rssFeedItemList, 0, len(feed.Items))
 
 	for i := range feed.Items {
@@ -223,7 +233,7 @@ func fetchItemsFromRSSFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
 		}
 
 		if item.Title != "" {
-			rssItem.Title = item.Title
+			rssItem.Title = html.UnescapeString(item.Title)
 		} else {
 			rssItem.Title = shortenFeedDescriptionLen(item.Description, 100)
 		}
@@ -320,7 +330,6 @@ func fetchItemsFromRSSFeeds(requests []rssFeedRequest) (rssFeedItemList, error) 
 	}
 
 	failed := 0
-
 	entries := make(rssFeedItemList, 0, len(feeds)*10)
 
 	for i := range feeds {
@@ -336,8 +345,6 @@ func fetchItemsFromRSSFeeds(requests []rssFeedRequest) (rssFeedItemList, error) 
 	if failed == len(requests) {
 		return nil, errNoContent
 	}
-
-	entries.sortByNewest()
 
 	if failed > 0 {
 		return entries, fmt.Errorf("%w: missing %d RSS feeds", errPartialContent, failed)

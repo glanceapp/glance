@@ -47,7 +47,7 @@ func (widget *dockerContainersWidget) Render() template.HTML {
 
 const (
 	dockerContainerLabelHide        = "glance.hide"
-	dockerContainerLabelTitle       = "glance.title"
+	dockerContainerLabelName        = "glance.name"
 	dockerContainerLabelURL         = "glance.url"
 	dockerContainerLabelDescription = "glance.description"
 	dockerContainerLabelSameTab     = "glance.same-tab"
@@ -194,7 +194,7 @@ func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContain
 }
 
 func deriveDockerContainerTitle(container *dockerContainerJsonResponse) string {
-	if v := container.Labels.getOrDefault(dockerContainerLabelTitle, ""); v != "" {
+	if v := container.Labels.getOrDefault(dockerContainerLabelName, ""); v != "" {
 		return v
 	}
 

@@ -14,6 +14,7 @@ type bookmarksWidget struct {
 		Color     *hslColorField `yaml:"color"`
 		SameTab   bool           `yaml:"same-tab"`
 		HideArrow bool           `yaml:"hide-arrow"`
+		Target    string         `yaml:"target"`
 		Links     []struct {
 			Title string          `yaml:"title"`
 			URL   string          `yaml:"url"`
@@ -23,10 +24,11 @@ type bookmarksWidget struct {
 			// {{ if not .SameTab }} would return true for any non-nil pointer
 			// which leaves us with no way of checking if the value is true or
 			// false, hence the duplicated fields below
-			SameTabRaw   *bool `yaml:"same-tab"`
-			SameTab      bool  `yaml:"-"`
-			HideArrowRaw *bool `yaml:"hide-arrow"`
-			HideArrow    bool  `yaml:"-"`
+			SameTabRaw   *bool  `yaml:"same-tab"`
+			SameTab      bool   `yaml:"-"`
+			HideArrowRaw *bool  `yaml:"hide-arrow"`
+			HideArrow    bool   `yaml:"-"`
+			Target       string `yaml:"target"`
 		} `yaml:"links"`
 	} `yaml:"groups"`
 }
@@ -48,6 +50,18 @@ func (widget *bookmarksWidget) initialize() error {
 				link.HideArrow = group.HideArrow
 			} else {
 				link.HideArrow = *link.HideArrowRaw
+			}
+
+			if link.Target == "" {
+				if group.Target != "" {
+					link.Target = group.Target
+				} else {
+					if link.SameTab {
+						link.Target = ""
+					} else {
+						link.Target = "_blank"
+					}
+				}
 			}
 		}
 	}

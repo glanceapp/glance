@@ -13,7 +13,7 @@
                 <img class="bookmarks-icon{{ if .Icon.IsFlatIcon }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
             </div>
             {{ end }}
-            <a href="{{ .URL | safeURL }}" class="bookmarks-link {{ if .HideArrow }}bookmarks-link-no-arrow {{ end }}color-highlight size-h4" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
+            <a href="{{ .URL | safeURL }}" class="bookmarks-link {{ if .HideArrow }}bookmarks-link-no-arrow {{ end }}color-highlight size-h4" {{ if .Target }}target="{{ .Target }}"{{ end }} rel="noreferrer">{{ .Title }}</a>
         </li>
         {{ end }}
         </ul>

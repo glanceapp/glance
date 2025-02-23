@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"math"
 	"strconv"
-	"time"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -14,8 +13,8 @@ import (
 var intl = message.NewPrinter(language.English)
 
 var globalTemplateFunctions = template.FuncMap{
-	"formatViewerCount": formatViewerCount,
-	"formatNumber":      intl.Sprint,
+	"formatApproxNumber": formatApproxNumber,
+	"formatNumber":       intl.Sprint,
 	"safeCSS": func(str string) template.CSS {
 		return template.CSS(str)
 	},
@@ -28,8 +27,30 @@ var globalTemplateFunctions = template.FuncMap{
 	"formatPrice": func(price float64) string {
 		return intl.Sprintf("%.2f", price)
 	},
-	"dynamicRelativeTimeAttrs": func(t time.Time) template.HTMLAttr {
+	"dynamicRelativeTimeAttrs": func(t interface{ Unix() int64 }) template.HTMLAttr {
 		return template.HTMLAttr(`data-dynamic-relative-time="` + strconv.FormatInt(t.Unix(), 10) + `"`)
+	},
+	"formatServerMegabytes": func(mb uint64) template.HTML {
+		var value string
+		var label string
+
+		if mb < 1_000 {
+			value = strconv.FormatUint(mb, 10)
+			label = "MB"
+		} else if mb < 1_000_000 {
+			if mb < 10_000 {
+				value = fmt.Sprintf("%.1f", float64(mb)/1_000)
+			} else {
+				value = strconv.FormatUint(mb/1_000, 10)
+			}
+
+			label = "GB"
+		} else {
+			value = fmt.Sprintf("%.1f", float64(mb)/1_000_000)
+			label = "TB"
+		}
+
+		return template.HTML(value + ` <span class="color-base size-h5">` + label + `</span>`)
 	},
 }
 
@@ -45,18 +66,18 @@ func mustParseTemplate(primary string, dependencies ...string) *template.Templat
 	return t
 }
 
-func formatViewerCount(count int) string {
+func formatApproxNumber(count int) string {
 	if count < 1_000 {
 		return strconv.Itoa(count)
 	}
 
 	if count < 10_000 {
-		return fmt.Sprintf("%.1fk", float64(count)/1_000)
+		return strconv.FormatFloat(float64(count)/1_000, 'f', 1, 64) + "k"
 	}
 
 	if count < 1_000_000 {
-		return fmt.Sprintf("%dk", count/1_000)
+		return strconv.Itoa(count/1_000) + "k"
 	}
 
-	return fmt.Sprintf("%.1fm", float64(count)/1_000_000)
+	return strconv.FormatFloat(float64(count)/1_000_000, 'f', 1, 64) + "m"
 }

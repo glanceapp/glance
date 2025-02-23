@@ -1,0 +1,140 @@
+{{ template "widget-base.html" . }}
+
+{{- define "widget-content" }}
+{{- range .Servers }}
+<div class="server">
+    <div class="server-info">
+        <div class="server-details">
+            <div class="server-name color-highlight size-h3">{{ if .Name }}{{ .Name }}{{ else }}{{ .Info.Hostname }}{{ end }}</div>
+            <div>
+                {{- if .IsReachable }}
+                    {{ if .Info.HostInfoIsAvailable }}<span {{ dynamicRelativeTimeAttrs .Info.BootTime }}></span>{{ else }}unknown{{ end }} uptime
+                {{- else }}
+                    unreachable
+                {{- end }}
+            </div>
+        </div>
+        <div class="shrink-0"{{ if .IsReachable }} data-popover-type="html" data-popover-margin="0.2rem" data-popover-max-width="400px"{{ end }}>
+            {{- if .IsReachable }}
+            <div data-popover-html>
+                <div class="size-h5 text-compact">PLATFORM</div>
+                <div class="color-highlight">{{ if .Info.HostInfoIsAvailable }}{{ .Info.Platform }}{{ else }}Unknown{{ end }}</div>
+            </div>
+            {{- end }}
+            <svg class="server-icon" stroke="var(--color-{{ if .IsReachable }}positive{{ else }}negative{{ end }})" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 17.25v-.228a4.5 4.5 0 0 0-.12-1.03l-2.268-9.64a3.375 3.375 0 0 0-3.285-2.602H7.923a3.375 3.375 0 0 0-3.285 2.602l-2.268 9.64a4.5 4.5 0 0 0-.12 1.03v.228m19.5 0a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3m19.5 0a3 3 0 0 0-3-3H5.25a3 3 0 0 0-3 3m16.5 0h.008v.008h-.008v-.008Zm-3 0h.008v.008h-.008v-.008Z" />
+            </svg>
+        </div>
+    </div>
+    <div class="server-stats">
+        <div class="flex-1{{ if not .Info.CPU.LoadIsAvailable }} server-stat-unavailable{{ end }}">
+            <div class="flex items-end size-h5">
+                <div>CPU</div>
+                {{- if and .Info.CPU.TemperatureIsAvailable (ge .Info.CPU.TemperatureC 80) }}
+                <svg class="server-spicy-cpu-icon" fill="var(--color-negative)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" >
+                    <path fill-rule="evenodd" d="M8.074.945A4.993 4.993 0 0 0 6 5v.032c.004.6.114 1.176.311 1.709.16.428-.204.91-.61.7a5.023 5.023 0 0 1-1.868-1.677c-.202-.304-.648-.363-.848-.058a6 6 0 1 0 8.017-1.901l-.004-.007a4.98 4.98 0 0 1-2.18-2.574c-.116-.31-.477-.472-.744-.28Zm.78 6.178a3.001 3.001 0 1 1-3.473 4.341c-.205-.365.215-.694.62-.59a4.008 4.008 0 0 0 1.873.03c.288-.065.413-.386.321-.666A3.997 3.997 0 0 1 8 8.999c0-.585.126-1.14.351-1.641a.42.42 0 0 1 .503-.235Z" clip-rule="evenodd" />
+                </svg>
+                {{- end }}
+                <div class="color-highlight margin-left-auto text-very-compact">{{ if .Info.CPU.LoadIsAvailable }}{{ .Info.CPU.Load1Percent }} <span class="color-base">%</span>{{ else }}n/a{{ end }}</div>
+            </div>
+            <div{{ if .Info.CPU.LoadIsAvailable }} data-popover-type="html"{{ end }}>
+                {{- if .Info.CPU.LoadIsAvailable }}
+                <div data-popover-html>
+                    <div class="flex">
+                        <div class="size-h5">1M AVG</div>
+                        <div class="value-separator"></div>
+                        <div class="color-highlight text-very-compact">{{ .Info.CPU.Load1Percent }} <span class="color-base size-h5">%</span></div>
+                    </div>
+                    <div class="flex margin-top-3">
+                        <div class="size-h5">15M AVG</div>
+                        <div class="value-separator"></div>
+                        <div class="color-highlight text-very-compact">{{ .Info.CPU.Load15Percent }} <span class="color-base size-h5">%</span></div>
+                    </div>
+                    {{- if .Info.CPU.TemperatureIsAvailable }}
+                    <div class="flex margin-top-3">
+                        <div class="size-h5">TEMP C</div>
+                        <div class="value-separator"></div>
+                        <div class="color-highlight text-very-compact">{{ .Info.CPU.TemperatureC }} <span class="color-base size-h5">°</span></div>
+                    </div>
+                    {{- end }}
+                </div>
+                {{- end }}
+                <div class="progress-bar progress-bar-combined">
+                    {{- if .Info.CPU.LoadIsAvailable }}
+                    <div class="progress-value{{ if ge .Info.CPU.Load1Percent 85 }} progress-value-notice{{ end }}" style="--percent: {{ .Info.CPU.Load1Percent }}"></div>
+                    <div class="progress-value{{ if ge .Info.CPU.Load15Percent 85 }} progress-value-notice{{ end }}" style="--percent: {{ .Info.CPU.Load15Percent }}"></div>
+                    {{- end }}
+                </div>
+            </div>
+        </div>
+        <div class="flex-1{{ if not .Info.Memory.IsAvailable }} server-stat-unavailable{{ end }}">
+            <div class="flex justify-between items-end size-h5">
+                <div>RAM</div>
+                <div class="color-highlight text-very-compact">{{ if .Info.Memory.IsAvailable }}{{ .Info.Memory.UsedPercent }} <span class="color-base">%</span>{{ else }}n/a{{ end }}</div>
+            </div>
+            <div{{ if .Info.Memory.IsAvailable }} data-popover-type="html"{{ end }}>
+                {{- if .Info.Memory.IsAvailable }}
+                <div data-popover-html>
+                    <div class="flex">
+                        <div class="size-h5">RAM</div>
+                        <div class="value-separator"></div>
+                        <div class="color-highlight text-very-compact">
+                            {{ .Info.Memory.UsedMB | formatServerMegabytes }} <span class="color-base size-h5">/</span> {{ .Info.Memory.TotalMB | formatServerMegabytes }}
+                        </div>
+                    </div>
+                    {{- if and (not .HideSwap) .Info.Memory.SwapIsAvailable }}
+                    <div class="flex margin-top-3">
+                        <div class="size-h5">SWAP</div>
+                        <div class="value-separator"></div>
+                        <div class="color-highlight text-very-compact">
+                            {{ .Info.Memory.SwapUsedMB | formatServerMegabytes }} <span class="color-base size-h5">/</span> {{ .Info.Memory.SwapTotalMB | formatServerMegabytes }}
+                        </div>
+                    </div>
+                    {{- end }}
+                </div>
+                {{- end }}
+                <div class="progress-bar progress-bar-combined">
+                    {{- if .Info.Memory.IsAvailable }}
+                    <div class="progress-value{{ if ge .Info.Memory.UsedPercent 85 }} progress-value-notice{{ end }}" style="--percent: {{ .Info.Memory.UsedPercent }}"></div>
+                    {{- if and (not .HideSwap) .Info.Memory.SwapIsAvailable }}
+                    <div class="progress-value{{ if ge .Info.Memory.SwapUsedPercent 85 }} progress-value-notice{{ end }}" style="--percent: {{ .Info.Memory.SwapUsedPercent }}"></div>
+                    {{- end }}
+                    {{- end }}
+                </div>
+            </div>
+        </div>
+        <div class="flex-1{{ if not .Info.Mountpoints }} server-stat-unavailable{{ end }}">
+            <div class="flex justify-between items-end size-h5">
+                <div>DISK</div>
+                <div class="color-highlight text-very-compact">{{ if .Info.Mountpoints }}{{ (index .Info.Mountpoints 0).UsedPercent }} <span class="color-base">%</span>{{ else }}n/a{{ end }}</div>
+            </div>
+            <div{{ if .Info.Mountpoints }} data-popover-type="html"{{ end }}>
+                {{- if .Info.Mountpoints }}
+                <div data-popover-html>
+                    <ul class="list list-gap-2">
+                        {{- range .Info.Mountpoints }}
+                        <li class="flex">
+                            <div class="size-h5">{{ if .Name }}{{ .Name }}{{ else }}{{ .Path }}{{ end }}</div>
+                            <div class="value-separator"></div>
+                            <div class="color-highlight text-very-compact">
+                                {{ .UsedMB | formatServerMegabytes }} <span class="color-base size-h5">/</span> {{ .TotalMB | formatServerMegabytes }}
+                            </div>
+                        </li>
+                        {{- end }}
+                    </ul>
+                </div>
+                {{- end }}
+                <div class="progress-bar progress-bar-combined">
+                    {{- if .Info.Mountpoints }}
+                    <div class="progress-value{{ if ge ((index .Info.Mountpoints 0).UsedPercent) 85 }} progress-value-notice{{ end }}" style="--percent: {{ (index .Info.Mountpoints 0).UsedPercent }}"></div>
+                    {{- if ge (len .Info.Mountpoints) 2 }}
+                    <div class="progress-value{{ if ge ((index .Info.Mountpoints 1).UsedPercent) 85 }} progress-value-notice{{ end }}" style="--percent: {{ (index .Info.Mountpoints 1).UsedPercent }}"></div>
+                    {{- end }}
+                    {{- end }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{- end }}
+{{- end }}

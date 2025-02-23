@@ -1,7 +1,1 @@
-<!--
-
-If your pull request adds new features or changes existing ones please use the latest release/* branch as the base.
-
-Documentation updates (including new themes) can be submitted to the main branch.
-
--->
+<!-- If your pull request adds new features, changes existing ones or fixes any bugs, please use the dev branch as the base, otherwise use the main branch -->

@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"io"
 	"log/slog"
+	"math"
 	"net/http"
 	"time"
 
@@ -100,7 +101,7 @@ func fetchAndParseCustomAPI(req *http.Request, tmpl *template.Template) (templat
 
 	var templateBuffer bytes.Buffer
 
-	data := CustomAPITemplateData{
+	data := customAPITemplateData{
 		JSON:     decoratedGJSONResult{gjson.Parse(body)},
 		Response: resp,
 	}
@@ -117,7 +118,7 @@ type decoratedGJSONResult struct {
 	gjson.Result
 }
 
-type CustomAPITemplateData struct {
+type customAPITemplateData struct {
 	JSON     decoratedGJSONResult
 	Response *http.Response
 }
@@ -130,6 +131,10 @@ func gJsonResultArrayToDecoratedResultArray(results []gjson.Result) []decoratedG
 	}
 
 	return decoratedResults
+}
+
+func (r *decoratedGJSONResult) Exists(key string) bool {
+	return r.Get(key).Exists()
 }
 
 func (r *decoratedGJSONResult) Array(key string) []decoratedGJSONResult {
@@ -180,28 +185,28 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		"toInt": func(a float64) int64 {
 			return int64(a)
 		},
-		"mathexpr": func(left float64, op string, right float64) float64 {
-			if right == 0 {
-				return 0
+		"add": func(a, b float64) float64 {
+			return a + b
+		},
+		"sub": func(a, b float64) float64 {
+			return a - b
+		},
+		"mul": func(a, b float64) float64 {
+			return a * b
+		},
+		"div": func(a, b float64) float64 {
+			if b == 0 {
+				return math.NaN()
 			}
 
-			switch op {
-			case "+":
-				return left + right
-			case "-":
-				return left - right
-			case "*":
-				return left * right
-			case "/":
-				return left / right
-			default:
-				return 0
-			}
+			return a / b
 		},
 	}
 
 	for key, value := range globalTemplateFunctions {
-		funcs[key] = value
+		if _, exists := funcs[key]; !exists {
+			funcs[key] = value
+		}
 	}
 
 	return funcs
