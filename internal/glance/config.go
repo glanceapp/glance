@@ -144,7 +144,7 @@ func formatWidgetInitError(err error, w widget) error {
 	return fmt.Errorf("%s widget: %v", w.GetType(), err)
 }
 
-var includePattern = regexp.MustCompile(`(?m)^(\s*)!include:\s*(.+)$`)
+var includePattern = regexp.MustCompile(`(?m)^([ \t]*)(?:-[ \t]*)?(?:!|\$)include:[ \t]*(.+)$`)
 
 func parseYAMLIncludes(mainFilePath string) ([]byte, map[string]struct{}, error) {
 	mainFileContents, err := os.ReadFile(mainFilePath)

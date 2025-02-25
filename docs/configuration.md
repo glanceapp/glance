@@ -93,13 +93,13 @@ something: \${NOT_AN_ENV_VAR}
 ```
 
 ### Including other config files
-Including config files from within your main config file is supported. This is done via the `!include` directive along with a relative or absolute path to the file you want to include. If the path is relative, it will be relative to the main config file. Additionally, environment variables can be used within included files, and changes to the included files will trigger an automatic reload. Example:
+Including config files from within your main config file is supported. This is done via the `$include` directive along with a relative or absolute path to the file you want to include. If the path is relative, it will be relative to the main config file. Additionally, environment variables can be used within included files, and changes to the included files will trigger an automatic reload. Example:
 
 ```yaml
 pages:
-  !include: home.yml
-  !include: videos.yml
-  !include: homelab.yml
+  - $include: home.yml
+  - $include: videos.yml
+  - $include: homelab.yml
 ```
 
 The file you are including should not have any additional indentation, its values should be at the top level and the appropriate amount of indentation will be added automatically depending on where the file is included. Example:
@@ -112,14 +112,14 @@ pages:
     columns:
       - size: full
         widgets:
-          !include: rss.yml
+          $include: rss.yml
   - name: News
     columns:
       - size: full
         widgets:
           - type: group
             widgets:
-              !include: rss.yml
+              $include: rss.yml
               - type: reddit
                 subreddit: news
 ```
@@ -133,9 +133,9 @@ pages:
     - url: ${RSS_URL}
 ```
 
-The `!include` directive can be used anywhere in the config file, not just in the `pages` property, however it must be on its own line and have the appropriate indentation.
+The `$include` directive can be used anywhere in the config file, not just in the `pages` property, however it must be on its own line and have the appropriate indentation.
 
-If you encounter YAML parsing errors when using the `!include` directive, the reported line numbers will likely be incorrect. This is because the inclusion of files is done before the YAML is parsed, as YAML itself does not support file inclusion. To help with debugging in cases like this, you can use the `config:print` command and pipe it into `less -N` to see the full config file with includes resolved and line numbers added:
+If you encounter YAML parsing errors when using the `$include` directive, the reported line numbers will likely be incorrect. This is because the inclusion of files is done before the YAML is parsed, as YAML itself does not support file inclusion. To help with debugging in cases like this, you can use the `config:print` command and pipe it into `less -N` to see the full config file with includes resolved and line numbers added:
 
 ```sh
 glance --config /path/to/glance.yml config:print | less -N
