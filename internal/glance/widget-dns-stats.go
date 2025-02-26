@@ -350,7 +350,7 @@ func piholeGetSID(instanceURL, appPassword string, allowInsecure bool) (string, 
 }
 
 // checkPiholeSID checks if the SID is valid by checking HTTP response status code from /api/auth.
-func checkPiholeSID(instanceURL string, appPassword, sid string, allowInsecure bool) error {
+func checkPiholeSID(instanceURL string, sid string, allowInsecure bool) error {
 	requestURL := strings.TrimRight(instanceURL, "/") + "/api/auth?sid=" + sid
 
 	request, err := http.NewRequest("GET", requestURL, nil)
@@ -399,7 +399,7 @@ func fetchPiholeTopDomains(instanceURL string, sid string, allowInsecure bool) (
 
 // fetchPiholeSeries fetches the series data for Pi-hole v6+ (QueriesSeries and BlockedSeries).
 func fetchPiholeSeries(instanceURL string, sid string, allowInsecure bool) (piholeQueriesSeries, map[int64]int, error) {
-	requestURL := strings.TrimRight(instanceURL, "/") + "/api/stats/over_time_data?sid=" + sid
+	requestURL := strings.TrimRight(instanceURL, "/") + "/api/history?sid=" + sid
 
 	request, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
@@ -413,17 +413,30 @@ func fetchPiholeSeries(instanceURL string, sid string, allowInsecure bool) (piho
 		client = defaultInsecureHTTPClient
 	}
 
+	// Define the correct struct to match the API response
 	var responseJson struct {
-		QueriesSeries piholeQueriesSeries `json:"queries_over_time"`
-		BlockedSeries map[int64]int       `json:"blocked_over_time"`
+		History []struct {
+			Timestamp int64 `json:"timestamp"`
+			Total     int   `json:"total"`
+			Blocked   int   `json:"blocked"`
+		} `json:"history"`
 	}
 
-	err = decodeJsonFromRequest[&responseJson](client, request)
+	err = decodeJsonInto(client, request, &responseJson)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return responseJson.QueriesSeries, responseJson.BlockedSeries, nil
+	queriesSeries := make(piholeQueriesSeries)
+	blockedSeries := make(map[int64]int)
+
+	// Populate the series data from history array
+	for _, entry := range responseJson.History {
+		queriesSeries[entry.Timestamp] = entry.Total
+		blockedSeries[entry.Timestamp] = entry.Blocked
+	}
+
+	return queriesSeries, blockedSeries, nil
 }
 
 // Helper functions to process the responses
@@ -531,21 +544,19 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGr
 		}
 
 		sid = os.Getenv("SID")
-		// Only get a new SID if it's not set or is invalid
 		if sid == "" {
 			newSid, err := piholeGetSID(instanceURL, appPassword, allowInsecure)
 			if err != nil {
-				return nil, fmt.Errorf("failed to get SID: %w", err) // Use %w for wrapping
+				return nil, fmt.Errorf("failed to get SID: %w", err)
 			}
 			sid = newSid
 			os.Setenv("SID", sid)
 		} else {
-			// Check existing SID validity.  Only get a new one if the check fails.
-			err := checkPiholeSID(instanceURL, appPassword, sid, allowInsecure)
+			err := checkPiholeSID(instanceURL, sid, allowInsecure)
 			if err != nil {
 				newSid, err := piholeGetSID(instanceURL, appPassword, allowInsecure)
 				if err != nil {
-					return nil, fmt.Errorf("failed to get SID after invalid SID check: %w", err)
+					return nil, fmt.Errorf("failed to get SID after invalid check: %w", err)
 				}
 				sid = newSid
 				os.Setenv("SID", sid)
@@ -553,7 +564,6 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGr
 		}
 
 		requestURL = instanceURL + "/api/stats/summary?sid=" + sid
-
 	} else {
 		if token == "" {
 			return nil, errors.New("missing API token")
@@ -567,8 +577,9 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGr
 	}
 
 	var client requestDoer
-	client = defaultHTTPClient
-	if allowInsecure {
+	if !allowInsecure {
+		client = defaultHTTPClient
+	} else {
 		client = defaultInsecureHTTPClient
 	}
 
@@ -585,14 +596,27 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGr
 
 	switch r := responseJson.(type) {
 	case *piholeStatsResponse:
-		// Fetch top domains separately for v6+.
+		// Fetch top domains separately for v6+
 		topDomains, err := fetchPiholeTopDomains(instanceURL, sid, allowInsecure)
 		if err != nil {
 			return nil, fmt.Errorf("failed to fetch top domains: %w", err)
 		}
+
+		// Fetch series data separately for v6+
+		queriesSeries, blockedSeries, err := fetchPiholeSeries(instanceURL, sid, allowInsecure)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch queries series: %w", err)
+		}
+
+		// Merge series data
+		r.QueriesSeries = queriesSeries
+		r.BlockedSeries = blockedSeries
+
 		return parsePiholeStats(r, topDomains), nil
+
 	case *legacyPiholeStatsResponse:
 		return parsePiholeStatsLegacy(r, noGraph), nil
+
 	default:
 		return nil, errors.New("unexpected response type")
 	}
