@@ -18,6 +18,10 @@ import (
 var widgetIDCounter atomic.Uint64
 
 func newWidget(widgetType string) (widget, error) {
+	if widgetType == "" {
+		return nil, errors.New("widget 'type' property is empty or not specified")
+	}
+
 	var w widget
 
 	switch widgetType {
@@ -76,10 +80,7 @@ func newWidget(widgetType string) (widget, error) {
 	case "server-stats":
 		w = &serverStatsWidget{}
 	default:
-		return nil, fmt.Errorf(
-			"unknown widget type: %s",
-			ternary(widgetType == "", "'type' property is empty or not specified", widgetType),
-		)
+		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}
 
 	w.setID(widgetIDCounter.Add(1))
@@ -107,7 +108,7 @@ func (w *widgets) UnmarshalYAML(node *yaml.Node) error {
 
 		widget, err := newWidget(meta.Type)
 		if err != nil {
-			return err
+			return fmt.Errorf("line %d: %w", node.Line, err)
 		}
 
 		if err = node.Decode(widget); err != nil {
