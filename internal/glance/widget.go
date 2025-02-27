@@ -76,7 +76,10 @@ func newWidget(widgetType string) (widget, error) {
 	case "server-stats":
 		w = &serverStatsWidget{}
 	default:
-		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
+		return nil, fmt.Errorf(
+			"unknown widget type: %s",
+			ternary(widgetType == "", "'type' property is empty or not specified", widgetType),
+		)
 	}
 
 	w.setID(widgetIDCounter.Add(1))
