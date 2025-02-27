@@ -259,7 +259,17 @@ type piholeStatsResponse struct {
 	BlockedSeries map[int64]int       `json:"ads_over_time"`     // Will always be empty.
 }
 
-type piholeTopDomainsResponse map[string]int
+type piholeTopDomainsResponse struct {
+	Domains			[]Domains	`json:"domains"`
+	TotalQueries 	int			`json:"total_queries"`
+	BlockedQueries 	int			`json:"blocked_queries"`
+	Took			float64		`json:"took"`
+}
+
+type Domains struct {
+	Domain	string	`json:"domain"`
+	Count 	int		`json:"count"`
+}
 
 // If the user has query logging disabled it's possible for domains_over_time to be returned as an
 // empty array rather than a map which will prevent unmashalling the rest of the data so we use
@@ -351,12 +361,13 @@ func piholeGetSID(instanceURL, appPassword string, allowInsecure bool) (string, 
 
 // checkPiholeSID checks if the SID is valid by checking HTTP response status code from /api/auth.
 func checkPiholeSID(instanceURL string, sid string, allowInsecure bool) error {
-	requestURL := strings.TrimRight(instanceURL, "/") + "/api/auth?sid=" + sid
+	requestURL := strings.TrimRight(instanceURL, "/") + "/api/auth"
 
 	request, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
 		return err
 	}
+	request.Header.Set("x-ftl-sid", sid)
 
 	var client requestDoer
 	if !allowInsecure {
@@ -380,12 +391,13 @@ func checkPiholeSID(instanceURL string, sid string, allowInsecure bool) error {
 
 // fetchPiholeTopDomains fetches the top blocked domains for Pi-hole v6+.
 func fetchPiholeTopDomains(instanceURL string, sid string, allowInsecure bool) (piholeTopDomainsResponse, error) {
-	requestURL := strings.TrimRight(instanceURL, "/") + "/api/stats/top_domains?blocked=true&sid=" + sid
+	requestURL := strings.TrimRight(instanceURL, "/") + "/api/stats/top_domains?blocked=true"
 
 	request, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
-		return nil, err
+		return piholeTopDomainsResponse{}, err
 	}
+	request.Header.Set("x-ftl-sid", sid)
 
 	var client requestDoer
 	if !allowInsecure {
@@ -399,12 +411,13 @@ func fetchPiholeTopDomains(instanceURL string, sid string, allowInsecure bool) (
 
 // fetchPiholeSeries fetches the series data for Pi-hole v6+ (QueriesSeries and BlockedSeries).
 func fetchPiholeSeries(instanceURL string, sid string, allowInsecure bool) (piholeQueriesSeries, map[int64]int, error) {
-	requestURL := strings.TrimRight(instanceURL, "/") + "/api/history?sid=" + sid
+	requestURL := strings.TrimRight(instanceURL, "/") + "/api/history"
 
 	request, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
 		return nil, nil, err
 	}
+	request.Header.Set("x-ftl-sid", sid)
 
 	var client requestDoer
 	if !allowInsecure {
@@ -440,7 +453,7 @@ func fetchPiholeSeries(instanceURL string, sid string, allowInsecure bool) (piho
 }
 
 // Helper functions to process the responses
-func parsePiholeStats(r *piholeStatsResponse, topDomains piholeTopDomainsResponse) *dnsStats {
+func parsePiholeStats(r piholeStatsResponse, topDomains piholeTopDomainsResponse, noGraph bool) *dnsStats {
 
 	stats := &dnsStats{
 		TotalQueries:   r.Queries.Total,
@@ -449,12 +462,12 @@ func parsePiholeStats(r *piholeStatsResponse, topDomains piholeTopDomainsRespons
 		DomainsBlocked: r.Gravity.DomainsBlocked,
 	}
 
-	if len(topDomains) > 0 {
-		domains := make([]dnsStatsBlockedDomain, 0, len(topDomains))
-		for domain, count := range topDomains {
+	if len(topDomains.Domains) > 0 {
+		domains := make([]dnsStatsBlockedDomain, 0, len(topDomains.Domains))
+		for _, d := range topDomains.Domains {
 			domains = append(domains, dnsStatsBlockedDomain{
-				Domain:         domain,
-				PercentBlocked: int(float64(count) / float64(r.Queries.Blocked) * 100), // Calculate percentage here
+				Domain:         d.Domain,
+				PercentBlocked: int(float64(d.Count) / float64(r.Queries.Blocked) * 100),
 			})
 		}
 
@@ -463,10 +476,49 @@ func parsePiholeStats(r *piholeStatsResponse, topDomains piholeTopDomainsRespons
 		})
 		stats.TopBlockedDomains = domains[:min(len(domains), 5)]
 	}
+	if noGraph {
+		return stats
+	}
 
+	// Pihole _should_ return data for the last 24 hours
+	if len(r.QueriesSeries) != 145 || len(r.BlockedSeries) != 145 {
+		return stats
+	}
+
+
+	var lowestTimestamp int64 = 0
+	for timestamp := range r.QueriesSeries {
+		if lowestTimestamp == 0 || timestamp < lowestTimestamp {
+			lowestTimestamp = timestamp
+		}
+	}
+	maxQueriesInSeries := 0
+
+	for i := 0; i < 8; i++ {
+		queries := 0
+		blocked := 0
+		for j := 0; j < 18; j++ {
+			index := lowestTimestamp + int64(i*10800+j*600)
+			queries += r.QueriesSeries[index]
+			blocked += r.BlockedSeries[index]
+		}
+		if queries > maxQueriesInSeries {
+			maxQueriesInSeries = queries
+		}
+		stats.Series[i] = dnsStatsSeries{
+			Queries: queries,
+			Blocked: blocked,
+		}
+		if queries > 0 {
+			stats.Series[i].PercentBlocked = int(float64(blocked) / float64(queries) * 100)
+		}
+	}
+	for i := 0; i < 8; i++ {
+		stats.Series[i].PercentTotal = int(float64(stats.Series[i].Queries) / float64(maxQueriesInSeries) * 100)
+	}
 	return stats
 }
-func parsePiholeStatsLegacy(r *legacyPiholeStatsResponse, noGraph bool) *dnsStats {
+func parsePiholeStatsLegacy(r legacyPiholeStatsResponse, noGraph bool) *dnsStats {
 
 	stats := &dnsStats{
 		TotalQueries:   r.TotalQueries,
@@ -563,7 +615,7 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGr
 			}
 		}
 
-		requestURL = instanceURL + "/api/stats/summary?sid=" + sid
+		requestURL = instanceURL + "/api/stats/summary"
 	} else {
 		if token == "" {
 			return nil, errors.New("missing API token")
@@ -574,6 +626,10 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGr
 	request, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	if isV6 {
+		request.Header.Set("x-ftl-sid", sid)
 	}
 
 	var client requestDoer
@@ -595,7 +651,7 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGr
 	}
 
 	switch r := responseJson.(type) {
-	case *piholeStatsResponse:
+	case piholeStatsResponse:
 		// Fetch top domains separately for v6+
 		topDomains, err := fetchPiholeTopDomains(instanceURL, sid, allowInsecure)
 		if err != nil {
@@ -611,10 +667,10 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGr
 		// Merge series data
 		r.QueriesSeries = queriesSeries
 		r.BlockedSeries = blockedSeries
+		
+		return parsePiholeStats(r, topDomains, noGraph), nil
 
-		return parsePiholeStats(r, topDomains), nil
-
-	case *legacyPiholeStatsResponse:
+	case legacyPiholeStatsResponse:
 		return parsePiholeStatsLegacy(r, noGraph), nil
 
 	default:
