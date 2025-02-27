@@ -315,7 +315,7 @@ func configFilesWatcher(
 
 					// wait for file to maybe get created again
 					// see https://github.com/glanceapp/glance/pull/358
-					for i := 0; i < 10; i++ {
+					for range 10 {
 						if _, err := os.Stat(event.Name); err == nil {
 							break
 						}
