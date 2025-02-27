@@ -147,18 +147,24 @@ func formatWidgetInitError(err error, w widget) error {
 var includePattern = regexp.MustCompile(`(?m)^([ \t]*)(?:-[ \t]*)?(?:!|\$)include:[ \t]*(.+)$`)
 
 func parseYAMLIncludes(mainFilePath string) ([]byte, map[string]struct{}, error) {
+	return recursiveParseYAMLIncludes(mainFilePath, nil)
+}
+
+func recursiveParseYAMLIncludes(mainFilePath string, includes map[string]struct{}) ([]byte, map[string]struct{}, error) {
 	mainFileContents, err := os.ReadFile(mainFilePath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("reading main YAML file: %w", err)
+		return nil, nil, fmt.Errorf("reading %s: %w", mainFilePath, err)
 	}
 
 	mainFileAbsPath, err := filepath.Abs(mainFilePath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("getting absolute path of main YAML file: %w", err)
+		return nil, nil, fmt.Errorf("getting absolute path of %s: %w", mainFilePath, err)
 	}
 	mainFileDir := filepath.Dir(mainFileAbsPath)
 
-	includes := make(map[string]struct{})
+	if includes == nil {
+		includes = make(map[string]struct{})
+	}
 	var includesLastErr error
 
 	mainFileContents = includePattern.ReplaceAllFunc(mainFileContents, func(match []byte) []byte {
@@ -181,13 +187,14 @@ func parseYAMLIncludes(mainFilePath string) ([]byte, map[string]struct{}, error)
 		var fileContents []byte
 		var err error
 
-		fileContents, err = os.ReadFile(includeFilePath)
+		includes[includeFilePath] = struct{}{}
+
+		fileContents, includes, err = recursiveParseYAMLIncludes(includeFilePath, includes)
 		if err != nil {
-			includesLastErr = fmt.Errorf("reading included file %s: %w", includeFilePath, err)
+			includesLastErr = fmt.Errorf("recursively parsing included file %s: %w", includeFilePath, err)
 			return nil
 		}
 
-		includes[includeFilePath] = struct{}{}
 		return []byte(prefixStringLines(indent, string(fileContents)))
 	})
 
