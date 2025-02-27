@@ -17,6 +17,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const CONFIG_INCLUDE_RECURSION_DEPTH_LIMIT = 20
+
 type config struct {
 	Server struct {
 		Host       string    `yaml:"host"`
@@ -147,10 +149,14 @@ func formatWidgetInitError(err error, w widget) error {
 var includePattern = regexp.MustCompile(`(?m)^([ \t]*)(?:-[ \t]*)?(?:!|\$)include:[ \t]*(.+)$`)
 
 func parseYAMLIncludes(mainFilePath string) ([]byte, map[string]struct{}, error) {
-	return recursiveParseYAMLIncludes(mainFilePath, nil)
+	return recursiveParseYAMLIncludes(mainFilePath, nil, 0)
 }
 
-func recursiveParseYAMLIncludes(mainFilePath string, includes map[string]struct{}) ([]byte, map[string]struct{}, error) {
+func recursiveParseYAMLIncludes(mainFilePath string, includes map[string]struct{}, depth int) ([]byte, map[string]struct{}, error) {
+	if depth > CONFIG_INCLUDE_RECURSION_DEPTH_LIMIT {
+		return nil, nil, fmt.Errorf("recursion depth limit of %d reached", CONFIG_INCLUDE_RECURSION_DEPTH_LIMIT)
+	}
+
 	mainFileContents, err := os.ReadFile(mainFilePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("reading %s: %w", mainFilePath, err)
@@ -189,9 +195,9 @@ func recursiveParseYAMLIncludes(mainFilePath string, includes map[string]struct{
 
 		includes[includeFilePath] = struct{}{}
 
-		fileContents, includes, err = recursiveParseYAMLIncludes(includeFilePath, includes)
+		fileContents, includes, err = recursiveParseYAMLIncludes(includeFilePath, includes, depth+1)
 		if err != nil {
-			includesLastErr = fmt.Errorf("recursively parsing included file %s: %w", includeFilePath, err)
+			includesLastErr = err
 			return nil
 		}
 
