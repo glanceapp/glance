@@ -1294,6 +1294,7 @@ Examples:
 | headers | key (string) & value (string) | no | |
 | frameless | boolean | no | false |
 | template | string | yes | |
+| parameters | key & value | no | |
 
 ##### `url`
 The URL to fetch the data from. It must be accessible from the server that Glance is running on.
@@ -1312,6 +1313,17 @@ When set to `true`, removes the border and padding around the widget.
 
 ##### `template`
 The template that will be used to display the data. It relies on Go's `html/template` package so it's recommended to go through [its documentation](https://pkg.go.dev/text/template) to understand how to do basic things such as conditionals, loops, etc. In addition, it also uses [tidwall's gjson](https://github.com/tidwall/gjson) package to parse the JSON data so it's worth going through its documentation if you want to use more advanced JSON selectors. You can view additional examples with explanations and function definitions [here](custom-api.md).
+
+##### `parameters`
+A list of keys and values that will be sent to the custom-api as query paramters.
+
+```yaml
+parameters:
+  param1: value1
+  param2:
+    - item1
+    - item2
+```
 
 ### Extension
 Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
