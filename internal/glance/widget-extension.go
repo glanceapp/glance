@@ -19,12 +19,12 @@ const extensionWidgetDefaultTitle = "Extension"
 
 type extensionWidget struct {
 	widgetBase          `yaml:",inline"`
-	URL                 string            `yaml:"url"`
-	FallbackContentType string            `yaml:"fallback-content-type"`
-	Parameters          map[string]string `yaml:"parameters"`
-	AllowHtml           bool              `yaml:"allow-potentially-dangerous-html"`
-	Extension           extension         `yaml:"-"`
-	cachedHTML          template.HTML     `yaml:"-"`
+	URL                 string               `yaml:"url"`
+	FallbackContentType string               `yaml:"fallback-content-type"`
+	Parameters          queryParametersField `yaml:"parameters"`
+	AllowHtml           bool                 `yaml:"allow-potentially-dangerous-html"`
+	Extension           extension            `yaml:"-"`
+	cachedHTML          template.HTML        `yaml:"-"`
 }
 
 func (widget *extensionWidget) initialize() error {
@@ -82,10 +82,10 @@ const (
 )
 
 type extensionRequestOptions struct {
-	URL                 string            `yaml:"url"`
-	FallbackContentType string            `yaml:"fallback-content-type"`
-	Parameters          map[string]string `yaml:"parameters"`
-	AllowHtml           bool              `yaml:"allow-potentially-dangerous-html"`
+	URL                 string               `yaml:"url"`
+	FallbackContentType string               `yaml:"fallback-content-type"`
+	Parameters          queryParametersField `yaml:"parameters"`
+	AllowHtml           bool                 `yaml:"allow-potentially-dangerous-html"`
 }
 
 type extension struct {
@@ -109,14 +109,7 @@ func convertExtensionContent(options extensionRequestOptions, content []byte, co
 
 func fetchExtension(options extensionRequestOptions) (extension, error) {
 	request, _ := http.NewRequest("GET", options.URL, nil)
-
-	query := url.Values{}
-
-	for key, value := range options.Parameters {
-		query.Set(key, value)
-	}
-
-	request.URL.RawQuery = query.Encode()
+	request.URL.RawQuery = options.Parameters.toQueryString()
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
