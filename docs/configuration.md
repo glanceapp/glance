@@ -1317,6 +1317,10 @@ The template that will be used to display the data. It relies on Go's `html/temp
 ##### `parameters`
 A list of keys and values that will be sent to the custom-api as query paramters.
 
+> [!NOTE]
+>
+> Setting this property will override any query parameters that are already in the URL.
+
 ```yaml
 parameters:
   param1: value1
