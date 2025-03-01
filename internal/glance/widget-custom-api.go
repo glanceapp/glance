@@ -10,7 +10,6 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/tidwall/gjson"
@@ -20,14 +19,14 @@ var customAPIWidgetTemplate = mustParseTemplate("custom-api.html", "widget-base.
 
 type customAPIWidget struct {
 	widgetBase       `yaml:",inline"`
-	URL              string             	`yaml:"url"`
-	Template         string             	`yaml:"template"`
-	Frameless        bool               	`yaml:"frameless"`
-	Headers          map[string]string  	`yaml:"headers"`
-	Parameters       map[string]interface{}	`yaml:"parameters"`
-	APIRequest       *http.Request      	`yaml:"-"`
-	compiledTemplate *template.Template 	`yaml:"-"`
-	CompiledHTML     template.HTML      	`yaml:"-"`
+	URL              string               `yaml:"url"`
+	Template         string               `yaml:"template"`
+	Frameless        bool                 `yaml:"frameless"`
+	Headers          map[string]string    `yaml:"headers"`
+	Parameters       queryParametersField `yaml:"parameters"`
+	APIRequest       *http.Request        `yaml:"-"`
+	compiledTemplate *template.Template   `yaml:"-"`
+	CompiledHTML     template.HTML        `yaml:"-"`
 }
 
 func (widget *customAPIWidget) initialize() error {
@@ -53,31 +52,7 @@ func (widget *customAPIWidget) initialize() error {
 		return err
 	}
 
-	query := url.Values{}
-
-	for key, value := range widget.Parameters {
-		switch v := value.(type) {
-		case string:
-			query.Add(key, v)
-		case int, int8, int16, int32, int64, float32, float64:
-			query.Add(key, fmt.Sprintf("%v", v)) 
-		case []string:
-			for _, item := range v {
-				query.Add(key, item)
-			}
-		case []interface{}:
-			for _, item := range v {
-				switch item := item.(type) {
-				case string:
-					query.Add(key, item)
-				case int, int8, int16, int32, int64, float32, float64:
-					query.Add(key, fmt.Sprintf("%v", item))
-				}
-			}
-		}
-	}
-
-	req.URL.RawQuery = query.Encode()
+	req.URL.RawQuery = widget.Parameters.toQueryString()
 
 	for key, value := range widget.Headers {
 		req.Header.Add(key, value)
