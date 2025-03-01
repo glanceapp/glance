@@ -19,13 +19,14 @@ var customAPIWidgetTemplate = mustParseTemplate("custom-api.html", "widget-base.
 
 type customAPIWidget struct {
 	widgetBase       `yaml:",inline"`
-	URL              string             `yaml:"url"`
-	Template         string             `yaml:"template"`
-	Frameless        bool               `yaml:"frameless"`
-	Headers          map[string]string  `yaml:"headers"`
-	APIRequest       *http.Request      `yaml:"-"`
-	compiledTemplate *template.Template `yaml:"-"`
-	CompiledHTML     template.HTML      `yaml:"-"`
+	URL              string               `yaml:"url"`
+	Template         string               `yaml:"template"`
+	Frameless        bool                 `yaml:"frameless"`
+	Headers          map[string]string    `yaml:"headers"`
+	Parameters       queryParametersField `yaml:"parameters"`
+	APIRequest       *http.Request        `yaml:"-"`
+	compiledTemplate *template.Template   `yaml:"-"`
+	CompiledHTML     template.HTML        `yaml:"-"`
 }
 
 func (widget *customAPIWidget) initialize() error {
@@ -50,6 +51,8 @@ func (widget *customAPIWidget) initialize() error {
 	if err != nil {
 		return err
 	}
+
+	req.URL.RawQuery = widget.Parameters.toQueryString()
 
 	for key, value := range widget.Headers {
 		req.Header.Add(key, value)
