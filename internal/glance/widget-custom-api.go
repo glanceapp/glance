@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/tidwall/gjson"
@@ -90,9 +91,9 @@ func fetchAndParseCustomAPI(req *http.Request, tmpl *template.Template) (templat
 		return emptyBody, err
 	}
 
-	body := string(bodyBytes)
+	body := strings.TrimSpace(string(bodyBytes))
 
-	if !gjson.Valid(body) {
+	if body != "" && !gjson.Valid(body) {
 		truncatedBody, isTruncated := limitStringLength(body, 100)
 		if isTruncated {
 			truncatedBody += "... <truncated>"
