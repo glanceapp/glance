@@ -374,7 +374,7 @@ The URL friendly version of the title which is used to access the page. For exam
 #### `width`
 The maximum width of the page on desktop. Possible values are `slim` and `wide`.
 
-* default: `1600px`
+* default: `1600px` (when no value is specified)
 * slim: `1100px`
 * wide: `1920px`
 
