@@ -113,7 +113,6 @@ func fetchAndParseCustomAPI(requests map[string]*http.Request, tmpl *template.Te
 	var resp *http.Response
 	var err error
 	body := make(map[string]string)
-	mergedBody := "{}"
 	for key, req := range requests {
 		resp, err = defaultHTTPClient.Do(req)
 		if err != nil {
@@ -139,6 +138,7 @@ func fetchAndParseCustomAPI(requests map[string]*http.Request, tmpl *template.Te
 		}
 	}
 	
+	mergedBody := "{}"
 	if jsonBody, exists := body[customRandomKeyForSingleRequest]; exists {
 		mergedBody = jsonBody
 	} else {
