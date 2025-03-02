@@ -2057,6 +2057,7 @@ An array of groups which can optionally have a title and a custom color.
 | ---- | ---- | -------- | ------- |
 | title | string | yes | |
 | url | string | yes | |
+| description | string | no | |
 | icon | string | no | |
 | same-tab | boolean | no | false |
 | hide-arrow | boolean | no | false |
