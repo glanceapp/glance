@@ -242,6 +242,28 @@ Other operations include `add`, `mul`, and `div`.
 
 <hr>
 
+#### API-Queries
+JSON response
+```json
+  {
+    "sample-data1": {
+      "title": "My Title",
+      "content": "My Content"
+    },
+    "sample-data2": [
+      {
+          "name": "John Doe"
+      },
+      {
+          "name": "Jane Doe"
+      }
+    ]
+  }
+```
+
+
+<hr>
+
 In some instances, you may want to know the status code of the response. This can be done using the following:
 
 ```html

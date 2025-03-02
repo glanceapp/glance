@@ -1290,11 +1290,34 @@ Examples:
 #### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| url | string | yes | |
+| url | string | yes, unless `api-queries` is set | |
 | headers | key (string) & value (string) | no | |
 | frameless | boolean | no | false |
 | template | string | yes | |
 | parameters | key & value | no | |
+| api-queries | list of urls, parameters & headers | no | |
+
+> [!NOTE]
+> 
+> `api-queries` will override `url`, `headers` and `parameters`
+> since it also provides its own options
+
+##### `api-queries`
+A list of API queries, the name set will be the name of the json returned
+```yaml
+api-queries:
+  sample-data1:
+    url: https://domain.com/api
+    parameters:
+      foo: bar
+    headers:
+      x-api-key: your-api-key
+      Accept: application/json
+  sample-data2:
+    url: https://another-domain.com/api
+```
+see [custom-api docs](./custom-api.md#api-queries)
+
 
 ##### `url`
 The URL to fetch the data from. It must be accessible from the server that Glance is running on.
