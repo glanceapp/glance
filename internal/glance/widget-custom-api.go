@@ -65,10 +65,6 @@ func (widget *customAPIWidget) initialize() error {
 		if widget.URL == "" {
 			return errors.New("URL is required")
 		}
-
-		if widget.Template == "" {
-			return errors.New("template is required")
-		}
 		
 		req, err := http.NewRequest(http.MethodGet, widget.URL, nil)
 		if err != nil {
@@ -82,6 +78,10 @@ func (widget *customAPIWidget) initialize() error {
 		}
 		
 		widget.APIRequest[customRandomKeyForSingleRequest] = req
+	}
+
+	if widget.Template == "" {
+		return errors.New("template is required")
 	}
 
 	compiledTemplate, err := template.New("").Funcs(customAPITemplateFuncs).Parse(widget.Template)
