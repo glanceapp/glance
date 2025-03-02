@@ -3,6 +3,7 @@ package glance
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -17,28 +18,70 @@ import (
 )
 
 var customAPIWidgetTemplate = mustParseTemplate("custom-api.html", "widget-base.html")
+var customRandomKeyForSingleRequest = fmt.Sprintf("%x", time.Now().UnixNano())
 
 type customAPIWidget struct {
 	widgetBase       `yaml:",inline"`
+	ApiQueries		 map[string]apiQueries		`yaml:"api-queries"`
+	URL              string               		`yaml:"url"`
+	Template         string               		`yaml:"template"`
+	Frameless        bool                 		`yaml:"frameless"`
+	Headers          map[string]string    		`yaml:"headers"`
+	Parameters       queryParametersField 		`yaml:"parameters"`
+	APIRequest       map[string]*http.Request	`yaml:"-"`
+	compiledTemplate *template.Template   		`yaml:"-"`
+	CompiledHTML     template.HTML        		`yaml:"-"`
+}
+
+type apiQueries struct {
 	URL              string               `yaml:"url"`
-	Template         string               `yaml:"template"`
-	Frameless        bool                 `yaml:"frameless"`
 	Headers          map[string]string    `yaml:"headers"`
 	Parameters       queryParametersField `yaml:"parameters"`
-	APIRequest       *http.Request        `yaml:"-"`
-	compiledTemplate *template.Template   `yaml:"-"`
-	CompiledHTML     template.HTML        `yaml:"-"`
 }
 
 func (widget *customAPIWidget) initialize() error {
 	widget.withTitle("Custom API").withCacheDuration(1 * time.Hour)
 
-	if widget.URL == "" {
-		return errors.New("URL is required")
-	}
+	widget.APIRequest = make(map[string]*http.Request)
+	if len(widget.ApiQueries) != 0 {
+		for object, query := range widget.ApiQueries {
+			if query.URL == "" {
+				return errors.New("URL for each query is required")
+			}
+			req, err := http.NewRequest(http.MethodGet, query.URL, nil)
+			if err != nil {
+				return err
+			}
 
-	if widget.Template == "" {
-		return errors.New("template is required")
+			req.URL.RawQuery = query.Parameters.toQueryString()
+
+			for key, value := range query.Headers {
+				req.Header.Add(key, value)
+			}
+
+			widget.APIRequest[object] = req
+		}
+	} else {
+		if widget.URL == "" {
+			return errors.New("URL is required")
+		}
+
+		if widget.Template == "" {
+			return errors.New("template is required")
+		}
+		
+		req, err := http.NewRequest(http.MethodGet, widget.URL, nil)
+		if err != nil {
+			return err
+		}
+		
+		req.URL.RawQuery = widget.Parameters.toQueryString()
+		
+		for key, value := range widget.Headers {
+			req.Header.Add(key, value)
+		}
+		
+		widget.APIRequest[customRandomKeyForSingleRequest] = req
 	}
 
 	compiledTemplate, err := template.New("").Funcs(customAPITemplateFuncs).Parse(widget.Template)
@@ -47,19 +90,6 @@ func (widget *customAPIWidget) initialize() error {
 	}
 
 	widget.compiledTemplate = compiledTemplate
-
-	req, err := http.NewRequest(http.MethodGet, widget.URL, nil)
-	if err != nil {
-		return err
-	}
-
-	req.URL.RawQuery = widget.Parameters.toQueryString()
-
-	for key, value := range widget.Headers {
-		req.Header.Add(key, value)
-	}
-
-	widget.APIRequest = req
 
 	return nil
 }
@@ -77,36 +107,58 @@ func (widget *customAPIWidget) Render() template.HTML {
 	return widget.renderTemplate(widget, customAPIWidgetTemplate)
 }
 
-func fetchAndParseCustomAPI(req *http.Request, tmpl *template.Template) (template.HTML, error) {
+func fetchAndParseCustomAPI(requests map[string]*http.Request, tmpl *template.Template) (template.HTML, error) {
 	emptyBody := template.HTML("")
 
-	resp, err := defaultHTTPClient.Do(req)
-	if err != nil {
-		return emptyBody, err
-	}
-	defer resp.Body.Close()
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return emptyBody, err
-	}
-
-	body := strings.TrimSpace(string(bodyBytes))
-
-	if body != "" && !gjson.Valid(body) {
-		truncatedBody, isTruncated := limitStringLength(body, 100)
-		if isTruncated {
-			truncatedBody += "... <truncated>"
+	var resp *http.Response
+	var err error
+	body := make(map[string]string)
+	mergedBody := "{}"
+	for key, req := range requests {
+		resp, err = defaultHTTPClient.Do(req)
+		if err != nil {
+			return emptyBody, err
 		}
+		defer resp.Body.Close()
 
-		slog.Error("Invalid response JSON in custom API widget", "url", req.URL.String(), "body", truncatedBody)
-		return emptyBody, errors.New("invalid response JSON")
+		bodyBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return emptyBody, err
+		}
+	
+		body[key] = strings.TrimSpace(string(bodyBytes))
+	
+		if body[key] != "" && !gjson.Valid(body[key]) {
+			truncatedBody, isTruncated := limitStringLength(body[key], 100)
+			if isTruncated {
+				truncatedBody += "... <truncated>"
+			}
+	
+			slog.Error("Invalid response JSON in custom API widget", "url", req.URL.String(), key, truncatedBody)
+			return emptyBody, errors.New("invalid response JSON")
+		}
+	}
+	
+	if jsonBody, exists := body[customRandomKeyForSingleRequest]; exists {
+		mergedBody = jsonBody
+	} else {
+		mergedMap := make(map[string]json.RawMessage)
+		for key, jsonBody := range body {
+			if !gjson.Valid(jsonBody) {
+				continue
+			}
+			mergedMap[key] = json.RawMessage(jsonBody)
+		}
+		if len(mergedMap) > 0 {
+			bytes, _ := json.Marshal(mergedMap)
+			mergedBody = string(bytes)
+		}
 	}
 
 	var templateBuffer bytes.Buffer
 
 	data := customAPITemplateData{
-		JSON:     decoratedGJSONResult{gjson.Parse(body)},
+		JSON:     decoratedGJSONResult{gjson.Parse(mergedBody)},
 		Response: resp,
 	}
 
