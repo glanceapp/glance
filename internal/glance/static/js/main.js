@@ -257,7 +257,7 @@ function setupGroups() {
         const group = groups[g];
         const titles = group.getElementsByClassName("widget-header")[0].children;
         const tabs = group.getElementsByClassName("widget-group-contents")[0].children;
-        let current = 0;
+        let current = Array.from(titles).findIndex(c => c.classList.contains('widget-group-title-current')) || 0;
 
         for (let t = 0; t < titles.length; t++) {
             const title = titles[t];
