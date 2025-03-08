@@ -356,7 +356,7 @@ pages:
 ### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| title | string | yes | |
+| name | string | yes | |
 | slug | string | no | |
 | width | string | no | |
 | center-vertically | boolean | no | false |
