@@ -231,12 +231,15 @@ func (q *queryParametersField) UnmarshalYAML(node *yaml.Node) error {
 
 	*q = make(queryParametersField)
 
+	// TODO: refactor the duplication in the switch cases if any more types get added
 	for key, value := range decoded {
 		switch v := value.(type) {
 		case string:
 			(*q)[key] = []string{v}
 		case int, int8, int16, int32, int64, float32, float64:
 			(*q)[key] = []string{fmt.Sprintf("%v", v)}
+		case bool:
+			(*q)[key] = []string{fmt.Sprintf("%t", v)}
 		case []string:
 			(*q)[key] = append((*q)[key], v...)
 		case []any:
