@@ -2032,6 +2032,7 @@ details[open] .summary::after {
 .shrink-0           { flex-shrink: 0; }
 .min-width-0        { min-width: 0; }
 .max-width-100      { max-width: 100%; }
+.width-100          { width: 100% }
 .block              { display: block; }
 .inline-block       { display: inline-block; }
 .overflow-hidden    { overflow: hidden; }
