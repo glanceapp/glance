@@ -1290,34 +1290,12 @@ Examples:
 #### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| url | string | yes, unless `api-queries` is set | |
+| url | string | yes | |
 | headers | key (string) & value (string) | no | |
 | frameless | boolean | no | false |
 | template | string | yes | |
-| parameters | key & value | no | |
-| api-queries | list of urls, parameters & headers | no | |
-
-> [!NOTE]
-> 
-> `api-queries` will override `url`, `headers` and `parameters`
-> since it also provides its own options
-
-##### `api-queries`
-A list of API queries, the name set will be the name of the json returned
-```yaml
-api-queries:
-  sample-data1:
-    url: https://domain.com/api
-    parameters:
-      foo: bar
-    headers:
-      x-api-key: your-api-key
-      Accept: application/json
-  sample-data2:
-    url: https://another-domain.com/api
-```
-see [custom-api docs](./custom-api.md#api-queries)
-
+| parameters | key (string) & value (string|array) | no | |
+| subrequests | map of requests | no | |
 
 ##### `url`
 The URL to fetch the data from. It must be accessible from the server that Glance is running on.
@@ -1339,6 +1317,40 @@ The template that will be used to display the data. It relies on Go's `html/temp
 
 ##### `parameters`
 A list of keys and values that will be sent to the custom-api as query paramters.
+
+##### `subrequests`
+A map of additional requests that will be executed concurrently and then made available in the template via the `.Subrequests` property. Example:
+
+```yaml
+- type: custom-api
+  cache: 2h
+  subrequests:
+    another-one:
+      url: https://uselessfacts.jsph.pl/api/v2/facts/random
+  title: Random Fact
+  url: https://uselessfacts.jsph.pl/api/v2/facts/random
+  template: |
+    <p class="size-h4 color-paragraph">{{ .JSON.String "text" }}</p>
+    <p class="size-h4 color-paragraph margin-top-15">{{ (.Subrequest "another-one").JSON.String "text" }}</p>
+```
+
+The subrequests support all the same properties as the main request, except for `subrequests` itself, so you can use `headers`, `parameters`, etc.
+
+`(.Subrequest "key")` can be a little cumbersome to write, so you can define a variable to make it easier:
+
+```yaml
+  template: |
+    {{ $anotherOne := .Subrequest "another-one" }}
+    <p>{{ $anotherOne.JSON.String "text" }}</p>
+```
+
+You can also access the `.Response` property of a subrequest as you would with the main request:
+
+```yaml
+  template: |
+    {{ $anotherOne := .Subrequest "another-one" }}
+    <p>{{ $anotherOne.Response.StatusCode }}</p>
+```
 
 > [!NOTE]
 >

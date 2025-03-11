@@ -3,7 +3,6 @@ package glance
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -12,72 +11,43 @@ import (
 	"math"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/tidwall/gjson"
 )
 
 var customAPIWidgetTemplate = mustParseTemplate("custom-api.html", "widget-base.html")
-var customRandomKeyForSingleRequest = fmt.Sprintf("%x", time.Now().UnixNano())
 
-type customAPIWidget struct {
-	widgetBase       `yaml:",inline"`
-	ApiQueries		 map[string]apiQueries		`yaml:"api-queries"`
-	URL              string               		`yaml:"url"`
-	Template         string               		`yaml:"template"`
-	Frameless        bool                 		`yaml:"frameless"`
-	Headers          map[string]string    		`yaml:"headers"`
-	Parameters       queryParametersField 		`yaml:"parameters"`
-	APIRequest       map[string]*http.Request	`yaml:"-"`
-	compiledTemplate *template.Template   		`yaml:"-"`
-	CompiledHTML     template.HTML        		`yaml:"-"`
+// Needs to be exported for the YAML unmarshaler to work
+type CustomAPIRequest struct {
+	URL         string               `json:"url"`
+	Headers     map[string]string    `json:"headers"`
+	Parameters  queryParametersField `json:"parameters"`
+	httpRequest *http.Request        `yaml:"-"`
 }
 
-type apiQueries struct {
-	URL              string               `yaml:"url"`
-	Headers          map[string]string    `yaml:"headers"`
-	Parameters       queryParametersField `yaml:"parameters"`
+type customAPIWidget struct {
+	widgetBase        `yaml:",inline"`
+	*CustomAPIRequest `yaml:",inline"`             // the primary request
+	Subrequests       map[string]*CustomAPIRequest `yaml:"subrequests"`
+	Template          string                       `yaml:"template"`
+	Frameless         bool                         `yaml:"frameless"`
+	compiledTemplate  *template.Template           `yaml:"-"`
+	CompiledHTML      template.HTML                `yaml:"-"`
 }
 
 func (widget *customAPIWidget) initialize() error {
 	widget.withTitle("Custom API").withCacheDuration(1 * time.Hour)
 
-	widget.APIRequest = make(map[string]*http.Request)
-	if len(widget.ApiQueries) != 0 {
-		for object, query := range widget.ApiQueries {
-			if query.URL == "" {
-				return errors.New("URL for each query is required")
-			}
-			req, err := http.NewRequest(http.MethodGet, query.URL, nil)
-			if err != nil {
-				return err
-			}
+	if err := widget.CustomAPIRequest.initialize(); err != nil {
+		return fmt.Errorf("initializing primary request: %v", err)
+	}
 
-			req.URL.RawQuery = query.Parameters.toQueryString()
-
-			for key, value := range query.Headers {
-				req.Header.Add(key, value)
-			}
-
-			widget.APIRequest[object] = req
+	for key := range widget.Subrequests {
+		if err := widget.Subrequests[key].initialize(); err != nil {
+			return fmt.Errorf("initializing subrequest %q: %v", key, err)
 		}
-	} else {
-		if widget.URL == "" {
-			return errors.New("URL is required")
-		}
-		
-		req, err := http.NewRequest(http.MethodGet, widget.URL, nil)
-		if err != nil {
-			return err
-		}
-		
-		req.URL.RawQuery = widget.Parameters.toQueryString()
-		
-		for key, value := range widget.Headers {
-			req.Header.Add(key, value)
-		}
-		
-		widget.APIRequest[customRandomKeyForSingleRequest] = req
 	}
 
 	if widget.Template == "" {
@@ -95,7 +65,7 @@ func (widget *customAPIWidget) initialize() error {
 }
 
 func (widget *customAPIWidget) update(ctx context.Context) {
-	compiledHTML, err := fetchAndParseCustomAPI(widget.APIRequest, widget.compiledTemplate)
+	compiledHTML, err := fetchAndParseCustomAPI(widget.CustomAPIRequest, widget.Subrequests, widget.compiledTemplate)
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
@@ -107,61 +77,153 @@ func (widget *customAPIWidget) Render() template.HTML {
 	return widget.renderTemplate(widget, customAPIWidgetTemplate)
 }
 
-func fetchAndParseCustomAPI(requests map[string]*http.Request, tmpl *template.Template) (template.HTML, error) {
-	emptyBody := template.HTML("")
-
-	var resp *http.Response
-	var err error
-	body := make(map[string]string)
-	for key, req := range requests {
-		resp, err = defaultHTTPClient.Do(req)
-		if err != nil {
-			return emptyBody, err
-		}
-		defer resp.Body.Close()
-
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return emptyBody, err
-		}
-	
-		body[key] = strings.TrimSpace(string(bodyBytes))
-	
-		if body[key] != "" && !gjson.Valid(body[key]) {
-			truncatedBody, isTruncated := limitStringLength(body[key], 100)
-			if isTruncated {
-				truncatedBody += "... <truncated>"
-			}
-	
-			slog.Error("Invalid response JSON in custom API widget", "url", req.URL.String(), key, truncatedBody)
-			return emptyBody, errors.New("invalid response JSON")
-		}
-	}
-	
-	mergedBody := "{}"
-	if jsonBody, exists := body[customRandomKeyForSingleRequest]; exists {
-		mergedBody = jsonBody
-	} else {
-		mergedMap := make(map[string]json.RawMessage)
-		for key, jsonBody := range body {
-			if !gjson.Valid(jsonBody) {
-				continue
-			}
-			mergedMap[key] = json.RawMessage(jsonBody)
-		}
-		if len(mergedMap) > 0 {
-			bytes, _ := json.Marshal(mergedMap)
-			mergedBody = string(bytes)
-		}
+func (req *CustomAPIRequest) initialize() error {
+	if req.URL == "" {
+		return errors.New("URL is required")
 	}
 
-	var templateBuffer bytes.Buffer
+	httpReq, err := http.NewRequest(http.MethodGet, req.URL, nil)
+	if err != nil {
+		return err
+	}
 
-	data := customAPITemplateData{
-		JSON:     decoratedGJSONResult{gjson.Parse(mergedBody)},
+	if len(req.Parameters) > 0 {
+		httpReq.URL.RawQuery = req.Parameters.toQueryString()
+	}
+
+	for key, value := range req.Headers {
+		httpReq.Header.Add(key, value)
+	}
+
+	req.httpRequest = httpReq
+
+	return nil
+}
+
+type customAPIResponseData struct {
+	JSON     decoratedGJSONResult
+	Response *http.Response
+}
+
+type customAPITemplateData struct {
+	*customAPIResponseData
+	subrequests map[string]*customAPIResponseData
+}
+
+func (data *customAPITemplateData) Subrequest(key string) *customAPIResponseData {
+	req, exists := data.subrequests[key]
+	if !exists {
+		// We have to panic here since there's nothing sensible we can return and the
+		// lack of an error would cause requested data to return zero values which
+		// would be confusing from the user's perspective. Go's template module
+		// handles recovering from panics and will return the panic message as an
+		// error during template execution.
+		panic(fmt.Sprintf("subrequest with key %q has not been defined", key))
+	}
+
+	return req
+}
+
+func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customAPIResponseData, error) {
+	resp, err := defaultHTTPClient.Do(req.httpRequest.WithContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	body := strings.TrimSpace(string(bodyBytes))
+
+	if body != "" && !gjson.Valid(body) {
+		truncatedBody, isTruncated := limitStringLength(body, 100)
+		if isTruncated {
+			truncatedBody += "... <truncated>"
+		}
+
+		slog.Error("Invalid response JSON in custom API widget", "url", req.httpRequest.URL.String(), "body", truncatedBody)
+		return nil, errors.New("invalid response JSON")
+	}
+
+	data := &customAPIResponseData{
+		JSON:     decoratedGJSONResult{gjson.Parse(body)},
 		Response: resp,
 	}
 
+	return data, nil
+}
+
+func fetchAndParseCustomAPI(
+	primaryReq *CustomAPIRequest,
+	subReqs map[string]*CustomAPIRequest,
+	tmpl *template.Template,
+) (template.HTML, error) {
+	var primaryData *customAPIResponseData
+	subData := make(map[string]*customAPIResponseData, len(subReqs))
+	var err error
+
+	if len(subReqs) == 0 {
+		// If there are no subrequests, we can fetch the primary request in a much simpler way
+		primaryData, err = fetchCustomAPIRequest(context.Background(), primaryReq)
+	} else {
+		// If there are subrequests, we need to fetch them concurrently
+		// and cancel all requests if any of them fail. There's probably
+		// a more elegant way to do this, but this works for now.
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		var wg sync.WaitGroup
+		var mu sync.Mutex // protects subData and err
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			var localErr error
+			primaryData, localErr = fetchCustomAPIRequest(ctx, primaryReq)
+			mu.Lock()
+			if localErr != nil && err == nil {
+				err = localErr
+				cancel()
+			}
+			mu.Unlock()
+		}()
+
+		for key, req := range subReqs {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				var localErr error
+				var data *customAPIResponseData
+				data, localErr = fetchCustomAPIRequest(ctx, req)
+				mu.Lock()
+				if localErr != nil && err == nil {
+					err = localErr
+					cancel()
+				} else {
+					subData[key] = data
+				}
+				mu.Unlock()
+			}()
+		}
+
+		wg.Wait()
+	}
+
+	emptyBody := template.HTML("")
+
+	if err != nil {
+		return emptyBody, err
+	}
+
+	data := customAPITemplateData{
+		customAPIResponseData: primaryData,
+		subrequests:           subData,
+	}
+
+	var templateBuffer bytes.Buffer
 	err = tmpl.Execute(&templateBuffer, &data)
 	if err != nil {
 		return emptyBody, err
@@ -172,11 +234,6 @@ func fetchAndParseCustomAPI(requests map[string]*http.Request, tmpl *template.Te
 
 type decoratedGJSONResult struct {
 	gjson.Result
-}
-
-type customAPITemplateData struct {
-	JSON     decoratedGJSONResult
-	Response *http.Response
 }
 
 func gJsonResultArrayToDecoratedResultArray(results []gjson.Result) []decoratedGJSONResult {
