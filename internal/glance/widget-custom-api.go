@@ -199,11 +199,11 @@ func fetchAndParseCustomAPI(
 				var data *customAPIResponseData
 				data, localErr = fetchCustomAPIRequest(ctx, req)
 				mu.Lock()
-				if localErr != nil && err == nil {
+				if localErr == nil {
+					subData[key] = data
+				} else if err == nil {
 					err = localErr
 					cancel()
-				} else {
-					subData[key] = data
 				}
 				mu.Unlock()
 			}()
