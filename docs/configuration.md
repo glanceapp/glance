@@ -1319,7 +1319,7 @@ The template that will be used to display the data. It relies on Go's `html/temp
 A list of keys and values that will be sent to the custom-api as query paramters.
 
 ##### `subrequests`
-A map of additional requests that will be executed concurrently and then made available in the template via the `.Subrequests` property. Example:
+A map of additional requests that will be executed concurrently and then made available in the template via the `.Subrequest` property. Example:
 
 ```yaml
 - type: custom-api
