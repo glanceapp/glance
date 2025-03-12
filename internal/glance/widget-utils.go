@@ -179,6 +179,11 @@ func workerPoolDo[I any, O any](job *workerPoolJob[I, O]) ([]O, []error, error) 
 		return results, errs, nil
 	}
 
+	if len(job.data) == 1 {
+		output, err := job.task(job.data[0])
+		return append(results, output), append(errs, err), nil
+	}
+
 	tasksQueue := make(chan *workerPoolTask[I, O])
 	resultsQueue := make(chan *workerPoolTask[I, O])
 
