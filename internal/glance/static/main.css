@@ -110,7 +110,7 @@
 .visited-indicator:not(.text-truncate)::after,
 .visited-indicator.text-truncate::before,
 .bookmarks-link:not(.bookmarks-link-no-arrow)::after {
-    content: '↗';
+    content: '↗' / "";
     margin-left: 0.5em;
     display: inline-block;
     position: relative;
@@ -189,7 +189,7 @@
 }
 
 .expand-toggle-button-icon::before {
-    content: '';
+    content: '' / "";
     font-size: 0.8rem;
     transform: rotate(90deg);
     line-height: 1;
@@ -339,6 +339,19 @@ html {
 
 html, body, .body-content {
     height: 100%;
+}
+
+h1, h2, h3, h4, h5 {
+    font: inherit;
+}
+
+.visually-hidden {
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
 }
 
 a {
@@ -563,7 +576,7 @@ kbd:active {
 }
 
 .summary::after {
-    content: "◀";
+    content: "◀" / "";
     font-size: 1.2em;
     position: absolute;
     top: 0;
@@ -822,7 +835,7 @@ details[open] .summary::after {
 }
 
 .list-horizontal-text > *:not(:last-child)::after {
-    content: '•';
+    content: '•' / "";
     color: var(--color-text-subdue);
     margin: 0 0.4rem;
     position: relative;
