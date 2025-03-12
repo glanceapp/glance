@@ -25,7 +25,7 @@
 
 {{ define "navigation-links" }}
 {{ range .App.Config.Pages }}
-<a href="{{ $.App.Config.Server.BaseURL }}/{{ .Slug }}" class="nav-item{{ if eq .Slug $.Page.Slug }} nav-item-current{{ end }}">{{ .Title }}</a>
+<a href="{{ $.App.Config.Server.BaseURL }}/{{ .Slug }}" class="nav-item{{ if eq .Slug $.Page.Slug }} nav-item-current{{ end }}"{{ if eq .Slug $.Page.Slug }} aria-current="page"{{ end }}>{{ .Title }}</a>
 {{ end }}
 {{ end }}
 
@@ -35,10 +35,10 @@
     <div class="header-container content-bounds">
         <div class="header flex padding-inline-widget widget-content-frame">
             <!-- TODO: Replace G with actual logo, first need an actual logo -->
-            <div class="logo">{{ if ne "" .App.Config.Branding.LogoURL }}<img src="{{ .App.Config.Branding.LogoURL }}" alt="">{{ else if ne "" .App.Config.Branding.LogoText }}{{ .App.Config.Branding.LogoText }}{{ else }}G{{ end }}</div>
-            <div class="nav flex grow">
+            <div class="logo" aria-hidden="true">{{ if ne "" .App.Config.Branding.LogoURL }}<img src="{{ .App.Config.Branding.LogoURL }}" alt="">{{ else if ne "" .App.Config.Branding.LogoText }}{{ .App.Config.Branding.LogoText }}{{ else }}G{{ end }}</div>
+            <nav class="nav flex grow">
                 {{ template "navigation-links" . }}
-            </div>
+            </nav>
         </div>
     </div>
     {{ end }}
@@ -57,17 +57,19 @@
     </div>
 
     <div class="content-bounds grow">
-        <div class="page" id="page">
+        <main class="page" id="page" aria-live="polite" aria-busy="true">
+            <h1 class="visually-hidden">{{ .Page.Title }}</h1>
             <div class="page-content" id="page-content"></div>
             <div class="page-loading-container">
                 <!-- TODO: add a bigger/better loading indicator -->
-                <div class="loading-icon"></div>
+                 <div class="visually-hidden">Loading</div>
+                <div class="loading-icon" aria-hidden="true"></div>
             </div>
-        </div>
+        </main>
     </div>
 
     {{ if not .App.Config.Branding.HideFooter }}
-    <div class="footer flex items-center flex-column">
+    <footer class="footer flex items-center flex-column">
     {{ if eq "" .App.Config.Branding.CustomFooter }}
         <div>
             <a class="size-h3" href="https://github.com/glanceapp/glance" target="_blank" rel="noreferrer">Glance</a> {{ if ne "dev" .App.Version }}<a class="visited-indicator" title="Release notes" href="https://github.com/glanceapp/glance/releases/tag/{{ .App.Version }}" target="_blank" rel="noreferrer">{{ .App.Version }}</a>{{ else }}({{ .App.Version }}){{ end }}
@@ -75,7 +77,7 @@
     {{ else }}
         {{ .App.Config.Branding.CustomFooter }}
     {{ end }}
-    </div>
+    </footer>
     {{ end }}
 
     <div class="mobile-navigation-offset"></div>

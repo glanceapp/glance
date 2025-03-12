@@ -53,6 +53,16 @@ theme:
   primary-color: 97 13 80
 ```
 
+### Gruvbox Dark
+![screenshot](images/themes/gruvbox.png)
+```yaml
+theme:
+  background-color: 0 0 16
+  primary-color: 43 59 81
+  positive-color: 61 66 44
+  negative-color: 6 96 59
+```
+
 ### Kanagawa Dark
 ![screenshot](images/themes/kanagawa-dark.png)
 ```yaml

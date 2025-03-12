@@ -68,7 +68,7 @@ func newApplication(config *config) (*application, error) {
 
 			for w := range column.Widgets {
 				widget := column.Widgets[w]
-				app.widgetByID[widget.id()] = widget
+				app.widgetByID[widget.GetID()] = widget
 
 				widget.setProviders(providers)
 			}
