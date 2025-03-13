@@ -242,6 +242,57 @@ Other operations include `add`, `mul`, and `div`.
 
 <hr>
 
+JSON response:
+
+```json
+{
+  "posts": [
+    {
+      "title": "Exploring the Depths of Quantum Computing",
+      "date": "2023-10-27T10:00:00Z"
+    },
+    {
+      "title": "A Beginner's Guide to Sustainable Living",
+      "date": "2023-11-15T14:30:00+01:00"
+    },
+    {
+      "title": "The Art of Baking Sourdough Bread",
+      "date": "2023-12-03T08:45:22-08:00"
+    }
+  ]
+}
+```
+
+To parse the date and display the relative time (e.g. 2h, 1d, etc), you would use the following:
+
+```
+{{ range .JSON.Array "posts" }}
+  <div>{{ .String "title" }}</div>
+  <div {{ .String "date" | parseTime "rfc3339" | toRelativeTime }}></div>
+{{ end }}
+```
+
+The `parseTime` function takes two arguments: the layout of the date string and the date string itself. The layout can be one of the following: "RFC3339", "RFC3339Nano", "DateTime", "DateOnly", "TimeOnly" or a custom layout in Go's [date format](https://pkg.go.dev/time#pkg-constants).
+
+Output:
+
+```html
+<div>Exploring the Depths of Quantum Computing</div>
+<div data-dynamic-relative-time="1698400800"></div>
+
+<div>A Beginner's Guide to Sustainable Living</div>
+<div data-dynamic-relative-time="1700055000"></div>
+
+<div>The Art of Baking Sourdough Bread</div>
+<div data-dynamic-relative-time="1701621922"></div>
+```
+
+You don't have to worry about the internal implementation, this will then be dynamically populated by Glance on the client side to show the correct relative time.
+
+The important thing to notice here is that the return value of `toRelativeTime` must be used as an attribute in an HTML tag, be it a `div`, `li`, `span`, etc.
+
+<hr>
+
 In some instances, you may want to know the status code of the response. This can be done using the following:
 
 ```html
@@ -273,6 +324,8 @@ The following helper functions provided by Glance are available:
 
 - `toFloat(i int) float`: Converts an integer to a float.
 - `toInt(f float) int`: Converts a float to an integer.
+- `toRelativeTime(t time.Time) template.HTMLAttr`: Converts Time to a relative time such as 2h, 1d, etc which dynamically updates. **NOTE:** the value of this function should be used as an attribute in an HTML tag, e.g. `<span {{ toRelativeTime .Time }}></span>`.
+- `parseTime(layout string, s string) time.Time`: Parses a string into time.Time. The layout must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants). You can alternatively use these values instead of the literal format: "RFC3339", "RFC3339Nano", "DateTime", "DateOnly", "TimeOnly".
 - `add(a, b float) float`: Adds two numbers.
 - `sub(a, b float) float`: Subtracts two numbers.
 - `mul(a, b float) float`: Multiplies two numbers.
