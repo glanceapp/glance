@@ -314,6 +314,28 @@ var customAPITemplateFuncs = func() template.FuncMap {
 
 			return a / b
 		},
+		"parseTime": func(layout, value string) time.Time {
+			switch strings.ToLower(layout) {
+			case "rfc3339":
+				layout = time.RFC3339
+			case "rfc3339nano":
+				layout = time.RFC3339Nano
+			case "datetime":
+				layout = time.DateTime
+			case "dateonly":
+				layout = time.DateOnly
+			case "timeonly":
+				layout = time.TimeOnly
+			}
+
+			parsed, err := time.Parse(layout, value)
+			if err != nil {
+				return time.Unix(0, 0)
+			}
+
+			return parsed
+		},
+		"toRelativeTime": dynamicRelativeTimeAttrs,
 	}
 
 	for key, value := range globalTemplateFunctions {
