@@ -39,6 +39,7 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
+  - [Last.FM](#lastfm)
 
 
 ## Preconfigured page
@@ -2458,3 +2459,47 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+### Last.FM
+Displays your past and currently playing tracks
+
+Example:
+
+```yaml
+- type: last-fm
+  api-key: ${LAST_FM_API_KEY}
+  username: your_username
+```
+
+Preview:
+
+![](images/last-fm-widget-preview.gif)
+
+#### Properties
+
+| Name           | Type    | Required | Default |
+| -------------- | ------- | -------- | ------- |
+| api-key        | string  | yes      |         |
+| username       | string  | yes      |         |
+| limit          | integer | no       | 1       |
+| collapse-after | integer | no       | 1       |
+| square-cover   | boolean | no       | false   |
+| static-cover   | boolean | no       | false   |
+
+##### `api-key`
+Your Last.FM API key. Register [here](https://www.last.fm/api/authentication).
+
+##### `username`
+Your Last.FM username. You can find it in the URL of your profile. For example, `your_username` of `https://www.last.fm/user/your_username`.
+
+##### `limit`
+The maximum number of tracks to show.
+
+##### `collapse-after`
+How many tracks are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+##### `square-cover`
+When set to `true`, the album covers are square.
+
+##### `static-cover`
+When set to `true`, the track's album cover that is playing will not spin.

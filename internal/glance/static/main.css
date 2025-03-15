@@ -1792,6 +1792,37 @@ details[open] .summary::after {
     background: linear-gradient(0deg, var(--color-widget-background) 10%, transparent);
 }
 
+.last-fm-album-cover-container {
+	width: 4.4rem;
+	height: 4.4rem;
+	border: 2px solid var(--color-text-subdue);
+	padding: 2px;
+	position: relative;
+	flex-shrink: 0;
+}
+
+.last-fm-first {
+	width: 6rem;
+	height: 6rem;
+}
+
+.last-fm-playing {
+	border-color: var(--color-positive);
+}
+
+.last-fm-spin {
+	animation: spin 20s infinite linear;
+}
+
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
 @media (max-width: 1190px) {
     .header-container {
         display: none;
@@ -2040,6 +2071,7 @@ details[open] .summary::after {
 .text-elevate       { margin-top: -0.2em; }
 .text-compact       { word-spacing: -0.18em; }
 .text-very-compact  { word-spacing: -0.35em; }
+.rounded-full       { border-radius: 100%; }
 .rtl                { direction: rtl; }
 .shrink             { flex-shrink: 1; }
 .shrink-0           { flex-shrink: 0; }
