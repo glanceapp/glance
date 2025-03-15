@@ -1269,6 +1269,7 @@ details[open] .summary::after {
 
 .dns-stats-graph-bar > .blocked {
     background-color: var(--color-negative);
+    flex-basis: calc(var(--percent) - 1px);
 }
 
 .dns-stats-graph-column:nth-child(even) .dns-stats-graph-time {
