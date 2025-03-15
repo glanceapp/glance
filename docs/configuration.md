@@ -1765,35 +1765,31 @@ Preview:
 | allow-insecure | bool | no | false |
 | url | string | yes |  |
 | username | string | when service is `adguard` |  |
-| password | string | when service is `adguard` |  |
+| password | string | when service is `adguard` or `pihole6` |  |
 | token | string | when service is `pihole` |  |
 | hide-graph | bool | no | false |
 | hide-top-domains | bool | no | false |
 | hour-format | string | no | 12h |
 
 ##### `service`
-Either `adguard` or `pihole`.
+Either `adguard`, or `pihole` (major version 5 and below) or `pihole6` (major version 6 and above).
 
 ##### `allow-insecure`
 Whether to allow invalid/self-signed certificates when making the request to the service.
 
 ##### `url`
-The base URL of the service. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+The base URL of the service.
 
 ##### `username`
-Only required when using AdGuard Home. The username used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Only required when using AdGuard Home. The username used to log into the admin dashboard.
 
 ##### `password`
-Only required when using AdGuard Home. The password used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Required when using AdGuard Home, where the password is the one used to log into the admin dashboard.
 
-##### `token` (Deprecated)
-Only required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Also requried when using Pi-hole major version 6 and above, where the password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
 
-##### `app-password`
-Only required when using Pi-hole. The App Password can be found in `Settings -> Web Interface / API -> Configure app password`.
-
-##### `pihole-version`
-Only required if using an older version of Pi-hole (major version 5 or earlier).
+##### `token`
+Only required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`.
 
 ##### `hide-graph`
 Whether to hide the graph showing the number of queries over time.

@@ -82,16 +82,6 @@ func decodeJsonFromRequest[T any](client requestDoer, request *http.Request) (T,
 	return result, nil
 }
 
-func decodeJsonInto[T any](client requestDoer, request *http.Request, out *T) error {
-	result, err := decodeJsonFromRequest[T](client, request)
-	if err != nil {
-		return err
-	}
-
-	*out = result
-	return nil
-}
-
 func decodeJsonFromRequestTask[T any](client requestDoer) func(*http.Request) (T, error) {
 	return func(request *http.Request) (T, error) {
 		return decodeJsonFromRequest[T](client, request)
