@@ -678,7 +678,6 @@ function setUpCountdowns() {
 
         // Create update callback fn
         const updateCountdown = (now) => {
-            // Timezone
             var diff = targetDate - now;
             
             // Remove all colors

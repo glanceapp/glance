@@ -2490,7 +2490,7 @@ Preview:
 | href | str(URL) | no | | |
 
 #### `date`
-The target date to count to. ISO 8601 format
+The target date to count to. ISO 8601 format.
 
 #### `event-title`
 The event title. ` ⋅ PAST` or ` ⋅ FUTURE` will be added to form the widget title.
