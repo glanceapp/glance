@@ -1765,14 +1765,14 @@ Preview:
 | allow-insecure | bool | no | false |
 | url | string | yes |  |
 | username | string | when service is `adguard` |  |
-| password | string | when service is `adguard` or `pihole6` |  |
+| password | string | when service is `adguard` or `pihole-v6` |  |
 | token | string | when service is `pihole` |  |
 | hide-graph | bool | no | false |
 | hide-top-domains | bool | no | false |
 | hour-format | string | no | 12h |
 
 ##### `service`
-Either `adguard`, or `pihole` (major version 5 and below) or `pihole6` (major version 6 and above).
+Either `adguard`, or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
 
 ##### `allow-insecure`
 Whether to allow invalid/self-signed certificates when making the request to the service.

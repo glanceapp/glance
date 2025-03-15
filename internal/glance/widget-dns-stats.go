@@ -61,10 +61,10 @@ func (widget *dnsStatsWidget) initialize() error {
 
 	switch widget.Service {
 	case "adguard":
-	case "pihole6":
+	case "pihole-v6":
 	case "pihole":
 	default:
-		return errors.New("service must be one of: adguard, pihole6, pihole")
+		return errors.New("service must be one of: adguard, pihole-v6, pihole")
 	}
 
 	return nil
