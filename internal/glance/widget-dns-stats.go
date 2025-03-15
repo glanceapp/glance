@@ -533,8 +533,6 @@ func fetchPiholeStats(
 		DomainsBlocked: statsResponse.Gravity.DomainsBlocked,
 	}
 
-	ItsUsedTrustMeBro(seriesResponse, topDomainsResponse)
-
 	if includeGraph && seriesErr == nil {
 		if len(seriesResponse.History) != 145 {
 			slog.Error(
