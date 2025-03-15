@@ -2478,6 +2478,7 @@ Example:
 ```
 
 Preview:
+
 ![](images/count-timer.png)
 
 #### Properties
