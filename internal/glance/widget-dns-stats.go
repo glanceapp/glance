@@ -42,6 +42,12 @@ type dnsStatsWidget struct {
 	Password       string `yaml:"password"`
 }
 
+const (
+	dnsServiceAdguard  = "adguard"
+	dnsServicePihole   = "pihole"
+	dnsServicePiholeV6 = "pihole-v6"
+)
+
 func makeDNSWidgetTimeLabels(format string) [8]string {
 	now := time.Now()
 	var labels [dnsStatsBars]string
@@ -60,11 +66,11 @@ func (widget *dnsStatsWidget) initialize() error {
 		withCacheDuration(10 * time.Minute)
 
 	switch widget.Service {
-	case "adguard":
-	case "pihole-v6":
-	case "pihole":
+	case dnsServiceAdguard:
+	case dnsServicePiholeV6:
+	case dnsServicePihole:
 	default:
-		return errors.New("service must be one of: adguard, pihole-v6, pihole")
+		return fmt.Errorf("service must be one of: %s, %s, %s", dnsServiceAdguard, dnsServicePihole, dnsServicePiholeV6)
 	}
 
 	return nil
@@ -75,11 +81,11 @@ func (widget *dnsStatsWidget) update(ctx context.Context) {
 	var err error
 
 	switch widget.Service {
-	case "adguard":
+	case dnsServiceAdguard:
 		stats, err = fetchAdguardStats(widget.URL, widget.AllowInsecure, widget.Username, widget.Password, widget.HideGraph)
-	case "pihole":
+	case dnsServicePihole:
 		stats, err = fetchPihole5Stats(widget.URL, widget.AllowInsecure, widget.Token, widget.HideGraph)
-	case "pihole6":
+	case dnsServicePiholeV6:
 		var newSessionID string
 		stats, newSessionID, err = fetchPiholeStats(
 			widget.URL,
