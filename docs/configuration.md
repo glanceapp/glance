@@ -39,6 +39,7 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
+  - [Count Timer](#count-timer)
 
 
 ## Preconfigured page
@@ -2458,3 +2459,44 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+### Count Timer
+Adds a counting timer. Counts up or down from/to a specific time. This widget is dynamic and updates every second.
+
+Example:
+```yaml
+- type: count-timer
+  event-title: Christmas 2025
+  date: 2025-12-25T00:00:00Z
+- type: count-timer
+  event-title: New Year 2022 (US EST)
+  date: 2022-01-01T00:00:00-05:00
+- type: count-timer
+  title: Conf 2022
+  date: 2022-06-04T00:00:00Z
+  href: https://conf.com
+```
+
+Preview:
+![](images/count-timer.png)
+
+#### Properties
+| Name | Type | Required | Default | Description |
+| ---- | ---- | -------- | ------- | ----------- |
+| date | time | yes      |         | Time, including timezone info |
+| title | str | no | | Choose one between `titie` end `event-title` |
+| event-title | str | no |  | Choose one between `titie` end `event-title` |
+| href | str(URL) | no | | |
+
+#### `date`
+The target date to count to. ISO 8601 format
+
+#### `event-title`
+The event title. ` ⋅ PAST` or ` ⋅ FUTURE` will be added to form the widget title.
+
+#### `title`
+If `event-title` is not set or empty, this title shows instead.
+
+#### `href`
+If set, the counter will have a hyperlink to this URL.
+

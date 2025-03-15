@@ -653,6 +653,99 @@ function setupTruncatedElementTitles() {
     }
 }
 
+function setUpCountdowns() {
+    const countdowns = document.getElementsByClassName("widget-type-count-timer");
+    
+    if (countdowns.length == 0) {
+        return;
+    }
+
+    const updateCallbacks = [];
+
+    for (var i = 0; i < countdowns.length; i++) {
+        const countdown = countdowns[i];
+
+        const datasetMeta = countdown.getElementsByTagName("meta")[0];
+        const targetDate = new Date(datasetMeta.getAttribute("target"));
+        const title = datasetMeta.getAttribute("title");
+        const eventTitle = datasetMeta.getAttribute("event");
+        const h2Element = countdown.getElementsByTagName("h2")[0];
+
+        const dayTd = countdown.getElementsByClassName("count-days")[0];
+        const hourTd = countdown.getElementsByClassName("count-hours")[0];
+        const minuteTd = countdown.getElementsByClassName("count-minutes")[0];
+        const secondTd = countdown.getElementsByClassName("count-seconds")[0];
+
+        // Create update callback fn
+        const updateCountdown = (now) => {
+            // Timezone
+            var diff = targetDate - now;
+            
+            // Remove all colors
+            dayTd.classList.remove("color-primary")
+            dayTd.classList.remove("color-highlight")
+            hourTd.classList.remove("color-primary")
+            hourTd.classList.remove("color-highlight")
+            minuteTd.classList.remove("color-primary")
+            minuteTd.classList.remove("color-highlight")
+            secondTd.classList.remove("color-primary")
+            secondTd.classList.remove("color-highlight")
+
+            if(diff > 0) {
+                // Set color to primary
+                dayTd.classList.add("color-primary")
+                hourTd.classList.add("color-primary")
+                minuteTd.classList.add("color-primary")
+                secondTd.classList.add("color-primary")
+            } else {
+                // Set color to highlight
+                dayTd.classList.add("color-highlight")
+                hourTd.classList.add("color-highlight")
+                minuteTd.classList.add("color-highlight")
+                secondTd.classList.add("color-highlight")
+            }
+            
+            if(eventTitle & (eventTitle != "")) {
+                if(diff > 0) {
+                    h2Element.textContent = eventTitle + " ⋅ FUTURE"
+                } else {
+                    h2Element.textContent = eventTitle + " ⋅ PAST"
+                }
+            } else {
+                h2Element.textContent = title;
+            }
+
+            if(diff < 0) {
+                diff = -diff;
+            }
+            
+            const diffDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const diffHours = String(Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0');
+            const diffMinutes = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+            const diffSeconds = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
+            
+            // Set up countdown
+            dayTd.innerHTML = diffDays;
+            hourTd.innerHTML = diffHours;
+            minuteTd.innerHTML = diffMinutes;
+            secondTd.innerHTML = diffSeconds;
+        }
+
+        updateCallbacks.push(updateCountdown);
+    }
+
+    const updateCountdowns = () => {
+        const now = new Date();
+
+        for (var i = 0; i < updateCallbacks.length; i++)
+            updateCallbacks[i](now);
+
+        setTimeout(updateCountdowns, 1000);
+    }
+
+    updateCountdowns();
+}
+
 async function setupPage() {
     const pageElement = document.getElementById("page");
     const pageContentElement = document.getElementById("page-content");
@@ -662,7 +755,8 @@ async function setupPage() {
 
     try {
         setupPopovers();
-        setupClocks()
+        setupClocks();
+        setUpCountdowns();
         await setupCalendars();
         setupCarousels();
         setupSearchBoxes();
