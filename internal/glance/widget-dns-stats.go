@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -44,6 +45,7 @@ type dnsStatsWidget struct {
 
 const (
 	dnsServiceAdguard  = "adguard"
+	dnsServiceBlocky   = "blocky"
 	dnsServicePihole   = "pihole"
 	dnsServicePiholeV6 = "pihole-v6"
 )
@@ -67,6 +69,8 @@ func (widget *dnsStatsWidget) initialize() error {
 
 	switch widget.Service {
 	case dnsServiceAdguard:
+	case dnsServiceBlocky:
+		widget.HideGraph = true
 	case dnsServicePiholeV6:
 	case dnsServicePihole:
 	default:
@@ -83,6 +87,8 @@ func (widget *dnsStatsWidget) update(ctx context.Context) {
 	switch widget.Service {
 	case dnsServiceAdguard:
 		stats, err = fetchAdguardStats(widget.URL, widget.AllowInsecure, widget.Username, widget.Password, widget.HideGraph)
+	case dnsServiceBlocky:
+		stats, err = fetchBlockyStats(widget.URL, widget.AllowInsecure)
 	case dnsServicePihole:
 		stats, err = fetchPihole5Stats(widget.URL, widget.AllowInsecure, widget.Token, widget.HideGraph)
 	case dnsServicePiholeV6:
@@ -247,6 +253,102 @@ func fetchAdguardStats(instanceURL string, allowInsecure bool, username, passwor
 
 	for i := range dnsStatsBars {
 		stats.Series[i].PercentTotal = int(float64(stats.Series[i].Queries) / float64(maxQueriesInSeries) * 100)
+	}
+
+	return stats, nil
+}
+
+func parseLineStat[T int | float64](line string) (T, error) {
+	var zero T
+
+	fields := strings.Fields(line)
+	if len(fields) != 2 {
+		return zero, fmt.Errorf("unexpected number of fields: %d", len(fields))
+	}
+
+	var val any
+	var err error
+
+	switch any(*new(T)).(type) {
+	case int:
+		val, err = strconv.Atoi(fields[1])
+	case float64:
+		val, err = strconv.ParseFloat(fields[1], 64)
+	default:
+		return zero, fmt.Errorf("unsupported type")
+	}
+
+	if err != nil {
+		return zero, err
+	}
+
+	return val.(T), nil
+}
+
+func fetchBlockyStats(instanceURL string, allowInsecure bool) (*dnsStats, error) {
+	requestURL := strings.TrimRight(instanceURL, "/")
+
+	request, err := http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var client = ternary(allowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
+		truncatedBody, _ := limitStringLength(string(body), 256)
+
+		return nil, fmt.Errorf(
+			"unexpected status code %d for %s, response: %s",
+			response.StatusCode,
+			request.URL,
+			truncatedBody,
+		)
+	}
+
+	var (
+		totalQueries   int
+		blockedQueries int
+		responseTime   float64
+		domainsBlocked int
+	)
+
+	for _, line := range strings.Split(string(body), "\n") {
+		if strings.HasPrefix(line, "blocky_denylist_cache_entries") {
+			if val, err := parseLineStat[int](line); err == nil {
+				domainsBlocked += val
+			}
+		} else if strings.HasPrefix(line, "blocky_query_total") {
+			if val, err := parseLineStat[int](line); err == nil {
+				totalQueries += val
+			}
+		} else if strings.HasPrefix(line, "blocky_request_duration_seconds_sum") {
+			if val, err := parseLineStat[float64](line); err == nil {
+				responseTime += val
+			}
+		} else if strings.HasPrefix(line, "blocky_response_total{reason=\"BLOCKED") {
+			if val, err := parseLineStat[int](line); err == nil {
+				blockedQueries += val
+			}
+		}
+	}
+
+	stats := &dnsStats{
+		TotalQueries:   totalQueries,
+		BlockedQueries: blockedQueries,
+		BlockedPercent: ternary(totalQueries > 0, int(float64(blockedQueries)/float64(totalQueries)*100), 0),
+		ResponseTime:   int(responseTime * 1000 / float64(totalQueries)),
+		DomainsBlocked: domainsBlocked,
 	}
 
 	return stats, nil
