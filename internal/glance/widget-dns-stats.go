@@ -644,7 +644,10 @@ func fetchPiholeSessionID(instanceURL string, client *http.Client, password stri
 	}
 
 	if jsonResponse.Session.SID == "" {
-		return "", errors.New("authentication response returned empty session ID")
+		return "", fmt.Errorf(
+			"authentication response returned empty session ID, status code %d, message '%s'",
+			response.StatusCode, jsonResponse.Session.Message,
+		)
 	}
 
 	return jsonResponse.Session.SID, nil
