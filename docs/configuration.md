@@ -30,8 +30,6 @@
   - [Server Stats](#server-stats)
   - [Repository](#repository)
   - [Bookmarks](#bookmarks)
-  - [Calendar](#calendar)
-  - [Calendar (legacy)](#calendar-legacy)
   - [ChangeDetection.io](#changedetectionio)
   - [Clock](#clock)
   - [Markets](#markets)
@@ -302,7 +300,7 @@ Color used across the page, largely to indicate unvisited links.
 Used to indicate that something is positive, such as stock price being up, twitch channel being live or a monitored site being online. If not set, the value of `primary-color` will be used.
 
 #### `negative-color`
-Oppposite of `positive-color`.
+Opposite of `positive-color`.
 
 #### `contrast-multiplier`
 Used to increase or decrease the contrast (in other words visibility) of the text. A value of `1.3` means that the text will be 30% lighter/darker depending on the scheme. Use this if you think that some of the text on the page is too dark and hard to read. Example:
@@ -1202,7 +1200,7 @@ Just like the `group` widget, you can insert any widget type, you can even inser
 
 ### Custom API
 
-Display data from a JSON API using a custom template.
+Display data from a JSON API using a custom template, supporting both GET and POST requests.
 
 > [!NOTE]
 >
@@ -1287,13 +1285,77 @@ Examples:
 ```
 </details>
 
+![](images/custom-api-preview-GET-POST.png)
+
+<details>
+<summary>POST request example with JSON body</summary>
+<br>
+
+```yaml
+- type: custom-api
+  title: POST with JSON Example
+  url: https://api.example.com/data
+  headers:
+    User-Agent: Glance Widget
+    Accept: application/json
+  body:
+    message: "Hello from Glance!"
+    timestamp: "2025-03-17T18:55:00+07:00"
+    values:
+      temperature: 25.5
+      humidity: 60
+  template: |
+    <div class="widget-content">
+      <h3>POST JSON Response</h3>
+      <div class="response-details">
+        <p><strong>Status:</strong> {{ .JSON.String "status" }}</p>
+        <p><strong>Message:</strong> {{ .JSON.String "message" }}</p>
+        <p><strong>Values:</strong> {{ .JSON.String "data.values.temperature" }}°C, {{ .JSON.String "data.values.humidity" }}%</p>
+        <p><strong>Timestamp:</strong> {{ .JSON.String "data.timestamp" }}</p>
+      </div>
+    </div>
+  cache: 1h
+```
+</details>
+
+<details>
+<summary>POST request example with form data</summary>
+<br>
+
+```yaml
+- type: custom-api
+  title: POST with Form Data Example
+  url: https://api.example.com/submit-form
+  headers:
+    User-Agent: Glance Widget
+    Accept: application/json
+  form_data:
+    name: "Glance User"
+    email: "user@example.com"
+    feedback: "This widget is awesome!"
+  template: |
+    <div class="widget-content">
+      <h3>POST Form Response</h3>
+      <div class="response-details">
+        <p><strong>Name:</strong> {{ .JSON.String "data.name" }}</p>
+        <p><strong>Email:</strong> {{ .JSON.String "data.email" }}</p>
+        <p><strong>Feedback:</strong> {{ .JSON.String "data.feedback" }}</p>
+      </div>
+    </div>
+  cache: 1h
+```
+</details>
+
 #### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | url | string | yes | |
 | headers | key (string) & value (string) | no | |
+| body | object | no | |
+| form_data | key (string) & value (string) | no | |
 | frameless | boolean | no | false |
 | template | string | yes | |
+| cache | duration | no | 1h |
 
 ##### `url`
 The URL to fetch the data from. It must be accessible from the server that Glance is running on.
@@ -1307,11 +1369,40 @@ headers:
   Accept: application/json
 ```
 
+##### `body`
+Optional JSON body content to send with a POST request. When this parameter is specified, the request will automatically use the POST method with a Content-Type of application/json.
+
+```yaml
+body:
+  user_id: 12345
+  action: "check_status"
+  options:
+    include_details: true
+    format: "full"
+```
+
+##### `form_data`
+Optional form data to send with a POST request. When this parameter is specified, the request will automatically use the POST method with a Content-Type of application/x-www-form-urlencoded.
+
+```yaml
+form_data:
+  username: "glance_user"
+  email: "user@example.com"
+  subscribe: "true"
+```
+
+> [!NOTE]
+>
+> If both `body` and `form_data` are specified, the `body` parameter will take precedence.
+
 ##### `frameless`
 When set to `true`, removes the border and padding around the widget.
 
 ##### `template`
 The template that will be used to display the data. It relies on Go's `html/template` package so it's recommended to go through [its documentation](https://pkg.go.dev/text/template) to understand how to do basic things such as conditionals, loops, etc. In addition, it also uses [tidwall's gjson](https://github.com/tidwall/gjson) package to parse the JSON data so it's worth going through its documentation if you want to use more advanced JSON selectors. You can view additional examples with explanations and function definitions [here](custom-api.md).
+
+##### `cache`
+The duration for which to cache the API response. Uses Go's duration format (e.g., `5m`, `1h`, `1d`). Default is `1h` (1 hour).
 
 ### Extension
 Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
@@ -1379,7 +1470,7 @@ Each bar represents a 2 hour interval. The yellow background represents sunrise 
 
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| location | string | yes |  |
+| location | string | yes | |
 | units | string | no | metric |
 | hour-format | string | no | 12h |
 | hide-location | boolean | no | false |
