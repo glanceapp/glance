@@ -1701,7 +1701,10 @@ Display the status of your Docker containers along with an icon and an optional 
 ```yaml
 - type: docker-containers
   hide-by-default: false
+  readable-names: false
 ```
+
+The `readable-names` will try to auto format your container names by capitalizing the first letter and converting `-` and `_` characters to spaces.
 
 > [!NOTE]
 >
@@ -1725,6 +1728,21 @@ Configuration of the containers is done via labels applied to each container:
       glance.icon: si:jellyfin
       glance.url: https://jellyfin.domain.com
       glance.description: Movies & shows
+```
+
+Configuration of the containers can also be overridden using `glance.yml`.  Containers are specified by their container names, these will take preference over any docker labels that are set:
+
+```yaml
+- type: docker-containers
+  hide-by-default: false
+  readable-names: false
+  containers: # Alternative to using docker labels
+    container_name_1:  # This is the actual container name
+      title: "Test Container Name"
+      description: "test-description"
+      url: "127.0.0.1:3011/test"
+      icon: "si:jellyfin"
+      hide: false
 ```
 
 For services with multiple containers you can specify a `glance.id` on the "main" container and `glance.parent` on each "child" container:
