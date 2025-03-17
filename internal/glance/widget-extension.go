@@ -109,7 +109,9 @@ func convertExtensionContent(options extensionRequestOptions, content []byte, co
 
 func fetchExtension(options extensionRequestOptions) (extension, error) {
 	request, _ := http.NewRequest("GET", options.URL, nil)
-	request.URL.RawQuery = options.Parameters.toQueryString()
+	if len(options.Parameters) > 0 {
+		request.URL.RawQuery = options.Parameters.toQueryString()
+	}
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
