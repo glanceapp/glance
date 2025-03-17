@@ -153,12 +153,12 @@ func (r *decoratedGJSONResult) String(key string) string {
 	return r.Get(key).String()
 }
 
-func (r *decoratedGJSONResult) Int(key string) int64 {
+func (r *decoratedGJSONResult) Int(key string) int {
 	if key == "" {
-		return r.Result.Int()
+		return int(r.Result.Int())
 	}
 
-	return r.Get(key).Int()
+	return int(r.Get(key).Int())
 }
 
 func (r *decoratedGJSONResult) Float(key string) float64 {
@@ -179,11 +179,11 @@ func (r *decoratedGJSONResult) Bool(key string) bool {
 
 var customAPITemplateFuncs = func() template.FuncMap {
 	funcs := template.FuncMap{
-		"toFloat": func(a int64) float64 {
+		"toFloat": func(a int) float64 {
 			return float64(a)
 		},
-		"toInt": func(a float64) int64 {
-			return int64(a)
+		"toInt": func(a float64) int {
+			return int(a)
 		},
 		"add": func(a, b float64) float64 {
 			return a + b
