@@ -39,6 +39,7 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
+  - [Tautulli](#tautulli)
 
 
 ## Preconfigured page
@@ -2397,3 +2398,40 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+### Tautulli
+Displays Plex active sessions per users.
+You can add a progress bar, but it is not dynamic yet, just for fluff.
+
+Example:
+
+```yaml
+- type: tautulli
+  apikey: ${TAUTULLI_API_KEY}
+  tautulli-url: ${TAUTULLI_URL}
+  progress-bar: true 
+```
+
+Preview:
+
+![](./images/tautulli-widget-preview.png)
+
+#### Properties
+
+| Name         | Type    | Required | Default |
+| ------------ | ------- | -------- | ------- |
+| apikey       | string  | yes      |         |
+| tautulli-url | string  | yes      |         |
+| progress-bar | boolean | no       | false   |
+
+##### `apikey`
+Your Tautulli API key. In Settings -> Web Interface -> API key
+
+##### `tautulli-url`
+Your Tautulli url. You need to add `http://` or `https://`.
+You can use your own domain, or `IP:PORT` format.
+Do not leave a trailing `/` at the end or the url.
+
+##### progress-bar
+Display a progress bar of what's being played.
+For now, since glance is not dynamic, it's mostly for fluff.

@@ -1,0 +1,35 @@
+{{ template "widget-base.html" . }} {{ define "widget-content" }}
+<div class="tautulli">
+  {{- range .Users}}
+  <div class="tautulli-user">
+    <div class="size-h2 color-primary">{{.Name}}</div>
+    <hr class="tautulli-separator"/>
+    
+    <ul class="tautulli-sessions">
+      {{- range .Sessions}}
+        <li class="tautulli-sessions-content color-highlight">
+          {{- if eq .MediaType "episode"}}
+            {{.LibraryName}}: {{.GrandparentTitle}} - S{{.ParentMediaIndex}}E{{.MediaIndex}} - {{.Title}}
+          {{- else if eq .MediaType "track"}}
+            {{.LibraryName}}: {{.GrandparentTitle}} - {{.ParentTitle}} - {{.Title}}
+          {{- else if eq .MediaType "movie"}}
+            {{.LibraryName}}: {{.Title}}
+          {{- else}}
+            {{.LibraryName}}: {{.Title}}
+          {{- end}}
+        </li>
+        
+        {{- if $.ProgressBar}}
+        <li class="tautulli-progress">
+          <div class="tautulli-progress-container">
+            <div class="tautulli-progress-bar" style="width: {{.ProgressPercent}}%"></div>
+          </div>
+          <span class="tautulli-progress-text">{{.ProgressPercent}}%</span>
+        </li>
+        {{- end}}
+      {{- end}}
+    </ul>
+  </div>
+  {{- end}}
+</div>
+{{end}}
