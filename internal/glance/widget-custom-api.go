@@ -3,6 +3,7 @@ package glance
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -10,6 +11,8 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/tidwall/gjson"
@@ -23,6 +26,8 @@ type customAPIWidget struct {
 	Template         string             `yaml:"template"`
 	Frameless        bool               `yaml:"frameless"`
 	Headers          map[string]string  `yaml:"headers"`
+	Body             interface{}        `yaml:"body"`
+	FormData         map[string]string  `yaml:"form_data"`
 	APIRequest       *http.Request      `yaml:"-"`
 	compiledTemplate *template.Template `yaml:"-"`
 	CompiledHTML     template.HTML      `yaml:"-"`
@@ -46,11 +51,57 @@ func (widget *customAPIWidget) initialize() error {
 
 	widget.compiledTemplate = compiledTemplate
 
-	req, err := http.NewRequest(http.MethodGet, widget.URL, nil)
-	if err != nil {
-		return err
+	var req *http.Request
+	var bodyReader io.Reader
+	
+	// Determine if POST request based on Body or FormData presence
+	isPostRequest := widget.Body != nil || len(widget.FormData) > 0
+	method := http.MethodGet
+	
+	if isPostRequest {
+		method = http.MethodPost
+		contentType := ""
+		
+		if widget.Body != nil {
+			// JSON body
+			jsonData, ok := widget.Body.(map[string]interface{})
+			if ok {
+				jsonStr, err := json.Marshal(jsonData)
+				if err != nil {
+					return fmt.Errorf("marshaling JSON: %w", err)
+				}
+				bodyReader = bytes.NewBuffer(jsonStr)
+				contentType = "application/json"
+			}
+		} else if len(widget.FormData) > 0 {
+			// Form data
+			formValues := url.Values{}
+			for key, value := range widget.FormData {
+				formValues.Add(key, value)
+			}
+			bodyReader = strings.NewReader(formValues.Encode())
+			contentType = "application/x-www-form-urlencoded"
+		}
+
+		// Create request with body
+		req, err = http.NewRequest(method, widget.URL, bodyReader)
+		if err != nil {
+			return err
+		}
+
+		// Set content type if determined
+		if contentType != "" {
+			req.Header.Set("Content-Type", contentType)
+		}
+	} else {
+		// GET request
+		req, err = http.NewRequest(method, widget.URL, nil)
+		if err != nil {
+			return err
+		}
 	}
 
+	// Add headers
 	for key, value := range widget.Headers {
 		req.Header.Add(key, value)
 	}
@@ -89,6 +140,7 @@ func fetchAndParseCustomAPI(req *http.Request, tmpl *template.Template) (templat
 
 	body := string(bodyBytes)
 
+	// Check if response is valid JSON
 	if !gjson.Valid(body) {
 		truncatedBody, isTruncated := limitStringLength(body, 100)
 		if isTruncated {
