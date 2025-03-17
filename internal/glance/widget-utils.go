@@ -19,6 +19,7 @@ import (
 var (
 	errNoContent      = errors.New("failed to retrieve any content")
 	errPartialContent = errors.New("failed to retrieve some of the content")
+	errNotModified    = errors.New("content not modified")
 )
 
 const defaultClientTimeout = 5 * time.Second
