@@ -4,6 +4,7 @@
 - [The config file](#the-config-file)
   - [Auto reload](#auto-reload)
   - [Environment variables](#environment-variables)
+    - [Other ways of providing tokens/passwords/secrets](#other-ways-of-providing-tokenspasswordssecrets)
   - [Including other config files](#including-other-config-files)
 - [Server](#server)
 - [Document](#document)
@@ -91,6 +92,38 @@ If you need to use the syntax `${NAME}` in your config without it being interpre
 ```yaml
 something: \${NOT_AN_ENV_VAR}
 ```
+
+#### Other ways of providing tokens/passwords/secrets
+
+You can use [Docker secrets](https://docs.docker.com/compose/how-tos/use-secrets/) with the following syntax:
+
+```yaml
+# This will be replaced with the contents of the file /run/secrets/github_token
+# so long as the secret `github_token` is provided to the container
+token: ${secret:github_token}
+```
+
+Alternatively, you can load the contents of a file who's path is provided by an environment variable:
+
+`docker-compose.yml`
+```yaml
+services:
+  glance:
+    image: glanceapp/glance
+    environment:
+      - TOKEN_FILE=/home/user/token
+    volumes:
+      - /home/user/token:/home/user/token
+```
+
+`glance.yml`
+```yaml
+token: ${readFileFromEnv:TOKEN_FILE}
+```
+
+> [!NOTE]
+>
+> The contents of the file will be stripped of any leading/trailing whitespace before being used.
 
 ### Including other config files
 Including config files from within your main config file is supported. This is done via the `$include` directive along with a relative or absolute path to the file you want to include. If the path is relative, it will be relative to the main config file. Additionally, environment variables can be used within included files, and changes to the included files will trigger an automatic reload. Example:

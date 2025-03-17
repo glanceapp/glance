@@ -19,6 +19,12 @@ import (
 
 const CONFIG_INCLUDE_RECURSION_DEPTH_LIMIT = 20
 
+const (
+	configVarTypeEnv         = "env"
+	configVarTypeSecret      = "secret"
+	configVarTypeFileFromEnv = "readFileFromEnv"
+)
+
 type config struct {
 	Server struct {
 		Host       string    `yaml:"host"`
@@ -71,7 +77,7 @@ type page struct {
 }
 
 func newConfigFromYAML(contents []byte) (*config, error) {
-	contents, err := parseConfigEnvVariables(contents)
+	contents, err := parseConfigVariables(contents)
 	if err != nil {
 		return nil, err
 	}
@@ -101,23 +107,36 @@ func newConfigFromYAML(contents []byte) (*config, error) {
 	return config, nil
 }
 
-// TODO: change the pattern so that it doesn't match commented out lines
-var configEnvVariablePattern = regexp.MustCompile(`(^|.)\$\{([A-Z0-9_]+)\}`)
+var configVariablePattern = regexp.MustCompile(`(^|.)\$\{(?:([a-zA-Z]+):)?([a-zA-Z0-9_-]+)\}`)
 
-func parseConfigEnvVariables(contents []byte) ([]byte, error) {
+// Parses variables defined in the config such as:
+// ${API_KEY} 				            - gets replaced with the value of the API_KEY environment variable
+// \${API_KEY} 					        - escaped, gets used as is without the \ in the config
+// ${secret:api_key} 			        - value gets loaded from /run/secrets/api_key
+// ${loadFileFromEnv:PATH_TO_SECRET}    - value gets loaded from the file path specified in the environment variable PATH_TO_SECRET
+//
+// TODO: don't match against commented out sections, not sure exactly how since
+// variables can be placed anywhere and used to modify the YAML structure itself
+func parseConfigVariables(contents []byte) ([]byte, error) {
 	var err error
 
-	replaced := configEnvVariablePattern.ReplaceAllFunc(contents, func(match []byte) []byte {
+	replaced := configVariablePattern.ReplaceAllFunc(contents, func(match []byte) []byte {
 		if err != nil {
 			return nil
 		}
 
-		groups := configEnvVariablePattern.FindSubmatch(match)
-		if len(groups) != 3 {
+		groups := configVariablePattern.FindSubmatch(match)
+		if len(groups) != 4 {
+			// we can't handle this match, this shouldn't happen unless the number of groups
+			// in the regex has been changed without updating the below code
 			return match
 		}
 
-		prefix, key := string(groups[1]), string(groups[2])
+		typeAsString := string(groups[2])
+		variableType := ternary(typeAsString == "", configVarTypeEnv, typeAsString)
+		value := string(groups[3])
+
+		prefix := string(groups[1])
 		if prefix == `\` {
 			if len(match) >= 2 {
 				return match[1:]
@@ -126,13 +145,13 @@ func parseConfigEnvVariables(contents []byte) ([]byte, error) {
 			}
 		}
 
-		value, found := os.LookupEnv(key)
-		if !found {
-			err = fmt.Errorf("environment variable %s not found", key)
+		parsedValue, localErr := parseConfigVariableOfType(variableType, value)
+		if localErr != nil {
+			err = fmt.Errorf("parsing variable: %v", localErr)
 			return nil
 		}
 
-		return []byte(prefix + value)
+		return []byte(prefix + parsedValue)
 	})
 
 	if err != nil {
@@ -142,11 +161,45 @@ func parseConfigEnvVariables(contents []byte) ([]byte, error) {
 	return replaced, nil
 }
 
+func parseConfigVariableOfType(variableType, value string) (string, error) {
+	switch variableType {
+	case configVarTypeEnv:
+		v, found := os.LookupEnv(value)
+		if !found {
+			return "", fmt.Errorf("environment variable %s not found", value)
+		}
+
+		return v, nil
+	case configVarTypeSecret:
+		secretPath := filepath.Join("/run/secrets", value)
+		secret, err := os.ReadFile(secretPath)
+		if err != nil {
+			return "", fmt.Errorf("reading secret file: %v", err)
+		}
+
+		return strings.TrimSpace(string(secret)), nil
+	case configVarTypeFileFromEnv:
+		filePath, found := os.LookupEnv(value)
+		if !found {
+			return "", fmt.Errorf("readFileFromEnv: environment variable %s not found", value)
+		}
+
+		fileContents, err := os.ReadFile(filePath)
+		if err != nil {
+			return "", fmt.Errorf("readFileFromEnv: reading file from %s: %v", value, err)
+		}
+
+		return strings.TrimSpace(string(fileContents)), nil
+	default:
+		return "", fmt.Errorf("unknown variable type %s with value %s", variableType, value)
+	}
+}
+
 func formatWidgetInitError(err error, w widget) error {
 	return fmt.Errorf("%s widget: %v", w.GetType(), err)
 }
 
-var includePattern = regexp.MustCompile(`(?m)^([ \t]*)(?:-[ \t]*)?(?:!|\$)include:[ \t]*(.+)$`)
+var configIncludePattern = regexp.MustCompile(`(?m)^([ \t]*)(?:-[ \t]*)?(?:!|\$)include:[ \t]*(.+)$`)
 
 func parseYAMLIncludes(mainFilePath string) ([]byte, map[string]struct{}, error) {
 	return recursiveParseYAMLIncludes(mainFilePath, nil, 0)
@@ -173,12 +226,12 @@ func recursiveParseYAMLIncludes(mainFilePath string, includes map[string]struct{
 	}
 	var includesLastErr error
 
-	mainFileContents = includePattern.ReplaceAllFunc(mainFileContents, func(match []byte) []byte {
+	mainFileContents = configIncludePattern.ReplaceAllFunc(mainFileContents, func(match []byte) []byte {
 		if includesLastErr != nil {
 			return nil
 		}
 
-		matches := includePattern.FindSubmatch(match)
+		matches := configIncludePattern.FindSubmatch(match)
 		if len(matches) != 3 {
 			includesLastErr = fmt.Errorf("invalid include match: %v", matches)
 			return nil
