@@ -1132,7 +1132,7 @@ details[open] .summary::after {
 
 .calendar-date {
     padding: 0.4rem 0;
-    color: var(--color-text-paragraph);
+    color: var(--color-text-base);
     position: relative;
     border-radius: var(--border-radius);
     background: none;
