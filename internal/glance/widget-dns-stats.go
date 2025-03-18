@@ -60,10 +60,19 @@ func makeDNSWidgetTimeLabels(format string) [8]string {
 	return labels
 }
 
+func getWidgetTitleURL(widget *dnsStatsWidget) string {
+	switch widget.Service {
+	case dnsServicePihole, dnsServicePiholeV6:
+		return fmt.Sprintf("%s/admin", strings.TrimRight(widget.URL, "/"))
+	default:
+		return widget.URL
+	}
+}
+
 func (widget *dnsStatsWidget) initialize() error {
 	widget.
 		withTitle("DNS Stats").
-		withTitleURL(string(widget.URL)).
+		withTitleURL(getWidgetTitleURL(widget)).
 		withCacheDuration(10 * time.Minute)
 
 	switch widget.Service {
