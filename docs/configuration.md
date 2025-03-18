@@ -29,6 +29,7 @@
   - [DNS Stats](#dns-stats)
   - [Server Stats](#server-stats)
   - [Repository](#repository)
+  - [Calendar](#calendar)
   - [Bookmarks](#bookmarks)
   - [ChangeDetection.io](#changedetectionio)
   - [Clock](#clock)
