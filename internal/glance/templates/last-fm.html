@@ -1,0 +1,36 @@
+{{ template "widget-base.html" . }} {{ define "widget-content" }}
+<ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
+	{{ range $index, $track := .Tracks }}
+	<li class="{{ if $track.IsPlaying }}last-fm-playing {{ end }} flex gap-10 thumbnail-parent">
+		<div
+			class="last-fm-album-cover-container
+      {{ if eq $index 0 }}last-fm-first {{ end }}
+      {{ if $track.IsPlaying }}last-fm-playing {{ end }}
+      {{ if not $.SquareCover }}rounded-full {{ end }}
+      {{ if and (not $.StaticCover) ($track.IsPlaying) }}last-fm-spin {{ end }}"
+		>
+			<a href="{{ $track.Url }}">
+				<img class="{{ if not $.SquareCover }}rounded-full {{ end }} thumbnail" style="aspect-ratio: 1" src="{{ $track.Image }}" alt="album cover" />
+			</a>
+		</div>
+
+		<div class="min-width-0">
+			<a class="text-truncate block {{ if $track.IsPlaying }}size-h3 color-primary {{ end }}" href="{{ $track.Url }}" target="_blank" rel="noreferrer"
+				>{{ $track.Song }}</a
+			>
+
+			<ul class="list-horizontal-text flex-nowrap">
+				{{ if not $track.IsPlaying }}
+				<li {{ dynamicRelativeTimeAttrs $track.PlayedAt }}></li>
+				{{ else }}
+				<li>Now</li>
+				{{ end }}
+				<li class="text-truncate">{{ $track.Artist }}</li>
+			</ul>
+		</div>
+	</li>
+	{{ else }}
+	<li>{{ $.NoItemsMessage }}</li>
+	{{ end }}
+</ul>
+{{ end }}
