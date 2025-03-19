@@ -653,6 +653,36 @@ function setupTruncatedElementTitles() {
     }
 }
 
+function setupTouch() {
+    let touchstartX, touchstartY;
+    let touchendX, touchendY;
+
+    document.addEventListener('touchstart', function (event) {
+        touchstartX = event.changedTouches[0].screenX;
+        touchstartY = event.changedTouches[0].screenY;
+    }, false);
+
+    document.addEventListener('touchend', function (event) {
+        touchendX = event.changedTouches[0].screenX;
+        touchendY = event.changedTouches[0].screenY;
+
+        const swipeThreshold = 50;
+
+        if (Math.abs(touchendX - touchstartX) > Math.abs(touchendY - touchstartY) && Math.abs(touchendX - touchstartX) > swipeThreshold) {
+            let pos = document.querySelector('input[name="column"]:checked').value;
+            let maxCol = document.getElementsByName('column').length-1;
+            if (touchendX < touchstartX) {
+                pos++
+                pos = pos > maxCol ? 0 : pos;
+            } else {
+                pos--
+                pos = pos < 0 ? maxCol : pos;	  
+            }
+            document.querySelector('input[name="column"][value="' + pos + '"]').click();
+        }
+    }, false);
+}
+
 async function setupPage() {
     const pageElement = document.getElementById("page");
     const pageContentElement = document.getElementById("page-content");
@@ -672,6 +702,7 @@ async function setupPage() {
         setupMasonries();
         setupDynamicRelativeTime();
         setupLazyImages();
+        setupTouch();
     } finally {
         pageElement.classList.add("content-ready");
         pageElement.setAttribute("aria-busy", "false");
