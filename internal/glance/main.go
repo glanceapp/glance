@@ -24,7 +24,7 @@ func Main() int {
 			return 1
 		}
 
-		if err := serveApp(options.configPath); err != nil {
+		if err := ServeApp(options.configPath); err != nil {
 			fmt.Println(err)
 			return 1
 		}
@@ -54,7 +54,7 @@ func Main() int {
 	return 0
 }
 
-func serveApp(configPath string) error {
+func ServeApp(configPath string) error {
 	exitChannel := make(chan struct{})
 	hadValidConfigOnStartup := false
 	var stopServer func() error
