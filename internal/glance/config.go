@@ -47,6 +47,7 @@ type config struct {
 		LogoText     string        `yaml:"logo-text"`
 		LogoURL      string        `yaml:"logo-url"`
 		FaviconURL   string        `yaml:"favicon-url"`
+		PwaText      string        `yaml:"pwa-text"`
 	} `yaml:"branding"`
 
 	Pages []page `yaml:"pages"`
