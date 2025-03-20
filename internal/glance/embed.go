@@ -142,7 +142,7 @@ var bundledCSSContents = func() []byte {
 	}
 
 	// We could strip a bunch more unnecessary characters, but the biggest
-	// win comes from removing the whitepsace at the beginning of lines
+	// win comes from removing the whitespace at the beginning of lines
 	// since that's at least 4 bytes per property, which yielded a ~20% reduction.
 	contents = cssSingleLineCommentPattern.ReplaceAll(contents, nil)
 	contents = whitespaceAtBeginningOfLinePattern.ReplaceAll(contents, nil)
