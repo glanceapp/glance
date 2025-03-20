@@ -160,12 +160,12 @@ server:
 
 ### Properties
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| host | string | no |  |
-| port | number | no | 8080 |
-| base-url | string | no | |
-| assets-path | string | no |  |
+| Name        | Type   | Required | Default |
+| ----------- | ------ | -------- | ------- |
+| host        | string | no       |         |
+| port        | number | no       | 8080    |
+| base-url    | string | no       |         |
+| assets-path | string | no       |         |
 
 #### `host`
 The address which the server will listen on. Setting it to `localhost` means that only the machine that the server is running on will be able to access the dashboard. By default it will listen on all interfaces.
@@ -239,13 +239,13 @@ branding:
 
 ### Properties
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| hide-footer | bool | no | false |
-| custom-footer | string | no |  |
-| logo-text | string | no | G |
-| logo-url | string | no | |
-| favicon-url | string | no | |
+| Name          | Type   | Required | Default |
+| ------------- | ------ | -------- | ------- |
+| hide-footer   | bool   | no       | false   |
+| custom-footer | string | no       |         |
+| logo-text     | string | no       | G       |
+| logo-url      | string | no       |         |
+| favicon-url   | string | no       |         |
 
 #### `hide-footer`
 Hides the footer when set to `true`.
@@ -278,17 +278,17 @@ theme:
 If you don't want to spend time configuring your own theme, there are [several available themes](themes.md) which you can simply copy the values for.
 
 ### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| light | boolean | no | false |
-| background-color | HSL | no | 240 8 9 |
-| primary-color | HSL | no | 43 50 70 |
-| positive-color | HSL | no | same as `primary-color` |
-| negative-color | HSL | no | 0 70 70 |
-| contrast-multiplier | number | no | 1 |
-| text-saturation-multiplier | number | no | 1 |
-| custom-css-file | string | no | |
 
+| Name                       | Type    | Required | Default                 |
+| -------------------------- | ------- | -------- | ----------------------- |
+| light                      | boolean | no       | false                   |
+| background-color           | HSL     | no       | 240 8 9                 |
+| primary-color              | HSL     | no       | 43 50 70                |
+| positive-color             | HSL     | no       | same as `primary-color` |
+| negative-color             | HSL     | no       | 0 70 70                 |
+| contrast-multiplier        | number  | no       | 1                       |
+| text-saturation-multiplier | number  | no       | 1                       |
+| custom-css-file            | string  | no       |                         |
 #### `light`
 Whether the scheme is light or dark. This does not change the background color, it inverts the text colors so that they look appropriately on a light background.
 
@@ -354,17 +354,17 @@ pages:
 ```
 
 ### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| name | string | yes | |
-| slug | string | no | |
-| width | string | no | |
-| center-vertically | boolean | no | false |
-| hide-desktop-navigation | boolean | no | false |
-| expand-mobile-page-navigation | boolean | no | false |
-| show-mobile-header | boolean | no | false |
-| columns | array | yes | |
 
+| Name                          | Type    | Required | Default |
+| ----------------------------- | ------- | -------- | ------- |
+| name                          | string  | yes      |         |
+| slug                          | string  | no       |         |
+| width                         | string  | no       |         |
+| center-vertically             | boolean | no       | false   |
+| hide-desktop-navigation       | boolean | no       | false   |
+| expand-mobile-page-navigation | boolean | no       | false   |
+| show-mobile-header            | boolean | no       | false   |
+| columns                       | array   | yes      |         |
 #### `title`
 The name of the page which gets shown in the navigation bar.
 
@@ -414,10 +414,10 @@ pages:
 ```
 
 ### Properties
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| size | string | yes |
-| widgets | array | no |
+| Name    | Type   | Required |
+| ------- | ------ | -------- |
+| size    | string | yes      |
+| widgets | array  | no       |
 
 Here are some of the possible column configurations:
 
@@ -471,14 +471,14 @@ pages:
 > Currently not all widgets are designed to fit every column size, however some widgets offer different "styles" that help alleviate this limitation.
 
 ### Shared Properties
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| type | string | yes |
-| title | string | no |
-| title-url | string | no |
-| cache | string | no |
-| css-class | string | no |
 
+| Name      | Type   | Required |
+| --------- | ------ | -------- |
+| type      | string | yes      |
+| title     | string | no       |
+| title-url | string | no       |
+| cache     | string | no       |
+| css-class | string | no       |
 #### `type`
 Used to specify the widget.
 
@@ -524,17 +524,17 @@ Example:
 ```
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| style | string | no | vertical-list |
-| feeds | array | yes |
-| thumbnail-height | float | no | 10 |
-| card-height | float | no | 27 |
-| limit | integer | no | 25 |
-| preserve-order | bool | no | false |
-| single-line-titles | boolean | no | false |
-| collapse-after | integer | no | 5 |
 
+| Name               | Type    | Required | Default       |
+| ------------------ | ------- | -------- | ------------- |
+| style              | string  | no       | vertical-list |
+| feeds              | array   | yes      |               |
+| thumbnail-height   | float   | no       | 10            |
+| card-height        | float   | no       | 27            |
+| limit              | integer | no       | 25            |
+| preserve-order     | bool    | no       | false         |
+| single-line-titles | boolean | no       | false         |
+| collapse-after     | integer | no       | 5             |
 ##### `limit`
 The maximum number of articles to show.
 
@@ -583,16 +583,16 @@ Used to modify the height of cards when using the `horizontal-cards-2` style. Th
 An array of RSS/atom feeds. The title can optionally be changed.
 
 ###### Properties for each feed
-| Name | Type | Required | Default | Notes |
-| ---- | ---- | -------- | ------- | ----- |
-| url | string | yes | | |
-| title | string | no | the title provided by the feed | |
-| hide-categories | boolean | no | false | Only applicable for `detailed-list` style |
-| hide-description | boolean | no | false | Only applicable for `detailed-list` style |
-| limit | integer | no | | |
-| item-link-prefix | string | no | | |
-| headers | key (string) & value (string) | no | | |
 
+| Name             | Type                          | Required | Default                        | Notes                                     |
+| ---------------- | ----------------------------- | -------- | ------------------------------ | ----------------------------------------- |
+| url              | string                        | yes      |                                |                                           |
+| title            | string                        | no       | the title provided by the feed |                                           |
+| hide-categories  | boolean                       | no       | false                          | Only applicable for `detailed-list` style |
+| hide-description | boolean                       | no       | false                          | Only applicable for `detailed-list` style |
+| limit            | integer                       | no       |                                |                                           |
+| item-link-prefix | string                        | no       |                                |                                           |
+| headers          | key (string) & value (string) | no       |                                |                                           |
 ###### `limit`
 The maximum number of articles to show from that specific feed. Useful if you have a feed which posts a lot of articles frequently and you want to prevent it from excessively pushing down articles from other feeds.
 
@@ -627,17 +627,17 @@ Preview:
 ![](images/videos-widget-preview.png)
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| channels | array | yes | |
-| playlists | array | no | |
-| limit | integer | no | 25 |
-| style | string | no | horizontal-cards |
-| collapse-after | integer | no | 7 |
-| collapse-after-rows | integer | no | 4 |
-| include-shorts | boolean | no | false |
-| video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
+| Name                | Type    | Required | Default                                    |
+| ------------------- | ------- | -------- | ------------------------------------------ |
+| channels            | array   | yes      |                                            |
+| playlists           | array   | no       |                                            |
+| limit               | integer | no       | 25                                         |
+| style               | string  | no       | horizontal-cards                           |
+| collapse-after      | integer | no       | 7                                          |
+| collapse-after-rows | integer | no       | 4                                          |
+| include-shorts      | boolean | no       | false                                      |
+| video-url-template  | string  | no       | https://www.youtube.com/watch?v={VIDEO-ID} |
 ##### `channels`
 A list of channels IDs.
 
@@ -706,14 +706,14 @@ Preview:
 ![](images/hacker-news-widget-preview.png)
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| limit | integer | no | 15 |
-| collapse-after | integer | no | 5 |
-| comments-url-template | string | no | https://news.ycombinator.com/item?id={POST-ID} |
-| sort-by | string | no | top |
-| extra-sort-by | string | no | |
 
+| Name                  | Type    | Required | Default                                        |
+| --------------------- | ------- | -------- | ---------------------------------------------- |
+| limit                 | integer | no       | 15                                             |
+| collapse-after        | integer | no       | 5                                              |
+| comments-url-template | string  | no       | https://news.ycombinator.com/item?id={POST-ID} |
+| sort-by               | string  | no       | top                                            |
+| extra-sort-by         | string  | no       |                                                |
 ##### `comments-url-template`
 Used to replace the default link for post comments. Useful if you want to use an alternative front-end. Example:
 
@@ -753,15 +753,15 @@ Preview:
 ![](images/lobsters-widget-preview.png)
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| instance-url | string | no | https://lobste.rs/ |
-| custom-url | string | no | |
-| limit | integer | no | 15 |
-| collapse-after | integer | no | 5 |
-| sort-by | string | no | hot |
-| tags | array | no | |
 
+| Name           | Type    | Required | Default            |
+| -------------- | ------- | -------- | ------------------ |
+| instance-url   | string  | no       | https://lobste.rs/ |
+| custom-url     | string  | no       |                    |
+| limit          | integer | no       | 15                 |
+| collapse-after | integer | no       | 5                  |
+| sort-by        | string  | no       | hot                |
+| tags           | array   | no       |                    |
 ##### `instance-url`
 The base URL for a lobsters instance hosted somewhere other than on lobste.rs. Example:
 
@@ -799,22 +799,22 @@ Example:
 ```
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| subreddit | string | yes |  |
-| style | string | no | vertical-list |
-| show-thumbnails | boolean | no | false |
-| show-flairs | boolean | no | false |
-| limit | integer | no | 15 |
-| collapse-after | integer | no | 5 |
-| comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
-| request-url-template | string | no |  |
-| proxy | string or multiple parameters | no |  |
-| sort-by | string | no | hot |
-| top-period | string | no | day |
-| search | string | no | |
-| extra-sort-by | string | no | |
 
+| Name                  | Type                          | Required | Default                            |
+| --------------------- | ----------------------------- | -------- | ---------------------------------- |
+| subreddit             | string                        | yes      |                                    |
+| style                 | string                        | no       | vertical-list                      |
+| show-thumbnails       | boolean                       | no       | false                              |
+| show-flairs           | boolean                       | no       | false                              |
+| limit                 | integer                       | no       | 15                                 |
+| collapse-after        | integer                       | no       | 5                                  |
+| comments-url-template | string                        | no       | https://www.reddit.com/{POST-PATH} |
+| request-url-template  | string                        | no       |                                    |
+| proxy                 | string or multiple parameters | no       |                                    |
+| sort-by               | string                        | no       | hot                                |
+| top-period            | string                        | no       | day                                |
+| search                | string                        | no       |                                    |
+| extra-sort-by         | string                        | no       |                                    |
 ##### `subreddit`
 The subreddit for which to fetch the posts from.
 
@@ -940,34 +940,34 @@ Preview:
 ![](images/search-widget-preview.png)
 
 #### Keyboard shortcuts
-| Keys | Action | Condition |
-| ---- | ------ | --------- |
-| <kbd>S</kbd> | Focus the search bar | Not already focused on another input field |
-| <kbd>Enter</kbd> | Perform search in the same tab | Search input is focused and not empty |
-| <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Perform search in a new tab | Search input is focused and not empty |
-| <kbd>Escape</kbd> | Leave focus | Search input is focused |
-| <kbd>Up</kbd> | Insert the last search query since the page was opened into the input field | Search input is focused |
 
+| Keys                               | Action                                                                      | Condition                                  |
+| ---------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------ |
+| <kbd>S</kbd>                       | Focus the search bar                                                        | Not already focused on another input field |
+| <kbd>Enter</kbd>                   | Perform search in the same tab                                              | Search input is focused and not empty      |
+| <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Perform search in a new tab                                                 | Search input is focused and not empty      |
+| <kbd>Escape</kbd>                  | Leave focus                                                                 | Search input is focused                    |
+| <kbd>Up</kbd>                      | Insert the last search query since the page was opened into the input field | Search input is focused                    |
 > [!TIP]
 >
 > You can use the property `new-tab` with a value of `true` if you want to show search results in a new tab by default. <kbd>Ctrl</kbd> + <kbd>Enter</kbd> will then show results in the same tab.
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| search-engine | string | no | duckduckgo |
-| new-tab | boolean | no | false |
-| autofocus | boolean | no | false |
-| placeholder | string | no | Type here to search… |
-| bangs | array | no | |
 
+| Name          | Type    | Required | Default              |
+| ------------- | ------- | -------- | -------------------- |
+| search-engine | string  | no       | duckduckgo           |
+| new-tab       | boolean | no       | false                |
+| autofocus     | boolean | no       | false                |
+| placeholder   | string  | no       | Type here to search… |
+| bangs         | array   | no       |                      |
 ##### `search-engine`
 Either a value from the table below or a URL to a custom search engine. Use `{QUERY}` to indicate where the query value gets placed.
 
-| Name | URL |
-| ---- | --- |
-| duckduckgo | `https://duckduckgo.com/?q={QUERY}` |
-| google | `https://www.google.com/search?q={QUERY}` |
+| Name       | URL                                       |
+| ---------- | ----------------------------------------- |
+| duckduckgo | `https://duckduckgo.com/?q={QUERY}`       |
+| google     | `https://www.google.com/search?q={QUERY}` |
 
 ##### `new-tab`
 When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
@@ -984,12 +984,12 @@ What now? [Bangs](https://duckduckgo.com/bangs). They're shortcuts that allow yo
 ![](images/search-widget-bangs-preview.png)
 
 ##### Properties for each bang
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| title | string | no |
-| shortcut | string | yes |
-| url | string | yes |
 
+| Name     | Type   | Required |
+| -------- | ------ | -------- |
+| title    | string | no       |
+| shortcut | string | yes      |
+| url      | string | yes      |
 ###### `title`
 Optional title that will appear on the right side of the search bar when the query starts with the associated shortcut.
 
@@ -1288,13 +1288,13 @@ Examples:
 </details>
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| url | string | yes | |
-| headers | key (string) & value (string) | no | |
-| frameless | boolean | no | false |
-| template | string | yes | |
 
+| Name      | Type                          | Required | Default |
+| --------- | ----------------------------- | -------- | ------- |
+| url       | string                        | yes      |         |
+| headers   | key (string) & value (string) | no       |         |
+| frameless | boolean                       | no       | false   |
+| template  | string                        | yes      |         |
 ##### `url`
 The URL to fetch the data from. It must be accessible from the server that Glance is running on.
 
@@ -1325,13 +1325,13 @@ Display a widget provided by an external source (3rd party). If you want to lear
 ```
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| url | string | yes | |
-| fallback-content-type | string | no | |
-| allow-potentially-dangerous-html | boolean | no | false |
-| parameters | key & value | no | |
 
+| Name                             | Type        | Required | Default |
+| -------------------------------- | ----------- | -------- | ------- |
+| url                              | string      | yes      |         |
+| fallback-content-type            | string      | no       |         |
+| allow-potentially-dangerous-html | boolean     | no       | false   |
+| parameters                       | key & value | no       |         |
 ##### `url`
 The URL of the extension. **Note that the query gets stripped from this URL and the one defined by `parameters` gets used instead.**
 
@@ -1377,13 +1377,13 @@ Each bar represents a 2 hour interval. The yellow background represents sunrise 
 
 #### Properties
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| location | string | yes |  |
-| units | string | no | metric |
-| hour-format | string | no | 12h |
-| hide-location | boolean | no | false |
-| show-area-name | boolean | no | false |
+| Name           | Type    | Required | Default |
+| -------------- | ------- | -------- | ------- |
+| location       | string  | yes      |         |
+| units          | string  | no       | metric  |
+| hour-format    | string  | no       | 12h     |
+| hide-location  | boolean | no       | false   |
+| show-area-name | boolean | no       | false   |
 
 ##### `location`
 The name of the city and country to fetch weather information for. Attempting to launch the applcation with an invalid location will result in an error. You can use the [gecoding API page](https://open-meteo.com/en/docs/geocoding-api) to search for your specific location. Glance will use the first result from the list if there are multiple.
@@ -1446,11 +1446,11 @@ You can hover over the "ERROR" text to view more information.
 
 #### Properties
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| sites | array | yes | |
-| style | string | no | |
-| show-failing-only | boolean | no | false |
+| Name              | Type    | Required | Default |
+| ----------------- | ------- | -------- | ------- |
+| sites             | array   | yes      |         |
+| style             | string  | no       |         |
+| show-failing-only | boolean | no       | false   |
 
 ##### `show-failing-only`
 Shows only a list of failing sites when set to `true`.
@@ -1466,16 +1466,16 @@ Preview of `compact`:
 
 Properties for each site:
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| title | string | yes | |
-| url | string | yes | |
-| check-url | string | no | |
-| error-url | string | no | |
-| icon | string | no | |
-| allow-insecure | boolean | no | false |
-| same-tab | boolean | no | false |
-| alt-status-codes | array | no | |
+| Name             | Type    | Required | Default |
+| ---------------- | ------- | -------- | ------- |
+| title            | string  | yes      |         |
+| url              | string  | yes      |         |
+| check-url        | string  | no       |         |
+| error-url        | string  | no       |         |
+| icon             | string  | no       |         |
+| allow-insecure   | boolean | no       | false   |
+| same-tab         | boolean | no       | false   |
+| alt-status-codes | array   | no       |         |
 
 `title`
 
@@ -1547,14 +1547,14 @@ Preview:
 
 #### Properties
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| repositories | array | yes |  |
-| show-source-icon | boolean | no | false |  |
-| token | string | no | |
-| gitlab-token | string | no | |
-| limit | integer | no | 10 |
-| collapse-after | integer | no | 5 |
+| Name             | Type    | Required | Default |
+| ---------------- | ------- | -------- | ------- |
+| repositories     | array   | yes      |         |
+| show-source-icon | boolean | no       | false   |
+| token            | string  | no       |         |
+| gitlab-token     | string  | no       |         |
+| limit            | integer | no       | 10      |
+| collapse-after   | integer | no       | 5       |
 
 ##### `repositories`
 A list of repositores to fetch the latest release for. Only the name/repo is required, not the full URL. A prefix can be specified for repositories hosted elsewhere such as GitLab, Codeberg and Docker Hub. Example:
@@ -1564,6 +1564,14 @@ repositories:
   - gitlab:inkscape/inkscape
   - dockerhub:glanceapp/glance
   - codeberg:redict/redict
+```
+
+You can also specify the url of the corresponding GitLab or Codeberg instance:
+
+```yaml
+repositories:
+  - repository: codeberg:AkkomaGang/akkoma
+    url: akkoma.dev
 ```
 
 Official images on Docker Hub can be specified by omitting the owner:
@@ -1656,13 +1664,13 @@ Display the status of your Docker containers along with an icon and an optional 
 Configuration of the containers is done via labels applied to each container:
 
 ```yaml
-  jellyfin:
-    image: jellyfin/jellyfin:latest
-    labels:
-      glance.name: Jellyfin
-      glance.icon: si:jellyfin
-      glance.url: https://jellyfin.domain.com
-      glance.description: Movies & shows
+jellyfin:
+  image: jellyfin/jellyfin:latest
+  labels:
+    glance.name: Jellyfin
+    glance.icon: si:jellyfin
+    glance.url: https://jellyfin.domain.com
+    glance.description: Movies & shows
 ```
 
 For services with multiple containers you can specify a `glance.id` on the "main" container and `glance.parent` on each "child" container:
@@ -1713,10 +1721,10 @@ If any of the child containers are down, their status will propagate up to the p
 
 #### Properties
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| hide-by-default | boolean | no | false |
-| sock-path | string | no | /var/run/docker.sock |
+| Name            | Type    | Required | Default              |
+| --------------- | ------- | -------- | -------------------- |
+| hide-by-default | boolean | no       | false                |
+| sock-path       | string  | no       | /var/run/docker.sock |
 
 ##### `hide-by-default`
 Whether to hide the containers by default. If set to `true` you'll have to manually add a `glance.hide: false` label to each container you want to display. By default all containers will be shown and if you want to hide a specific container you can add a `glance.hide: true` label.
@@ -1725,17 +1733,17 @@ Whether to hide the containers by default. If set to `true` you'll have to manua
 The path to the Docker socket.
 
 #### Labels
-| Name | Description |
-| ---- | ----------- |
-| glance.name | The name displayed in the UI. If not specified, the name of the container will be used. |
-| glance.icon | The icon displayed in the UI. Can be an external URL or an icon prefixed with si:, sh: or di: like with the bookmarks and monitor widgets |
-| glance.url | The URL that the user will be redirected to when clicking on the container. |
-| glance.same-tab | Whether to open the link in the same or a new tab. Default is `false`. |
-| glance.description | A short description displayed in the UI. Default is empty. |
-| glance.hide | Whether to hide the container. If set to `true` the container will not be displayed. Defaults to `false`. |
-| glance.id | The custom ID of the container. Used to group containers under a single parent. |
-| glance.parent | The ID of the parent container. Used to group containers under a single parent. |
 
+| Name               | Description                                                                                                                               |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| glance.name        | The name displayed in the UI. If not specified, the name of the container will be used.                                                   |
+| glance.icon        | The icon displayed in the UI. Can be an external URL or an icon prefixed with si:, sh: or di: like with the bookmarks and monitor widgets |
+| glance.url         | The URL that the user will be redirected to when clicking on the container.                                                               |
+| glance.same-tab    | Whether to open the link in the same or a new tab. Default is `false`.                                                                    |
+| glance.description | A short description displayed in the UI. Default is empty.                                                                                |
+| glance.hide        | Whether to hide the container. If set to `true` the container will not be displayed. Defaults to `false`.                                 |
+| glance.id          | The custom ID of the container. Used to group containers under a single parent.                                                           |
+| glance.parent      | The ID of the parent container. Used to group containers under a single parent.                                                           |
 ### DNS Stats
 Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home or Pi-hole.
 
@@ -1759,17 +1767,17 @@ Preview:
 
 #### Properties
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| service | string | no | pihole |
-| allow-insecure | bool | no | false |
-| url | string | yes |  |
-| username | string | when service is `adguard` |  |
-| password | string | when service is `adguard` or `pihole-v6` |  |
-| token | string | when service is `pihole` |  |
-| hide-graph | bool | no | false |
-| hide-top-domains | bool | no | false |
-| hour-format | string | no | 12h |
+| Name             | Type   | Required                                 | Default |
+| ---------------- | ------ | ---------------------------------------- | ------- |
+| service          | string | no                                       | pihole  |
+| allow-insecure   | bool   | no                                       | false   |
+| url              | string | yes                                      |         |
+| username         | string | when service is `adguard`                |         |
+| password         | string | when service is `adguard` or `pihole-v6` |         |
+| token            | string | when service is `pihole`                 |         |
+| hide-graph       | bool   | no                                       | false   |
+| hide-top-domains | bool   | no                                       | false   |
+| hour-format      | string | no                                       | 12h     |
 
 ##### `service`
 Either `adguard`, or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
@@ -1827,20 +1835,20 @@ In the event that the CPU temperature goes over 80°C, a flame icon will appear 
 ![](images/server-stats-flame-icon.png)
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| servers | array | no |  |
 
+| Name    | Type  | Required | Default |
+| ------- | ----- | -------- | ------- |
+| servers | array | no       |         |
 ##### `servers`
 If not provided it will display the statistics of the server Glance is running on.
 
 ##### Properties for both `local` and `remote` servers
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| type | string | yes |  |
-| name | string | no |  |
-| hide-swap | boolean | no | false |
 
+| Name      | Type    | Required | Default |
+| --------- | ------- | -------- | ------- |
+| type      | string  | yes      |         |
+| name      | string  | no       |         |
+| hide-swap | boolean | no       | false   |
 ###### `type`
 Whether to display statistics for the local server or a remote server. Possible values are `local` and `remote`.
 
@@ -1851,12 +1859,12 @@ The name of the server which will be displayed on the widget. If not provided it
 Whether to hide the swap usage.
 
 ##### Properties for the `local` server
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| cpu-temp-sensor | string | no |  |
-| hide-mointpoints-by-default | boolean | no | false |
-| mountpoints | map\[string\]object | no |  |
 
+| Name                        | Type                | Required | Default |
+| --------------------------- | ------------------- | -------- | ------- |
+| cpu-temp-sensor             | string              | no       |         |
+| hide-mointpoints-by-default | boolean             | no       | false   |
+| mountpoints                 | map\[string\]object | no       |         |
 ###### `cpu-temp-sensor`
 The name of the sensor to use for the CPU temperature. When not provided the widget will attempt to find the correct one, if it fails to do so the temperature will not be displayed. To view the available sensors you can use `sensors` command.
 
@@ -1891,11 +1899,11 @@ mountpoints:
 ```
 
 ##### Properties for each `mountpoint`
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| name | string | no |  |
-| hide | boolean | no | false |
 
+| Name | Type    | Required | Default |
+| ---- | ------- | -------- | ------- |
+| name | string  | no       |         |
+| hide | boolean | no       | false   |
 ###### `name`
 The name of the mountpoint which will be displayed on the widget. If not provided it will default to the mountpoint's path.
 
@@ -1903,12 +1911,12 @@ The name of the mountpoint which will be displayed on the widget. If not provide
 Whether to hide this mountpoint from the widget.
 
 ##### Properties for `remote` servers
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| url | string | yes |  |
-| token | string | no |  |
-| timeout | string | no | 3s |
 
+| Name    | Type   | Required | Default |
+| ------- | ------ | -------- | ------- |
+| url     | string | yes      |         |
+| token   | string | no       |         |
+| timeout | string | no       | 3s      |
 ###### `url`
 The URL and port of the server to fetch the statistics from.
 
@@ -1937,13 +1945,13 @@ Preview:
 
 #### Properties
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| repository | string | yes |  |
-| token | string | no | |
-| pull-requests-limit | integer | no | 3 |
-| issues-limit | integer | no | 3 |
-| commits-limit | integer | no | -1 |
+| Name                | Type    | Required | Default |
+| ------------------- | ------- | -------- | ------- |
+| repository          | string  | yes      |         |
+| token               | string  | no       |         |
+| pull-requests-limit | integer | no       | 3       |
+| issues-limit        | integer | no       | 3       |
+| commits-limit       | integer | no       | -1      |
 
 ##### `repository`
 The owner and repository name that will have their information displayed.
@@ -2006,37 +2014,37 @@ Preview:
 
 #### Properties
 
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| groups | array | yes |
+| Name   | Type  | Required |
+| ------ | ----- | -------- |
+| groups | array | yes      |
 
 ##### `groups`
 An array of groups which can optionally have a title and a custom color.
 
 ###### Properties for each group
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| title | string | no | |
-| color | HSL | no | the primary color of the theme |
-| links | array | yes | |
-| same-tab | boolean | no | false |
-| hide-arrow | boolean | no | false |
-| target | string | no | |
 
+| Name       | Type    | Required | Default                        |
+| ---------- | ------- | -------- | ------------------------------ |
+| title      | string  | no       |                                |
+| color      | HSL     | no       | the primary color of the theme |
+| links      | array   | yes      |                                |
+| same-tab   | boolean | no       | false                          |
+| hide-arrow | boolean | no       | false                          |
+| target     | string  | no       |                                |
 > [!TIP]
 >
 > You can set `same-tab`, `hide-arrow` and `target` either on the group which will apply them to all links in that group, or on each individual link which will override the value set on the group.
 
 ###### Properties for each link
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| title | string | yes | |
-| url | string | yes | |
-| icon | string | no | |
-| same-tab | boolean | no | false |
-| hide-arrow | boolean | no | false |
-| target | string | no | |
 
+| Name       | Type    | Required | Default |
+| ---------- | ------- | -------- | ------- |
+| title      | string  | yes      |         |
+| url        | string  | yes      |         |
+| icon       | string  | no       |         |
+| same-tab   | boolean | no       | false   |
+| hide-arrow | boolean | no       | false   |
+| target     | string  | no       |         |
 `icon`
 
 URL pointing to an image. You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix or [Dashboard Icons](https://github.com/walkxcode/dashboard-icons) via a `di:` prefix:
@@ -2080,13 +2088,13 @@ Preview:
 
 #### Properties
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| instance-url | string | no | `https://www.changedetection.io` |
-| token | string | no |  |
-| limit | integer | no | 10 |
-| collapse-after | integer | no | 5 |
-| watches | array of strings | no |  |
+| Name           | Type             | Required | Default                          |
+| -------------- | ---------------- | -------- | -------------------------------- |
+| instance-url   | string           | no       | `https://www.changedetection.io` |
+| token          | string           | no       |                                  |
+| limit          | integer          | no       | 10                               |
+| collapse-after | integer          | no       | 5                                |
+| watches        | array of strings | no       |                                  |
 
 ##### `instance-url`
 The URL pointing to your instance of `changedetection.io`.
@@ -2104,10 +2112,10 @@ How many watches are visible before the "SHOW MORE" button appears. Set to `-1` 
 By default all of the configured watches will be shown. Optionally, you can specify a list of UUIDs for the specific watches you want to have listed:
 
 ```yaml
-  - type: change-detection
-    watches:
-      - 1abca041-6d4f-4554-aa19-809147f538d3
-      - 705ed3e4-ea86-4d25-a064-822a6425be2c
+- type: change-detection
+  watches:
+    - 1abca041-6d4f-4554-aa19-809147f538d3
+    - 705ed3e4-ea86-4d25-a064-822a6425be2c
 ```
 
 ### Clock
@@ -2133,20 +2141,20 @@ Preview:
 
 #### Properties
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| hour-format | string | no | 24h |
-| timezones | array | no |  |
+| Name        | Type   | Required | Default |
+| ----------- | ------ | -------- | ------- |
+| hour-format | string | no       | 24h     |
+| timezones   | array  | no       |         |
 
 ##### `hour-format`
 Whether to show the time in 12 or 24 hour format. Possible values are `12h` and `24h`.
 
 #### Properties for each timezone
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| timezone | string | yes | |
-| label | string | no | |
+| Name     | Type   | Required | Default |
+| -------- | ------ | -------- | ------- |
+| timezone | string | yes      |         |
+| label    | string | no       |         |
 
 ##### `timezone`
 A timezone identifier such as `Europe/London`, `America/New_York`, etc. The full list of available identifiers can be found [here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
@@ -2171,9 +2179,9 @@ Preview:
 
 #### Properties
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| first-day-of-week | string | no | monday |
+| Name              | Type   | Required | Default |
+| ----------------- | ------ | -------- | ------- |
+| first-day-of-week | string | no       | monday  |
 
 ##### `first-day-of-week`
 The day of the week that the calendar starts on. All week days are available as possible values.
@@ -2198,9 +2206,9 @@ Preview:
 
 #### Properties
 
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| start-sunday | boolean | no | false |
+| Name         | Type    | Required | Default |
+| ------------ | ------- | -------- | ------- |
+| start-sunday | boolean | no       | false   |
 
 ##### `start-sunday`
 Whether calendar weeks start on Sunday or Monday.
@@ -2235,12 +2243,12 @@ Preview:
 
 #### Properties
 
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| markets | array | yes |
-| sort-by | string | no |
-| chart-link-template | string | no |
-| symbol-link-template | string | no |
+| Name                 | Type   | Required |
+| -------------------- | ------ | -------- |
+| markets              | array  | yes      |
+| sort-by              | string | no       |
+| chart-link-template  | string | no       |
+| symbol-link-template | string | no       |
 
 ##### `markets`
 An array of markets for which to display information about.
@@ -2263,13 +2271,13 @@ symbol-link-template: https://www.google.com/search?tbm=nws&q={SYMBOL}
 ```
 
 ###### Properties for each market
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| symbol | string | yes |
-| name | string | no |
-| symbol-link | string | no |
-| chart-link | string | no |
 
+| Name        | Type   | Required |
+| ----------- | ------ | -------- |
+| symbol      | string | yes      |
+| name        | string | no       |
+| symbol-link | string | no       |
+| chart-link  | string | no       |
 `symbol`
 
 The symbol, as seen in Yahoo Finance.
@@ -2307,12 +2315,12 @@ Preview:
 ![](images/twitch-channels-widget-preview.png)
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| channels | array | yes | |
-| collapse-after | integer | no | 5 |
-| sort-by | string | no | viewers |
 
+| Name           | Type    | Required | Default |
+| -------------- | ------- | -------- | ------- |
+| channels       | array   | yes      |         |
+| collapse-after | integer | no       | 5       |
+| sort-by        | string  | no       | viewers |
 ##### `channels`
 A list of channels to display.
 
@@ -2342,12 +2350,12 @@ Preview:
 ![](images/twitch-top-games-widget-preview.png)
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| exclude | array | no | |
-| limit | integer | no | 10 |
-| collapse-after | integer | no | 5 |
 
+| Name           | Type    | Required | Default |
+| -------------- | ------- | -------- | ------- |
+| exclude        | array   | no       |         |
+| limit          | integer | no       | 10      |
+| collapse-after | integer | no       | 5       |
 ##### `exclude`
 A list of categories that will never be shown. You must provide the slug found by clicking on the category and looking at the URL:
 
@@ -2374,11 +2382,11 @@ Example:
 ```
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| source | string | yes | |
-| height | integer | no | 300 |
 
+| Name   | Type    | Required | Default |
+| ------ | ------- | -------- | ------- |
+| source | string  | yes      |         |
+| height | integer | no       | 300     |
 ##### `source`
 The source of the iframe.
 
