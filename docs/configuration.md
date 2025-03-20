@@ -613,7 +613,7 @@ Optionally specify the headers that will be sent with the request. Example:
 ```
 
 ###### `fallback-icon`
-If the feed doesn't provide an icon, this will be used instead. 
+If the feed doesn't provide an image, this will be used instead. 
 
 ```yaml
 - type: rss
