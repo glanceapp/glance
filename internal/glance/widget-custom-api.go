@@ -21,10 +21,11 @@ var customAPIWidgetTemplate = mustParseTemplate("custom-api.html", "widget-base.
 
 // Needs to be exported for the YAML unmarshaler to work
 type CustomAPIRequest struct {
-	URL         string               `json:"url"`
-	Headers     map[string]string    `json:"headers"`
-	Parameters  queryParametersField `json:"parameters"`
-	httpRequest *http.Request        `yaml:"-"`
+	URL           string               `json:"url"`
+	AllowInsecure bool                 `json:"allow-insecure"`
+	Headers       map[string]string    `json:"headers"`
+	Parameters    queryParametersField `json:"parameters"`
+	httpRequest   *http.Request        `yaml:"-"`
 }
 
 type customAPIWidget struct {
@@ -125,7 +126,8 @@ func (data *customAPITemplateData) Subrequest(key string) *customAPIResponseData
 }
 
 func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customAPIResponseData, error) {
-	resp, err := defaultHTTPClient.Do(req.httpRequest.WithContext(ctx))
+	client := ternary(req.AllowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
+	resp, err := client.Do(req.httpRequest.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
