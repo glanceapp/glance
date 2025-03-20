@@ -37,7 +37,8 @@
     --color-popover-background: hsl(var(--bgh), calc(var(--bgs) + 3%), calc(var(--bgl) + 3%));
     --color-popover-border: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 12%)));
     --color-progress-border: hsl(var(--bghs), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 10% * var(--cm))));
-    --color-progress-value: hsl(var(--bgh), calc(var(--bgs) * var(--tsm)), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 30% * var(--cm))));
+    --color-progress-value: hsl(var(--bgh), calc(var(--bgs) * var(--tsm)), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 24% * var(--cm))));
+    --color-vertical-progress-value: hsl(var(--bgh), calc(var(--bgs) * var(--tsm)), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 28% * var(--cm))));
     --color-graph-gridlines: hsl(var(--bghs), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 6% * var(--cm))));
 
     --ths: var(--bgh), calc(var(--bgs) * var(--tsm));

@@ -73,7 +73,7 @@
 
 .dns-stats-graph-bar > * {
     border-radius: 2px;
-    background: var(--color-progress-value);
+    background: var(--color-vertical-progress-value);
     min-height: 1px;
 }
 
