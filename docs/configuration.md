@@ -1754,8 +1754,10 @@ Preview:
 ![](images/dns-stats-widget-preview.png)
 
 > [!NOTE]
->
-> When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole it will be the total number of blocked domains from all adlists.
+> Following statistics are unavailable:\
+> AdGuard Home: Total number of blocked domains\
+> Blocky: Graph and Top blocked domains\
+> Pi-hole: Average latency
 
 #### Properties
 
@@ -1772,13 +1774,13 @@ Preview:
 | hour-format | string | no | 12h |
 
 ##### `service`
-Either `adguard`, or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
+Either `adguard` or `blocky` or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
 
 ##### `allow-insecure`
 Whether to allow invalid/self-signed certificates when making the request to the service.
 
 ##### `url`
-The base URL of the service.
+The base URL of the service. When using Blocky, set this to the [prometheus endpoint](https://0xerr0r.github.io/blocky/latest/configuration/#prometheus).
 
 ##### `username`
 Only required when using AdGuard Home. The username used to log into the admin dashboard.
@@ -1786,7 +1788,7 @@ Only required when using AdGuard Home. The username used to log into the admin d
 ##### `password`
 Required when using AdGuard Home, where the password is the one used to log into the admin dashboard.
 
-Also requried when using Pi-hole major version 6 and above, where the password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
+Also required when using Pi-hole major version 6 and above, where the password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
 
 ##### `token`
 Only required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`.
