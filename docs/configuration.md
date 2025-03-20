@@ -392,6 +392,7 @@ pages:
 | name | string | yes | |
 | slug | string | no | |
 | width | string | no | |
+| desktop-navigation-width | string | no | |
 | center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
 | expand-mobile-page-navigation | boolean | no | false |
@@ -405,9 +406,14 @@ The name of the page which gets shown in the navigation bar.
 The URL friendly version of the title which is used to access the page. For example if the title of the page is "RSS Feeds" you can make the page accessible via `localhost:8080/feeds` by setting the slug to `feeds`. If not defined, it will automatically be generated from the title.
 
 #### `width`
-The maximum width of the page on desktop. Possible values are `slim` and `wide`.
+The maximum width of the page on desktop. Possible values are `default`, `slim` and `wide`.
 
-* default: `1600px` (when no value is specified)
+#### `desktop-navigation-width`
+The maximum width of the desktop navigation. Useful if you have a few pages that use a different width than the rest and don't want the navigation to jump abruptly when going to and away from those pages. Possible values are `default`, `slim` and `wide`.
+
+Here are the pixel equivalents for each value:
+
+* default: `1600px`
 * slim: `1100px`
 * wide: `1920px`
 

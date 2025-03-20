@@ -64,6 +64,7 @@ type page struct {
 	Title                      string `yaml:"name"`
 	Slug                       string `yaml:"slug"`
 	Width                      string `yaml:"width"`
+	DesktopNavigationWidth     string `yaml:"desktop-navigation-width"`
 	ShowMobileHeader           bool   `yaml:"show-mobile-header"`
 	ExpandMobilePageNavigation bool   `yaml:"expand-mobile-page-navigation"`
 	HideDesktopNavigation      bool   `yaml:"hide-desktop-navigation"`
@@ -435,36 +436,46 @@ func isConfigStateValid(config *config) error {
 	}
 
 	for i := range config.Pages {
-		if config.Pages[i].Title == "" {
+		page := &config.Pages[i]
+
+		if page.Title == "" {
 			return fmt.Errorf("page %d has no name", i+1)
 		}
 
-		if config.Pages[i].Width != "" && (config.Pages[i].Width != "wide" && config.Pages[i].Width != "slim") {
+		if page.Width != "" && (page.Width != "wide" && page.Width != "slim" && page.Width != "default") {
 			return fmt.Errorf("page %d: width can only be either wide or slim", i+1)
 		}
 
-		if len(config.Pages[i].Columns) == 0 {
+		if page.DesktopNavigationWidth != "" {
+			if page.DesktopNavigationWidth != "wide" && page.DesktopNavigationWidth != "slim" && page.DesktopNavigationWidth != "default" {
+				return fmt.Errorf("page %d: desktop-navigation-width can only be either wide or slim", i+1)
+			}
+		}
+
+		if len(page.Columns) == 0 {
 			return fmt.Errorf("page %d has no columns", i+1)
 		}
 
-		if config.Pages[i].Width == "slim" {
-			if len(config.Pages[i].Columns) > 2 {
+		if page.Width == "slim" {
+			if len(page.Columns) > 2 {
 				return fmt.Errorf("page %d is slim and cannot have more than 2 columns", i+1)
 			}
 		} else {
-			if len(config.Pages[i].Columns) > 3 {
+			if len(page.Columns) > 3 {
 				return fmt.Errorf("page %d has more than 3 columns", i+1)
 			}
 		}
 
 		columnSizesCount := make(map[string]int)
 
-		for j := range config.Pages[i].Columns {
-			if config.Pages[i].Columns[j].Size != "small" && config.Pages[i].Columns[j].Size != "full" {
+		for j := range page.Columns {
+			column := &page.Columns[j]
+
+			if column.Size != "small" && column.Size != "full" {
 				return fmt.Errorf("column %d of page %d: size can only be either small or full", j+1, i+1)
 			}
 
-			columnSizesCount[config.Pages[i].Columns[j].Size]++
+			columnSizesCount[page.Columns[j].Size]++
 		}
 
 		full := columnSizesCount["full"]

@@ -211,11 +211,11 @@ kbd:active {
     padding: 0 var(--content-bounds-padding);
 }
 
-.page-width-wide .content-bounds {
+.content-bounds-wide {
     max-width: 1920px;
 }
 
-.page-width-slim .content-bounds {
+.content-bounds-slim {
     max-width: 1100px;
 }
 

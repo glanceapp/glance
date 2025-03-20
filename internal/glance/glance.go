@@ -61,6 +61,14 @@ func newApplication(config *config) (*application, error) {
 
 		app.slugToPage[page.Slug] = page
 
+		if page.Width == "default" {
+			page.Width = ""
+		}
+
+		if page.DesktopNavigationWidth == "" && page.DesktopNavigationWidth != "default" {
+			page.DesktopNavigationWidth = page.Width
+		}
+
 		for c := range page.Columns {
 			column := &page.Columns[c]
 
