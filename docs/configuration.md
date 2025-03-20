@@ -592,6 +592,8 @@ An array of RSS/atom feeds. The title can optionally be changed.
 | limit | integer | no | | |
 | item-link-prefix | string | no | | |
 | headers | key (string) & value (string) | no | | |
+| fallback-icon | string | no | | URL to an icon to use if the feed doesn't provide one |
+| fallback-image | string | no | | URL to an image to use if the feed doesn't provide one |
 
 ###### `limit`
 The maximum number of articles to show from that specific feed. Useful if you have a feed which posts a lot of articles frequently and you want to prevent it from excessively pushing down articles from other feeds.
@@ -609,6 +611,43 @@ Optionally specify the headers that will be sent with the request. Example:
       headers:
         User-Agent: Custom User Agent
 ```
+
+###### `fallback-icon`
+If the feed doesn't provide an icon, this will be used instead. 
+
+```yaml
+- type: rss
+  feeds:
+    - url: https://domain.com/rss
+      fallback-icon: https://..../image.png
+```
+
+You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix or [Dashboard Icons](https://github.com/walkxcode/dashboard-icons) via a `di:` prefix:
+
+```yaml
+- type: rss
+  feeds:
+    - url: https://domain.com/rss
+      fallback-icon: si:github
+```
+
+> [!WARNING]
+>
+> The `fallback-icon` property cannot be defined if `fallback-image` is also defined.
+
+###### `fallback-image`
+If the feed doesn't provide an image, this will be used instead. Example:
+
+```yaml
+- type: rss
+  feeds:
+    - url: https://domain.com/rss
+      fallback-icon: https://..../image.png
+```
+
+> [!WARNING]
+>
+> The `fallback-icon` property cannot be defined if `fallback-image` is also defined.
 
 ### Videos
 Display a list of the latest videos from specific YouTube channels.
