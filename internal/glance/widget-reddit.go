@@ -86,19 +86,30 @@ func isValidRedditTopPeriod(period string) bool {
 		period == "all"
 }
 
-func (widget *redditWidget) update(ctx context.Context) {
-	// TODO: refactor, use a struct to pass all of these
-	posts, err := fetchSubredditPosts(
-		widget.Subreddit,
-		widget.SortBy,
-		widget.TopPeriod,
-		widget.Search,
-		widget.CommentsUrlTemplate,
-		widget.RequestUrlTemplate,
-		widget.Proxy.client,
-		widget.ShowFlairs,
-	)
+type redditPostsRequest struct {
+	Subreddit           string
+	Sort                string
+	TopPeriod           string
+	Search              string
+	CommentsUrlTemplate string
+	RequestUrlTemplate  string
+	ProxyClient         *http.Client
+	ShowFlairs          bool
+}
 
+func (widget *redditWidget) update(ctx context.Context) {
+	req := redditPostsRequest{
+		Subreddit:           widget.Subreddit,
+		Sort:                widget.SortBy,
+		TopPeriod:           widget.TopPeriod,
+		Search:              widget.Search,
+		CommentsUrlTemplate: widget.CommentsUrlTemplate,
+		RequestUrlTemplate:  widget.RequestUrlTemplate,
+		ProxyClient:         widget.Proxy.client,
+		ShowFlairs:          widget.ShowFlairs,
+	}
+
+	posts, err := fetchSubredditPosts(req)
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
@@ -125,7 +136,6 @@ func (widget *redditWidget) Render() template.HTML {
 	}
 
 	return widget.renderTemplate(widget, forumPostsTemplate)
-
 }
 
 type subredditResponseJson struct {
@@ -159,44 +169,34 @@ func templateRedditCommentsURL(template, subreddit, postId, postPath string) str
 	template = strings.ReplaceAll(template, "{SUBREDDIT}", subreddit)
 	template = strings.ReplaceAll(template, "{POST-ID}", postId)
 	template = strings.ReplaceAll(template, "{POST-PATH}", strings.TrimLeft(postPath, "/"))
-
 	return template
 }
 
-func fetchSubredditPosts(
-	subreddit,
-	sort,
-	topPeriod,
-	search,
-	commentsUrlTemplate,
-	requestUrlTemplate string,
-	proxyClient *http.Client,
-	showFlairs bool,
-) (forumPostList, error) {
+func fetchSubredditPosts(req redditPostsRequest) (forumPostList, error) {
 	query := url.Values{}
 	var requestUrl string
 
-	if search != "" {
-		query.Set("q", search+" subreddit:"+subreddit)
-		query.Set("sort", sort)
+	if req.Search != "" {
+		query.Set("q", req.Search+" subreddit:"+req.Subreddit)
+		query.Set("sort", req.Sort)
 	}
 
-	if sort == "top" {
-		query.Set("t", topPeriod)
+	if req.Sort == "top" {
+		query.Set("t", req.TopPeriod)
 	}
 
-	if search != "" {
+	if req.Search != "" {
 		requestUrl = fmt.Sprintf("https://www.reddit.com/search.json?%s", query.Encode())
 	} else {
-		requestUrl = fmt.Sprintf("https://www.reddit.com/r/%s/%s.json?%s", subreddit, sort, query.Encode())
+		requestUrl = fmt.Sprintf("https://www.reddit.com/r/%s/%s.json?%s", req.Subreddit, req.Sort, query.Encode())
 	}
 
 	var client requestDoer = defaultHTTPClient
 
-	if requestUrlTemplate != "" {
-		requestUrl = strings.ReplaceAll(requestUrlTemplate, "{REQUEST-URL}", requestUrl)
-	} else if proxyClient != nil {
-		client = proxyClient
+	if req.RequestUrlTemplate != "" {
+		requestUrl = strings.ReplaceAll(req.RequestUrlTemplate, "{REQUEST-URL}", requestUrl)
+	} else if req.ProxyClient != nil {
+		client = req.ProxyClient
 	}
 
 	request, err := http.NewRequest("GET", requestUrl, nil)
@@ -226,10 +226,10 @@ func fetchSubredditPosts(
 
 		var commentsUrl string
 
-		if commentsUrlTemplate == "" {
+		if req.CommentsUrlTemplate == "" {
 			commentsUrl = "https://www.reddit.com" + post.Permalink
 		} else {
-			commentsUrl = templateRedditCommentsURL(commentsUrlTemplate, subreddit, post.Id, post.Permalink)
+			commentsUrl = templateRedditCommentsURL(req.CommentsUrlTemplate, req.Subreddit, post.Id, post.Permalink)
 		}
 
 		forumPost := forumPost{
@@ -249,7 +249,7 @@ func fetchSubredditPosts(
 			forumPost.TargetUrl = post.Url
 		}
 
-		if showFlairs && post.Flair != "" {
+		if req.ShowFlairs && post.Flair != "" {
 			forumPost.Tags = append(forumPost.Tags, post.Flair)
 		}
 
@@ -257,11 +257,11 @@ func fetchSubredditPosts(
 			forumPost.IsCrosspost = true
 			forumPost.TargetUrlDomain = "r/" + post.ParentList[0].Subreddit
 
-			if commentsUrlTemplate == "" {
+			if req.CommentsUrlTemplate == "" {
 				forumPost.TargetUrl = "https://www.reddit.com" + post.ParentList[0].Permalink
 			} else {
 				forumPost.TargetUrl = templateRedditCommentsURL(
-					commentsUrlTemplate,
+					req.CommentsUrlTemplate,
 					post.ParentList[0].Subreddit,
 					post.ParentList[0].Id,
 					post.ParentList[0].Permalink,
