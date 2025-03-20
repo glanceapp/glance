@@ -113,7 +113,7 @@ var configVariablePattern = regexp.MustCompile(`(^|.)\$\{(?:([a-zA-Z]+):)?([a-zA
 // ${API_KEY} 				            - gets replaced with the value of the API_KEY environment variable
 // \${API_KEY} 					        - escaped, gets used as is without the \ in the config
 // ${secret:api_key} 			        - value gets loaded from /run/secrets/api_key
-// ${loadFileFromEnv:PATH_TO_SECRET}    - value gets loaded from the file path specified in the environment variable PATH_TO_SECRET
+// ${readFileFromEnv:PATH_TO_SECRET}    - value gets loaded from the file path specified in the environment variable PATH_TO_SECRET
 //
 // TODO: don't match against commented out sections, not sure exactly how since
 // variables can be placed anywhere and used to modify the YAML structure itself

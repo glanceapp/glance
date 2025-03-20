@@ -20,6 +20,8 @@ var (
 	pageThemeStyleTemplate = mustParseTemplate("theme-style.gotmpl")
 )
 
+const STATIC_ASSETS_CACHE_DURATION = 24 * time.Hour
+
 type application struct {
 	Version          string
 	Config           config
@@ -230,8 +232,22 @@ func (a *application) server() (func() error, func() error) {
 
 	mux.Handle(
 		fmt.Sprintf("GET /static/%s/{path...}", staticFSHash),
-		http.StripPrefix("/static/"+staticFSHash, fileServerWithCache(http.FS(staticFS), 24*time.Hour)),
+		http.StripPrefix(
+			"/static/"+staticFSHash,
+			fileServerWithCache(http.FS(staticFS), STATIC_ASSETS_CACHE_DURATION),
+		),
 	)
+
+	cssBundleCacheControlValue := fmt.Sprintf(
+		"public, max-age=%d",
+		int(STATIC_ASSETS_CACHE_DURATION.Seconds()),
+	)
+
+	mux.HandleFunc(fmt.Sprintf("GET /static/%s/css/bundle.css", staticFSHash), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Cache-Control", cssBundleCacheControlValue)
+		w.Header().Add("Content-Type", "text/css; charset=utf-8")
+		w.Write(bundledCSSContents)
+	})
 
 	var absAssetsPath string
 	if a.Config.Server.AssetsPath != "" {
