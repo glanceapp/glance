@@ -5,7 +5,13 @@
     {{ range .Items }}
     <li class="flex gap-15 items-start row-reverse-on-mobile thumbnail-parent">
         <div class="thumbnail-container rss-detailed-thumbnail">
-            {{ if ne "" .ImageURL }}
+            {{ if and (eq "" .ImageURL) (ne "" .FallbackIconURL) }}
+            <div class="scale-half hide-on-mobile">
+                <img class="fallback-icon-thumbnail" loading="lazy" src="{{ .FallbackIconURL }}" alt="">
+            </div>
+            {{ else if and (eq "" .ImageURL) (ne "" .FallbackImageURL) }}
+            <img class="thumbnail" loading="lazy" src="{{ .FallbackImageURL }}" alt="">
+            {{ else if and (ne "" .ImageURL) (eq "" .FallbackImageURL) }}
             <img class="thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
             {{ else }}
             <svg class="scale-half hide-on-mobile" stroke="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">

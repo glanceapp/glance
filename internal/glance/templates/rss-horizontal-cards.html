@@ -8,7 +8,13 @@
     <div class="cards-horizontal carousel-items-container"{{ if ne 0.0 .ThumbnailHeight }} style="--rss-thumbnail-height: {{ .ThumbnailHeight }}rem;"{{ end }}>
         {{ range .Items }}
         <div class="card widget-content-frame thumbnail-parent">
-            {{ if ne "" .ImageURL }}
+            {{ if and (eq "" .ImageURL) (ne "" .FallbackIconURL) }}
+            <div class="rss-card-image scale-half hide-on-mobile">
+                <img class="fallback-icon-thumbnail" loading="lazy" src="{{ .FallbackIconURL }}" alt="">
+            </div>
+            {{ else if and (eq "" .ImageURL) (ne "" .FallbackImageURL) }}
+            <img class="rss-card-image thumbnail" loading="lazy" src="{{ .FallbackImageURL }}" alt="">
+            {{ else if and (ne "" .ImageURL) (eq "" .FallbackImageURL) }}
             <img class="rss-card-image thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
             {{ else }}
             <svg class="rss-card-image" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--color-text-subdue)">
