@@ -107,6 +107,7 @@ func newConfigFromYAML(contents []byte) (*config, error) {
 	return config, nil
 }
 
+var envVariableNamePattern = regexp.MustCompile(`^[A-Z0-9_]+$`)
 var configVariablePattern = regexp.MustCompile(`(^|.)\$\{(?:([a-zA-Z]+):)?([a-zA-Z0-9_-]+)\}`)
 
 // Parses variables defined in the config such as:
@@ -132,10 +133,6 @@ func parseConfigVariables(contents []byte) ([]byte, error) {
 			return match
 		}
 
-		typeAsString := string(groups[2])
-		variableType := ternary(typeAsString == "", configVarTypeEnv, typeAsString)
-		value := string(groups[3])
-
 		prefix := string(groups[1])
 		if prefix == `\` {
 			if len(match) >= 2 {
@@ -145,10 +142,17 @@ func parseConfigVariables(contents []byte) ([]byte, error) {
 			}
 		}
 
-		parsedValue, localErr := parseConfigVariableOfType(variableType, value)
+		typeAsString, variableName := string(groups[2]), string(groups[3])
+		variableType := ternary(typeAsString == "", configVarTypeEnv, typeAsString)
+
+		parsedValue, returnOriginal, localErr := parseConfigVariableOfType(variableType, variableName)
 		if localErr != nil {
 			err = fmt.Errorf("parsing variable: %v", localErr)
 			return nil
+		}
+
+		if returnOriginal {
+			return match
 		}
 
 		return []byte(prefix + parsedValue)
@@ -161,37 +165,50 @@ func parseConfigVariables(contents []byte) ([]byte, error) {
 	return replaced, nil
 }
 
-func parseConfigVariableOfType(variableType, value string) (string, error) {
+// When the bool return value is true, it indicates that the caller should use the original value
+func parseConfigVariableOfType(variableType, variableName string) (string, bool, error) {
 	switch variableType {
 	case configVarTypeEnv:
-		v, found := os.LookupEnv(value)
-		if !found {
-			return "", fmt.Errorf("environment variable %s not found", value)
+		if !envVariableNamePattern.MatchString(variableName) {
+			return "", true, nil
 		}
 
-		return v, nil
+		v, found := os.LookupEnv(variableName)
+		if !found {
+			return "", false, fmt.Errorf("environment variable %s not found", variableName)
+		}
+
+		return v, false, nil
 	case configVarTypeSecret:
-		secretPath := filepath.Join("/run/secrets", value)
+		secretPath := filepath.Join("/run/secrets", variableName)
 		secret, err := os.ReadFile(secretPath)
 		if err != nil {
-			return "", fmt.Errorf("reading secret file: %v", err)
+			return "", false, fmt.Errorf("reading secret file: %v", err)
 		}
 
-		return strings.TrimSpace(string(secret)), nil
+		return strings.TrimSpace(string(secret)), false, nil
 	case configVarTypeFileFromEnv:
-		filePath, found := os.LookupEnv(value)
+		if !envVariableNamePattern.MatchString(variableName) {
+			return "", true, nil
+		}
+
+		filePath, found := os.LookupEnv(variableName)
 		if !found {
-			return "", fmt.Errorf("readFileFromEnv: environment variable %s not found", value)
+			return "", false, fmt.Errorf("readFileFromEnv: environment variable %s not found", variableName)
+		}
+
+		if !filepath.IsAbs(filePath) {
+			return "", false, fmt.Errorf("readFileFromEnv: file path %s is not absolute", filePath)
 		}
 
 		fileContents, err := os.ReadFile(filePath)
 		if err != nil {
-			return "", fmt.Errorf("readFileFromEnv: reading file from %s: %v", value, err)
+			return "", false, fmt.Errorf("readFileFromEnv: reading file from %s: %v", variableName, err)
 		}
 
-		return strings.TrimSpace(string(fileContents)), nil
+		return strings.TrimSpace(string(fileContents)), false, nil
 	default:
-		return "", fmt.Errorf("unknown variable type %s with value %s", variableType, value)
+		return "", true, nil
 	}
 }
 
