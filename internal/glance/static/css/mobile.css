@@ -186,7 +186,7 @@
 
 @media (max-width: 550px) {
     :root {
-        font-size: 9px;
+        font-size: 9.4px;
         --widget-gap: 15px;
         --widget-content-vertical-padding: 10px;
         --widget-content-horizontal-padding: 10px;
