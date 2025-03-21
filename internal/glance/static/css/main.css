@@ -57,8 +57,10 @@
     --font-size-h6: 1.1rem;
 }
 
+/* Do not change the order of the below imports unless you know what you're doing */
+
 @import "site.css";
 @import "widgets.css";
 @import "popover.css";
-@import "mobile.css";
 @import "utils.css";
+@import "mobile.css";
