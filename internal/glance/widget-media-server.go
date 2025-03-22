@@ -16,14 +16,15 @@ var mediaServerTemplate = mustParseTemplate(
 )
 
 type MediaServerWidget struct {
-	widgetBase   `yaml:",inline"`
-	MediaServer  string `yaml:"media-server"` // "plex", "jellyfin", or "tautulli"
-	ApiKey       string `yaml:"apikey"`
-	Url          string `yaml:"url"`
-	ProgressBar  bool   `yaml:"progress-bar"`
-	ProgressType string `yaml:"progress-type"` // "ends-at-24", "ends-at-12" "percentage" or "none"
-	Thumbnails   bool   `yaml:"thumbnails"`
-	Users        Users  `yaml:"-"`
+	widgetBase    `yaml:",inline"`
+	MediaServer   string `yaml:"media-server"` // "plex", "jellyfin", or "tautulli"
+	ApiKey        string `yaml:"apikey"`
+	Url           string `yaml:"url"`
+	DisplayPaused bool   `yaml:"display-paused"`
+	ProgressBar   bool   `yaml:"progress-bar"`
+	ProgressType  string `yaml:"progress-type"` // "ends-at-24", "ends-at-12" "percentage" or "none"
+	Thumbnails    bool   `yaml:"thumbnails"`
+	Users         Users  `yaml:"-"`
 }
 
 // constants
@@ -90,6 +91,7 @@ type Session struct {
 	ArtistTitle      string
 	AlbumTitle       string
 	SongTitle        string
+	IsPlaying        bool
 	ProgressPercent  string
 	RemainingSeconds string
 	EndTime          string
@@ -220,7 +222,7 @@ func fetchMediaServerData[T any](serverType, baseURL, apiKey string) (T, error) 
 		)
 	case string(MediaServerJellyfin):
 		url = fmt.Sprintf(
-			"%s/Sessions?activeWithinSeconds=10&api_key=%s",
+			"%s/Sessions?activeWithinSeconds=900&api_key=%s",
 			baseURL, apiKey,
 		)
 	default:
@@ -257,6 +259,20 @@ func determineMediaType(mediaType string) MediaType {
 	default:
 		return MediaTypeUnknown
 	}
+}
+
+// get the playing state
+func getPlayingState(state string) bool {
+	var isPlaying bool
+
+	switch strings.ToLower(state) {
+	case "playing", "true":
+		isPlaying = true
+	default:
+		isPlaying = false
+	}
+
+	return isPlaying
 }
 
 // get the prefered time format
@@ -360,6 +376,7 @@ type tautulliGetActivityJson struct {
 				Title            string `json:"title"`
 				ParentMediaIndex string `json:"parent_media_index"`
 				MediaIndex       string `json:"media_index"`
+				State            string `json:"state"`
 				ViewOffset       string `json:"view_offset"`
 				Duration         string `json:"duration"`
 				Thumb            string `json:"thumb"`
@@ -382,6 +399,8 @@ func (t *TautulliServer) FetchSessions(ctx context.Context) (Users, error) {
 	userMap := make(map[string]*User)
 
 	for _, session := range response.Response.Data.Sessions {
+		isPlaying := getPlayingState(session.State)
+
 		viewOffset, _ := strconv.ParseFloat(session.ViewOffset, 64)
 		duration, _ := strconv.ParseFloat(session.Duration, 64)
 		progressPercent, remainingSeconds, endTime := calculateProgress(
@@ -408,6 +427,7 @@ func (t *TautulliServer) FetchSessions(ctx context.Context) (Users, error) {
 			ArtistTitle:      session.GrandparentTitle,
 			AlbumTitle:       session.ParentTitle,
 			SongTitle:        session.Title,
+			IsPlaying:        isPlaying,
 			ProgressPercent:  progressPercent,
 			RemainingSeconds: remainingSeconds,
 			EndTime:          endTime,
@@ -428,6 +448,9 @@ type plexGetActivityJson struct {
 			User struct {
 				Title string `json:"title"`
 			} `json:"User"`
+			Player struct {
+				State string `json:"state"`
+			} `json:"Player"`
 			Type             string `json:"type"`
 			Title            string `json:"title"`
 			ParentTitle      string `json:"parentTitle"`
@@ -455,6 +478,8 @@ func (p *PlexServer) FetchSessions(ctx context.Context) (Users, error) {
 	userMap := make(map[string]*User)
 
 	for _, session := range response.MediaContainer.Metadata {
+		isPlaying := getPlayingState(session.Player.State)
+
 		progressPercent, remainingSeconds, endTime := calculateProgress(
 			float64(session.ViewOffset),
 			float64(session.Duration),
@@ -479,6 +504,7 @@ func (p *PlexServer) FetchSessions(ctx context.Context) (Users, error) {
 			ArtistTitle:      session.GrandparentTitle,
 			AlbumTitle:       session.ParentTitle,
 			SongTitle:        session.Title,
+			IsPlaying:        isPlaying,
 			ProgressPercent:  progressPercent,
 			RemainingSeconds: remainingSeconds,
 			EndTime:          endTime,
@@ -496,7 +522,8 @@ func (p *PlexServer) FetchSessions(ctx context.Context) (Users, error) {
 type jellyfinGetActivityJson []struct {
 	UserName  string `json:"UserName"`
 	PlayState struct {
-		PositionTicks int `json:"PositionTicks"`
+		IsPaused      bool `json:"IsPaused"`
+		PositionTicks int  `json:"PositionTicks"`
 	} `json:"PlayState"`
 	NowPlayingItem struct {
 		RunTimeTicks      int    `json:"RunTimeTicks"`
@@ -549,6 +576,7 @@ func (j *JellyfinServer) FetchSessions(ctx context.Context) (Users, error) {
 			ArtistTitle:      session.NowPlayingItem.AlbumArtist,
 			AlbumTitle:       session.NowPlayingItem.Album,
 			SongTitle:        session.NowPlayingItem.Name,
+			IsPlaying:        !session.PlayState.IsPaused,
 			ProgressPercent:  progressPercent,
 			RemainingSeconds: remainingSeconds,
 			EndTime:          endTime,

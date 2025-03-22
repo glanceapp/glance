@@ -2761,14 +2761,15 @@ Preview:
 
 #### Properties
 
-| Name          | Type    | Required | Default    |
-| ------------- | ------- | -------- | ---------- |
-| media-server  | string  | yes      |            |
-| apikey        | string  | yes      |            |
-| url           | string  | yes      |            |
-| progress-bar  | bool    | no       | false      |
-| progress-type | string  | no       | ends-at-24 |
-| thumbnails    | bool    | no       | false      |
+| Name           | Type    | Required | Default    |
+| -------------  | ------- | -------- | ---------- |
+| media-server   | string  | yes      |            |
+| apikey         | string  | yes      |            |
+| url            | string  | yes      |            |
+| display-paused | bool    | no       | false      |
+| progress-bar   | bool    | no       | false      |
+| progress-type  | string  | no       | ends-at-24 |
+| thumbnails     | bool    | no       | false      |
 
 ##### `media-server`
 
@@ -2793,6 +2794,11 @@ Your media server API key.
 Your media server url. You need to add `http://` or `https://`.
 You can use your own domain, or `IP:PORT` format.
 Do not leave a trailing `/` at the end or the url.
+
+##### `display-paused`
+
+If you want to display paused items, set to true.
+It will display the item but instead of showing the progress bar it will just display `is paused.`
 
 ##### `progress-bar`
 

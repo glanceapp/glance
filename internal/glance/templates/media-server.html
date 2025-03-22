@@ -9,7 +9,7 @@
 
         <div class="media-server-sessions flex flex-column gap-10">
           {{- range .Sessions }}
-            {{- if ne .Title "" }}
+            {{- if and (ne .Title "") (or .IsPlaying $.DisplayPaused) }}
               <div class="media-server-session flex gap-10 items-center">
                 {{- if $.Thumbnails }}
                   <div class="media-server-session-thumb shrink-0">
@@ -30,26 +30,34 @@
                     {{- end }}
                   </li>
 
-                  {{- if $.ProgressBar }}
-                    <li class="media-server-session-info-progress flex gap-10 items-center">
-                      <div class="media-server-sesssion-info-progress-container grow">
-                        <div class="media-server-session-info-progress-bar" 
-                          style="width: {{ .ProgressPercent }}%; 
-                            animation: progress-animation {{ .RemainingSeconds }}s linear forwards;"
-                          data-progress="{{ .ProgressPercent }}"
-                          data-remaining="{{ .RemainingSeconds }}">
+                  {{- if .IsPlaying }}
+                    {{- if $.ProgressBar }}
+                      <li class="media-server-session-info-progress flex gap-10 items-center">
+                        <div class="media-server-sesssion-info-progress-container grow">
+                          <div class="media-server-session-info-progress-bar" 
+                            style="width: {{ .ProgressPercent }}%; 
+                              animation: progress-animation {{ .RemainingSeconds }}s linear forwards;"
+                            data-progress="{{ .ProgressPercent }}"
+                            data-remaining="{{ .RemainingSeconds }}">
+                          </div>
                         </div>
-                      </div>
-                      {{- if eq $.ProgressType "percentage" }}
-                        <span class="media-server-session-info-progress-text size-h6 text-right">{{ .ProgressPercent }}%</span>
-                      {{- else if eq $.ProgressType "none" }}
-                      {{- else }}
-                        <span class="media-server-session-info-progress-text size-h6 text-right">ends at {{ .EndTime }}</span>
-                      {{- end }}
-                    </li>
+                        {{- if eq $.ProgressType "percentage" }}
+                          <span class="media-server-session-info-progress-text size-h6 text-right">{{ .ProgressPercent }}%</span>
+                        {{- else if eq $.ProgressType "none" }}
+                        {{- else }}
+                          <span class="media-server-session-info-progress-text size-h6 text-right">ends at {{ .EndTime }}</span>
+                        {{- end }}
+                      </li>
+                    {{- end }}
+                  {{- else }}
+                    <li class="media-server-session-info-state size-h6">is paused.</li>
                   {{- end }}
                 </ul>
               </div>
+            {{- else }}
+              <span class="media-server-session-not-playing">
+                is not playing anything right now.
+              </span>
             {{- end }}
           {{- end }}
         </div>
