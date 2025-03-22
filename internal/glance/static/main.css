@@ -1797,6 +1797,56 @@ details[open] .summary::after {
     background: linear-gradient(0deg, var(--color-widget-background) 10%, transparent);
 }
 
+/* MEDIA SERVER WIDGET START */
+
+.media-server {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(32rem, 1fr));
+}
+
+.page-column-small .media-server {
+  display: flex;
+  flex-direction: column;
+}
+
+.media-server-session-thumb img {
+  width: 5rem;
+  min-width: 5rem;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--border-radius);
+  object-fit: cover;
+}
+
+.media-server-session-info-content {
+  line-height: 2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.media-server-sesssion-info-progress-container {
+  height: 1rem;
+  max-width: 32rem;
+  border: 1px solid var(--color-text-base);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.media-server-session-info-progress-bar {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 3px;
+  transition: width 1s linear;
+}
+
+@keyframes progress-animation {
+  to {
+    width: 100%;
+  }
+}
+
+/* MEDIA SERVER WIDGET END */
+
 @media (max-width: 1190px) {
     .header-container {
         display: none;

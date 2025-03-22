@@ -40,9 +40,10 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
-
+  - [Media Server](#media-server)
 
 ## Preconfigured page
+
 If you don't want to spend time reading through all the available configuration options and just want something to get you going quickly you can use [this `glance.yml` file](glance.yml) and make changes to it as you see fit. It will give you a page that looks like the following:
 
 ![](images/preconfigured-page-preview.png)
@@ -52,6 +53,7 @@ Configure the widgets, add more of them, add extra pages, etc. Make it your own!
 ## The config file
 
 ### Auto reload
+
 Automatic config reload is supported, meaning that you can make changes to the config file and have them take effect on save without having to restart the container/service. Making changes to environment variables does not trigger a reload and requires manual restart. Deleting a config file will stop that file from being watched, even if it is recreated.
 
 > [!NOTE]
@@ -63,6 +65,7 @@ Automatic config reload is supported, meaning that you can make changes to the c
 > Reloading the configuration file clears your cached data, meaning that you have to request the data anew each time you do this. This can lead to rate limiting for some APIs if you do it too frequently. Having a cache that persists between reloads will be added in the future.
 
 ### Environment variables
+
 Inserting environment variables is supported anywhere in the config. This is done via the `${ENV_VAR}` syntax. Attempting to use an environment variable that doesn't exist will result in an error and Glance will either not start or load your new config on save. Example:
 
 ```yaml
@@ -106,6 +109,7 @@ token: ${secret:github_token}
 Alternatively, you can load the contents of a file who's path is provided by an environment variable:
 
 `docker-compose.yml`
+
 ```yaml
 services:
   glance:
@@ -117,6 +121,7 @@ services:
 ```
 
 `glance.yml`
+
 ```yaml
 token: ${readFileFromEnv:TOKEN_FILE}
 ```
@@ -126,6 +131,7 @@ token: ${readFileFromEnv:TOKEN_FILE}
 > The contents of the file will be stripped of any leading/trailing whitespace before being used.
 
 ### Including other config files
+
 Including config files from within your main config file is supported. This is done via the `$include` directive along with a relative or absolute path to the file you want to include. If the path is relative, it will be relative to the main config file. Additionally, environment variables can be used within included files, and changes to the included files will trigger an automatic reload. Example:
 
 ```yaml
@@ -183,6 +189,7 @@ docker run --rm -v ./glance.yml:/app/config/glance.yml glanceapp/glance config:p
 This assumes that the config you want to print is in your current working directory and is named `glance.yml`.
 
 ## Server
+
 Server configuration is done through a top level `server` property. Example:
 
 ```yaml
@@ -201,12 +208,15 @@ server:
 | assets-path | string | no |  |
 
 #### `host`
+
 The address which the server will listen on. Setting it to `localhost` means that only the machine that the server is running on will be able to access the dashboard. By default it will listen on all interfaces.
 
 #### `port`
+
 A number between 1 and 65,535, so long as that port isn't already used by anything else.
 
 #### `base-url`
+
 The base URL that Glance is hosted under. No need to specify this unless you're using a reverse proxy and are hosting Glance under a directory. If that's the case then you can set this value to `/glance` or whatever the directory is called. Note that the forward slash (`/`) in the beginning is required unless you specify the full domain and path.
 
 > [!IMPORTANT]
@@ -214,6 +224,7 @@ The base URL that Glance is hosted under. No need to specify this unless you're 
 > In Caddy you can do this using [`handle_path`](https://caddyserver.com/docs/caddyfile/directives/handle_path) or [`uri strip_prefix`](https://caddyserver.com/docs/caddyfile/directives/uri).
 
 #### `assets-path`
+
 The path to a directory that will be served by the server under the `/assets/` path. This is handy for widgets like the Monitor where you have to specify an icon URL and you want to self host all the icons rather than pointing to an external source.
 
 > [!IMPORTANT]
@@ -222,16 +233,19 @@ The path to a directory that will be served by the server under the `/assets/` p
 > Example:
 >
 > If your assets are in:
+>
 > ```
 > /home/user/glance-assets
 > ```
 >
 > You should mount:
+>
 > ```
 > /home/user/glance-assets:/app/assets
 > ```
 >
 > And your config should contain:
+>
 > ```
 > assets-path: /app/assets
 > ```
@@ -251,6 +265,7 @@ icon: /assets/gitea-icon.png
 ```
 
 ## Document
+
 If you want to insert custom HTML into the `<head>` of the document for all pages, you can do so by using the `document` property. Example:
 
 ```yaml
@@ -260,6 +275,7 @@ document:
 ```
 
 ## Branding
+
 You can adjust the various parts of the branding through a top level `branding` property. Example:
 
 ```yaml
@@ -281,21 +297,27 @@ branding:
 | favicon-url | string | no | |
 
 #### `hide-footer`
+
 Hides the footer when set to `true`.
 
 #### `custom-footer`
+
 Specify custom HTML to use for the footer.
 
 #### `logo-text`
+
 Specify custom text to use instead of the "G" found in the navigation.
 
 #### `logo-url`
+
 Specify a URL to a custom image to use instead of the "G" found in the navigation. If both `logo-text` and `logo-url` are set, only `logo-url` will be used.
 
 #### `favicon-url`
+
 Specify a URL to a custom image to use for the favicon.
 
 ## Theme
+
 Theming is done through a top level `theme` property. Values for the colors are in [HSL](https://giggster.com/guide/basics/hue-saturation-lightness/) (hue, saturation, lightness) format. You can use a color picker [like this one](https://hslpicker.com/) to convert colors from other formats to HSL. The values are separated by a space and `%` is not required for any of the numbers.
 
 Example:
@@ -308,9 +330,11 @@ theme:
 ```
 
 ### Themes
+
 If you don't want to spend time configuring your own theme, there are [several available themes](themes.md) which you can simply copy the values for.
 
 ### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | light | boolean | no | false |
@@ -323,29 +347,37 @@ If you don't want to spend time configuring your own theme, there are [several a
 | custom-css-file | string | no | |
 
 #### `light`
+
 Whether the scheme is light or dark. This does not change the background color, it inverts the text colors so that they look appropriately on a light background.
 
 #### `background-color`
+
 Color of the page and widgets.
 
 #### `primary-color`
+
 Color used across the page, largely to indicate unvisited links.
 
 #### `positive-color`
+
 Used to indicate that something is positive, such as stock price being up, twitch channel being live or a monitored site being online. If not set, the value of `primary-color` will be used.
 
 #### `negative-color`
+
 Oppposite of `positive-color`.
 
 #### `contrast-multiplier`
+
 Used to increase or decrease the contrast (in other words visibility) of the text. A value of `1.3` means that the text will be 30% lighter/darker depending on the scheme. Use this if you think that some of the text on the page is too dark and hard to read. Example:
 
 ![difference between 1 and 1.3 contrast](images/contrast-multiplier-example.png)
 
 #### `text-saturation-multiplier`
+
 Used to increase or decrease the saturation of text, useful when using a custom background color with a high amount of saturation and needing the text to have a more neutral color. `0.5` means that the saturation will be 50% lower and `1.5` means that it'll be 50% higher.
 
 #### `custom-css-file`
+
 Path to a custom CSS file, either external or one from within the server configured assets path. Example:
 
 ```yaml
@@ -365,13 +397,14 @@ theme:
 >
 > In addition, you can also use the `css-class` property which is available on every widget to set custom class names for individual widgets.
 
-
 ## Pages & Columns
+
 ![illustration of pages and columns](images/pages-and-columns-illustration.png)
 
 Using pages and columns is how widgets are organized. Each page contains up to 3 columns and each column can have any number of widgets.
 
 ### Pages
+
 Pages are defined through a top level `pages` property. The page defined first becomes the home page and all pages get automatically added to the navigation bar in the order that they were defined. Example:
 
 ```yaml
@@ -387,6 +420,7 @@ pages:
 ```
 
 ### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | name | string | yes | |
@@ -399,32 +433,39 @@ pages:
 | columns | array | yes | |
 
 #### `title`
+
 The name of the page which gets shown in the navigation bar.
 
 #### `slug`
+
 The URL friendly version of the title which is used to access the page. For example if the title of the page is "RSS Feeds" you can make the page accessible via `localhost:8080/feeds` by setting the slug to `feeds`. If not defined, it will automatically be generated from the title.
 
 #### `width`
+
 The maximum width of the page on desktop. Possible values are `slim` and `wide`.
 
-* default: `1600px` (when no value is specified)
-* slim: `1100px`
-* wide: `1920px`
+- default: `1600px` (when no value is specified)
+- slim: `1100px`
+- wide: `1920px`
 
 > [!NOTE]
 >
 > When using `slim`, the maximum number of columns allowed for that page is `2`.
 
 #### `center-vertically`
+
 When set to `true`, vertically centers the content on the page. Has no effect if the content is taller than the height of the viewport.
 
 #### `hide-desktop-navigation`
+
 Whether to show the navigation links at the top of the page on desktop.
 
 #### `expand-mobile-page-navigation`
+
 Whether the mobile page navigation should be expanded by default.
 
 #### `show-mobile-header`
+
 Whether to show a header displaying the name of the page on mobile. The header purposefully has a lot of vertical whitespace in order to push the content down and make it easier to reach on tall devices.
 
 Preview:
@@ -432,6 +473,7 @@ Preview:
 ![](images/mobile-header-preview.png)
 
 ### Columns
+
 Columns are defined for each page using a `columns` property. There are two types of columns - `full` and `small`, which refers to their width. A small column takes up a fixed amount of width (300px) and a full column takes up the all of the remaining width. You can have up to 3 columns per page and you must have either 1 or 2 full columns. Example:
 
 ```yaml
@@ -447,6 +489,7 @@ pages:
 ```
 
 ### Properties
+
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | size | string | yes |
@@ -487,6 +530,7 @@ columns:
 ```
 
 ## Widgets
+
 Widgets are defined for each column using a `widgets` property. Example:
 
 ```yaml
@@ -504,6 +548,7 @@ pages:
 > Currently not all widgets are designed to fit every column size, however some widgets offer different "styles" that help alleviate this limitation.
 
 ### Shared Properties
+
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | type | string | yes |
@@ -513,15 +558,19 @@ pages:
 | css-class | string | no |
 
 #### `type`
+
 Used to specify the widget.
 
 #### `title`
+
 The title of the widget. If left blank it will be defined by the widget.
 
 #### `title-url`
+
 The URL to go to when clicking on the widget's title. If left blank it will be defined by the widget (if available).
 
 #### `cache`
+
 How long to keep the fetched data in memory. The value is a string and must be a number followed by one of s, m, h, d. Examples:
 
 ```yaml
@@ -536,9 +585,11 @@ cache: 1d  # 1 day
 > Not all widgets can have their cache duration modified. The calendar and weather widgets update on the hour and this cannot be changed.
 
 #### `css-class`
+
 Set custom CSS classes for the specific widget instance.
 
 ### RSS
+
 Display a list of articles from multiple RSS feeds.
 
 Example:
@@ -557,6 +608,7 @@ Example:
 ```
 
 #### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | style | string | no | vertical-list |
@@ -569,24 +621,29 @@ Example:
 | collapse-after | integer | no | 5 |
 
 ##### `limit`
+
 The maximum number of articles to show.
 
 ##### `collapse-after`
+
 How many articles are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
 ##### `preserve-order`
+
 When set to `true`, the order of the articles will be preserved as they are in the feeds. Useful if a feed uses its own sorting order which denotes the importance of the articles. If you use this property while having a lot of feeds, it's recommended to set a `limit` to each individual feed since if the first defined feed has 15 articles, the articles from the second feed will start after the 15th article in the list.
 
 ##### `single-line-titles`
+
 When set to `true`, truncates the title of each post if it exceeds one line. Only applies when the style is set to `vertical-list`.
 
 ##### `style`
+
 Used to change the appearance of the widget. Possible values are:
 
-* `vertical-list` - suitable for `full` and `small` columns
-* `detailed-list` - suitable for `full` columns
-* `horizontal-cards` - suitable for `full` columns
-* `horizontal-cards-2` - suitable for `full` columns
+- `vertical-list` - suitable for `full` and `small` columns
+- `detailed-list` - suitable for `full` columns
+- `horizontal-cards` - suitable for `full` columns
+- `horizontal-cards-2` - suitable for `full` columns
 
 Below is a preview of each style:
 
@@ -607,15 +664,19 @@ Below is a preview of each style:
 ![preview of horizontal-cards-2 style for RSS widget](images/rss-widget-horizontal-cards-2-preview.png)
 
 ##### `thumbnail-height`
+
 Used to modify the height of the thumbnails. Works only when the style is set to `horizontal-cards`. The default value is `10` and the units are `rem`, if you want to for example double the height of the thumbnails you can set it to `20`.
 
 ##### `card-height`
+
 Used to modify the height of cards when using the `horizontal-cards-2` style. The default value is `27` and the units are `rem`.
 
 ##### `feeds`
+
 An array of RSS/atom feeds. The title can optionally be changed.
 
 ###### Properties for each feed
+
 | Name | Type | Required | Default | Notes |
 | ---- | ---- | -------- | ------- | ----- |
 | url | string | yes | | |
@@ -627,12 +688,15 @@ An array of RSS/atom feeds. The title can optionally be changed.
 | headers | key (string) & value (string) | no | | |
 
 ###### `limit`
+
 The maximum number of articles to show from that specific feed. Useful if you have a feed which posts a lot of articles frequently and you want to prevent it from excessively pushing down articles from other feeds.
 
 ###### `item-link-prefix`
+
 If an RSS feed isn't returning item links with a base domain and Glance has failed to automatically detect the correct domain you can manually add a prefix to each link with this property.
 
 ###### `headers`
+
 Optionally specify the headers that will be sent with the request. Example:
 
 ```yaml
@@ -644,6 +708,7 @@ Optionally specify the headers that will be sent with the request. Example:
 ```
 
 ### Videos
+
 Display a list of the latest videos from specific YouTube channels.
 
 Example:
@@ -660,6 +725,7 @@ Preview:
 ![](images/videos-widget-preview.png)
 
 #### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | channels | array | yes | |
@@ -669,9 +735,10 @@ Preview:
 | collapse-after | integer | no | 7 |
 | collapse-after-rows | integer | no | 4 |
 | include-shorts | boolean | no | false |
-| video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
+| video-url-template | string | no | <https://www.youtube.com/watch?v={VIDEO-ID}> |
 
 ##### `channels`
+
 A list of channels IDs.
 
 One way of getting the ID of a channel is going to the channel's page and clicking on its description:
@@ -694,15 +761,19 @@ A list of playlist IDs:
 ```
 
 ##### `limit`
+
 The maximum number of videos to show.
 
 ##### `collapse-after`
+
 Specify the number of videos to show when using the `vertical-list` style before the "SHOW MORE" button appears.
 
 ##### `collapse-after-rows`
+
 Specify the number of rows to show when using the `grid-cards` style before the "SHOW MORE" button appears.
 
 ##### `style`
+
 Used to change the appearance of the widget. Possible values are `horizontal-cards`, `vertical-list` and `grid-cards`.
 
 Preview of `vertical-list`:
@@ -714,6 +785,7 @@ Preview of `grid-cards`:
 ![](images/videos-widget-grid-cards-preview.png)
 
 ##### `video-url-template`
+
 Used to replace the default link for videos. Useful when you're running your own YouTube front-end. Example:
 
 ```yaml
@@ -725,6 +797,7 @@ Placeholders:
 `{VIDEO-ID}` - the ID of the video
 
 ### Hacker News
+
 Display a list of posts from [Hacker News](https://news.ycombinator.com/).
 
 Example:
@@ -739,15 +812,17 @@ Preview:
 ![](images/hacker-news-widget-preview.png)
 
 #### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
-| comments-url-template | string | no | https://news.ycombinator.com/item?id={POST-ID} |
+| comments-url-template | string | no | <https://news.ycombinator.com/item?id={POST-ID}> |
 | sort-by | string | no | top |
 | extra-sort-by | string | no | |
 
 ##### `comments-url-template`
+
 Used to replace the default link for post comments. Useful if you want to use an alternative front-end. Example:
 
 ```yaml
@@ -759,14 +834,17 @@ Placeholders:
 `{POST-ID}` - the ID of the post
 
 ##### `sort-by`
+
 Used to specify the order in which the posts should get returned. Possible values are `top`, `new`, and `best`.
 
 ##### `extra-sort-by`
+
 Can be used to specify an additional sort which will be applied on top of the already sorted posts. By default does not apply any extra sorting and the only available option is `engagement`.
 
 The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
 
 ### Lobsters
+
 Display a list of posts from [Lobsters](https://lobste.rs).
 
 Example:
@@ -786,9 +864,10 @@ Preview:
 ![](images/lobsters-widget-preview.png)
 
 #### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| instance-url | string | no | https://lobste.rs/ |
+| instance-url | string | no | <https://lobste.rs/> |
 | custom-url | string | no | |
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
@@ -796,6 +875,7 @@ Preview:
 | tags | array | no | |
 
 ##### `instance-url`
+
 The base URL for a lobsters instance hosted somewhere other than on lobste.rs. Example:
 
 ```yaml
@@ -803,21 +883,27 @@ instance-url: https://www.journalduhacker.net/
 ```
 
 ##### `custom-url`
+
 A custom URL to retrieve lobsters posts from. If this is specified, the `instance-url`, `sort-by` and `tags` properties are ignored.
 
 ##### `limit`
+
 The maximum number of posts to show.
 
 ##### `collapse-after`
+
 How many posts are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
 ##### `sort-by`
+
 The sort order in which posts are returned. Possible options are `hot` and `new`.
 
 ##### `tags`
+
 Limit to posts containing one of the given tags. **You cannot specify a sort order when filtering by tags, it will default to `hot`.**
 
 ### Reddit
+
 Display a list of posts from a specific subreddit.
 
 > [!WARNING]
@@ -832,6 +918,7 @@ Example:
 ```
 
 #### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | subreddit | string | yes |  |
@@ -840,7 +927,7 @@ Example:
 | show-flairs | boolean | no | false |
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
-| comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
+| comments-url-template | string | no | <https://www.reddit.com/{POST-PATH}> |
 | request-url-template | string | no |  |
 | proxy | string or multiple parameters | no |  |
 | sort-by | string | no | hot |
@@ -849,9 +936,11 @@ Example:
 | extra-sort-by | string | no | |
 
 ##### `subreddit`
+
 The subreddit for which to fetch the posts from.
 
 ##### `style`
+
 Used to change the appearance of the widget. Possible values are `vertical-list`, `horizontal-cards` and `vertical-cards`. The first two were designed for full columns and the last for small columns.
 
 `vertical-list`
@@ -867,6 +956,7 @@ Used to change the appearance of the widget. Possible values are `vertical-list`
 ![](images/reddit-widget-vertical-cards-preview.png)
 
 ##### `show-thumbnails`
+
 Shows or hides thumbnails next to the post. This only works if the `style` is `vertical-list`. Preview:
 
 ![](images/reddit-widget-vertical-list-thumbnails.png)
@@ -876,15 +966,19 @@ Shows or hides thumbnails next to the post. This only works if the `style` is `v
 > Thumbnails don't work for some subreddits due to Reddit's API not returning the thumbnail URL. No workaround for this yet.
 
 ##### `show-flairs`
+
 Shows post flairs when set to `true`.
 
 ##### `limit`
+
 The maximum number of posts to show.
 
 ##### `collapse-after`
+
 How many posts are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse. Not available when using the `vertical-cards` and `horizontal-cards` styles.
 
 ##### `comments-url-template`
+
 Used to replace the default link for post comments. Useful if you want to use the old Reddit design or any other 3rd party front-end. Example:
 
 ```yaml
@@ -904,11 +998,12 @@ r/selfhosted/comments/bsp01i/welcome_to_rselfhosted_please_read_this_first/
 `{SUBREDDIT}` - the subreddit name
 
 ##### `request-url-template`
+
 A custom request URL that will be used to fetch the data. This is useful when you're hosting Glance on a VPS where Reddit is blocking the requests and you want to route them through a proxy that accepts the URL as either a part of the path or a query parameter.
 
 Placeholders:
 
-`{REQUEST-URL}` - will be templated and replaced with the expanded request URL (i.e. https://www.reddit.com/r/selfhosted/hot.json). Example:
+`{REQUEST-URL}` - will be templated and replaced with the expanded request URL (i.e. <https://www.reddit.com/r/selfhosted/hot.json>). Example:
 
 ```
 https://proxy/{REQUEST-URL}
@@ -916,6 +1011,7 @@ https://your.proxy/?url={REQUEST-URL}
 ```
 
 ##### `proxy`
+
 A custom HTTP/HTTPS proxy URL that will be used to fetch the data. This is useful when you're hosting Glance on a VPS where Reddit is blocking the requests and you want to bypass the restriction by routing the requests through a proxy. Example:
 
 ```yaml
@@ -933,28 +1029,35 @@ proxy:
 ```
 
 ###### `allow-insecure`
+
 When set to `true`, allows the use of insecure connections such as when the proxy has a self-signed certificate.
 
 ###### `timeout`
+
 The maximum time to wait for a response from the proxy. The value is a string and must be a number followed by one of s, m, h, d. Example: `10s` for 10 seconds, `1m` for 1 minute, etc
 
 ##### `sort-by`
+
 Can be used to specify the order in which the posts should get returned. Possible values are `hot`, `new`, `top` and `rising`.
 
 ##### `top-period`
+
 Available only when `sort-by` is set to `top`. Possible values are `hour`, `day`, `week`, `month`, `year` and `all`.
 
 ##### `search`
+
 Keywords to search for. Searching within specific fields is also possible, **though keep in mind that Reddit may remove the ability to use any of these at any time**:
 
 ![](images/reddit-field-search.png)
 
 ##### `extra-sort-by`
+
 Can be used to specify an additional sort which will be applied on top of the already sorted posts. By default does not apply any extra sorting and the only available option is `engagement`.
 
 The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
 
 ### Search Widget
+
 Display a search bar that can be used to search for specific terms on various search engines.
 
 Example:
@@ -973,6 +1076,7 @@ Preview:
 ![](images/search-widget-preview.png)
 
 #### Keyboard shortcuts
+
 | Keys | Action | Condition |
 | ---- | ------ | --------- |
 | <kbd>S</kbd> | Focus the search bar | Not already focused on another input field |
@@ -986,6 +1090,7 @@ Preview:
 > You can use the property `new-tab` with a value of `true` if you want to show search results in a new tab by default. <kbd>Ctrl</kbd> + <kbd>Enter</kbd> will then show results in the same tab.
 
 #### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | search-engine | string | no | duckduckgo |
@@ -995,6 +1100,7 @@ Preview:
 | bangs | array | no | |
 
 ##### `search-engine`
+
 Either a value from the table below or a URL to a custom search engine. Use `{QUERY}` to indicate where the query value gets placed.
 
 | Name | URL |
@@ -1003,20 +1109,25 @@ Either a value from the table below or a URL to a custom search engine. Use `{QU
 | google | `https://www.google.com/search?q={QUERY}` |
 
 ##### `new-tab`
+
 When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
 
 ##### `autofocus`
+
 When set to `true`, automatically focuses the search input on page load.
 
 ##### `placeholder`
+
 When set, modifies the text displayed in the input field before typing.
 
 ##### `bangs`
+
 What now? [Bangs](https://duckduckgo.com/bangs). They're shortcuts that allow you to use the same search box for many different sites. Assuming you have it configured, if for example you start your search input with `!yt` you'd be able to perform a search on YouTube:
 
 ![](images/search-widget-bangs-preview.png)
 
 ##### Properties for each bang
+
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | title | string | no |
@@ -1024,19 +1135,23 @@ What now? [Bangs](https://duckduckgo.com/bangs). They're shortcuts that allow yo
 | url | string | yes |
 
 ###### `title`
+
 Optional title that will appear on the right side of the search bar when the query starts with the associated shortcut.
 
 ###### `shortcut`
+
 Any value you wish to use as the shortcut for the search engine. It does not have to start with `!`.
 
 > [!IMPORTANT]
 >
 > In YAML some characters have special meaning when placed in the beginning of a value. If your shortcut starts with `!` (and potentially some other special characters) you'll have to wrap the value in quotes:
+>
 > ```yaml
 > shortcut: "!yt"
 >```
 
 ###### `url`
+
 The URL of the search engine. Use `{QUERY}` to indicate where the query value gets placed. Examples:
 
 ```yaml
@@ -1046,6 +1161,7 @@ url: https://www.amazon.com/s?k={QUERY}
 ```
 
 ### Group
+
 Group multiple widgets into one using tabs. Widgets are defined using a `widgets` property exactly as you would on a page column. The only limitation is that you cannot place a group widget or a split column widget within a group widget.
 
 Example:
@@ -1090,6 +1206,7 @@ Example:
 ```
 
 ### Split Column
+
 Splits a full sized column in half, allowing you to place widgets side by side horizontally. This is converted to a single column on mobile devices or if not enough width is available. Widgets are defined using a `widgets` property exactly as you would on a page column.
 
 Two widgets side by side in a `full` column:
@@ -1114,6 +1231,7 @@ Two widgets side by side in a `full` column:
     - type: videos
 # ...
 ```
+
 </details>
 <br>
 
@@ -1146,6 +1264,7 @@ pages:
                 subreddit: sysadmin
                 collapse-after: 15
 ```
+
 </details>
 <br>
 
@@ -1180,6 +1299,7 @@ pages:
                 subreddit: sysadmin
                 collapse-after: 15
 ```
+
 </details>
 <br>
 
@@ -1227,11 +1347,11 @@ pages:
               - subreddit: FreeSoftware
                 <<: *subreddit-settings
 ```
+
 </details>
 <br>
 
 Just like the `group` widget, you can insert any widget type, you can even insert a `group` widget inside of a `split-column` widget, but you can't insert a `split-column` widget inside of a `group` widget.
-
 
 ### Custom API
 
@@ -1257,6 +1377,7 @@ Examples:
   template: |
     <p class="size-h4 color-paragraph">{{ .JSON.String "text" }}</p>
 ```
+
 </details>
 <br>
 
@@ -1290,6 +1411,7 @@ Examples:
       </div>
     </div>
 ```
+
 </details>
 <br>
 
@@ -1318,9 +1440,11 @@ Examples:
     {{ end }}
     </ul>
 ```
+
 </details>
 
 #### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | url | string | yes | |
@@ -1331,9 +1455,11 @@ Examples:
 | subrequests | map of requests | no | |
 
 ##### `url`
+
 The URL to fetch the data from. It must be accessible from the server that Glance is running on.
 
 ##### `headers`
+
 Optionally specify the headers that will be sent with the request. Example:
 
 ```yaml
@@ -1343,15 +1469,19 @@ headers:
 ```
 
 ##### `frameless`
+
 When set to `true`, removes the border and padding around the widget.
 
 ##### `template`
+
 The template that will be used to display the data. It relies on Go's `html/template` package so it's recommended to go through [its documentation](https://pkg.go.dev/text/template) to understand how to do basic things such as conditionals, loops, etc. In addition, it also uses [tidwall's gjson](https://github.com/tidwall/gjson) package to parse the JSON data so it's worth going through its documentation if you want to use more advanced JSON selectors. You can view additional examples with explanations and function definitions [here](custom-api.md).
 
 ##### `parameters`
+
 A list of keys and values that will be sent to the custom-api as query paramters.
 
 ##### `subrequests`
+
 A map of additional requests that will be executed concurrently and then made available in the template via the `.Subrequest` property. Example:
 
 ```yaml
@@ -1398,6 +1528,7 @@ parameters:
 ```
 
 ### Extension
+
 Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
 
 ```yaml
@@ -1409,6 +1540,7 @@ Display a widget provided by an external source (3rd party). If you want to lear
 ```
 
 #### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | url | string | yes | |
@@ -1417,12 +1549,15 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | parameters | key & value | no | |
 
 ##### `url`
+
 The URL of the extension. **Note that the query gets stripped from this URL and the one defined by `parameters` gets used instead.**
 
 ##### `fallback-content-type`
+
 Optionally specify the fallback content type of the extension if the URL does not return a valid `Widget-Content-Type` header. Currently the only supported value for this property is `html`.
 
 ##### `allow-potentially-dangerous-html`
+
 Whether to allow the extension to display HTML.
 
 > [!WARNING]
@@ -1430,10 +1565,12 @@ Whether to allow the extension to display HTML.
 > There's a reason this property is scary-sounding. It's intended to be used by developers who are comfortable with developing and using their own extensions. Do not enable it if you have no idea what it means or if you're not **absolutely sure** that the extension URL you're using is safe.
 
 ##### `parameters`
+
 A list of keys and values that will be sent to the extension as query paramters.
 
 ### Weather
-Display weather information for a specific location. The data is provided by https://open-meteo.com/.
+
+Display weather information for a specific location. The data is provided by <https://open-meteo.com/>.
 
 Example:
 
@@ -1448,10 +1585,9 @@ Example:
 >
 > US cities which have common names can have their state specified as the second parameter as such:
 >
-> * Greenville, North Carolina, United States
-> * Greenville, South Carolina, United States
-> * Greenville, Mississippi, United States
-
+> - Greenville, North Carolina, United States
+> - Greenville, South Carolina, United States
+> - Greenville, Mississippi, United States
 
 Preview:
 
@@ -1470,18 +1606,23 @@ Each bar represents a 2 hour interval. The yellow background represents sunrise 
 | show-area-name | boolean | no | false |
 
 ##### `location`
+
 The name of the city and country to fetch weather information for. Attempting to launch the applcation with an invalid location will result in an error. You can use the [gecoding API page](https://open-meteo.com/en/docs/geocoding-api) to search for your specific location. Glance will use the first result from the list if there are multiple.
 
 ##### `units`
+
 Whether to show the temperature in celsius or fahrenheit, possible values are `metric` or `imperial`.
 
 #### `hour-format`
+
 Whether to show the hours of the day in 12-hour format or 24-hour format. Possible values are `12h` and `24h`.
 
 ##### `hide-location`
+
 Optionally don't display the location name on the widget.
 
 ##### `show-area-name`
+
 Whether to display the state/administrative area in the location name. If set to `true` the location will be displayed as:
 
 ```
@@ -1495,6 +1636,7 @@ Greenville, United States
 ```
 
 ### Monitor
+
 Display a list of sites and whether they are reachable (online) or not. This is determined by sending a GET request to the specified URL, if the response is 200 then the site is OK. The time it took to receive a response is also shown in milliseconds.
 
 Example:
@@ -1537,9 +1679,11 @@ You can hover over the "ERROR" text to view more information.
 | show-failing-only | boolean | no | false |
 
 ##### `show-failing-only`
+
 Shows only a list of failing sites when set to `true`.
 
 ##### `style`
+
 Used to change the appearance of the widget. Possible values are `compact`.
 
 Preview of `compact`:
@@ -1620,6 +1764,7 @@ basic-auth:
 ```
 
 ### Releases
+
 Display a list of latest releases for specific repositories on Github, GitLab, Codeberg or Docker Hub.
 
 Example:
@@ -1652,6 +1797,7 @@ Preview:
 | collapse-after | integer | no | 5 |
 
 ##### `repositories`
+
 A list of repositores to fetch the latest release for. Only the name/repo is required, not the full URL. A prefix can be specified for repositories hosted elsewhere such as GitLab, Codeberg and Docker Hub. Example:
 
 ```yaml
@@ -1691,9 +1837,11 @@ repositories:
 ```
 
 ##### `show-source-icon`
+
 Shows an icon of the source (GitHub/GitLab/Codeberg/Docker Hub) next to the repository name when set to `true`.
 
 ##### `token`
+
 Without authentication Github allows for up to 60 requests per hour. You can easily exceed this limit and start seeing errors if you're tracking lots of repositories or your cache time is low. To circumvent this you can [create a read only token from your Github account](https://github.com/settings/personal-access-tokens/new) and provide it here.
 
 You can also specify the value for this token through an ENV variable using the syntax `${GITHUB_TOKEN}` where `GITHUB_TOKEN` is the name of the variable that holds the token. If you've installed Glance through docker you can specify the token in your docker-compose:
@@ -1717,12 +1865,15 @@ and then use it in your `glance.yml` like this:
 This way you can safely check your `glance.yml` in version control without exposing the token.
 
 ##### `gitlab-token`
+
 Same as the above but used when fetching GitLab releases.
 
 ##### `limit`
+
 The maximum number of releases to show.
 
 #### `collapse-after`
+
 How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
 ### Docker Containers
@@ -1795,6 +1946,7 @@ services:
       glance.parent: immich
       glance.name: Proxy
 ```
+
 </details>
 <br>
 
@@ -1814,12 +1966,15 @@ If any of the child containers are down, their status will propagate up to the p
 | sock-path | string | no | /var/run/docker.sock |
 
 ##### `hide-by-default`
+
 Whether to hide the containers by default. If set to `true` you'll have to manually add a `glance.hide: false` label to each container you want to display. By default all containers will be shown and if you want to hide a specific container you can add a `glance.hide: true` label.
 
 ##### `sock-path`
+
 The path to the Docker socket.
 
 #### Labels
+
 | Name | Description |
 | ---- | ----------- |
 | glance.name | The name displayed in the UI. If not specified, the name of the container will be used. |
@@ -1832,6 +1987,7 @@ The path to the Docker socket.
 | glance.parent | The ID of the parent container. Used to group containers under a single parent. |
 
 ### DNS Stats
+
 Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home, Pi-hole, or Technitium.
 
 Example:
@@ -1867,37 +2023,47 @@ Preview:
 | hour-format | string | no | 12h |
 
 ##### `service`
+
 Either `adguard`, `technitium`, or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
 
 ##### `allow-insecure`
+
 Whether to allow invalid/self-signed certificates when making the request to the service.
 
 ##### `url`
+
 The base URL of the service.
 
 ##### `username`
+
 Only required when using AdGuard Home. The username used to log into the admin dashboard.
 
 ##### `password`
+
 Required when using AdGuard Home, where the password is the one used to log into the admin dashboard.
 
 Also required when using Pi-hole major version 6 and above, where the password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
 
 ##### `token`
+
 Required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`.
 
 Also required when using Technitium, an API token can be generated at `Administration -> Sessions -> Create Token`.
 
 ##### `hide-graph`
+
 Whether to hide the graph showing the number of queries over time.
 
 ##### `hide-top-domains`
+
 Whether to hide the list of top blocked domains.
 
 ##### `hour-format`
+
 Whether to display the relative time in the graph in `12h` or `24h` format.
 
 ### Server Stats
+
 Display statistics such as CPU usage, memory usage and disk usage of the server Glance is running on or other servers.
 
 Example:
@@ -1924,14 +2090,17 @@ In the event that the CPU temperature goes over 80°C, a flame icon will appear 
 ![](images/server-stats-flame-icon.png)
 
 #### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | servers | array | no |  |
 
 ##### `servers`
+
 If not provided it will display the statistics of the server Glance is running on.
 
 ##### Properties for both `local` and `remote` servers
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | type | string | yes |  |
@@ -1939,15 +2108,19 @@ If not provided it will display the statistics of the server Glance is running o
 | hide-swap | boolean | no | false |
 
 ###### `type`
+
 Whether to display statistics for the local server or a remote server. Possible values are `local` and `remote`.
 
 ###### `name`
+
 The name of the server which will be displayed on the widget. If not provided it will default to the server's hostname.
 
 ###### `hide-swap`
+
 Whether to hide the swap usage.
 
 ##### Properties for the `local` server
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | cpu-temp-sensor | string | no |  |
@@ -1955,9 +2128,11 @@ Whether to hide the swap usage.
 | mountpoints | map\[string\]object | no |  |
 
 ###### `cpu-temp-sensor`
+
 The name of the sensor to use for the CPU temperature. When not provided the widget will attempt to find the correct one, if it fails to do so the temperature will not be displayed. To view the available sensors you can use `sensors` command.
 
 ###### `hide-mountpoints-by-default`
+
 If set to `true` you'll have to manually make each mountpoint visible by adding a `hide: false` property to it like so:
 
 ```yaml
@@ -1975,6 +2150,7 @@ If set to `true` you'll have to manually make each mountpoint visible by adding 
 This is useful if you're running Glance inside of a container which usually mounts a lot of irrelevant filesystems.
 
 ###### `mountpoints`
+
 A map of mountpoints to display disk usage for. The key is the path to the mountpoint and the value is an object with optional properties. Example:
 
 ```yaml
@@ -1988,18 +2164,22 @@ mountpoints:
 ```
 
 ##### Properties for each `mountpoint`
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | name | string | no |  |
 | hide | boolean | no | false |
 
 ###### `name`
+
 The name of the mountpoint which will be displayed on the widget. If not provided it will default to the mountpoint's path.
 
 ###### `hide`
+
 Whether to hide this mountpoint from the widget.
 
 ##### Properties for `remote` servers
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | url | string | yes |  |
@@ -2007,15 +2187,19 @@ Whether to hide this mountpoint from the widget.
 | timeout | string | no | 3s |
 
 ###### `url`
+
 The URL and port of the server to fetch the statistics from.
 
 ###### `token`
+
 The authentication token to use when fetching the statistics.
 
 ###### `timeout`
+
 The maximum time to wait for a response from the server. The value is a string and must be a number followed by one of s, m, h, d. Example: `10s` for 10 seconds, `1m` for 1 minute, etc
 
 ### Repository
+
 Display general information about a repository as well as a list of the latest open pull requests and issues.
 
 Example:
@@ -2043,21 +2227,27 @@ Preview:
 | commits-limit | integer | no | -1 |
 
 ##### `repository`
+
 The owner and repository name that will have their information displayed.
 
 ##### `token`
+
 Without authentication Github allows for up to 60 requests per hour. You can easily exceed this limit and start seeing errors if your cache time is low or you have many instances of this widget. To circumvent this you can [create a read only token from your Github account](https://github.com/settings/personal-access-tokens/new) and provide it here.
 
 ##### `pull-requests-limit`
+
 The maximum number of latest open pull requests to show. Set to `-1` to not show any.
 
 ##### `issues-limit`
+
 The maximum number of latest open issues to show. Set to `-1` to not show any.
 
 ##### `commits-limit`
+
 The maximum number of lastest commits to show from the default branch. Set to `-1` to not show any.
 
 ### Bookmarks
+
 Display a list of links which can be grouped.
 
 Example:
@@ -2100,7 +2290,6 @@ Preview:
 
 ![](images/bookmarks-widget-preview.png)
 
-
 #### Properties
 
 | Name | Type | Required |
@@ -2108,9 +2297,11 @@ Preview:
 | groups | array | yes |
 
 ##### `groups`
+
 An array of groups which can optionally have a title and a custom color.
 
 ###### Properties for each group
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | title | string | no | |
@@ -2125,6 +2316,7 @@ An array of groups which can optionally have a title and a custom color.
 > You can set `same-tab`, `hide-arrow` and `target` either on the group which will apply them to all links in that group, or on each individual link which will override the value set on the group.
 
 ###### Properties for each link
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | title | string | yes | |
@@ -2162,6 +2354,7 @@ Whether to hide the colored arrow on each link.
 Set a custom value for the link's `target` attribute. Possible values are `_blank`, `_self`, `_parent` and `_top`, you can read more about what they do [here](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target). This property has precedence over `same-tab`.
 
 ### ChangeDetection.io
+
 Display a list watches from changedetection.io.
 
 Example
@@ -2187,18 +2380,23 @@ Preview:
 | watches | array of strings | no |  |
 
 ##### `instance-url`
+
 The URL pointing to your instance of `changedetection.io`.
 
 ##### `token`
+
 The API access token which can be found in `SETTINGS > API`. Optionally, you can specify this using an environment variable with the syntax `${VARIABLE_NAME}`.
 
 ##### `limit`
+
 The maximum number of watches to show.
 
 ##### `collapse-after`
+
 How many watches are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
 ##### `watches`
+
 By default all of the configured watches will be shown. Optionally, you can specify a list of UUIDs for the specific watches you want to have listed:
 
 ```yaml
@@ -2209,6 +2407,7 @@ By default all of the configured watches will be shown. Optionally, you can spec
 ```
 
 ### Clock
+
 Display a clock showing the current time and date. Optionally, also display the the time in other timezones.
 
 Example:
@@ -2237,6 +2436,7 @@ Preview:
 | timezones | array | no |  |
 
 ##### `hour-format`
+
 Whether to show the time in 12 or 24 hour format. Possible values are `12h` and `24h`.
 
 #### Properties for each timezone
@@ -2247,13 +2447,15 @@ Whether to show the time in 12 or 24 hour format. Possible values are `12h` and 
 | label | string | no | |
 
 ##### `timezone`
+
 A timezone identifier such as `Europe/London`, `America/New_York`, etc. The full list of available identifiers can be found [here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
 
 ##### `label`
+
 Optionally, override the display value for the timezone to something more meaningful such as "Home", "Work" or anything else.
 
-
 ### Calendar
+
 Display a calendar.
 
 Example:
@@ -2274,9 +2476,11 @@ Preview:
 | first-day-of-week | string | no | monday |
 
 ##### `first-day-of-week`
+
 The day of the week that the calendar starts on. All week days are available as possible values.
 
 ### Calendar (legacy)
+
 Display a calendar.
 
 Example:
@@ -2301,6 +2505,7 @@ Preview:
 | start-sunday | boolean | no | false |
 
 ##### `start-sunday`
+
 Whether calendar weeks start on Sunday or Monday.
 
 > [!NOTE]
@@ -2308,6 +2513,7 @@ Whether calendar weeks start on Sunday or Monday.
 > There is currently little customizability available for the calendar. Extra features will be added in the future.
 
 ### Markets
+
 Display a list of markets, their current value, change for the day and a small 21d chart. Data is taken from Yahoo Finance.
 
 Example:
@@ -2341,12 +2547,15 @@ Preview:
 | symbol-link-template | string | no |
 
 ##### `markets`
+
 An array of markets for which to display information about.
 
 ##### `sort-by`
+
 By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `change` for descending order based on the stock's percentage change (e.g. 1% would be sorted higher than -1%) or `absolute-change` for descending order based on the stock's absolute price change (e.g. -1% would be sorted higher than +0.5%).
 
 ##### `chart-link-template`
+
 A template for the link to go to when clicking on the chart that will be applied to all markets. The value `{SYMBOL}` will be replaced with the symbol of the market. You can override this on a per-market basis by specifying a `chart-link` property. Example:
 
 ```yaml
@@ -2354,6 +2563,7 @@ chart-link-template: https://www.tradingview.com/chart/?symbol={SYMBOL}
 ```
 
 ##### `symbol-link-template`
+
 A template for the link to go to when clicking on the symbol that will be applied to all markets. The value `{SYMBOL}` will be replaced with the symbol of the market. You can override this on a per-market basis by specifying a `symbol-link` property. Example:
 
 ```yaml
@@ -2361,6 +2571,7 @@ symbol-link-template: https://www.google.com/search?tbm=nws&q={SYMBOL}
 ```
 
 ###### Properties for each market
+
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | symbol | string | yes |
@@ -2385,6 +2596,7 @@ The link to go to when clicking on the symbol.
 The link to go to when clicking on the chart.
 
 ### Twitch Channels
+
 Display a list of channels from Twitch.
 
 Example:
@@ -2405,6 +2617,7 @@ Preview:
 ![](images/twitch-channels-widget-preview.png)
 
 #### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | channels | array | yes | |
@@ -2412,15 +2625,19 @@ Preview:
 | sort-by | string | no | viewers |
 
 ##### `channels`
+
 A list of channels to display.
 
 ##### `collapse-after`
+
 How many channels are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
 ##### `sort-by`
+
 Can be used to specify the order in which the channels are displayed. Possible values are `viewers` and `live`.
 
 ### Twitch top games
+
 Display a list of games with the most viewers on Twitch.
 
 Example:
@@ -2440,6 +2657,7 @@ Preview:
 ![](images/twitch-top-games-widget-preview.png)
 
 #### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | exclude | array | no | |
@@ -2447,6 +2665,7 @@ Preview:
 | collapse-after | integer | no | 5 |
 
 ##### `exclude`
+
 A list of categories that will never be shown. You must provide the slug found by clicking on the category and looking at the URL:
 
 ```
@@ -2455,12 +2674,15 @@ https://www.twitch.tv/directory/category/grand-theft-auto-v
 ```
 
 ##### `limit`
+
 The maximum number of games to show.
 
 ##### `collapse-after`
+
 How many games are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
 ### iframe
+
 Embed an iframe as a widget.
 
 Example:
@@ -2472,18 +2694,22 @@ Example:
 ```
 
 #### Properties
+
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | source | string | yes | |
 | height | integer | no | 300 |
 
 ##### `source`
+
 The source of the iframe.
 
 ##### `height`
+
 The height of the iframe. The minimum allowed height is 50.
 
 ### HTML
+
 Embed any HTML.
 
 Example:
@@ -2495,3 +2721,78 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+### Media Server
+
+Displays your media server active sessions per users.
+
+Example:
+
+```yaml
+- type: media-server
+  title: Plex
+  apikey: ${X_PLEX_TOKEN}
+  tautulli-url: ${PLEX_URL}
+  progress-bar: true 
+  progress-type: ends-at-12 
+  thumbnails: false 
+```
+
+Preview:
+
+![](images/media-server-wide-preview.gif)
+![](images/media-server-small-preview.gif)
+
+#### Properties
+
+| Name          | Type    | Required | Default    |
+| ------------- | ------- | -------- | ---------- |
+| media-server  | string  | yes      |            |
+| apikey        | string  | yes      |            |
+| url           | string  | yes      |            |
+| progress-bar  | bool    | no       | true       |
+| progress-type | string  | no       | ends-at-24 |
+| thumbnails    | bool    | no       | true       |
+
+##### `media-server`
+
+Your media server.
+Options are : `plex`, `jellyfin` or `tautulli`
+
+> __**Note:**__ I didn't test but Emby API is very similar to Jellyfin's one.
+>       You can use `jellyfin`, if there is any problems, I will check it.
+
+##### `apikey`
+
+Your media server API key.
+- Plex: Use your `X-Plex-Token` read the [How to find Plex Token](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/)
+- Jellyfin: In Administration -> Dashboard -> API Keys
+- Tautulli: In Settings -> Web Interface -> API key
+
+##### `url`
+
+Your media server url. You need to add `http://` or `https://`.
+You can use your own domain, or `IP:PORT` format.
+Do not leave a trailing `/` at the end or the url.
+
+##### `progress-bar`
+
+Display a progress bar of what's being played.
+For now, it's mostly for fluff.
+
+> __**Note:**__ The progress bar is not dynamic. It uses CSS animation.
+
+##### `progress-type`
+
+Display a progress indicator next to the progress bar.
+Options are : `ends-at-24`, `ends-at-12`, `percentage` or `none`
+
+> __**Note:**__ This is not dynamic. That's why I added the `ends-at-XX` option.
+>       I left the `percentage` option in case we have a solution to update this later.
+
+##### `thumbnails`
+
+Display the thumbnail of the item being played.
+
+> __**Note:**__ ⚠️ WARNING ⚠️ The thumbnails url contains your API key.
+>       If you are exposing glance to the internet I strongly suggest to set this to `false`

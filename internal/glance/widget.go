@@ -79,6 +79,8 @@ func newWidget(widgetType string) (widget, error) {
 		w = &dockerContainersWidget{}
 	case "server-stats":
 		w = &serverStatsWidget{}
+	case "media-server":
+		w = &MediaServerWidget{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}
@@ -185,7 +187,6 @@ func (w *widgetBase) IsWIP() bool {
 }
 
 func (w *widgetBase) update(ctx context.Context) {
-
 }
 
 func (w *widgetBase) GetID() uint64 {

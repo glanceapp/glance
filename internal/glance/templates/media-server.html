@@ -1,0 +1,64 @@
+{{ template "widget-base.html" . }} 
+{{ define "widget-content" }}
+<div class="media-server gap-20">
+  {{- if gt (len .Users) 0 }}
+    {{- range .Users }}
+      <div class="media-server-user flex flex-column grow max-width-100">
+        <h2 class="size-h2 color-primary">{{ .Name }}</h2>
+        <hr class="media-server-separator margin-bottom-10" />
+
+        <div class="media-server-sessions flex flex-column gap-10">
+          {{- range .Sessions }}
+            {{- if ne .Title "" }}
+              <div class="media-server-session flex gap-10 items-center">
+                {{- if $.Thumbnails }}
+                  <div class="media-server-session-thumb shrink-0">
+                    <img src="{{.Thumb}}" alt="{{ .Title }} thumbnail" />
+                  </div>
+                {{- end }}
+
+                <ul class="media-server-session-info flex flex-column gap-5 min-width-0 grow">
+                  <li class="media-server-session-info-content color-highlight size-h5">
+                    {{- if eq .MediaType "show" }}
+                      {{ .SeriesTitle }} - S{{ .SeasonNumber }}E{{ .EpisodeNumber }} - {{ .EpisodeTitle }}
+                    {{- else if eq .MediaType "music" }}
+                      {{ .ArtistTitle }} - {{ .AlbumTitle }} - {{ .SongTitle }}
+                    {{- else if eq .MediaType "movie" }}
+                      {{ .MovieTitle }}
+                    {{- else }}
+                      {{ .Title }}
+                    {{- end }}
+                  </li>
+
+                  {{- if $.ProgressBar }}
+                    <li class="media-server-session-info-progress flex gap-10 items-center">
+                      <div class="media-server-sesssion-info-progress-container grow">
+                        <div class="media-server-session-info-progress-bar" 
+                          style="width: {{ .ProgressPercent }}%; 
+                            animation: progress-animation {{ .RemainingSeconds }}s linear forwards;"
+                          data-progress="{{ .ProgressPercent }}"
+                          data-remaining="{{ .RemainingSeconds }}">
+                        </div>
+                      </div>
+                      {{- if eq $.ProgressType "percentage" }}
+                        <span class="media-server-session-info-progress-text size-h6 text-right">{{ .ProgressPercent }}%</span>
+                      {{- else if eq $.ProgressType "none" }}
+                      {{- else }}
+                        <span class="media-server-session-info-progress-text size-h6 text-right">ends at {{ .EndTime }}</span>
+                      {{- end }}
+                    </li>
+                  {{- end }}
+                </ul>
+              </div>
+            {{- end }}
+          {{- end }}
+        </div>
+      </div>
+    {{- end }}
+  {{- else }}
+    <span class="media-server-no-sessions text-center">
+      no one is playing anything right now.
+    </span>
+  {{- end }}
+</div>
+{{ end }}
