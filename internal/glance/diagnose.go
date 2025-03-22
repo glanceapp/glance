@@ -103,7 +103,7 @@ func runDiagnostic() {
 	fmt.Println("Glance version: " + buildVersion)
 	fmt.Println("Go version: " + runtime.Version())
 	fmt.Printf("Platform: %s / %s / %d CPUs\n", runtime.GOOS, runtime.GOARCH, runtime.NumCPU())
-	fmt.Println("In Docker container: " + boolToString(isRunningInsideDockerContainer(), "yes", "no"))
+	fmt.Println("In Docker container: " + ternary(isRunningInsideDockerContainer(), "yes", "no"))
 
 	fmt.Printf("\nChecking network connectivity, this may take up to %d seconds...\n\n", int(httpTestRequestTimeout.Seconds()))
 
@@ -129,7 +129,7 @@ func runDiagnostic() {
 
 		fmt.Printf(
 			"%s %s %s| %dms\n",
-			boolToString(step.err == nil, "✓ Can", "✗ Can't"),
+			ternary(step.err == nil, "✓ Can", "✗ Can't"),
 			step.name,
 			extraInfo,
 			step.elapsed.Milliseconds(),
