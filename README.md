@@ -264,59 +264,31 @@ Glance can also be installed through the following 3rd party channels:
 
 <br>
 
-## Building from source
-
-Choose one of the following methods:
-
+## Common issues
 <details>
-<summary><strong>Build binary with Go</strong></summary>
-<br>
+<summary><strong>Requests timing out</strong></summary>
 
-Requirements: [Go](https://go.dev/dl/) >= v1.23
+The most common cause of this is when using Pi-Hole, AdGuard Home or other ad-blocking DNS services, which by default have a fairly low rate limit. Depending on the number of widgets you have in a single page, this limit can very easily be exceeded. To fix this, increase the rate limit in the settings of your DNS service.
 
-To build the project for your current OS and architecture, run:
-
-```bash
-go build -o build/glance .
+If using Podman, in some rare cases the timeout can be caused by an unknown issue, in which case it may be resolved by adding the following to the bottom of your `docker-compose.yml` file:
+```yaml
+networks:
+  podman:
+    external: true
 ```
-
-To build for a specific OS and architecture, run:
-
-```bash
-GOOS=linux GOARCH=amd64 go build -o build/glance .
-```
-
-[*click here for a full list of GOOS and GOARCH combinations*](https://go.dev/doc/install/source#:~:text=$GOOS%20and%20$GOARCH)
-
-Alternatively, if you just want to run the app without creating a binary, like when you're testing out changes, you can run:
-
-```bash
-go run .
-```
-<hr>
 </details>
 
 <details>
-<summary><strong>Build project and Docker image with Docker</strong></summary>
-<br>
+<summary><strong>Broken layout for markets, bookmarks or other widgets</strong></summary>
 
-Requirements: [Docker](https://docs.docker.com/engine/install/)
+This is almost always caused by the browser extension Dark Reader. To fix this, disable dark mode for the domain where Glance is hosted.
+</details>
 
-To build the project and image using just Docker, run:
+<details>
+<summary><strong>cannot unmarshal !!map into []glance.page</strong></summary>
 
-*(replace `owner` with your name or organization)*
+The most common cause of this is having a `pages` key in your `glance.yml` and then also having a `pages` key inside one of your included pages. To fix this, remove the `pages` key from the top of your included pages.
 
-```bash
-docker build -t owner/glance:latest .
-```
-
-If you wish to push the image to a registry (by default Docker Hub), run:
-
-```bash
-docker push owner/glance:latest
-```
-
-<hr>
 </details>
 
 <br>
@@ -372,6 +344,63 @@ Feature requests are tagged with one of the following:
 * [Roadmap](https://github.com/glanceapp/glance/labels/roadmap) - will be implemented in a future release
 * [Backlog](https://github.com/glanceapp/glance/labels/backlog) - may be implemented in the future but needs further feedback or interest from the community
 * [Icebox](https://github.com/glanceapp/glance/labels/icebox) - no plans to implement as it doesn't currently align with the project's goals or capabilities, may be revised at a later date
+
+<br>
+
+## Building from source
+
+Choose one of the following methods:
+
+<details>
+<summary><strong>Build binary with Go</strong></summary>
+<br>
+
+Requirements: [Go](https://go.dev/dl/) >= v1.23
+
+To build the project for your current OS and architecture, run:
+
+```bash
+go build -o build/glance .
+```
+
+To build for a specific OS and architecture, run:
+
+```bash
+GOOS=linux GOARCH=amd64 go build -o build/glance .
+```
+
+[*click here for a full list of GOOS and GOARCH combinations*](https://go.dev/doc/install/source#:~:text=$GOOS%20and%20$GOARCH)
+
+Alternatively, if you just want to run the app without creating a binary, like when you're testing out changes, you can run:
+
+```bash
+go run .
+```
+<hr>
+</details>
+
+<details>
+<summary><strong>Build project and Docker image with Docker</strong></summary>
+<br>
+
+Requirements: [Docker](https://docs.docker.com/engine/install/)
+
+To build the project and image using just Docker, run:
+
+*(replace `owner` with your name or organization)*
+
+```bash
+docker build -t owner/glance:latest .
+```
+
+If you wish to push the image to a registry (by default Docker Hub), run:
+
+```bash
+docker push owner/glance:latest
+```
+
+<hr>
+</details>
 
 <br>
 
