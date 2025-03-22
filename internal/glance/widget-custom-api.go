@@ -21,10 +21,11 @@ var customAPIWidgetTemplate = mustParseTemplate("custom-api.html", "widget-base.
 
 // Needs to be exported for the YAML unmarshaler to work
 type CustomAPIRequest struct {
-	URL         string               `json:"url"`
-	Headers     map[string]string    `json:"headers"`
-	Parameters  queryParametersField `json:"parameters"`
-	httpRequest *http.Request        `yaml:"-"`
+	URL           string               `json:"url"`
+	AllowInsecure bool                 `json:"allow-insecure"`
+	Headers       map[string]string    `json:"headers"`
+	Parameters    queryParametersField `json:"parameters"`
+	httpRequest   *http.Request        `yaml:"-"`
 }
 
 type customAPIWidget struct {
@@ -125,7 +126,8 @@ func (data *customAPITemplateData) Subrequest(key string) *customAPIResponseData
 }
 
 func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customAPIResponseData, error) {
-	resp, err := defaultHTTPClient.Do(req.httpRequest.WithContext(ctx))
+	client := ternary(req.AllowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
+	resp, err := client.Do(req.httpRequest.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -314,28 +316,12 @@ var customAPITemplateFuncs = func() template.FuncMap {
 
 			return a / b
 		},
-		"parseTime": func(layout, value string) time.Time {
-			switch strings.ToLower(layout) {
-			case "rfc3339":
-				layout = time.RFC3339
-			case "rfc3339nano":
-				layout = time.RFC3339Nano
-			case "datetime":
-				layout = time.DateTime
-			case "dateonly":
-				layout = time.DateOnly
-			case "timeonly":
-				layout = time.TimeOnly
-			}
-
-			parsed, err := time.Parse(layout, value)
-			if err != nil {
-				return time.Unix(0, 0)
-			}
-
-			return parsed
-		},
+		"parseTime":      customAPIFuncParseTime,
 		"toRelativeTime": dynamicRelativeTimeAttrs,
+		"parseRelativeTime": func(layout, value string) template.HTMLAttr {
+			// Shorthand to do both of the above with a single function call
+			return dynamicRelativeTimeAttrs(customAPIFuncParseTime(layout, value))
+		},
 	}
 
 	for key, value := range globalTemplateFunctions {
@@ -346,3 +332,25 @@ var customAPITemplateFuncs = func() template.FuncMap {
 
 	return funcs
 }()
+
+func customAPIFuncParseTime(layout, value string) time.Time {
+	switch strings.ToLower(layout) {
+	case "rfc3339":
+		layout = time.RFC3339
+	case "rfc3339nano":
+		layout = time.RFC3339Nano
+	case "datetime":
+		layout = time.DateTime
+	case "dateonly":
+		layout = time.DateOnly
+	case "timeonly":
+		layout = time.TimeOnly
+	}
+
+	parsed, err := time.Parse(layout, value)
+	if err != nil {
+		return time.Unix(0, 0)
+	}
+
+	return parsed
+}

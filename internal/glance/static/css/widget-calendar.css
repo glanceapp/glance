@@ -1,0 +1,71 @@
+.old-calendar-day {
+    width: calc(100% / 7);
+    text-align: center;
+    padding: 0.6rem 0;
+}
+
+.old-calendar-day-today {
+    border-radius: var(--border-radius);
+    background-color: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) (var(--bgl)) + 6%)));
+    color: var(--color-text-highlight);
+}
+
+.calendar-dates {
+    text-align: center;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.calendar-date {
+    padding: 0.4rem 0;
+    color: var(--color-text-base);
+    position: relative;
+    border-radius: var(--border-radius);
+    background: none;
+    border: none;
+    font: inherit;
+}
+
+.calendar-current-date {
+    border-radius: var(--border-radius);
+    background-color: var(--color-popover-border);
+    color: var(--color-text-highlight);
+}
+
+.calendar-spillover-date {
+    color: var(--color-text-subdue);
+}
+
+.calendar-header-button {
+    position: relative;
+    cursor: pointer;
+    width: 2rem;
+    height: 2rem;
+    z-index: 1;
+    background: none;
+    border: none;
+}
+
+.calendar-header-button::before {
+    content: '';
+    position: absolute;
+    inset: -0.2rem;
+    border-radius: var(--border-radius);
+    background-color: var(--color-text-subdue);
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: -1;
+}
+
+.calendar-header-button:hover::before {
+    opacity: 0.4;
+}
+
+.calendar-undo-button {
+    display: inline-block;
+    vertical-align: text-top;
+    width: 2rem;
+    height: 2rem;
+    margin-left: 0.7rem;
+}

@@ -364,7 +364,7 @@ Used to indicate that something is positive, such as stock price being up, twitc
 
 #### `negative-color`
 
-Oppposite of `positive-color`.
+Opposite of `positive-color`.
 
 #### `contrast-multiplier`
 
@@ -426,6 +426,7 @@ pages:
 | name | string | yes | |
 | slug | string | no | |
 | width | string | no | |
+| desktop-navigation-width | string | no | |
 | center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
 | expand-mobile-page-navigation | boolean | no | false |
@@ -442,9 +443,15 @@ The URL friendly version of the title which is used to access the page. For exam
 
 #### `width`
 
-The maximum width of the page on desktop. Possible values are `slim` and `wide`.
+The maximum width of the page on desktop. Possible values are `default`, `slim` and `wide`.
 
-- default: `1600px` (when no value is specified)
+#### `desktop-navigation-width`
+
+The maximum width of the desktop navigation. Useful if you have a few pages that use a different width than the rest and don't want the navigation to jump abruptly when going to and away from those pages. Possible values are `default`, `slim` and `wide`.
+
+Here are the pixel equivalents for each value:
+
+- default: `1600px`
 - slim: `1100px`
 - wide: `1920px`
 
@@ -1107,6 +1114,10 @@ Either a value from the table below or a URL to a custom search engine. Use `{QU
 | ---- | --- |
 | duckduckgo | `https://duckduckgo.com/?q={QUERY}` |
 | google | `https://www.google.com/search?q={QUERY}` |
+| bing | `https://www.bing.com/search?q={QUERY}` |
+| perplexity | `https://www.perplexity.ai/search?q={QUERY}` |
+| kagi | `https://kagi.com/search?q={QUERY}` |
+| startpage | `https://www.startpage.com/search?q={QUERY}` |
 
 ##### `new-tab`
 
@@ -1450,6 +1461,7 @@ Examples:
 | url | string | yes | |
 | headers | key (string) & value (string) | no | |
 | frameless | boolean | no | false |
+| allow-insecure | boolean | no | false |
 | template | string | yes | |
 | parameters | key (string) & value (string|array) | no | |
 | subrequests | map of requests | no | |
@@ -1471,6 +1483,10 @@ headers:
 ##### `frameless`
 
 When set to `true`, removes the border and padding around the widget.
+
+##### `allow-insecure`
+
+Whether to ignore invalid/self-signed certificates.
 
 ##### `template`
 
@@ -2759,12 +2775,15 @@ Preview:
 Your media server.
 Options are : `plex`, `jellyfin` or `tautulli`
 
-> __**Note:**__ I didn't test but Emby API is very similar to Jellyfin's one.
->       You can use `jellyfin`, if there is any problems, I will check it.
+> [!NOTE]
+>
+> I didn't test but Emby API is very similar to Jellyfin's one.
+> You can use `jellyfin`, if there is any problems, I will check it.
 
 ##### `apikey`
 
 Your media server API key.
+
 - Plex: Use your `X-Plex-Token` read the [How to find Plex Token](https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/)
 - Jellyfin: In Administration -> Dashboard -> API Keys
 - Tautulli: In Settings -> Web Interface -> API key
@@ -2780,19 +2799,25 @@ Do not leave a trailing `/` at the end or the url.
 Display a progress bar of what's being played.
 For now, it's mostly for fluff.
 
-> __**Note:**__ The progress bar is not dynamic. It uses CSS animation.
+> [!NOTE]
+>
+> The progress bar is not dynamic. It uses CSS animation.
 
 ##### `progress-type`
 
 Display a progress indicator next to the progress bar.
 Options are : `ends-at-24`, `ends-at-12`, `percentage` or `none`
 
-> __**Note:**__ This is not dynamic. That's why I added the `ends-at-XX` option.
->       I left the `percentage` option in case we have a solution to update this later.
+> [!NOTE]
+>
+> This is not dynamic. That's why I added the `ends-at-XX` option.
+> I left the `percentage` option in case we have a solution to update this later.
 
 ##### `thumbnails`
 
 Display the thumbnail of the item being played.
 
-> __**Note:**__ ⚠️ WARNING ⚠️ The thumbnails url contains your API key.
->       If you are exposing glance to the internet I strongly suggest to set this to `false`
+> [!CAUTION]
+>
+> The thumbnails url contains your API key.
+> If you are exposing glance to the internet I strongly suggest to set this to `false`

@@ -64,6 +64,7 @@ type page struct {
 	Title                      string `yaml:"name"`
 	Slug                       string `yaml:"slug"`
 	Width                      string `yaml:"width"`
+	DesktopNavigationWidth     string `yaml:"desktop-navigation-width"`
 	ShowMobileHeader           bool   `yaml:"show-mobile-header"`
 	ExpandMobilePageNavigation bool   `yaml:"expand-mobile-page-navigation"`
 	HideDesktopNavigation      bool   `yaml:"hide-desktop-navigation"`
@@ -107,13 +108,14 @@ func newConfigFromYAML(contents []byte) (*config, error) {
 	return config, nil
 }
 
+var envVariableNamePattern = regexp.MustCompile(`^[A-Z0-9_]+$`)
 var configVariablePattern = regexp.MustCompile(`(^|.)\$\{(?:([a-zA-Z]+):)?([a-zA-Z0-9_-]+)\}`)
 
 // Parses variables defined in the config such as:
 // ${API_KEY} 				            - gets replaced with the value of the API_KEY environment variable
 // \${API_KEY} 					        - escaped, gets used as is without the \ in the config
 // ${secret:api_key} 			        - value gets loaded from /run/secrets/api_key
-// ${loadFileFromEnv:PATH_TO_SECRET}    - value gets loaded from the file path specified in the environment variable PATH_TO_SECRET
+// ${readFileFromEnv:PATH_TO_SECRET}    - value gets loaded from the file path specified in the environment variable PATH_TO_SECRET
 //
 // TODO: don't match against commented out sections, not sure exactly how since
 // variables can be placed anywhere and used to modify the YAML structure itself
@@ -132,10 +134,6 @@ func parseConfigVariables(contents []byte) ([]byte, error) {
 			return match
 		}
 
-		typeAsString := string(groups[2])
-		variableType := ternary(typeAsString == "", configVarTypeEnv, typeAsString)
-		value := string(groups[3])
-
 		prefix := string(groups[1])
 		if prefix == `\` {
 			if len(match) >= 2 {
@@ -145,10 +143,17 @@ func parseConfigVariables(contents []byte) ([]byte, error) {
 			}
 		}
 
-		parsedValue, localErr := parseConfigVariableOfType(variableType, value)
+		typeAsString, variableName := string(groups[2]), string(groups[3])
+		variableType := ternary(typeAsString == "", configVarTypeEnv, typeAsString)
+
+		parsedValue, returnOriginal, localErr := parseConfigVariableOfType(variableType, variableName)
 		if localErr != nil {
 			err = fmt.Errorf("parsing variable: %v", localErr)
 			return nil
+		}
+
+		if returnOriginal {
+			return match
 		}
 
 		return []byte(prefix + parsedValue)
@@ -161,37 +166,50 @@ func parseConfigVariables(contents []byte) ([]byte, error) {
 	return replaced, nil
 }
 
-func parseConfigVariableOfType(variableType, value string) (string, error) {
+// When the bool return value is true, it indicates that the caller should use the original value
+func parseConfigVariableOfType(variableType, variableName string) (string, bool, error) {
 	switch variableType {
 	case configVarTypeEnv:
-		v, found := os.LookupEnv(value)
-		if !found {
-			return "", fmt.Errorf("environment variable %s not found", value)
+		if !envVariableNamePattern.MatchString(variableName) {
+			return "", true, nil
 		}
 
-		return v, nil
+		v, found := os.LookupEnv(variableName)
+		if !found {
+			return "", false, fmt.Errorf("environment variable %s not found", variableName)
+		}
+
+		return v, false, nil
 	case configVarTypeSecret:
-		secretPath := filepath.Join("/run/secrets", value)
+		secretPath := filepath.Join("/run/secrets", variableName)
 		secret, err := os.ReadFile(secretPath)
 		if err != nil {
-			return "", fmt.Errorf("reading secret file: %v", err)
+			return "", false, fmt.Errorf("reading secret file: %v", err)
 		}
 
-		return strings.TrimSpace(string(secret)), nil
+		return strings.TrimSpace(string(secret)), false, nil
 	case configVarTypeFileFromEnv:
-		filePath, found := os.LookupEnv(value)
+		if !envVariableNamePattern.MatchString(variableName) {
+			return "", true, nil
+		}
+
+		filePath, found := os.LookupEnv(variableName)
 		if !found {
-			return "", fmt.Errorf("readFileFromEnv: environment variable %s not found", value)
+			return "", false, fmt.Errorf("readFileFromEnv: environment variable %s not found", variableName)
+		}
+
+		if !filepath.IsAbs(filePath) {
+			return "", false, fmt.Errorf("readFileFromEnv: file path %s is not absolute", filePath)
 		}
 
 		fileContents, err := os.ReadFile(filePath)
 		if err != nil {
-			return "", fmt.Errorf("readFileFromEnv: reading file from %s: %v", value, err)
+			return "", false, fmt.Errorf("readFileFromEnv: reading file from %s: %v", variableName, err)
 		}
 
-		return strings.TrimSpace(string(fileContents)), nil
+		return strings.TrimSpace(string(fileContents)), false, nil
 	default:
-		return "", fmt.Errorf("unknown variable type %s with value %s", variableType, value)
+		return "", true, nil
 	}
 }
 
@@ -418,36 +436,46 @@ func isConfigStateValid(config *config) error {
 	}
 
 	for i := range config.Pages {
-		if config.Pages[i].Title == "" {
+		page := &config.Pages[i]
+
+		if page.Title == "" {
 			return fmt.Errorf("page %d has no name", i+1)
 		}
 
-		if config.Pages[i].Width != "" && (config.Pages[i].Width != "wide" && config.Pages[i].Width != "slim") {
+		if page.Width != "" && (page.Width != "wide" && page.Width != "slim" && page.Width != "default") {
 			return fmt.Errorf("page %d: width can only be either wide or slim", i+1)
 		}
 
-		if len(config.Pages[i].Columns) == 0 {
+		if page.DesktopNavigationWidth != "" {
+			if page.DesktopNavigationWidth != "wide" && page.DesktopNavigationWidth != "slim" && page.DesktopNavigationWidth != "default" {
+				return fmt.Errorf("page %d: desktop-navigation-width can only be either wide or slim", i+1)
+			}
+		}
+
+		if len(page.Columns) == 0 {
 			return fmt.Errorf("page %d has no columns", i+1)
 		}
 
-		if config.Pages[i].Width == "slim" {
-			if len(config.Pages[i].Columns) > 2 {
+		if page.Width == "slim" {
+			if len(page.Columns) > 2 {
 				return fmt.Errorf("page %d is slim and cannot have more than 2 columns", i+1)
 			}
 		} else {
-			if len(config.Pages[i].Columns) > 3 {
+			if len(page.Columns) > 3 {
 				return fmt.Errorf("page %d has more than 3 columns", i+1)
 			}
 		}
 
 		columnSizesCount := make(map[string]int)
 
-		for j := range config.Pages[i].Columns {
-			if config.Pages[i].Columns[j].Size != "small" && config.Pages[i].Columns[j].Size != "full" {
+		for j := range page.Columns {
+			column := &page.Columns[j]
+
+			if column.Size != "small" && column.Size != "full" {
 				return fmt.Errorf("column %d of page %d: size can only be either small or full", j+1, i+1)
 			}
 
-			columnSizesCount[config.Pages[i].Columns[j].Size]++
+			columnSizesCount[page.Columns[j].Size]++
 		}
 
 		full := columnSizesCount["full"]
