@@ -303,6 +303,9 @@ Specify a custom icon that iOS devices display when a user adds a website to the
 #### `manifest-url`
 Specify a custom manifest.json file to provide metadata about the web app, like its name, icons, start URL, and display mode. It’s used by browsers (especially on mobile) to control how the app looks and behaves when installed, including the icon shown, splash screen, and whether it opens fullscreen.
 
+## Theme
+Theming is done through a top level `theme` property. Values for the colors are in [HSL](https://giggster.com/guide/basics/hue-saturation-lightness/) (hue, saturation, lightness) format. You can use a color picker [like this one](https://hslpicker.com/) to convert colors from other formats to HSL. The values are separated by a space and `%` is not required for any of the numbers.
+
 Example:
 
 ```yaml
