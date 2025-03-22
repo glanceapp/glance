@@ -96,6 +96,18 @@ func newApplication(config *config) (*application, error) {
 		config.Branding.FaviconURL = app.transformUserDefinedAssetPath(config.Branding.FaviconURL)
 	}
 
+	if config.Branding.AppleTouchIcon == "" {
+		config.Branding.AppleTouchIcon = app.AssetPath("app-icon.png")
+	} else {
+		config.Branding.AppleTouchIcon = app.transformUserDefinedAssetPath(config.Branding.AppleTouchIcon)
+	}
+
+	if config.Branding.ManifestURL == "" {
+		config.Branding.ManifestURL = app.AssetPath("manifest.json")
+	} else {
+		config.Branding.ManifestURL = app.transformUserDefinedAssetPath(config.Branding.ManifestURL)
+	}
+
 	config.Branding.LogoURL = app.transformUserDefinedAssetPath(config.Branding.LogoURL)
 
 	return app, nil

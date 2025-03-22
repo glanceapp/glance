@@ -279,6 +279,8 @@ branding:
 | logo-text | string | no | G |
 | logo-url | string | no | |
 | favicon-url | string | no | |
+| apple-touch-icon-url | string | no | |
+| manifest-url | string | no | |
 
 #### `hide-footer`
 Hides the footer when set to `true`.
@@ -295,8 +297,11 @@ Specify a URL to a custom image to use instead of the "G" found in the navigatio
 #### `favicon-url`
 Specify a URL to a custom image to use for the favicon.
 
-## Theme
-Theming is done through a top level `theme` property. Values for the colors are in [HSL](https://giggster.com/guide/basics/hue-saturation-lightness/) (hue, saturation, lightness) format. You can use a color picker [like this one](https://hslpicker.com/) to convert colors from other formats to HSL. The values are separated by a space and `%` is not required for any of the numbers.
+#### `apple-touch-icon-url`
+Specify a custom icon that iOS devices display when a user adds a website to their home screen.
+
+#### `manifest-url`
+Specify a custom manifest.json file to provide metadata about the web app, like its name, icons, start URL, and display mode. It’s used by browsers (especially on mobile) to control how the app looks and behaves when installed, including the icon shown, splash screen, and whether it opens fullscreen.
 
 Example:
 
