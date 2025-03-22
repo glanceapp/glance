@@ -2748,7 +2748,7 @@ Example:
 - type: media-server
   title: Plex
   apikey: ${X_PLEX_TOKEN}
-  tautulli-url: ${PLEX_URL}
+  url: ${PLEX_URL}
   progress-bar: true 
   progress-type: ends-at-12 
   thumbnails: false 
