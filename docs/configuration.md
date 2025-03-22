@@ -2766,9 +2766,9 @@ Preview:
 | media-server  | string  | yes      |            |
 | apikey        | string  | yes      |            |
 | url           | string  | yes      |            |
-| progress-bar  | bool    | no       | true       |
+| progress-bar  | bool    | no       | false      |
 | progress-type | string  | no       | ends-at-24 |
-| thumbnails    | bool    | no       | true       |
+| thumbnails    | bool    | no       | false      |
 
 ##### `media-server`
 
