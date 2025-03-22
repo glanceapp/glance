@@ -198,13 +198,6 @@ func (widget *MediaServerWidget) Render() template.HTML {
 
 // Helper functions
 
-func NewBaseMediaServer(baseURL, apiKey string) BaseMediaServer {
-	return BaseMediaServer{
-		baseURL: baseURL,
-		apiKey:  apiKey,
-	}
-}
-
 func fetchMediaServerData[T any](serverType, baseURL, apiKey string) (T, error) {
 	var empty T
 
