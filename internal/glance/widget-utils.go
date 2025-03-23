@@ -147,10 +147,8 @@ const defaultNumWorkers = 10
 func (job *workerPoolJob[I, O]) withWorkers(workers int) *workerPoolJob[I, O] {
 	if workers == 0 {
 		job.workers = defaultNumWorkers
-	} else if workers > len(job.data) {
-		job.workers = len(job.data)
 	} else {
-		job.workers = workers
+		job.workers = min(workers, len(job.data))
 	}
 
 	return job
@@ -179,6 +177,11 @@ func workerPoolDo[I any, O any](job *workerPoolJob[I, O]) ([]O, []error, error) 
 
 	if len(job.data) == 0 {
 		return results, errs, nil
+	}
+
+	if len(job.data) == 1 {
+		output, err := job.task(job.data[0])
+		return append(results, output), append(errs, err), nil
 	}
 
 	tasksQueue := make(chan *workerPoolTask[I, O])

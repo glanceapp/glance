@@ -4,6 +4,7 @@
 - [The config file](#the-config-file)
   - [Auto reload](#auto-reload)
   - [Environment variables](#environment-variables)
+    - [Other ways of providing tokens/passwords/secrets](#other-ways-of-providing-tokenspasswordssecrets)
   - [Including other config files](#including-other-config-files)
 - [Server](#server)
 - [Document](#document)
@@ -92,14 +93,46 @@ If you need to use the syntax `${NAME}` in your config without it being interpre
 something: \${NOT_AN_ENV_VAR}
 ```
 
+#### Other ways of providing tokens/passwords/secrets
+
+You can use [Docker secrets](https://docs.docker.com/compose/how-tos/use-secrets/) with the following syntax:
+
+```yaml
+# This will be replaced with the contents of the file /run/secrets/github_token
+# so long as the secret `github_token` is provided to the container
+token: ${secret:github_token}
+```
+
+Alternatively, you can load the contents of a file who's path is provided by an environment variable:
+
+`docker-compose.yml`
+```yaml
+services:
+  glance:
+    image: glanceapp/glance
+    environment:
+      - TOKEN_FILE=/home/user/token
+    volumes:
+      - /home/user/token:/home/user/token
+```
+
+`glance.yml`
+```yaml
+token: ${readFileFromEnv:TOKEN_FILE}
+```
+
+> [!NOTE]
+>
+> The contents of the file will be stripped of any leading/trailing whitespace before being used.
+
 ### Including other config files
-Including config files from within your main config file is supported. This is done via the `!include` directive along with a relative or absolute path to the file you want to include. If the path is relative, it will be relative to the main config file. Additionally, environment variables can be used within included files, and changes to the included files will trigger an automatic reload. Example:
+Including config files from within your main config file is supported. This is done via the `$include` directive along with a relative or absolute path to the file you want to include. If the path is relative, it will be relative to the main config file. Additionally, environment variables can be used within included files, and changes to the included files will trigger an automatic reload. Example:
 
 ```yaml
 pages:
-  !include: home.yml
-  !include: videos.yml
-  !include: homelab.yml
+  - $include: home.yml
+  - $include: videos.yml
+  - $include: homelab.yml
 ```
 
 The file you are including should not have any additional indentation, its values should be at the top level and the appropriate amount of indentation will be added automatically depending on where the file is included. Example:
@@ -112,14 +145,14 @@ pages:
     columns:
       - size: full
         widgets:
-          !include: rss.yml
+          $include: rss.yml
   - name: News
     columns:
       - size: full
         widgets:
           - type: group
             widgets:
-              !include: rss.yml
+              $include: rss.yml
               - type: reddit
                 subreddit: news
 ```
@@ -133,9 +166,9 @@ pages:
     - url: ${RSS_URL}
 ```
 
-The `!include` directive can be used anywhere in the config file, not just in the `pages` property, however it must be on its own line and have the appropriate indentation.
+The `$include` directive can be used anywhere in the config file, not just in the `pages` property, however it must be on its own line and have the appropriate indentation.
 
-If you encounter YAML parsing errors when using the `!include` directive, the reported line numbers will likely be incorrect. This is because the inclusion of files is done before the YAML is parsed, as YAML itself does not support file inclusion. To help with debugging in cases like this, you can use the `config:print` command and pipe it into `less -N` to see the full config file with includes resolved and line numbers added:
+If you encounter YAML parsing errors when using the `$include` directive, the reported line numbers will likely be incorrect. This is because the inclusion of files is done before the YAML is parsed, as YAML itself does not support file inclusion. To help with debugging in cases like this, you can use the `config:print` command and pipe it into `less -N` to see the full config file with includes resolved and line numbers added:
 
 ```sh
 glance --config /path/to/glance.yml config:print | less -N
@@ -359,6 +392,7 @@ pages:
 | name | string | yes | |
 | slug | string | no | |
 | width | string | no | |
+| desktop-navigation-width | string | no | |
 | center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
 | expand-mobile-page-navigation | boolean | no | false |
@@ -372,9 +406,14 @@ The name of the page which gets shown in the navigation bar.
 The URL friendly version of the title which is used to access the page. For example if the title of the page is "RSS Feeds" you can make the page accessible via `localhost:8080/feeds` by setting the slug to `feeds`. If not defined, it will automatically be generated from the title.
 
 #### `width`
-The maximum width of the page on desktop. Possible values are `slim` and `wide`.
+The maximum width of the page on desktop. Possible values are `default`, `slim` and `wide`.
 
-* default: `1600px` (when no value is specified)
+#### `desktop-navigation-width`
+The maximum width of the desktop navigation. Useful if you have a few pages that use a different width than the rest and don't want the navigation to jump abruptly when going to and away from those pages. Possible values are `default`, `slim` and `wide`.
+
+Here are the pixel equivalents for each value:
+
+* default: `1600px`
 * slim: `1100px`
 * wide: `1920px`
 
@@ -968,6 +1007,10 @@ Either a value from the table below or a URL to a custom search engine. Use `{QU
 | ---- | --- |
 | duckduckgo | `https://duckduckgo.com/?q={QUERY}` |
 | google | `https://www.google.com/search?q={QUERY}` |
+| bing | `https://www.bing.com/search?q={QUERY}` |
+| perplexity | `https://www.perplexity.ai/search?q={QUERY}` |
+| kagi | `https://kagi.com/search?q={QUERY}` |
+| startpage | `https://www.startpage.com/search?q={QUERY}` |
 
 ##### `new-tab`
 When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
@@ -1293,7 +1336,10 @@ Examples:
 | url | string | yes | |
 | headers | key (string) & value (string) | no | |
 | frameless | boolean | no | false |
+| allow-insecure | boolean | no | false |
 | template | string | yes | |
+| parameters | key (string) & value (string|array) | no | |
+| subrequests | map of requests | no | |
 
 ##### `url`
 The URL to fetch the data from. It must be accessible from the server that Glance is running on.
@@ -1310,8 +1356,60 @@ headers:
 ##### `frameless`
 When set to `true`, removes the border and padding around the widget.
 
+##### `allow-insecure`
+Whether to ignore invalid/self-signed certificates.
+
 ##### `template`
 The template that will be used to display the data. It relies on Go's `html/template` package so it's recommended to go through [its documentation](https://pkg.go.dev/text/template) to understand how to do basic things such as conditionals, loops, etc. In addition, it also uses [tidwall's gjson](https://github.com/tidwall/gjson) package to parse the JSON data so it's worth going through its documentation if you want to use more advanced JSON selectors. You can view additional examples with explanations and function definitions [here](custom-api.md).
+
+##### `parameters`
+A list of keys and values that will be sent to the custom-api as query paramters.
+
+##### `subrequests`
+A map of additional requests that will be executed concurrently and then made available in the template via the `.Subrequest` property. Example:
+
+```yaml
+- type: custom-api
+  cache: 2h
+  subrequests:
+    another-one:
+      url: https://uselessfacts.jsph.pl/api/v2/facts/random
+  title: Random Fact
+  url: https://uselessfacts.jsph.pl/api/v2/facts/random
+  template: |
+    <p class="size-h4 color-paragraph">{{ .JSON.String "text" }}</p>
+    <p class="size-h4 color-paragraph margin-top-15">{{ (.Subrequest "another-one").JSON.String "text" }}</p>
+```
+
+The subrequests support all the same properties as the main request, except for `subrequests` itself, so you can use `headers`, `parameters`, etc.
+
+`(.Subrequest "key")` can be a little cumbersome to write, so you can define a variable to make it easier:
+
+```yaml
+  template: |
+    {{ $anotherOne := .Subrequest "another-one" }}
+    <p>{{ $anotherOne.JSON.String "text" }}</p>
+```
+
+You can also access the `.Response` property of a subrequest as you would with the main request:
+
+```yaml
+  template: |
+    {{ $anotherOne := .Subrequest "another-one" }}
+    <p>{{ $anotherOne.Response.StatusCode }}</p>
+```
+
+> [!NOTE]
+>
+> Setting this property will override any query parameters that are already in the URL.
+
+```yaml
+parameters:
+  param1: value1
+  param2:
+    - item1
+    - item2
+```
 
 ### Extension
 Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
@@ -1476,6 +1574,7 @@ Properties for each site:
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
 | alt-status-codes | array | no | |
+| basic-auth | object | no | |
 
 `title`
 
@@ -1522,6 +1621,16 @@ Status codes other than 200 that you want to return "OK".
 ```yaml
 alt-status-codes:
   - 403
+```
+
+`basic-auth`
+
+HTTP Basic Authentication credentials for protected sites.
+
+```yaml
+basic-auth:
+  usename: your-username
+  password: your-password
 ```
 
 ### Releases
@@ -1737,7 +1846,7 @@ The path to the Docker socket.
 | glance.parent | The ID of the parent container. Used to group containers under a single parent. |
 
 ### DNS Stats
-Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home or Pi-hole.
+Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home, Pi-hole, or Technitium.
 
 Example:
 
@@ -1755,7 +1864,7 @@ Preview:
 
 > [!NOTE]
 >
-> When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole it will be the total number of blocked domains from all adlists.
+> When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole or Technitium it will be the total number of blocked domains from all adlists.
 
 #### Properties
 
@@ -1772,7 +1881,7 @@ Preview:
 | hour-format | string | no | 12h |
 
 ##### `service`
-Either `adguard`, or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
+Either `adguard`, `technitium`, or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
 
 ##### `allow-insecure`
 Whether to allow invalid/self-signed certificates when making the request to the service.
@@ -1786,10 +1895,12 @@ Only required when using AdGuard Home. The username used to log into the admin d
 ##### `password`
 Required when using AdGuard Home, where the password is the one used to log into the admin dashboard.
 
-Also requried when using Pi-hole major version 6 and above, where the password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
+Also required when using Pi-hole major version 6 and above, where the password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
 
 ##### `token`
-Only required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`.
+Required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`.
+
+Also required when using Technitium, an API token can be generated at `Administration -> Sessions -> Create Token`.
 
 ##### `hide-graph`
 Whether to hide the graph showing the number of queries over time.
@@ -2032,6 +2143,7 @@ An array of groups which can optionally have a title and a custom color.
 | ---- | ---- | -------- | ------- |
 | title | string | yes | |
 | url | string | yes | |
+| description | string | no | |
 | icon | string | no | |
 | same-tab | boolean | no | false |
 | hide-arrow | boolean | no | false |

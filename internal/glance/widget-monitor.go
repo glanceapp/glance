@@ -118,6 +118,10 @@ type SiteStatusRequest struct {
 	DefaultURL    string `yaml:"url"`
 	CheckURL      string `yaml:"check-url"`
 	AllowInsecure bool   `yaml:"allow-insecure"`
+	BasicAuth     struct {
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+	} `yaml:"basic-auth"`
 }
 
 type siteStatus struct {
@@ -139,6 +143,10 @@ func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (siteStatus, error) {
 		return siteStatus{
 			Error: err,
 		}, nil
+	}
+
+	if statusRequest.BasicAuth.Username != "" || statusRequest.BasicAuth.Password != "" {
+		request.SetBasicAuth(statusRequest.BasicAuth.Username, statusRequest.BasicAuth.Password)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)

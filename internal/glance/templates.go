@@ -27,9 +27,7 @@ var globalTemplateFunctions = template.FuncMap{
 	"formatPrice": func(price float64) string {
 		return intl.Sprintf("%.2f", price)
 	},
-	"dynamicRelativeTimeAttrs": func(t interface{ Unix() int64 }) template.HTMLAttr {
-		return template.HTMLAttr(`data-dynamic-relative-time="` + strconv.FormatInt(t.Unix(), 10) + `"`)
-	},
+	"dynamicRelativeTimeAttrs": dynamicRelativeTimeAttrs,
 	"formatServerMegabytes": func(mb uint64) template.HTML {
 		var value string
 		var label string
@@ -80,4 +78,8 @@ func formatApproxNumber(count int) string {
 	}
 
 	return strconv.FormatFloat(float64(count)/1_000_000, 'f', 1, 64) + "m"
+}
+
+func dynamicRelativeTimeAttrs(t interface{ Unix() int64 }) template.HTMLAttr {
+	return template.HTMLAttr(`data-dynamic-relative-time="` + strconv.FormatInt(t.Unix(), 10) + `"`)
 }
