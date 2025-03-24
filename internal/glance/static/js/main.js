@@ -46,52 +46,64 @@ function setupCarousels() {
     }
 }
 
-const minuteInSeconds = 60;
-const hourInSeconds = minuteInSeconds * 60;
-const dayInSeconds = hourInSeconds * 24;
-const monthInSeconds = dayInSeconds * 30.4;
-const yearInSeconds = dayInSeconds * 365;
+const TIME_UNITS = [
+    ["y", 31536000],
+    ["mo", 2592000],
+    ["w", 604800],
+    ["d", 86400],
+    ["h", 3600],
+    ["m", 60],
+    ["s", 1],
+];
 
-function timestampToRelativeTime(timestamp) {
-    let delta = Math.round((Date.now() / 1000) - timestamp);
-    let prefix = "";
+function timestampToRelativeTime(timestamp, { units = 1, relative = false })
+{
+    if (!Number.isFinite(timestamp) || timestamp < 0) return "Invalid";
 
-    if (delta < 0) {
-        delta = -delta;
-        prefix = "in ";
+    const normalizedUnits = Math.max(1, Math.min(TIME_UNITS.length, units));
+    const now = Math.floor(Date.now() / 1000);
+    const diff = now - timestamp;
+    const isInFuture = diff < 0;
+    const absDiff = Math.abs(diff);
+
+    if (absDiff < 1) return relative ? "just now" : "0s";
+
+    const parts = [];
+    let remaining = Math.floor(absDiff);
+
+    for (const [label, seconds] of TIME_UNITS)
+    {
+        if (parts.length >= normalizedUnits) break;
+
+        const count = Math.floor(remaining / seconds);
+        if (count > 0) {
+            parts.push(`${count}${label}`);
+            remaining %= seconds;
+        }
     }
 
-    if (delta < minuteInSeconds) {
-        return prefix + "1m";
-    }
-    if (delta < hourInSeconds) {
-        return prefix + Math.floor(delta / minuteInSeconds) + "m";
-    }
-    if (delta < dayInSeconds) {
-        return prefix + Math.floor(delta / hourInSeconds) + "h";
-    }
-    if (delta < monthInSeconds) {
-        return prefix + Math.floor(delta / dayInSeconds) + "d";
-    }
-    if (delta < yearInSeconds) {
-        return prefix + Math.floor(delta / monthInSeconds) + "mo";
-    }
+    const timeStr = parts.join(" ");
 
-    return prefix + Math.floor(delta / yearInSeconds) + "y";
+    if (!relative) return timeStr;
+    return isInFuture ? `in ${timeStr}` : `${timeStr} ago`;
 }
 
 function updateRelativeTimeForElements(elements)
 {
-    for (let i = 0; i < elements.length; i++)
-    {
-        const element = elements[i];
-        const timestamp = element.dataset.dynamicRelativeTime;
+    Array.from(elements).forEach(element => {
+        const timestamp = Number(element.dataset.dynamicRelativeTime);
+        if (!timestamp) return;
 
-        if (timestamp === undefined)
-            continue
+        const options = {
+            units: Number(element.dataset.units) || 1,
+            relative: element.dataset.showRelative === "true"
+        };
 
-        element.textContent = timestampToRelativeTime(timestamp);
-    }
+        const formattedTime = timestampToRelativeTime(timestamp, options);
+        if (element.textContent !== formattedTime) {
+            element.textContent = formattedTime;
+        }
+    });
 }
 
 function setupSearchBoxes() {
@@ -206,7 +218,7 @@ function setupSearchBoxes() {
 
 function setupDynamicRelativeTime() {
     const elements = document.querySelectorAll("[data-dynamic-relative-time]");
-    const updateInterval = 60 * 1000;
+    const updateInterval = 2 * 1000;
     let lastUpdateTime = Date.now();
 
     updateRelativeTimeForElements(elements);
