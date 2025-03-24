@@ -49,15 +49,13 @@ function setupCarousels() {
 const TIME_UNITS = [
     ["y", 31536000],
     ["mo", 2592000],
-    ["w", 604800],
     ["d", 86400],
     ["h", 3600],
     ["m", 60],
     ["s", 1],
 ];
 
-function timestampToRelativeTime(timestamp, { units = 1, relative = false })
-{
+function timestampToRelativeTime(timestamp, { units = 1, relative = false }) {
     if (!Number.isFinite(timestamp) || timestamp < 0) return "Invalid";
 
     const normalizedUnits = Math.max(1, Math.min(TIME_UNITS.length, units));
@@ -88,8 +86,7 @@ function timestampToRelativeTime(timestamp, { units = 1, relative = false })
     return isInFuture ? `in ${timeStr}` : `${timeStr} ago`;
 }
 
-function updateRelativeTimeForElements(elements)
-{
+function updateRelativeTimeForElements(elements) {
     Array.from(elements).forEach(element => {
         const timestamp = Number(element.dataset.dynamicRelativeTime);
         if (!timestamp) return;
@@ -218,7 +215,7 @@ function setupSearchBoxes() {
 
 function setupDynamicRelativeTime() {
     const elements = document.querySelectorAll("[data-dynamic-relative-time]");
-    const updateInterval = 2 * 1000;
+    const updateInterval = 1 * 1000;
     let lastUpdateTime = Date.now();
 
     updateRelativeTimeForElements(elements);
