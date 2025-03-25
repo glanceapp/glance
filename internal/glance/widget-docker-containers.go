@@ -66,8 +66,8 @@ const (
 
 const (
 	dockerContainerStateIconOK      = "ok"
-	dockerContainerStateIconPaused  = "paused"
 	dockerContainerStateIconPending = "pending"
+	dockerContainerStateIconPaused  = "paused"
 	dockerContainerStateIconWarn    = "warn"
 	dockerContainerStateIconOther   = "other"
 )
@@ -75,8 +75,8 @@ const (
 var dockerContainerStateIconPriorities = map[string]int{
 	dockerContainerStateIconWarn:    0,
 	dockerContainerStateIconOther:   1,
-	dockerContainerStateIconPaused:  2,
-	dockerContainerStateIconPending: 3,
+	dockerContainerStateIconPending: 2,
+	dockerContainerStateIconPaused:  3,
 	dockerContainerStateIconOK:      4,
 }
 
