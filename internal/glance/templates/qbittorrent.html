@@ -17,7 +17,11 @@
                 <span class="color-base">%</span></span>
         </div>
         <div class="qbittorrent-torrent-info">
+            {{- if eq .Progress 1.0 }}
+            <span class="qbittorrent-torrent-speed color-positive">Completed</span>
+            {{- else }}
             <span class="qbittorrent-torrent-speed">{{ .Speed }}/s</span>
+            {{- end }}
         </div>
     </div>
     {{- end }}
