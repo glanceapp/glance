@@ -1797,6 +1797,10 @@ details[open] .summary::after {
     background: linear-gradient(0deg, var(--color-widget-background) 10%, transparent);
 }
 
+.qbittorrent-torrent + .qbittorrent-torrent {
+    margin-top: 1.2rem;
+}
+
 @media (max-width: 1190px) {
     .header-container {
         display: none;

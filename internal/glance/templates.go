@@ -24,6 +24,7 @@ var globalTemplateFunctions = template.FuncMap{
 	"absInt": func(i int) int {
 		return int(math.Abs(float64(i)))
 	},
+	"multiply": multiply,
 	"formatPrice": func(price float64) string {
 		return intl.Sprintf("%.2f", price)
 	},
@@ -80,4 +81,26 @@ func formatApproxNumber(count int) string {
 	}
 
 	return strconv.FormatFloat(float64(count)/1_000_000, 'f', 1, 64) + "m"
+}
+
+func multiply(a, b interface{}) float64 {
+	var result float64
+
+	switch v := a.(type) {
+	case int:
+		result = float64(v)
+	case float64:
+		result = v
+	default:
+		panic("Unsupported type for 'a', only int and float64 are supported")
+	}
+
+	switch v := b.(type) {
+	case int:
+		return result * float64(v)
+	case float64:
+		return result * v
+	default:
+		panic("Unsupported type for 'b', only int and float64 are supported")
+	}
 }
