@@ -68,8 +68,10 @@ func (widget *qbittorrentWidget) initialize() error {
 
 	widget.client = &http.Client{Jar: jar}
 
-	if err := widget.login(); err != nil {
-		return fmt.Errorf("login failed: %w", err)
+	if widget.Username != "" && widget.Password != "" {
+		if err := widget.login(); err != nil {
+			return fmt.Errorf("login failed: %w", err)
+		}
 	}
 
 	return nil
