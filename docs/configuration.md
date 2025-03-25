@@ -1826,12 +1826,16 @@ If any of the child containers are down, their status will propagate up to the p
 | ---- | ---- | -------- | ------- |
 | hide-by-default | boolean | no | false |
 | sock-path | string | no | /var/run/docker.sock |
+| swarm-mode | boolean | no | false |
 
 ##### `hide-by-default`
 Whether to hide the containers by default. If set to `true` you'll have to manually add a `glance.hide: false` label to each container you want to display. By default all containers will be shown and if you want to hide a specific container you can add a `glance.hide: true` label.
 
 ##### `sock-path`
 The path to the Docker socket.
+
+##### `swarm-mode`
+Whether to enable Docker's swarm mode. If set to `true` swarm services are fetched instead of docker containers.
 
 #### Labels
 | Name | Description |
