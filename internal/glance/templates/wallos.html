@@ -1,0 +1,60 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+
+  {{ if and .HideActiveColumn .HideMonthlyColumn .HideYearlyColumn .HideUpcoming }}
+    <p class="color-negative" style="text-align: center; padding: 1rem 0;">
+      All Wallos sections hidden via configuration.
+    </p>
+  {{ else }}
+
+    {{ $topVisible := or (not .HideActiveColumn) (not .HideMonthlyColumn) (not .HideYearlyColumn) }}
+
+    <a href="{{ .Data.BaseURL }}" target="_blank" style="text-decoration: none; color: inherit; display: block;">
+
+      {{ if $topVisible }}
+      <div style="display: flex; justify-content: space-around;">
+
+        {{ if not .HideActiveColumn }}
+        <div style="flex: 1; text-align: center;">
+          <p>ACTIVE</p>
+          <p class="color-highlight">{{- with .Data.ActiveCount }}{{ . }}{{ else }}0{{ end -}}</p>
+        </div>
+        {{ end }}
+
+        {{ if not .HideMonthlyColumn }}
+        <div style="flex: 1; text-align: center;">
+          <p>MONTHLY</p>
+          <p class="color-highlight">{{- with .Data.MonthlyCost }}{{ . }}{{ else }}N/A{{ end -}}</p>
+        </div>
+        {{ end }}
+
+        {{ if not .HideYearlyColumn }}
+        <div style="flex: 1; text-align: center;">
+          <p>YEARLY</p>
+          <p class="color-highlight">{{- with .Data.YearlyCost }}{{ . }}{{ else }}N/A{{ end -}}</p>
+        </div>
+        {{ end }}
+
+      </div>
+      {{ end }}
+
+
+      {{ if not .HideUpcoming }}
+        <div class="flex items-center justify-center{{ if $topVisible }} margin-top-15 size-h5{{ end }}">
+          {{ if and .Data.UpcomingName (ne .Data.UpcomingName "N/A") .Data.UpcomingRelativeTime }}
+            <span>
+               {{ .Data.UpcomingName }} {{ .Data.UpcomingRelativeTime }}
+               {{ if .Data.UpcomingPriceFormatted }} for {{ .Data.UpcomingPriceFormatted }}{{ end }}
+            </span>
+          {{ else }}
+            <span>No upcoming payments</span>
+          {{ end }}
+        </div>
+      {{ end }}
+
+    </a>
+
+  {{ end }}
+
+{{ end }}
