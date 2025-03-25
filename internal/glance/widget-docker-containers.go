@@ -18,7 +18,7 @@ type dockerContainersWidget struct {
 	widgetBase    `yaml:",inline"`
 	HideByDefault bool                `yaml:"hide-by-default"`
 	SockPath      string              `yaml:"sock-path"`
-	SwarmMode     bool                `yaml:"swarm-mode"`
+	Mode          string              `yaml:"mode"`
 	Containers    dockerContainerList `yaml:"-"`
 }
 
@@ -33,14 +33,7 @@ func (widget *dockerContainersWidget) initialize() error {
 }
 
 func (widget *dockerContainersWidget) update(ctx context.Context) {
-	var containers dockerContainerList
-	var err error
-	if widget.SwarmMode {
-		containers, err = fetchSwarmServices(widget.SockPath, widget.HideByDefault)
-	} else {
-		containers, err = fetchDockerContainers(widget.SockPath, widget.HideByDefault)
-	}
-
+	containers, err := fetchDockerContainers(widget.SockPath, widget.HideByDefault, widget.Mode)
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
@@ -107,6 +100,79 @@ func (l *dockerContainerLabels) getOrDefault(label, def string) string {
 	return v
 }
 
+type swarmServiceJsonResponse struct {
+	ID   string `json:"ID"`
+	Spec struct {
+		Name         string                `json:"Name"`
+		Labels       dockerContainerLabels `json:"Labels"`
+		TaskTemplate struct {
+			ContainerSpec struct {
+				Image string `json:"Image"`
+			} `json:"ContainerSpec"`
+		} `json:"TaskTemplate"`
+	} `json:"Spec"`
+}
+
+type swarmTaskJsonResponse struct {
+	ID        string `json:"ID"`
+	CreatedAt string `json:"CreatedAt"`
+	UpdatedAt string `json:"UpdatedAt"`
+	ServiceID string `json:"ServiceID"`
+	Status    struct {
+		State   string `json:"State"`
+		Message string `json:"Message"`
+	} `json:"Status"`
+}
+
+type swarmTaskJsonList []swarmTaskJsonResponse
+
+func (tasks swarmTaskJsonList) sortByUpdatedThenCreatedAt() {
+	sort.SliceStable(tasks, func(a, b int) bool {
+		updatedA, errA := time.Parse(time.RFC3339, tasks[a].UpdatedAt)
+		updatedB, errB := time.Parse(time.RFC3339, tasks[b].UpdatedAt)
+
+		if errA == nil && errB == nil {
+			return updatedA.After(updatedB)
+		}
+
+		createdA, errA := time.Parse(time.RFC3339, tasks[a].CreatedAt)
+		createdB, errB := time.Parse(time.RFC3339, tasks[b].CreatedAt)
+
+		if errA == nil && errB == nil {
+			return createdA.After(createdB)
+		}
+
+		return false
+	})
+}
+
+type swarmExtendedService struct {
+	*swarmServiceJsonResponse `json:"Service"`
+	State                     string `json:"State"`
+	Status                    string `json:"Status"`
+}
+
+type swarmExtendedServiceList []swarmExtendedService
+
+func (services swarmExtendedServiceList) toContainerJsonList() []dockerContainerJsonResponse {
+	containers := make([]dockerContainerJsonResponse, 0, len(services))
+
+	for i := range services {
+		service := services[i]
+		container := dockerContainerJsonResponse{
+			Names:  []string{service.Spec.Name},
+			Image:  service.Spec.TaskTemplate.ContainerSpec.Image,
+			State:  service.State,
+			Status: service.Status,
+			Labels: service.Spec.Labels,
+		}
+
+		containers = append(containers, container)
+	}
+
+	return containers
+}
+
 type dockerContainer struct {
 	Title       string
 	URL         string
@@ -149,8 +215,8 @@ func dockerContainerStateToStateIcon(state string) string {
 	}
 }
 
-func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContainerList, error) {
-	containers, err := fetchAllDockerContainersFromSock(socketPath)
+func fetchDockerContainers(socketPath string, hideByDefault bool, mode string) (dockerContainerList, error) {
+	containers, err := fetchContainersByMode(socketPath, mode)
 	if err != nil {
 		return nil, fmt.Errorf("fetching containers: %w", err)
 	}
@@ -162,7 +228,7 @@ func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContain
 		container := &containers[i]
 
 		dc := dockerContainer{
-			Title:       deriveDockerContainerTitle(&container.Labels, itemAtIndexOrDefault(container.Names, 0, "n/a")),
+			Title:       deriveDockerContainerTitle(container),
 			URL:         container.Labels.getOrDefault(dockerContainerLabelURL, ""),
 			Description: container.Labels.getOrDefault(dockerContainerLabelDescription, ""),
 			SameTab:     stringToBool(container.Labels.getOrDefault(dockerContainerLabelSameTab, "false")),
@@ -177,7 +243,7 @@ func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContain
 				for i := range children {
 					child := &children[i]
 					dc.Children = append(dc.Children, dockerContainer{
-						Title:     deriveDockerContainerTitle(&container.Labels, itemAtIndexOrDefault(container.Names, 0, "n/a")),
+						Title:     deriveDockerContainerTitle(container),
 						StateText: child.Status,
 						StateIcon: dockerContainerStateToStateIcon(strings.ToLower(child.State)),
 					})
@@ -205,12 +271,12 @@ func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContain
 	return dockerContainers, nil
 }
 
-func deriveDockerContainerTitle(labels *dockerContainerLabels, name string) string {
-	if v := labels.getOrDefault(dockerContainerLabelName, ""); v != "" {
+func deriveDockerContainerTitle(container *dockerContainerJsonResponse) string {
+	if v := container.Labels.getOrDefault(dockerContainerLabelName, ""); v != "" {
 		return v
 	}
 
-	return strings.TrimLeft(name, "/")
+	return strings.TrimLeft(itemAtIndexOrDefault(container.Names, 0, "n/a"), "/")
 }
 
 func groupDockerContainerChildren(
@@ -226,7 +292,7 @@ func groupDockerContainerChildren(
 	for i := range containers {
 		container := &containers[i]
 
-		if isDockerContainerHidden(&container.Labels, hideByDefault) {
+		if isDockerContainerHidden(container, hideByDefault) {
 			continue
 		}
 
@@ -243,12 +309,99 @@ func groupDockerContainerChildren(
 	return parents, children
 }
 
-func isDockerContainerHidden(labels *dockerContainerLabels, hideByDefault bool) bool {
-	if v := labels.getOrDefault(dockerContainerLabelHide, ""); v != "" {
+func isDockerContainerHidden(container *dockerContainerJsonResponse, hideByDefault bool) bool {
+	if v := container.Labels.getOrDefault(dockerContainerLabelHide, ""); v != "" {
 		return stringToBool(v)
 	}
 
 	return hideByDefault
+}
+
+func fetchContainersByMode(socketPath string, mode string) ([]dockerContainerJsonResponse, error) {
+	switch mode {
+	case "swarm":
+		return getSwarmContainers(socketPath)
+	default:
+		return getDockerContainers(socketPath)
+	}
+}
+
+func getSwarmContainers(socketPath string) ([]dockerContainerJsonResponse, error) {
+	svcs, err := fetchAllSwarmServicesFromSock(socketPath)
+	if err != nil {
+		return nil, fmt.Errorf("fetching services: %w", err)
+	}
+
+	tasks, err := fetchAllSwarmTasksFromSock(socketPath)
+	if err != nil {
+		return nil, fmt.Errorf("fetching tasks: %w", err)
+	}
+
+	tasks.sortByUpdatedThenCreatedAt()
+
+	services := extendSwarmServices(svcs, tasks)
+	containers := services.toContainerJsonList()
+	return containers, nil
+}
+
+func getDockerContainers(socketPath string) ([]dockerContainerJsonResponse, error) {
+	containers, err := fetchAllDockerContainersFromSock(socketPath)
+	if err != nil {
+		return nil, fmt.Errorf("fetching swarm containers: %w", err)
+	}
+
+	return containers, nil
+}
+
+func fetchAllDockerContainersFromSock(socketPath string) ([]dockerContainerJsonResponse, error) {
+	var containers []dockerContainerJsonResponse
+	if err := fetchFromSock(socketPath, "http://docker/containers/json?all=true", &containers); err != nil {
+		return nil, err
+	}
+
+	return containers, nil
+}
+
+func fetchAllSwarmServicesFromSock(socketPath string) ([]swarmServiceJsonResponse, error) {
+	var services []swarmServiceJsonResponse
+	if err := fetchFromSock(socketPath, "http://docker/services", &services); err != nil {
+		return nil, err
+	}
+
+	return services, nil
+}
+
+func fetchAllSwarmTasksFromSock(socketPath string) (swarmTaskJsonList, error) {
+	var tasks []swarmTaskJsonResponse
+	if err := fetchFromSock(socketPath, "http://docker/tasks", &tasks); err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
+}
+
+func extendSwarmServices(
+	services []swarmServiceJsonResponse,
+	tasks swarmTaskJsonList,
+) swarmExtendedServiceList {
+	servicesWithTasks := make([]swarmExtendedService, 0, len(services))
+
+	for i := range services {
+		service := &services[i]
+		extended := swarmExtendedService{service, "unknown", "no tasks found"}
+
+		for _, task := range tasks {
+			if task.ServiceID == service.ID {
+				extended.State = task.Status.State
+				extended.Status = task.Status.Message
+				break
+			}
+		}
+
+		servicesWithTasks = append(servicesWithTasks, extended)
+	}
+
+	return servicesWithTasks
 }
 
 func fetchFromSock(socketPath string, path string, target any) error {
@@ -281,13 +434,4 @@ func fetchFromSock(socketPath string, path string, target any) error {
 	}
 
 	return nil
-}
-
-func fetchAllDockerContainersFromSock(socketPath string) ([]dockerContainerJsonResponse, error) {
-	var containers []dockerContainerJsonResponse
-	if err := fetchFromSock(socketPath, "http://docker/containers/json?all=true", &containers); err != nil {
-		return nil, err
-	}
-
-	return containers, nil
 }
