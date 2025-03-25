@@ -7,11 +7,9 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"sort"
 	"strings"
 	"time"
 )
@@ -58,7 +56,7 @@ func (widget *qbittorrentWidget) initialize() error {
 	}
 
 	if widget.Limit <= 0 {
-		widget.Limit = 5
+		widget.Limit = 4
 	}
 
 	jar, err := cookiejar.New(nil)
@@ -107,9 +105,16 @@ func (widget *qbittorrentWidget) login() error {
 }
 
 func (widget *qbittorrentWidget) update(ctx context.Context) {
-	slog.Info("Updating qBittorrent widget", "url", widget.URL)
+	query := url.Values{}
+	query.Set("limit", fmt.Sprintf("%d", widget.Limit))
+	query.Set("sort", "progress")
 
-	req, err := http.NewRequestWithContext(ctx, "GET", widget.URL+qBittorrentTorrentsPath, nil)
+	requestURL := widget.URL + qBittorrentTorrentsPath
+	if len(query) > 0 {
+		requestURL = requestURL + "?" + query.Encode()
+	}
+	req, err := http.NewRequestWithContext(ctx, "GET", requestURL, nil)
+
 	if err != nil {
 		widget.withError(fmt.Errorf("creating torrents request: %w", err))
 		return
@@ -136,14 +141,6 @@ func (widget *qbittorrentWidget) update(ctx context.Context) {
 	if err := json.NewDecoder(resp.Body).Decode(&torrents); err != nil {
 		widget.withError(fmt.Errorf("decoding torrents response: %w", err))
 		return
-	}
-
-	sort.Slice(torrents, func(i, j int) bool {
-		return torrents[i].Progress > torrents[j].Progress
-	})
-
-	if len(torrents) > widget.Limit {
-		torrents = torrents[:widget.Limit]
 	}
 
 	widget.Torrents = torrents

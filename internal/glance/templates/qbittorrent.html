@@ -5,8 +5,8 @@
     {{- if .Torrents }}
     {{- range .Torrents }}
     <div class="qbittorrent-torrent">
-        <div class="qbittorrent-torrent-header">
-            <span class="qbittorrent-torrent-name text-truncate">{{ .Name }}</span>
+        <div class="qbittorrent-torrent-header text-truncate">
+            <span class="qbittorrent-torrent-name">{{ .Name }}</span>
         </div>
         <div class="qbittorrent-torrent-progress flex items-center gap-10">
             <div class="progress-bar flex-1">
