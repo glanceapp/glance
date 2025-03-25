@@ -268,7 +268,7 @@ func fetchDockerContainers(socketPath string, hideByDefault bool, mode string) (
 				for i := range children {
 					child := &children[i]
 					dc.Children = append(dc.Children, dockerContainer{
-						Title:     deriveDockerContainerTitle(container),
+						Title:     deriveDockerContainerTitle(child),
 						StateText: child.Status,
 						StateIcon: dockerContainerStateToStateIcon(strings.ToLower(child.State)),
 					})
