@@ -29,6 +29,21 @@ func (widget *dockerContainersWidget) initialize() error {
 		widget.SockPath = "/var/run/docker.sock"
 	}
 
+	widget.Mode = strings.ToLower(widget.Mode)
+	if widget.Mode == "" {
+		widget.Mode = dockerContainerModeStandalone
+	} else if !dockerContainerValidModes[widget.Mode] {
+		validModes := make([]string, 0, len(dockerContainerValidModes))
+		for key := range dockerContainerValidModes {
+			validModes = append(validModes, key)
+		}
+
+		return fmt.Errorf(
+			"invalid mode: %q, must be one of %q",
+			widget.Mode, strings.Join(validModes, ","),
+		)
+	}
+
 	return nil
 }
 
@@ -44,6 +59,16 @@ func (widget *dockerContainersWidget) update(ctx context.Context) {
 
 func (widget *dockerContainersWidget) Render() template.HTML {
 	return widget.renderTemplate(widget, dockerContainersWidgetTemplate)
+}
+
+const (
+	dockerContainerModeStandalone = "standalone"
+	dockerContainerModeSwarm      = "swarm"
+)
+
+var dockerContainerValidModes = map[string]bool{
+	dockerContainerModeStandalone: true,
+	dockerContainerModeSwarm:      true,
 }
 
 const (
@@ -319,7 +344,7 @@ func isDockerContainerHidden(container *dockerContainerJsonResponse, hideByDefau
 
 func fetchContainersByMode(socketPath string, mode string) ([]dockerContainerJsonResponse, error) {
 	switch mode {
-	case "swarm":
+	case dockerContainerModeSwarm:
 		return getSwarmContainers(socketPath)
 	default:
 		return getDockerContainers(socketPath)
