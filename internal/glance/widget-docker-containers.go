@@ -18,6 +18,7 @@ type dockerContainersWidget struct {
 	widgetBase    `yaml:",inline"`
 	HideByDefault bool                `yaml:"hide-by-default"`
 	SockPath      string              `yaml:"sock-path"`
+	SwarmMode     bool                `yaml:"swarm-mode"`
 	Containers    dockerContainerList `yaml:"-"`
 }
 
@@ -32,7 +33,14 @@ func (widget *dockerContainersWidget) initialize() error {
 }
 
 func (widget *dockerContainersWidget) update(ctx context.Context) {
-	containers, err := fetchDockerContainers(widget.SockPath, widget.HideByDefault)
+	var containers dockerContainerList
+	var err error
+	if widget.SwarmMode {
+		containers, err = fetchSwarmServices(widget.SockPath, widget.HideByDefault)
+	} else {
+		containers, err = fetchDockerContainers(widget.SockPath, widget.HideByDefault)
+	}
+
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
@@ -57,17 +65,19 @@ const (
 )
 
 const (
-	dockerContainerStateIconOK     = "ok"
-	dockerContainerStateIconPaused = "paused"
-	dockerContainerStateIconWarn   = "warn"
-	dockerContainerStateIconOther  = "other"
+	dockerContainerStateIconOK      = "ok"
+	dockerContainerStateIconPaused  = "paused"
+	dockerContainerStateIconPending = "pending"
+	dockerContainerStateIconWarn    = "warn"
+	dockerContainerStateIconOther   = "other"
 )
 
 var dockerContainerStateIconPriorities = map[string]int{
-	dockerContainerStateIconWarn:   0,
-	dockerContainerStateIconOther:  1,
-	dockerContainerStateIconPaused: 2,
-	dockerContainerStateIconOK:     3,
+	dockerContainerStateIconWarn:    0,
+	dockerContainerStateIconOther:   1,
+	dockerContainerStateIconPaused:  2,
+	dockerContainerStateIconPending: 3,
+	dockerContainerStateIconOK:      4,
 }
 
 type dockerContainerJsonResponse struct {
@@ -126,11 +136,13 @@ func (containers dockerContainerList) sortByStateIconThenTitle() {
 
 func dockerContainerStateToStateIcon(state string) string {
 	switch state {
-	case "running":
+	case "running", "complete":
 		return dockerContainerStateIconOK
 	case "paused":
 		return dockerContainerStateIconPaused
-	case "exited", "unhealthy", "dead":
+	case "new", "pending", "assigned", "accepted", "ready", "preparing", "starting":
+		return dockerContainerStateIconPending
+	case "exited", "unhealthy", "dead", "failed", "shutdown", "rejected", "orphaned", "remove":
 		return dockerContainerStateIconWarn
 	default:
 		return dockerContainerStateIconOther
@@ -150,7 +162,7 @@ func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContain
 		container := &containers[i]
 
 		dc := dockerContainer{
-			Title:       deriveDockerContainerTitle(container),
+			Title:       deriveDockerContainerTitle(&container.Labels, itemAtIndexOrDefault(container.Names, 0, "n/a")),
 			URL:         container.Labels.getOrDefault(dockerContainerLabelURL, ""),
 			Description: container.Labels.getOrDefault(dockerContainerLabelDescription, ""),
 			SameTab:     stringToBool(container.Labels.getOrDefault(dockerContainerLabelSameTab, "false")),
@@ -165,7 +177,7 @@ func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContain
 				for i := range children {
 					child := &children[i]
 					dc.Children = append(dc.Children, dockerContainer{
-						Title:     deriveDockerContainerTitle(child),
+						Title:     deriveDockerContainerTitle(&container.Labels, itemAtIndexOrDefault(container.Names, 0, "n/a")),
 						StateText: child.Status,
 						StateIcon: dockerContainerStateToStateIcon(strings.ToLower(child.State)),
 					})
@@ -193,12 +205,12 @@ func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContain
 	return dockerContainers, nil
 }
 
-func deriveDockerContainerTitle(container *dockerContainerJsonResponse) string {
-	if v := container.Labels.getOrDefault(dockerContainerLabelName, ""); v != "" {
+func deriveDockerContainerTitle(labels *dockerContainerLabels, name string) string {
+	if v := labels.getOrDefault(dockerContainerLabelName, ""); v != "" {
 		return v
 	}
 
-	return strings.TrimLeft(itemAtIndexOrDefault(container.Names, 0, "n/a"), "/")
+	return strings.TrimLeft(name, "/")
 }
 
 func groupDockerContainerChildren(
@@ -214,7 +226,7 @@ func groupDockerContainerChildren(
 	for i := range containers {
 		container := &containers[i]
 
-		if isDockerContainerHidden(container, hideByDefault) {
+		if isDockerContainerHidden(&container.Labels, hideByDefault) {
 			continue
 		}
 
@@ -231,15 +243,15 @@ func groupDockerContainerChildren(
 	return parents, children
 }
 
-func isDockerContainerHidden(container *dockerContainerJsonResponse, hideByDefault bool) bool {
-	if v := container.Labels.getOrDefault(dockerContainerLabelHide, ""); v != "" {
+func isDockerContainerHidden(labels *dockerContainerLabels, hideByDefault bool) bool {
+	if v := labels.getOrDefault(dockerContainerLabelHide, ""); v != "" {
 		return stringToBool(v)
 	}
 
 	return hideByDefault
 }
 
-func fetchAllDockerContainersFromSock(socketPath string) ([]dockerContainerJsonResponse, error) {
+func fetchFromSock(socketPath string, path string, target any) error {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 		Transport: &http.Transport{
@@ -249,24 +261,32 @@ func fetchAllDockerContainersFromSock(socketPath string) ([]dockerContainerJsonR
 		},
 	}
 
-	request, err := http.NewRequest("GET", "http://docker/containers/json?all=true", nil)
+	request, err := http.NewRequest("GET", path, nil)
 	if err != nil {
-		return nil, fmt.Errorf("creating request: %w", err)
+		return fmt.Errorf("creating request: %w", err)
 	}
 
 	response, err := client.Do(request)
 	if err != nil {
-		return nil, fmt.Errorf("sending request to socket: %w", err)
+		return fmt.Errorf("sending request to socket: %w", err)
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("non-200 response status: %s", response.Status)
+		return fmt.Errorf("non-200 response status: %s", response.Status)
 	}
 
+	if err := json.NewDecoder(response.Body).Decode(&target); err != nil {
+		return fmt.Errorf("decoding response: %w", err)
+	}
+
+	return nil
+}
+
+func fetchAllDockerContainersFromSock(socketPath string) ([]dockerContainerJsonResponse, error) {
 	var containers []dockerContainerJsonResponse
-	if err := json.NewDecoder(response.Body).Decode(&containers); err != nil {
-		return nil, fmt.Errorf("decoding response: %w", err)
+	if err := fetchFromSock(socketPath, "http://docker/containers/json?all=true", &containers); err != nil {
+		return nil, err
 	}
 
 	return containers, nil
