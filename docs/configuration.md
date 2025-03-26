@@ -1413,6 +1413,7 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | url | string | yes | |
 | fallback-content-type | string | no | |
 | allow-potentially-dangerous-html | boolean | no | false |
+| headers | key & value | no | |
 | parameters | key & value | no | |
 
 ##### `url`
@@ -1420,6 +1421,14 @@ The URL of the extension. **Note that the query gets stripped from this URL and 
 
 ##### `fallback-content-type`
 Optionally specify the fallback content type of the extension if the URL does not return a valid `Widget-Content-Type` header. Currently the only supported value for this property is `html`.
+
+##### `headers`
+Optionally specify the headers that will be sent with the request. Example:
+
+```yaml
+headers:
+  x-api-key: ${SECRET_KEY}
+```
 
 ##### `allow-potentially-dangerous-html`
 Whether to allow the extension to display HTML.
