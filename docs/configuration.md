@@ -1292,6 +1292,9 @@ Examples:
 | ---- | ---- | -------- | ------- |
 | url | string | yes | |
 | headers | key (string) & value (string) | no | |
+| method | string | no | GET |
+| body-type | string | no | json |
+| body | any | no | |
 | frameless | boolean | no | false |
 | allow-insecure | boolean | no | false |
 | template | string | yes | |
@@ -1308,6 +1311,31 @@ Optionally specify the headers that will be sent with the request. Example:
 headers:
   x-api-key: your-api-key
   Accept: application/json
+```
+
+##### `method`
+The HTTP method to use when making the request. Possible values are `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` and `HEAD`.
+
+##### `body-type`
+The type of the body that will be sent with the request. Possible values are `json`, and `string`.
+
+##### `body`
+The body that will be sent with the request. It can be a string or a map. Example:
+
+```yaml
+body-type: json
+body:
+  key1: value1
+  key2: value2
+  multiple-items:
+    - item1
+    - item2
+```
+
+```yaml
+body-type: string
+body: |
+  key1=value1&key2=value2
 ```
 
 ##### `frameless`

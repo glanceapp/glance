@@ -3,6 +3,7 @@ package glance
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -21,10 +22,14 @@ var customAPIWidgetTemplate = mustParseTemplate("custom-api.html", "widget-base.
 
 // Needs to be exported for the YAML unmarshaler to work
 type CustomAPIRequest struct {
-	URL           string               `json:"url"`
-	AllowInsecure bool                 `json:"allow-insecure"`
-	Headers       map[string]string    `json:"headers"`
-	Parameters    queryParametersField `json:"parameters"`
+	URL           string               `yaml:"url"`
+	AllowInsecure bool                 `yaml:"allow-insecure"`
+	Headers       map[string]string    `yaml:"headers"`
+	Parameters    queryParametersField `yaml:"parameters"`
+	Method        string               `yaml:"method"`
+	BodyType      string               `yaml:"body-type"`
+	Body          any                  `yaml:"body"`
+	bodyReader    io.ReadSeeker        `yaml:"-"`
 	httpRequest   *http.Request        `yaml:"-"`
 }
 
@@ -83,13 +88,51 @@ func (req *CustomAPIRequest) initialize() error {
 		return errors.New("URL is required")
 	}
 
-	httpReq, err := http.NewRequest(http.MethodGet, req.URL, nil)
+	if req.Body != nil {
+		if req.Method == "" {
+			req.Method = http.MethodPost
+		}
+
+		if req.BodyType == "" {
+			req.BodyType = "json"
+		}
+
+		if req.BodyType != "json" && req.BodyType != "string" {
+			return errors.New("invalid body type, must be either 'json' or 'string'")
+		}
+
+		switch req.BodyType {
+		case "json":
+			encoded, err := json.Marshal(req.Body)
+			if err != nil {
+				return fmt.Errorf("marshaling body: %v", err)
+			}
+
+			req.bodyReader = bytes.NewReader(encoded)
+		case "string":
+			bodyAsString, ok := req.Body.(string)
+			if !ok {
+				return errors.New("body must be a string when body-type is 'string'")
+			}
+
+			req.bodyReader = strings.NewReader(bodyAsString)
+		}
+
+	} else if req.Method == "" {
+		req.Method = http.MethodGet
+	}
+
+	httpReq, err := http.NewRequest(strings.ToUpper(req.Method), req.URL, req.bodyReader)
 	if err != nil {
 		return err
 	}
 
 	if len(req.Parameters) > 0 {
 		httpReq.URL.RawQuery = req.Parameters.toQueryString()
+	}
+
+	if req.BodyType == "json" {
+		httpReq.Header.Set("Content-Type", "application/json")
 	}
 
 	for key, value := range req.Headers {
@@ -126,6 +169,10 @@ func (data *customAPITemplateData) Subrequest(key string) *customAPIResponseData
 }
 
 func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customAPIResponseData, error) {
+	if req.bodyReader != nil {
+		req.bodyReader.Seek(0, io.SeekStart)
+	}
+
 	client := ternary(req.AllowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
 	resp, err := client.Do(req.httpRequest.WithContext(ctx))
 	if err != nil {
