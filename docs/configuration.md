@@ -9,7 +9,7 @@
 - [Document](#document)
 - [Branding](#branding)
 - [Theme](#theme)
-  - [Themes](#themes)
+  - [Available themes](#available-themes)
 - [Pages & Columns](#pages--columns)
 - [Widgets](#widgets)
   - [RSS](#rss)
@@ -274,7 +274,7 @@ theme:
   contrast-multiplier: 1.1
 ```
 
-### Themes
+### Available themes
 If you don't want to spend time configuring your own theme, there are [several available themes](themes.md) which you can simply copy the values for.
 
 ### Properties
