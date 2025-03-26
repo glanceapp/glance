@@ -140,19 +140,27 @@ type swarmServiceJsonResponse struct {
 
 type swarmTaskJsonResponse struct {
 	ID        string `json:"ID"`
+	ServiceID string `json:"ServiceID"`
 	CreatedAt string `json:"CreatedAt"`
 	UpdatedAt string `json:"UpdatedAt"`
-	ServiceID string `json:"ServiceID"`
 	Status    struct {
-		State   string `json:"State"`
-		Message string `json:"Message"`
+		Timestamp string `json:"Timestamp"`
+		State     string `json:"State"`
+		Message   string `json:"Message"`
 	} `json:"Status"`
 }
 
 type swarmTaskJsonList []swarmTaskJsonResponse
 
-func (tasks swarmTaskJsonList) sortByUpdatedThenCreatedAt() {
+func (tasks swarmTaskJsonList) sortByStatusUpdatedThenCreated() {
 	sort.SliceStable(tasks, func(a, b int) bool {
+		timestampA, errA := time.Parse(time.RFC3339, tasks[a].Status.Timestamp)
+		timestampB, errB := time.Parse(time.RFC3339, tasks[b].Status.Timestamp)
+
+		if errA == nil && errB == nil {
+			return timestampA.After(timestampB)
+		}
+
 		updatedA, errA := time.Parse(time.RFC3339, tasks[a].UpdatedAt)
 		updatedB, errB := time.Parse(time.RFC3339, tasks[b].UpdatedAt)
 
@@ -183,7 +191,7 @@ func (services swarmExtendedServiceList) toContainerJsonList() []dockerContainer
 	containers := make([]dockerContainerJsonResponse, 0, len(services))
 
 	for i := range services {
-		service := services[i]
+		service := &services[i]
 		container := dockerContainerJsonResponse{
 			Names:  []string{service.Spec.Name},
 			Image:  service.Spec.TaskTemplate.ContainerSpec.Image,
@@ -354,15 +362,13 @@ func fetchContainersByMode(socketPath string, mode string) ([]dockerContainerJso
 func getSwarmContainers(socketPath string) ([]dockerContainerJsonResponse, error) {
 	svcs, err := fetchAllSwarmServicesFromSock(socketPath)
 	if err != nil {
-		return nil, fmt.Errorf("fetching services: %w", err)
+		return nil, fmt.Errorf("fetching swarm services: %w", err)
 	}
 
 	tasks, err := fetchAllSwarmTasksFromSock(socketPath)
 	if err != nil {
-		return nil, fmt.Errorf("fetching tasks: %w", err)
+		return nil, fmt.Errorf("fetching swarm tasks: %w", err)
 	}
-
-	tasks.sortByUpdatedThenCreatedAt()
 
 	services := extendSwarmServices(svcs, tasks)
 	containers := services.toContainerJsonList()
@@ -372,7 +378,7 @@ func getSwarmContainers(socketPath string) ([]dockerContainerJsonResponse, error
 func getDockerContainers(socketPath string) ([]dockerContainerJsonResponse, error) {
 	containers, err := fetchAllDockerContainersFromSock(socketPath)
 	if err != nil {
-		return nil, fmt.Errorf("fetching swarm containers: %w", err)
+		return nil, fmt.Errorf("fetching docker containers: %w", err)
 	}
 
 	return containers, nil
@@ -409,24 +415,30 @@ func extendSwarmServices(
 	services []swarmServiceJsonResponse,
 	tasks swarmTaskJsonList,
 ) swarmExtendedServiceList {
-	servicesWithTasks := make([]swarmExtendedService, 0, len(services))
+	tasks.sortByStatusUpdatedThenCreated()
+	latestTaskByServiceID := make(map[string]*swarmTaskJsonResponse)
+	for i := range tasks {
+		task := &tasks[i]
+		_, exists := latestTaskByServiceID[task.ServiceID]
+		if !exists {
+			latestTaskByServiceID[task.ServiceID] = task
+		}
+	}
 
+	servicesExtended := make([]swarmExtendedService, 0, len(services))
 	for i := range services {
 		service := &services[i]
 		extended := swarmExtendedService{service, "unknown", "no tasks found"}
 
-		for _, task := range tasks {
-			if task.ServiceID == service.ID {
-				extended.State = task.Status.State
-				extended.Status = task.Status.Message
-				break
-			}
+		if latestTask, exists := latestTaskByServiceID[service.ID]; exists {
+			extended.State = latestTask.Status.State
+			extended.Status = latestTask.Status.Message
 		}
 
-		servicesWithTasks = append(servicesWithTasks, extended)
+		servicesExtended = append(servicesExtended, extended)
 	}
 
-	return servicesWithTasks
+	return servicesExtended
 }
 
 func fetchFromSock(socketPath string, path string, target any) error {
