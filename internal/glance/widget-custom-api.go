@@ -11,6 +11,9 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -340,6 +343,22 @@ func (r *decoratedGJSONResult) Bool(key string) bool {
 }
 
 var customAPITemplateFuncs = func() template.FuncMap {
+	var regexpCacheMu sync.Mutex
+	var regexpCache = make(map[string]*regexp.Regexp)
+
+	getCachedRegexp := func(pattern string) *regexp.Regexp {
+		regexpCacheMu.Lock()
+		defer regexpCacheMu.Unlock()
+
+		regex, exists := regexpCache[pattern]
+		if !exists {
+			regex = regexp.MustCompile(pattern)
+			regexpCache[pattern] = regex
+		}
+
+		return regex
+	}
+
 	funcs := template.FuncMap{
 		"toFloat": func(a int) float64 {
 			return float64(a)
@@ -369,6 +388,83 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			// Shorthand to do both of the above with a single function call
 			return dynamicRelativeTimeAttrs(customAPIFuncParseTime(layout, value))
 		},
+		// The reason we flip the parameter order is so that you can chain multiple calls together like this:
+		// {{ .JSON.String "foo" | trimPrefix "bar" | doSomethingElse }}
+		// instead of doing this:
+		// {{ trimPrefix (.JSON.String "foo") "bar" | doSomethingElse }}
+		// since the piped value gets passed as the last argument to the function.
+		"trimPrefix": func(prefix, s string) string {
+			return strings.TrimPrefix(s, prefix)
+		},
+		"trimSuffix": func(suffix, s string) string {
+			return strings.TrimSuffix(s, suffix)
+		},
+		"trimSpace": strings.TrimSpace,
+		"replaceAll": func(old, new, s string) string {
+			return strings.ReplaceAll(s, old, new)
+		},
+		"findMatch": func(pattern, s string) string {
+			if s == "" {
+				return ""
+			}
+
+			return getCachedRegexp(pattern).FindString(s)
+		},
+		"findSubmatch": func(pattern, s string) string {
+			if s == "" {
+				return ""
+			}
+
+			regex := getCachedRegexp(pattern)
+			return itemAtIndexOrDefault(regex.FindStringSubmatch(s), 1, "")
+		},
+		"sortByString": func(key, order string, results []decoratedGJSONResult) []decoratedGJSONResult {
+			sort.Slice(results, func(a, b int) bool {
+				if order == "asc" {
+					return results[a].String(key) < results[b].String(key)
+				}
+
+				return results[a].String(key) > results[b].String(key)
+			})
+
+			return results
+		},
+		"sortByInt": func(key, order string, results []decoratedGJSONResult) []decoratedGJSONResult {
+			sort.Slice(results, func(a, b int) bool {
+				if order == "asc" {
+					return results[a].Int(key) < results[b].Int(key)
+				}
+
+				return results[a].Int(key) > results[b].Int(key)
+			})
+
+			return results
+		},
+		"sortByFloat": func(key, order string, results []decoratedGJSONResult) []decoratedGJSONResult {
+			sort.Slice(results, func(a, b int) bool {
+				if order == "asc" {
+					return results[a].Float(key) < results[b].Float(key)
+				}
+
+				return results[a].Float(key) > results[b].Float(key)
+			})
+
+			return results
+		},
+		"sortByTime": func(key, layout, order string, results []decoratedGJSONResult) []decoratedGJSONResult {
+			sort.Slice(results, func(a, b int) bool {
+				timeA := customAPIFuncParseTime(layout, results[a].String(key))
+				timeB := customAPIFuncParseTime(layout, results[b].String(key))
+
+				if order == "asc" {
+					return timeA.Before(timeB)
+				}
+
+				return timeA.After(timeB)
+			})
+
+			return results
+		},
 	}
 
 	for key, value := range globalTemplateFunctions {
@@ -382,6 +478,13 @@ var customAPITemplateFuncs = func() template.FuncMap {
 
 func customAPIFuncParseTime(layout, value string) time.Time {
 	switch strings.ToLower(layout) {
+	case "unix":
+		asInt, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return time.Unix(0, 0)
+		}
+
+		return time.Unix(asInt, 0)
 	case "rfc3339":
 		layout = time.RFC3339
 	case "rfc3339nano":
@@ -390,8 +493,6 @@ func customAPIFuncParseTime(layout, value string) time.Time {
 		layout = time.DateTime
 	case "dateonly":
 		layout = time.DateOnly
-	case "timeonly":
-		layout = time.TimeOnly
 	}
 
 	parsed, err := time.Parse(layout, value)
