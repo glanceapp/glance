@@ -10,7 +10,7 @@
 - [Document](#document)
 - [Branding](#branding)
 - [Theme](#theme)
-  - [Themes](#themes)
+  - [Available themes](#available-themes)
 - [Pages & Columns](#pages--columns)
 - [Widgets](#widgets)
   - [RSS](#rss)
@@ -307,7 +307,7 @@ theme:
   contrast-multiplier: 1.1
 ```
 
-### Themes
+### Available themes
 If you don't want to spend time configuring your own theme, there are [several available themes](themes.md) which you can simply copy the values for.
 
 ### Properties
@@ -1335,6 +1335,9 @@ Examples:
 | ---- | ---- | -------- | ------- |
 | url | string | yes | |
 | headers | key (string) & value (string) | no | |
+| method | string | no | GET |
+| body-type | string | no | json |
+| body | any | no | |
 | frameless | boolean | no | false |
 | allow-insecure | boolean | no | false |
 | template | string | yes | |
@@ -1351,6 +1354,31 @@ Optionally specify the headers that will be sent with the request. Example:
 headers:
   x-api-key: your-api-key
   Accept: application/json
+```
+
+##### `method`
+The HTTP method to use when making the request. Possible values are `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` and `HEAD`.
+
+##### `body-type`
+The type of the body that will be sent with the request. Possible values are `json`, and `string`.
+
+##### `body`
+The body that will be sent with the request. It can be a string or a map. Example:
+
+```yaml
+body-type: json
+body:
+  key1: value1
+  key2: value2
+  multiple-items:
+    - item1
+    - item2
+```
+
+```yaml
+body-type: string
+body: |
+  key1=value1&key2=value2
 ```
 
 ##### `frameless`
@@ -1428,6 +1456,7 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | url | string | yes | |
 | fallback-content-type | string | no | |
 | allow-potentially-dangerous-html | boolean | no | false |
+| headers | key & value | no | |
 | parameters | key & value | no | |
 
 ##### `url`
@@ -1435,6 +1464,14 @@ The URL of the extension. **Note that the query gets stripped from this URL and 
 
 ##### `fallback-content-type`
 Optionally specify the fallback content type of the extension if the URL does not return a valid `Widget-Content-Type` header. Currently the only supported value for this property is `html`.
+
+##### `headers`
+Optionally specify the headers that will be sent with the request. Example:
+
+```yaml
+headers:
+  x-api-key: ${SECRET_KEY}
+```
 
 ##### `allow-potentially-dangerous-html`
 Whether to allow the extension to display HTML.

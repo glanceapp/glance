@@ -325,13 +325,24 @@ The following helper functions provided by Glance are available:
 - `toFloat(i int) float`: Converts an integer to a float.
 - `toInt(f float) int`: Converts a float to an integer.
 - `toRelativeTime(t time.Time) template.HTMLAttr`: Converts Time to a relative time such as 2h, 1d, etc which dynamically updates. **NOTE:** the value of this function should be used as an attribute in an HTML tag, e.g. `<span {{ toRelativeTime .Time }}></span>`.
-- `parseTime(layout string, s string) time.Time`: Parses a string into time.Time. The layout must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants). You can alternatively use these values instead of the literal format: "RFC3339", "RFC3339Nano", "DateTime", "DateOnly", "TimeOnly".
+- `parseTime(layout string, s string) time.Time`: Parses a string into time.Time. The layout must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants). You can alternatively use these values instead of the literal format: "unix", "RFC3339", "RFC3339Nano", "DateTime", "DateOnly".
+- `parseRelativeTime(layout string, s string) time.Time`: A shorthand for `{{ .String "date" | parseTime "rfc3339" | toRelativeTime }}`.
 - `add(a, b float) float`: Adds two numbers.
 - `sub(a, b float) float`: Subtracts two numbers.
 - `mul(a, b float) float`: Multiplies two numbers.
 - `div(a, b float) float`: Divides two numbers.
 - `formatApproxNumber(n int) string`: Formats a number to be more human-readable, e.g. 1000 -> 1k.
 - `formatNumber(n float|int) string`: Formats a number with commas, e.g. 1000 -> 1,000.
+- `trimPrefix(prefix string, str string) string`: Trims the prefix from a string.
+- `trimSuffix(suffix string, str string) string`: Trims the suffix from a string.
+- `trimSpace(str string) string`: Trims whitespace from a string on both ends.
+- `replaceAll(old string, new string, str string) string`: Replaces all occurrences of a string in a string.
+- `findMatch(pattern string, str string) string`: Finds the first match of a regular expression in a string.
+- `findSubmatch(pattern string, str string) string`: Finds the first submatch of a regular expression in a string.
+- `sortByString(key string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by a string key in either ascending or descending order.
+- `sortByInt(key string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by an integer key in either ascending or descending order.
+- `sortByFloat(key string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by a float key in either ascending or descending order.
+- `sortByTime(key string, layout string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by a time key in either ascending or descending order. The format must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants).
 
 The following helper functions provided by Go's `text/template` are available:
 

@@ -22,6 +22,7 @@ type extensionWidget struct {
 	URL                 string               `yaml:"url"`
 	FallbackContentType string               `yaml:"fallback-content-type"`
 	Parameters          queryParametersField `yaml:"parameters"`
+	Headers             map[string]string    `yaml:"headers"`
 	AllowHtml           bool                 `yaml:"allow-potentially-dangerous-html"`
 	Extension           extension            `yaml:"-"`
 	cachedHTML          template.HTML        `yaml:"-"`
@@ -46,6 +47,7 @@ func (widget *extensionWidget) update(ctx context.Context) {
 		URL:                 widget.URL,
 		FallbackContentType: widget.FallbackContentType,
 		Parameters:          widget.Parameters,
+		Headers:             widget.Headers,
 		AllowHtml:           widget.AllowHtml,
 	})
 
@@ -85,6 +87,7 @@ type extensionRequestOptions struct {
 	URL                 string               `yaml:"url"`
 	FallbackContentType string               `yaml:"fallback-content-type"`
 	Parameters          queryParametersField `yaml:"parameters"`
+	Headers             map[string]string    `yaml:"headers"`
 	AllowHtml           bool                 `yaml:"allow-potentially-dangerous-html"`
 }
 
@@ -111,6 +114,10 @@ func fetchExtension(options extensionRequestOptions) (extension, error) {
 	request, _ := http.NewRequest("GET", options.URL, nil)
 	if len(options.Parameters) > 0 {
 		request.URL.RawQuery = options.Parameters.toQueryString()
+	}
+
+	for key, value := range options.Headers {
+		request.Header.Add(key, value)
 	}
 
 	response, err := http.DefaultClient.Do(request)
