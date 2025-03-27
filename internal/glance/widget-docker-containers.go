@@ -18,6 +18,7 @@ type dockerContainersWidget struct {
 	widgetBase    `yaml:",inline"`
 	HideByDefault bool                `yaml:"hide-by-default"`
 	SockPath      string              `yaml:"sock-path"`
+	Mode          string              `yaml:"mode"`
 	Containers    dockerContainerList `yaml:"-"`
 }
 
@@ -28,11 +29,26 @@ func (widget *dockerContainersWidget) initialize() error {
 		widget.SockPath = "/var/run/docker.sock"
 	}
 
+	widget.Mode = strings.ToLower(widget.Mode)
+	if widget.Mode == "" {
+		widget.Mode = dockerContainerModeStandalone
+	} else if !dockerContainerValidModes[widget.Mode] {
+		validModes := make([]string, 0, len(dockerContainerValidModes))
+		for key := range dockerContainerValidModes {
+			validModes = append(validModes, key)
+		}
+
+		return fmt.Errorf(
+			"invalid mode: %q, must be one of %q",
+			widget.Mode, strings.Join(validModes, ","),
+		)
+	}
+
 	return nil
 }
 
 func (widget *dockerContainersWidget) update(ctx context.Context) {
-	containers, err := fetchDockerContainers(widget.SockPath, widget.HideByDefault)
+	containers, err := fetchDockerContainers(widget.SockPath, widget.HideByDefault, widget.Mode)
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
@@ -43,6 +59,16 @@ func (widget *dockerContainersWidget) update(ctx context.Context) {
 
 func (widget *dockerContainersWidget) Render() template.HTML {
 	return widget.renderTemplate(widget, dockerContainersWidgetTemplate)
+}
+
+const (
+	dockerContainerModeStandalone = "standalone"
+	dockerContainerModeSwarm      = "swarm"
+)
+
+var dockerContainerValidModes = map[string]bool{
+	dockerContainerModeStandalone: true,
+	dockerContainerModeSwarm:      true,
 }
 
 const (
@@ -57,17 +83,19 @@ const (
 )
 
 const (
-	dockerContainerStateIconOK     = "ok"
-	dockerContainerStateIconPaused = "paused"
-	dockerContainerStateIconWarn   = "warn"
-	dockerContainerStateIconOther  = "other"
+	dockerContainerStateIconOK      = "ok"
+	dockerContainerStateIconPending = "pending"
+	dockerContainerStateIconPaused  = "paused"
+	dockerContainerStateIconWarn    = "warn"
+	dockerContainerStateIconOther   = "other"
 )
 
 var dockerContainerStateIconPriorities = map[string]int{
-	dockerContainerStateIconWarn:   0,
-	dockerContainerStateIconOther:  1,
-	dockerContainerStateIconPaused: 2,
-	dockerContainerStateIconOK:     3,
+	dockerContainerStateIconWarn:    0,
+	dockerContainerStateIconOther:   1,
+	dockerContainerStateIconPending: 2,
+	dockerContainerStateIconPaused:  3,
+	dockerContainerStateIconOK:      4,
 }
 
 type dockerContainerJsonResponse struct {
@@ -95,6 +123,87 @@ func (l *dockerContainerLabels) getOrDefault(label, def string) string {
 	}
 
 	return v
+}
+
+type swarmServiceJsonResponse struct {
+	ID   string `json:"ID"`
+	Spec struct {
+		Name         string                `json:"Name"`
+		Labels       dockerContainerLabels `json:"Labels"`
+		TaskTemplate struct {
+			ContainerSpec struct {
+				Image string `json:"Image"`
+			} `json:"ContainerSpec"`
+		} `json:"TaskTemplate"`
+	} `json:"Spec"`
+}
+
+type swarmTaskJsonResponse struct {
+	ID        string `json:"ID"`
+	ServiceID string `json:"ServiceID"`
+	CreatedAt string `json:"CreatedAt"`
+	UpdatedAt string `json:"UpdatedAt"`
+	Status    struct {
+		Timestamp string `json:"Timestamp"`
+		State     string `json:"State"`
+		Message   string `json:"Message"`
+	} `json:"Status"`
+}
+
+type swarmTaskJsonList []swarmTaskJsonResponse
+
+func (tasks swarmTaskJsonList) sortByStatusUpdatedThenCreated() {
+	sort.SliceStable(tasks, func(a, b int) bool {
+		timestampA, errA := time.Parse(time.RFC3339, tasks[a].Status.Timestamp)
+		timestampB, errB := time.Parse(time.RFC3339, tasks[b].Status.Timestamp)
+
+		if errA == nil && errB == nil {
+			return timestampA.After(timestampB)
+		}
+
+		updatedA, errA := time.Parse(time.RFC3339, tasks[a].UpdatedAt)
+		updatedB, errB := time.Parse(time.RFC3339, tasks[b].UpdatedAt)
+
+		if errA == nil && errB == nil {
+			return updatedA.After(updatedB)
+		}
+
+		createdA, errA := time.Parse(time.RFC3339, tasks[a].CreatedAt)
+		createdB, errB := time.Parse(time.RFC3339, tasks[b].CreatedAt)
+
+		if errA == nil && errB == nil {
+			return createdA.After(createdB)
+		}
+
+		return false
+	})
+}
+
+type swarmExtendedService struct {
+	*swarmServiceJsonResponse `json:"Service"`
+	State                     string `json:"State"`
+	Status                    string `json:"Status"`
+}
+
+type swarmExtendedServiceList []swarmExtendedService
+
+func (services swarmExtendedServiceList) toContainerJsonList() []dockerContainerJsonResponse {
+	containers := make([]dockerContainerJsonResponse, 0, len(services))
+
+	for i := range services {
+		service := &services[i]
+		container := dockerContainerJsonResponse{
+			Names:  []string{service.Spec.Name},
+			Image:  service.Spec.TaskTemplate.ContainerSpec.Image,
+			State:  service.State,
+			Status: service.Status,
+			Labels: service.Spec.Labels,
+		}
+
+		containers = append(containers, container)
+	}
+
+	return containers
 }
 
 type dockerContainer struct {
@@ -126,19 +235,21 @@ func (containers dockerContainerList) sortByStateIconThenTitle() {
 
 func dockerContainerStateToStateIcon(state string) string {
 	switch state {
-	case "running":
+	case "running", "complete":
 		return dockerContainerStateIconOK
 	case "paused":
 		return dockerContainerStateIconPaused
-	case "exited", "unhealthy", "dead":
+	case "new", "pending", "assigned", "accepted", "ready", "preparing", "starting":
+		return dockerContainerStateIconPending
+	case "exited", "unhealthy", "dead", "failed", "shutdown", "rejected", "orphaned", "remove":
 		return dockerContainerStateIconWarn
 	default:
 		return dockerContainerStateIconOther
 	}
 }
 
-func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContainerList, error) {
-	containers, err := fetchAllDockerContainersFromSock(socketPath)
+func fetchDockerContainers(socketPath string, hideByDefault bool, mode string) (dockerContainerList, error) {
+	containers, err := fetchContainersByMode(socketPath, mode)
 	if err != nil {
 		return nil, fmt.Errorf("fetching containers: %w", err)
 	}
@@ -239,7 +350,98 @@ func isDockerContainerHidden(container *dockerContainerJsonResponse, hideByDefau
 	return hideByDefault
 }
 
+func fetchContainersByMode(socketPath string, mode string) ([]dockerContainerJsonResponse, error) {
+	switch mode {
+	case dockerContainerModeSwarm:
+		return getSwarmContainers(socketPath)
+	default:
+		return getDockerContainers(socketPath)
+	}
+}
+
+func getSwarmContainers(socketPath string) ([]dockerContainerJsonResponse, error) {
+	svcs, err := fetchAllSwarmServicesFromSock(socketPath)
+	if err != nil {
+		return nil, fmt.Errorf("fetching swarm services: %w", err)
+	}
+
+	tasks, err := fetchAllSwarmTasksFromSock(socketPath)
+	if err != nil {
+		return nil, fmt.Errorf("fetching swarm tasks: %w", err)
+	}
+
+	services := extendSwarmServices(svcs, tasks)
+	containers := services.toContainerJsonList()
+	return containers, nil
+}
+
+func getDockerContainers(socketPath string) ([]dockerContainerJsonResponse, error) {
+	containers, err := fetchAllDockerContainersFromSock(socketPath)
+	if err != nil {
+		return nil, fmt.Errorf("fetching docker containers: %w", err)
+	}
+
+	return containers, nil
+}
+
 func fetchAllDockerContainersFromSock(socketPath string) ([]dockerContainerJsonResponse, error) {
+	var containers []dockerContainerJsonResponse
+	if err := fetchFromSock(socketPath, "http://docker/containers/json?all=true", &containers); err != nil {
+		return nil, err
+	}
+
+	return containers, nil
+}
+
+func fetchAllSwarmServicesFromSock(socketPath string) ([]swarmServiceJsonResponse, error) {
+	var services []swarmServiceJsonResponse
+	if err := fetchFromSock(socketPath, "http://docker/services", &services); err != nil {
+		return nil, err
+	}
+
+	return services, nil
+}
+
+func fetchAllSwarmTasksFromSock(socketPath string) (swarmTaskJsonList, error) {
+	var tasks []swarmTaskJsonResponse
+	if err := fetchFromSock(socketPath, "http://docker/tasks", &tasks); err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
+}
+
+func extendSwarmServices(
+	services []swarmServiceJsonResponse,
+	tasks swarmTaskJsonList,
+) swarmExtendedServiceList {
+	tasks.sortByStatusUpdatedThenCreated()
+	latestTaskByServiceID := make(map[string]*swarmTaskJsonResponse)
+	for i := range tasks {
+		task := &tasks[i]
+		_, exists := latestTaskByServiceID[task.ServiceID]
+		if !exists {
+			latestTaskByServiceID[task.ServiceID] = task
+		}
+	}
+
+	servicesExtended := make([]swarmExtendedService, 0, len(services))
+	for i := range services {
+		service := &services[i]
+		extended := swarmExtendedService{service, "unknown", "no tasks found"}
+
+		if latestTask, exists := latestTaskByServiceID[service.ID]; exists {
+			extended.State = latestTask.Status.State
+			extended.Status = latestTask.Status.Message
+		}
+
+		servicesExtended = append(servicesExtended, extended)
+	}
+
+	return servicesExtended
+}
+
+func fetchFromSock(socketPath string, path string, target any) error {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 		Transport: &http.Transport{
@@ -249,25 +451,24 @@ func fetchAllDockerContainersFromSock(socketPath string) ([]dockerContainerJsonR
 		},
 	}
 
-	request, err := http.NewRequest("GET", "http://docker/containers/json?all=true", nil)
+	request, err := http.NewRequest("GET", path, nil)
 	if err != nil {
-		return nil, fmt.Errorf("creating request: %w", err)
+		return fmt.Errorf("creating request: %w", err)
 	}
 
 	response, err := client.Do(request)
 	if err != nil {
-		return nil, fmt.Errorf("sending request to socket: %w", err)
+		return fmt.Errorf("sending request to socket: %w", err)
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("non-200 response status: %s", response.Status)
+		return fmt.Errorf("non-200 response status: %s", response.Status)
 	}
 
-	var containers []dockerContainerJsonResponse
-	if err := json.NewDecoder(response.Body).Decode(&containers); err != nil {
-		return nil, fmt.Errorf("decoding response: %w", err)
+	if err := json.NewDecoder(response.Body).Decode(&target); err != nil {
+		return fmt.Errorf("decoding response: %w", err)
 	}
 
-	return containers, nil
+	return nil
 }
