@@ -40,6 +40,7 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
+  - [F1] (#f1)
 
 
 ## Preconfigured page
@@ -2546,3 +2547,27 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+### F1
+Time remaining until the next F1 session of your choice.
+
+Example:
+
+```yaml
+- type: f1
+```
+
+Preview:
+
+![alt text](images/f1-preview.png)
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| session-type | string | no | race |
+
+##### `session-type`
+The sessions you want to see in the widget. Can be one of the following:
+- `race`: only display time until next race
+- `major`: only display time until next qualifying or race
+- `all`: display time until nearest future session (includes free practice)
