@@ -2,10 +2,13 @@ package glance
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html"
 	"html/template"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -33,6 +36,17 @@ type redditWidget struct {
 	Limit               int               `yaml:"limit"`
 	CollapseAfter       int               `yaml:"collapse-after"`
 	RequestUrlTemplate  string            `yaml:"request-url-template"`
+	RedditAppName       string            `yaml:"reddit-app-name"`
+	RedditClientID      string            `yaml:"reddit-client-id"`
+	RedditClientSecret  string            `yaml:"reddit-client-secret"`
+	redditAccessToken   string
+}
+
+type redditTokenResponse struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	Scope       string `json:"scope"`
+	ExpiresIn   int    `json:"expires_in"`
 }
 
 func (widget *redditWidget) initialize() error {
@@ -62,6 +76,10 @@ func (widget *redditWidget) initialize() error {
 		}
 	}
 
+	if err := widget.fetchRedditAccessToken(); err != nil {
+		return fmt.Errorf("fetching Reddit API access token: %w", err)
+	}
+
 	widget.
 		withTitle("r/" + widget.Subreddit).
 		withTitleURL("https://www.reddit.com/r/" + widget.Subreddit + "/").
@@ -87,17 +105,7 @@ func isValidRedditTopPeriod(period string) bool {
 }
 
 func (widget *redditWidget) update(ctx context.Context) {
-	// TODO: refactor, use a struct to pass all of these
-	posts, err := fetchSubredditPosts(
-		widget.Subreddit,
-		widget.SortBy,
-		widget.TopPeriod,
-		widget.Search,
-		widget.CommentsUrlTemplate,
-		widget.RequestUrlTemplate,
-		widget.Proxy.client,
-		widget.ShowFlairs,
-	)
+	posts, err := widget.fetchSubredditPosts()
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
@@ -163,49 +171,55 @@ func templateRedditCommentsURL(template, subreddit, postId, postPath string) str
 	return template
 }
 
-func fetchSubredditPosts(
-	subreddit,
-	sort,
-	topPeriod,
-	search,
-	commentsUrlTemplate,
-	requestUrlTemplate string,
-	proxyClient *http.Client,
-	showFlairs bool,
-) (forumPostList, error) {
-	query := url.Values{}
-	var requestUrl string
+func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
+	var baseURL string
 
-	if search != "" {
-		query.Set("q", search+" subreddit:"+subreddit)
-		query.Set("sort", sort)
-	}
-
-	if sort == "top" {
-		query.Set("t", topPeriod)
-	}
-
-	if search != "" {
-		requestUrl = fmt.Sprintf("https://www.reddit.com/search.json?%s", query.Encode())
+	if widget.redditAccessToken != "" {
+		baseURL = "https://oauth.reddit.com"
 	} else {
-		requestUrl = fmt.Sprintf("https://www.reddit.com/r/%s/%s.json?%s", subreddit, sort, query.Encode())
+		baseURL = "https://www.reddit.com"
+	}
+
+	query := url.Values{}
+	var requestURL string
+
+	if widget.Search != "" {
+		query.Set("q", widget.Search+" subreddit:"+widget.Subreddit)
+		query.Set("sort", widget.SortBy)
+
+		requestURL = fmt.Sprintf("%s/search.json?%s", baseURL, query.Encode())
+	} else {
+		if widget.SortBy == "top" {
+			query.Set("t", widget.TopPeriod)
+		}
+
+		requestURL = fmt.Sprintf("%s/r/%s/%s.json?%s", baseURL, widget.Subreddit, widget.SortBy, query.Encode())
 	}
 
 	var client requestDoer = defaultHTTPClient
 
-	if requestUrlTemplate != "" {
-		requestUrl = strings.ReplaceAll(requestUrlTemplate, "{REQUEST-URL}", requestUrl)
-	} else if proxyClient != nil {
-		client = proxyClient
+	if widget.RequestUrlTemplate != "" {
+		requestURL = strings.ReplaceAll(widget.RequestUrlTemplate, "{REQUEST-URL}", requestURL)
+	} else if widget.Proxy.client != nil {
+		client = widget.Proxy.client
 	}
 
-	request, err := http.NewRequest("GET", requestUrl, nil)
+	request, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	// Required to increase rate limit, otherwise Reddit randomly returns 429 even after just 2 requests
-	setBrowserUserAgentHeader(request)
+	if widget.RedditAppName != "" {
+		request.Header.Set("User-Agent", fmt.Sprintf("%s/1.0", widget.RedditAppName))
+	} else {
+		setBrowserUserAgentHeader(request)
+	}
+
+	if widget.redditAccessToken != "" {
+		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", widget.redditAccessToken))
+	}
+
 	responseJson, err := decodeJsonFromRequest[subredditResponseJson](client, request)
 	if err != nil {
 		return nil, err
@@ -226,10 +240,10 @@ func fetchSubredditPosts(
 
 		var commentsUrl string
 
-		if commentsUrlTemplate == "" {
+		if widget.CommentsUrlTemplate == "" {
 			commentsUrl = "https://www.reddit.com" + post.Permalink
 		} else {
-			commentsUrl = templateRedditCommentsURL(commentsUrlTemplate, subreddit, post.Id, post.Permalink)
+			commentsUrl = templateRedditCommentsURL(widget.CommentsUrlTemplate, widget.Subreddit, post.Id, post.Permalink)
 		}
 
 		forumPost := forumPost{
@@ -249,7 +263,7 @@ func fetchSubredditPosts(
 			forumPost.TargetUrl = post.Url
 		}
 
-		if showFlairs && post.Flair != "" {
+		if widget.ShowFlairs && post.Flair != "" {
 			forumPost.Tags = append(forumPost.Tags, post.Flair)
 		}
 
@@ -257,11 +271,11 @@ func fetchSubredditPosts(
 			forumPost.IsCrosspost = true
 			forumPost.TargetUrlDomain = "r/" + post.ParentList[0].Subreddit
 
-			if commentsUrlTemplate == "" {
+			if widget.CommentsUrlTemplate == "" {
 				forumPost.TargetUrl = "https://www.reddit.com" + post.ParentList[0].Permalink
 			} else {
 				forumPost.TargetUrl = templateRedditCommentsURL(
-					commentsUrlTemplate,
+					widget.CommentsUrlTemplate,
 					post.ParentList[0].Subreddit,
 					post.ParentList[0].Id,
 					post.ParentList[0].Permalink,
@@ -273,4 +287,56 @@ func fetchSubredditPosts(
 	}
 
 	return posts, nil
+}
+
+func (widget *redditWidget) fetchRedditAccessToken() (err error) {
+	// Only execute if all three parameters are set
+	if widget.RedditAppName == "" || widget.RedditClientID == "" || widget.RedditClientSecret == "" {
+		return nil
+	}
+
+	auth := base64.StdEncoding.EncodeToString([]byte(widget.RedditClientID + ":" + widget.RedditClientSecret))
+
+	data := url.Values{"grant_type": {"client_credentials"}}
+
+	req, err := http.NewRequest("POST", "https://www.reddit.com/api/v1/access_token", strings.NewReader(data.Encode()))
+	if err != nil {
+		return fmt.Errorf("requesting an access token to the Reddit API: %w", err)
+	}
+
+	req.Header.Add("Authorization", "Basic "+auth)
+	req.Header.Add("User-Agent", widget.RedditAppName+"/1.0")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("querying Reddit API: %w", err)
+	}
+
+	defer func() {
+		err = errors.Join(err, resp.Body.Close())
+	}()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("reading response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var tokenResp redditTokenResponse
+	err = json.Unmarshal(body, &tokenResp)
+	if err != nil {
+		return fmt.Errorf("unmarshalling Reddit API response: %w", err)
+	}
+
+	widget.redditAccessToken = tokenResp.AccessToken
+
+	return
 }

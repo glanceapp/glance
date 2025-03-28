@@ -789,7 +789,11 @@ Display a list of posts from a specific subreddit.
 
 > [!WARNING]
 >
-> Reddit does not allow unauthorized API access from VPS IPs, if you're hosting Glance on a VPS you will get a 403 response. As a workaround you can route the traffic from Glance through a VPN or your own HTTP proxy using the `request-url-template` property.
+> Reddit does not allow unauthorized API access from VPS IPs, if you're hosting Glance on a VPS you will get a 403 
+> response. As a workaround you can either [register an app on Reddit](https://ssl.reddit.com/prefs/apps/) and use the
+> generated ID and secret in the widget configuration to authenticate your requests (see `reddit-app-name`,
+> `reddit-client-id` and `reddit-client-secret`) or route the traffic from Glance through a VPN or your own HTTP proxy 
+> using the `request-url-template` property.
 
 Example:
 
@@ -799,21 +803,24 @@ Example:
 ```
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| subreddit | string | yes |  |
-| style | string | no | vertical-list |
-| show-thumbnails | boolean | no | false |
-| show-flairs | boolean | no | false |
-| limit | integer | no | 15 |
-| collapse-after | integer | no | 5 |
+| Name                  | Type | Required | Default |
+|-----------------------| ---- | -------- | ------- |
+| subreddit             | string | yes |  |
+| style                 | string | no | vertical-list |
+| show-thumbnails       | boolean | no | false |
+| show-flairs           | boolean | no | false |
+| limit                 | integer | no | 15 |
+| collapse-after        | integer | no | 5 |
 | comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
-| request-url-template | string | no |  |
-| proxy | string or multiple parameters | no |  |
-| sort-by | string | no | hot |
-| top-period | string | no | day |
-| search | string | no | |
-| extra-sort-by | string | no | |
+| request-url-template  | string | no |  |
+| proxy                 | string or multiple parameters | no |  |
+| sort-by               | string | no | hot |
+| top-period            | string | no | day |
+| search                | string | no | |
+| extra-sort-by         | string | no | |
+| reddit-app-name       | string | no | |
+| reddit-client-id      | string | no | |
+| reddit-client-secret  | string | no | |
 
 ##### `subreddit`
 The subreddit for which to fetch the posts from.
@@ -920,6 +927,23 @@ Keywords to search for. Searching within specific fields is also possible, **tho
 Can be used to specify an additional sort which will be applied on top of the already sorted posts. By default does not apply any extra sorting and the only available option is `engagement`.
 
 The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
+
+##### `reddit-app-name`, `reddit-client-id`, `reddit-client-secret`
+Credentials generated when [registering an app on Reddit](https://ssl.reddit.com/prefs/apps/). Must be set for each Reddit
+widget. All three values should be populated otherwise the requests to the Reddit API will not be authenticated and will 
+be rejected if Glance is self-hosted on a VPS.
+
+Since `reddit-client-id` and `reddit-client-secret` are secrets, it is highly suggested to pass these values in the 
+configuration by using environment variables instead of storing them as is.
+
+```yaml
+widgets:
+  - type: reddit
+    subreddit: technology
+    reddit-app-name: ${REDDIT_APP_NAME} # Values stored in a .env
+    reddit-client-id: ${REDDIT_APP_CLIENT_ID}
+    reddit-client-secret: ${REDDIT_APP_SECRET}
+```
 
 ### Search Widget
 Display a search bar that can be used to search for specific terms on various search engines.
