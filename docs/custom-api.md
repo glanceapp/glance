@@ -226,10 +226,10 @@ JSON response:
 }
 ```
 
-Calculations can be performed, however all numbers must be converted to floats first if they are not already:
+Calculations can be performed on either ints or floats. If both numbers are ints, an int will be returned, otherwise a float will be returned. If you try to divide by zero, 0 will be returned. If you provide non-numeric values, `NaN` will be returned.
 
 ```html
-<div>{{ sub (.JSON.Int "price" | toFloat) (.JSON.Int "discount" | toFloat) }}</div>
+<div>{{ sub (.JSON.Int "price") (.JSON.Int "discount") }}</div>
 ```
 
 Output:
@@ -325,6 +325,8 @@ The following helper functions provided by Glance are available:
 - `toFloat(i int) float`: Converts an integer to a float.
 - `toInt(f float) int`: Converts a float to an integer.
 - `toRelativeTime(t time.Time) template.HTMLAttr`: Converts Time to a relative time such as 2h, 1d, etc which dynamically updates. **NOTE:** the value of this function should be used as an attribute in an HTML tag, e.g. `<span {{ toRelativeTime .Time }}></span>`.
+- `now() time.Time`: Returns the current time.
+- `duration(str string) time.Duration`: Parses a string such as `1h`, `1d`, `5h30m`, etc into a `time.Duration`.
 - `parseTime(layout string, s string) time.Time`: Parses a string into time.Time. The layout must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants). You can alternatively use these values instead of the literal format: "unix", "RFC3339", "RFC3339Nano", "DateTime", "DateOnly".
 - `parseRelativeTime(layout string, s string) time.Time`: A shorthand for `{{ .String "date" | parseTime "rfc3339" | toRelativeTime }}`.
 - `add(a, b float) float`: Adds two numbers.

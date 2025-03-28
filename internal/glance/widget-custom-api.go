@@ -342,6 +342,23 @@ func (r *decoratedGJSONResult) Bool(key string) bool {
 	return r.Get(key).Bool()
 }
 
+func customAPIDoMathOp[T int | float64](a, b T, op string) T {
+	switch op {
+	case "add":
+		return a + b
+	case "sub":
+		return a - b
+	case "mul":
+		return a * b
+	case "div":
+		if b == 0 {
+			return 0
+		}
+		return a / b
+	}
+	return 0
+}
+
 var customAPITemplateFuncs = func() template.FuncMap {
 	var regexpCacheMu sync.Mutex
 	var regexpCache = make(map[string]*regexp.Regexp)
@@ -359,6 +376,31 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		return regex
 	}
 
+	doMathOpWithAny := func(a, b any, op string) any {
+		switch at := a.(type) {
+		case int:
+			switch bt := b.(type) {
+			case int:
+				return customAPIDoMathOp(at, bt, op)
+			case float64:
+				return customAPIDoMathOp(float64(at), bt, op)
+			default:
+				return math.NaN()
+			}
+		case float64:
+			switch bt := b.(type) {
+			case int:
+				return customAPIDoMathOp(at, float64(bt), op)
+			case float64:
+				return customAPIDoMathOp(at, bt, op)
+			default:
+				return math.NaN()
+			}
+		default:
+			return math.NaN()
+		}
+	}
+
 	funcs := template.FuncMap{
 		"toFloat": func(a int) float64 {
 			return float64(a)
@@ -366,21 +408,28 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		"toInt": func(a float64) int {
 			return int(a)
 		},
-		"add": func(a, b float64) float64 {
-			return a + b
+		"add": func(a, b any) any {
+			return doMathOpWithAny(a, b, "add")
 		},
-		"sub": func(a, b float64) float64 {
-			return a - b
+		"sub": func(a, b any) any {
+			return doMathOpWithAny(a, b, "sub")
 		},
-		"mul": func(a, b float64) float64 {
-			return a * b
+		"mul": func(a, b any) any {
+			return doMathOpWithAny(a, b, "mul")
 		},
-		"div": func(a, b float64) float64 {
-			if b == 0 {
-				return math.NaN()
+		"div": func(a, b any) any {
+			return doMathOpWithAny(a, b, "div")
+		},
+		"now": func() time.Time {
+			return time.Now()
+		},
+		"duration": func(str string) time.Duration {
+			d, err := time.ParseDuration(str)
+			if err != nil {
+				return 0
 			}
 
-			return a / b
+			return d
 		},
 		"parseTime":      customAPIFuncParseTime,
 		"toRelativeTime": dynamicRelativeTimeAttrs,
