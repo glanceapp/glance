@@ -16,6 +16,7 @@ type forumPost struct {
 	DiscussionUrl   string
 	TargetUrl       string
 	TargetUrlDomain string
+	TextPreview     string
 	ThumbnailUrl    string
 	CommentCount    int
 	Score           int
