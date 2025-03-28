@@ -20,3 +20,12 @@
     inset: 0;
     background: linear-gradient(0deg, var(--color-widget-background) 10%, transparent);
 }
+
+.redditdetailed-thumbnail {
+    margin-top: 0.3rem;
+}
+
+.reddit-detailed-thumbnail > * {
+    aspect-ratio: 3 / 2;
+    height: 8.7rem;
+}
