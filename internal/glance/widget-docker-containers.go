@@ -125,9 +125,30 @@ func (l *dockerContainerLabels) getOrDefault(label, def string) string {
 	return v
 }
 
+type swarmNodeJsonResponse struct {
+	ID        string `json:"ID"`
+	CreatedAt string `json:"CreatedAt"`
+	UpdatedAt string `json:"UpdatedAt"`
+	Spec      struct {
+		Role         string `json:"Role"`
+		Availability string `json:"Availability"`
+	} `json:"Spec"`
+	Status struct {
+		State string `json:"State"`
+		Addr  string `json:"Addr"`
+	} `json:"Status"`
+	ManagerStatus struct {
+		Leader       bool   `json:"Leader"`
+		Reachability string `json:"Reachability"`
+		Addr         string `json:"Addr"`
+	} `json:"ManagerStatus"`
+}
+
 type swarmServiceJsonResponse struct {
-	ID   string `json:"ID"`
-	Spec struct {
+	ID        string `json:"ID"`
+	CreatedAt string `json:"CreatedAt"`
+	UpdatedAt string `json:"UpdatedAt"`
+	Spec      struct {
 		Name         string                `json:"Name"`
 		Labels       dockerContainerLabels `json:"Labels"`
 		TaskTemplate struct {
@@ -135,15 +156,23 @@ type swarmServiceJsonResponse struct {
 				Image string `json:"Image"`
 			} `json:"ContainerSpec"`
 		} `json:"TaskTemplate"`
+		Mode struct {
+			Global     *struct{} `json:"Global,omitempty"`
+			Replicated *struct {
+				Replicas int `json:"Replicas"`
+			} `json:"Replicated,omitempty"`
+		} `json:"Mode"`
 	} `json:"Spec"`
 }
 
 type swarmTaskJsonResponse struct {
-	ID        string `json:"ID"`
-	ServiceID string `json:"ServiceID"`
-	CreatedAt string `json:"CreatedAt"`
-	UpdatedAt string `json:"UpdatedAt"`
-	Status    struct {
+	ID           string `json:"ID"`
+	ServiceID    string `json:"ServiceID"`
+	CreatedAt    string `json:"CreatedAt"`
+	UpdatedAt    string `json:"UpdatedAt"`
+	DesiredState string `json:"DesiredState"`
+	NodeID       string `json:"NodeID"`
+	Status       struct {
 		Timestamp string `json:"Timestamp"`
 		State     string `json:"State"`
 		Message   string `json:"Message"`
@@ -239,9 +268,9 @@ func dockerContainerStateToStateIcon(state string) string {
 		return dockerContainerStateIconOK
 	case "paused":
 		return dockerContainerStateIconPaused
-	case "new", "pending", "assigned", "accepted", "ready", "preparing", "starting":
+	case "pending":
 		return dockerContainerStateIconPending
-	case "exited", "unhealthy", "dead", "failed", "shutdown", "rejected", "orphaned", "remove":
+	case "exited", "unhealthy", "dead":
 		return dockerContainerStateIconWarn
 	default:
 		return dockerContainerStateIconOther
@@ -365,12 +394,17 @@ func getSwarmContainers(socketPath string) ([]dockerContainerJsonResponse, error
 		return nil, fmt.Errorf("fetching swarm services: %w", err)
 	}
 
+	nodes, err := fetchAllSwarmNodesFromSock(socketPath)
+	if err != nil {
+		return nil, fmt.Errorf("fetching swarm nodes: %w", err)
+	}
+
 	tasks, err := fetchAllSwarmTasksFromSock(socketPath)
 	if err != nil {
 		return nil, fmt.Errorf("fetching swarm tasks: %w", err)
 	}
 
-	services := extendSwarmServices(svcs, tasks)
+	services := extendSwarmServices(svcs, nodes, tasks)
 	containers := services.toContainerJsonList()
 	return containers, nil
 }
@@ -393,6 +427,15 @@ func fetchAllDockerContainersFromSock(socketPath string) ([]dockerContainerJsonR
 	return containers, nil
 }
 
+func fetchAllSwarmNodesFromSock(socketPath string) ([]swarmNodeJsonResponse, error) {
+	var nodes []swarmNodeJsonResponse
+	if err := fetchFromSock(socketPath, "http://docker/nodes", &nodes); err != nil {
+		return nil, err
+	}
+
+	return nodes, nil
+}
+
 func fetchAllSwarmServicesFromSock(socketPath string) ([]swarmServiceJsonResponse, error) {
 	var services []swarmServiceJsonResponse
 	if err := fetchFromSock(socketPath, "http://docker/services", &services); err != nil {
@@ -413,35 +456,162 @@ func fetchAllSwarmTasksFromSock(socketPath string) (swarmTaskJsonList, error) {
 
 func extendSwarmServices(
 	services []swarmServiceJsonResponse,
+	nodes []swarmNodeJsonResponse,
 	tasks swarmTaskJsonList,
 ) swarmExtendedServiceList {
 	tasks.sortByStatusUpdatedThenCreated()
-	latestTaskByServiceID := make(map[string]*swarmTaskJsonResponse)
-	for i := range tasks {
-		task := &tasks[i]
-		_, exists := latestTaskByServiceID[task.ServiceID]
-		if !exists {
-			latestTaskByServiceID[task.ServiceID] = task
-		}
+	tasksByService := make(map[string][]swarmTaskJsonResponse)
+	for _, task := range tasks {
+		tasksByService[task.ServiceID] = append(tasksByService[task.ServiceID], task)
 	}
 
-	servicesExtended := make([]swarmExtendedService, 0, len(services))
+	servicesExtended := make(swarmExtendedServiceList, 0, len(services))
 	for i := range services {
 		service := &services[i]
-		extended := swarmExtendedService{service, "unknown", "no tasks found"}
-
-		if latestTask, exists := latestTaskByServiceID[service.ID]; exists {
-			extended.State = latestTask.Status.State
-			extended.Status = latestTask.Status.Message
-		}
-
-		servicesExtended = append(servicesExtended, extended)
+		serviceTasks := tasksByService[service.ID]
+		state, statusMsg := deriveServiceStatus(service, nodes, serviceTasks)
+		servicesExtended = append(servicesExtended, swarmExtendedService{
+			swarmServiceJsonResponse: service,
+			State:                    state,
+			Status:                   statusMsg,
+		})
 	}
 
 	return servicesExtended
 }
 
-func fetchFromSock(socketPath string, path string, target any) error {
+func deriveServiceStatus(
+	service *swarmServiceJsonResponse,
+	nodes []swarmNodeJsonResponse,
+	tasks []swarmTaskJsonResponse,
+) (string, string) {
+	expectedReplicas, isGlobal := calculateExpectedReplicas(service, nodes)
+	taskStateCounts, tasksForErrorMsg := aggregateTaskStates(tasks)
+	totalTasks := len(tasks)
+
+	if totalTasks == 0 && expectedReplicas > 0 {
+		return "pending", "Service created but no tasks are assigned yet"
+	} else if expectedReplicas == 0 {
+		tasksUp := taskStateCounts["running"] + taskStateCounts["pending"]
+		if tasksUp > 0 {
+			return "pending", fmt.Sprintf("Service scaling down (%d tasks terminating)", tasksUp)
+		}
+
+		return "complete", "Service scaled to 0 replicas"
+	} else if complete := taskStateCounts["complete"]; complete == expectedReplicas {
+		return "complete", fmt.Sprintf("Service tasks completed (%d tasks)", complete)
+	} else if running := taskStateCounts["running"]; running == expectedReplicas {
+		statusMsg := fmt.Sprintf("Service running (%d/%d replicas)", running, expectedReplicas)
+		if isGlobal {
+			statusMsg = fmt.Sprintf("Service running globally (%d/%d nodes)", running, expectedReplicas)
+		}
+
+		return "running", statusMsg
+	} else if pending := taskStateCounts["pending"]; pending > 0 {
+		statusMsg := fmt.Sprintf("Service pending (%d/%d replicas running, %d pending)", running, expectedReplicas, pending)
+		if isGlobal {
+			statusMsg = fmt.Sprintf("Service pending globally (%d/%d nodes running, %d pending)", running, expectedReplicas, pending)
+		}
+
+		return "pending", statusMsg
+	} else if unhealthy := taskStateCounts["unhealthy"]; unhealthy > 0 {
+		state := "unhealthy"
+		statusMsg := fmt.Sprintf("Service degraded (%d tasks unhealthy)", unhealthy)
+		if len(tasksForErrorMsg) > 0 {
+			details := combineTaskStatusMessages(tasksForErrorMsg, 3)
+			if details != "" {
+				statusMsg += ": " + details
+			}
+		}
+
+		if taskStateCounts["running"] > 0 {
+			state = "warn"
+			statusMsg = fmt.Sprintf("%s, %d/%d healthy", statusMsg, taskStateCounts["running"], expectedReplicas)
+		}
+
+		return state, statusMsg
+	} else if other := taskStateCounts["other"]; other > 0 {
+		return "other", fmt.Sprintf("Service in an unknown state (%d tasks in unexpected states)", other)
+	}
+
+	return "other", "Service in an uknown state"
+}
+
+func calculateExpectedReplicas(
+	service *swarmServiceJsonResponse,
+	nodes []swarmNodeJsonResponse,
+) (int, bool) {
+	expectedReplicas := 0
+	isGlobal := service.Spec.Mode.Global != nil
+
+	if isGlobal {
+		availableNodes := 0
+		for _, node := range nodes {
+			if node.Status.State == "ready" && node.Spec.Availability == "active" {
+				availableNodes++
+			}
+		}
+
+		expectedReplicas = availableNodes
+	} else if service.Spec.Mode.Replicated != nil && service.Spec.Mode.Replicated.Replicas > 0 {
+		expectedReplicas = service.Spec.Mode.Replicated.Replicas
+	}
+
+	return expectedReplicas, isGlobal
+}
+
+func aggregateTaskStates(
+	tasks []swarmTaskJsonResponse,
+) (map[string]int, []swarmTaskJsonResponse) {
+	tasksForErrorMsg := make([]swarmTaskJsonResponse, 0)
+	taskStateCounts := make(map[string]int, 0)
+	for _, task := range tasks {
+		if task.DesiredState == task.Status.State {
+			taskStateCounts[task.Status.State]++
+		} else {
+			switch task.Status.State {
+			case "running", "new", "pending", "assigned", "accepted", "preparing", "starting", "ready":
+				taskStateCounts["pending"]++
+			case "complete", "failed", "rejected", "shutdown", "orphaned", "remove":
+				taskStateCounts["unhealthy"]++
+				tasksForErrorMsg = append(tasksForErrorMsg, task)
+			default:
+				taskStateCounts["other"]++
+			}
+		}
+	}
+
+	return taskStateCounts, tasksForErrorMsg
+}
+
+func combineTaskStatusMessages(tasks []swarmTaskJsonResponse, maxMessages int) string {
+	if len(tasks) == 0 || maxMessages <= 0 {
+		return ""
+	}
+
+	messageCount := min(len(tasks), maxMessages)
+	messages := make([]string, 0, messageCount)
+
+	for i := range messageCount {
+		taskMessage := tasks[i].Status.Message
+		if taskMessage != "" {
+			id, _ := limitStringLength(tasks[i].ID, 12)
+			messages = append(messages, fmt.Sprintf("Task %s: %s", id, taskMessage))
+		}
+	}
+
+	if len(messages) == 0 {
+		return ""
+	}
+
+	if len(tasks) > maxMessages {
+		messages = append(messages, fmt.Sprintf("...and %d more tasks", len(tasks)-maxMessages))
+	}
+
+	return strings.Join(messages, "; ")
+}
+
+func fetchFromSock[T any](socketPath string, path string, target T) error {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 		Transport: &http.Transport{
