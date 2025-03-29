@@ -435,6 +435,13 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		"now": func() time.Time {
 			return time.Now()
 		},
+		"offsetNow": func(offset string) time.Time {
+			d, err := time.ParseDuration(offset)
+			if err != nil {
+				return time.Now()
+			}
+			return time.Now().Add(d)
+		},
 		"duration": func(str string) time.Duration {
 			d, err := time.ParseDuration(str)
 			if err != nil {
