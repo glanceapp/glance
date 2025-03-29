@@ -365,7 +365,7 @@ pages:
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
 
-#### `title`
+#### `name`
 The name of the page which gets shown in the navigation bar.
 
 #### `slug`
