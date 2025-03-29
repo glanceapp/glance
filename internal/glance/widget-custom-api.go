@@ -25,15 +25,16 @@ var customAPIWidgetTemplate = mustParseTemplate("custom-api.html", "widget-base.
 
 // Needs to be exported for the YAML unmarshaler to work
 type CustomAPIRequest struct {
-	URL           string               `yaml:"url"`
-	AllowInsecure bool                 `yaml:"allow-insecure"`
-	Headers       map[string]string    `yaml:"headers"`
-	Parameters    queryParametersField `yaml:"parameters"`
-	Method        string               `yaml:"method"`
-	BodyType      string               `yaml:"body-type"`
-	Body          any                  `yaml:"body"`
-	bodyReader    io.ReadSeeker        `yaml:"-"`
-	httpRequest   *http.Request        `yaml:"-"`
+	URL                string               `yaml:"url"`
+	AllowInsecure      bool                 `yaml:"allow-insecure"`
+	Headers            map[string]string    `yaml:"headers"`
+	Parameters         queryParametersField `yaml:"parameters"`
+	Method             string               `yaml:"method"`
+	BodyType           string               `yaml:"body-type"`
+	Body               any                  `yaml:"body"`
+	SkipJSONValidation bool                 `yaml:"skip-json-validation"`
+	bodyReader         io.ReadSeeker        `yaml:"-"`
+	httpRequest        *http.Request        `yaml:"-"`
 }
 
 type customAPIWidget struct {
@@ -157,6 +158,17 @@ type customAPITemplateData struct {
 	subrequests map[string]*customAPIResponseData
 }
 
+func (data *customAPITemplateData) JSONLines() []decoratedGJSONResult {
+	result := make([]decoratedGJSONResult, 0, 5)
+
+	gjson.ForEachLine(data.JSON.Raw, func(line gjson.Result) bool {
+		result = append(result, decoratedGJSONResult{line})
+		return true
+	})
+
+	return result
+}
+
 func (data *customAPITemplateData) Subrequest(key string) *customAPIResponseData {
 	req, exists := data.subrequests[key]
 	if !exists {
@@ -190,7 +202,7 @@ func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customA
 
 	body := strings.TrimSpace(string(bodyBytes))
 
-	if body != "" && !gjson.Valid(body) {
+	if !req.SkipJSONValidation && body != "" && !gjson.Valid(body) {
 		truncatedBody, isTruncated := limitStringLength(body, 100)
 		if isTruncated {
 			truncatedBody += "... <truncated>"

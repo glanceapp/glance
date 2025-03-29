@@ -1297,6 +1297,7 @@ Examples:
 | body | any | no | |
 | frameless | boolean | no | false |
 | allow-insecure | boolean | no | false |
+| skip-json-validation | boolean | no | false |
 | template | string | yes | |
 | parameters | key (string) & value (string|array) | no | |
 | subrequests | map of requests | no | |
@@ -1343,6 +1344,9 @@ When set to `true`, removes the border and padding around the widget.
 
 ##### `allow-insecure`
 Whether to ignore invalid/self-signed certificates.
+
+##### `skip-json-validation`
+When set to `true`, skips the JSON validation step. This is useful when the API returns JSON Lines/newline-delimited JSON, which is a format that consists of several JSON objects separated by newlines.
 
 ##### `template`
 The template that will be used to display the data. It relies on Go's `html/template` package so it's recommended to go through [its documentation](https://pkg.go.dev/text/template) to understand how to do basic things such as conditionals, loops, etc. In addition, it also uses [tidwall's gjson](https://github.com/tidwall/gjson) package to parse the JSON data so it's worth going through its documentation if you want to use more advanced JSON selectors. You can view additional examples with explanations and function definitions [here](custom-api.md).

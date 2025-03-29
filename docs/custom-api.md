@@ -309,6 +309,55 @@ You can also access the response headers:
 <div>{{ .Response.Header.Get "Content-Type" }}</div>
 ```
 
+<hr>
+
+JSON response:
+
+```json
+{"name": "Steve", "age": 30}
+{"name": "Alex", "age": 25}
+{"name": "John", "age": 35}
+```
+
+The above format is "[ndjson](https://docs.mulesoft.com/dataweave/latest/dataweave-formats-ndjson)" or "[JSON Lines](https://jsonlines.org/)", where each line is a separate JSON object. To parse this format, you must first disable the JSON validation check in your config, since by default the response is expected to be a single valid JSON object:
+
+```yaml
+- type: custom-api
+  skip-json-validation: true
+```
+
+Then, to iterate over each object you can use `.JSONLines`:
+
+```html
+{{ range .JSONLines }}
+  <p>{{ .String "name" }} is {{ .Int "age" }} years old</p>
+{{ end }}
+```
+
+Output:
+
+```html
+<p>Steve is 30 years old</p>
+<p>Alex is 25 years old</p>
+<p>John is 35 years old</p>
+```
+
+For other ways of selecting data from a JSON Lines response, have a look at the docs for [tidwall/gjson](https://github.com/tidwall/gjson/tree/master?tab=readme-ov-file#json-lines). For example, to  get an array of all names, you can use the following:
+
+```html
+{{ range .JSON.Array "..#.name" }}
+  <p>{{ .String "" }}</p>
+{{ end }}
+```
+
+Output:
+
+```html
+<p>Steve</p>
+<p>Alex</p>
+<p>John</p>
+```
+
 ## Functions
 
 The following functions are available on the `JSON` object:
