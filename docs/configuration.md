@@ -858,11 +858,17 @@ Example:
 The subreddit for which to fetch the posts from.
 
 ##### `style`
-Used to change the appearance of the widget. Possible values are `vertical-list`, `horizontal-cards` and `vertical-cards`. The first two were designed for full columns and the last for small columns.
+Used to change the appearance of the widget. Possible values are `vertical-list`, `detailed-list` `horizontal-cards` and `vertical-cards`. The first three were designed for full columns and the last for small columns.
 
 `vertical-list`
 
 ![](images/reddit-widget-preview.png)
+
+`detailed-list`
+
+This style includes the previews of each Reddit post.
+
+![](images/reddit-widget-detailed-list-preview.png)
 
 `horizontal-cards`
 
