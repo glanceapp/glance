@@ -1,0 +1,67 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<div class="flex flex-column gap-10">
+  <p class="size-h5">Round {{ .Data.Session.Round }} - {{ .Data.Session.Title }}</p>
+
+  <div class="margin-block-8">
+    <p class="color-primary">
+      <span>{{ .Data.Session.SessionName }}</span>
+      <span
+        class="color-highlight"
+        title="{{ .Data.Session.DateString }}"
+        data-dynamic-relative-time="{{ .Data.Session.Unix }}"
+      ></span>
+    </p>
+    <p class="size-h5">{{ .Data.Session.DateString }}</p>
+  </div>
+
+  <ul class="size-h5 attachments">
+    <li>{{ .Data.Session.Country }}</li>
+    <li>{{ .Data.Session.City }}</li>
+    <li>{{ .Data.Session.Circuit }}</li>
+  </ul>
+
+  {{ if .ShowLastRace }}
+  <hr />
+  <p class="size-h5">Last Race: {{ .Data.LastRace.RaceName }}</p>
+  <ul class="flex flex-column gap-8">
+    {{ range $i, $v := .Data.LastRace.Results }}
+    <li class="flex items-center {{ if eq $i 0 }}color-primary{{ else if eq $i 1 }}color-highlight{{ end }}">
+      <span class="grow min-width-0">{{ .Position }}. {{ .Driver.ShortName }}</span>
+      <span class="shrink-0 text-right">{{ .Time }}</span>
+    </li>
+    {{ end }}
+  </ul>
+  {{ end }}
+
+  {{ if .ShowWdcOrder }}
+  <hr />
+  <p class="size-h5">Drivers Championship</p>
+  <ul class="flex flex-column gap-8">
+    {{ range $i, $v := .Data.WdcOrder }}
+    <li class="flex items-center {{ if eq $i 0 }}color-primary{{ else if eq $i 1 }}color-highlight{{ end }}">
+      <div class="grow min-width-0">
+        <span>{{ .Position }}. {{ .Driver.ShortName }}</span>
+        <span class="size-h6">({{ .Team.TeamName }})</span>
+      </div>
+      <span class="shrink-0 text-right">{{ .Points }}</span>
+    </li>
+    {{ end }}
+  </ul>
+  {{ end }}
+
+  {{ if .ShowWccOrder }}
+  <hr />
+  <p class="size-h5">Constructors Championship</p>
+  <ul class="flex flex-column gap-8">
+    {{ range $i, $v := .Data.WccOrder }}
+    <li class="flex items-center {{ if eq $i 0 }}color-primary{{ else if eq $i 1 }}color-highlight{{ end }}">
+      <span class="grow min-width-0">{{ .Position }}. {{ .Team.TeamName }}</span>
+      <span class="shrink-0 text-right">{{ .Points }}</span>
+    </li>
+    {{ end }}
+  </ul>
+  {{ end }}
+</div>
+{{ end }}

@@ -79,6 +79,8 @@ func newWidget(widgetType string) (widget, error) {
 		w = &dockerContainersWidget{}
 	case "server-stats":
 		w = &serverStatsWidget{}
+	case "f1":
+		w = &formula1Widget{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}
