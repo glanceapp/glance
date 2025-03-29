@@ -59,6 +59,10 @@ func (widget *extensionWidget) update(ctx context.Context) {
 		widget.Title = extension.Title
 	}
 
+	if widget.TitleURL == "" && extension.TitleURL != "" {
+		widget.TitleURL = extension.TitleURL
+	}
+
 	widget.cachedHTML = widget.renderTemplate(widget, extensionWidgetTemplate)
 }
 
@@ -69,8 +73,8 @@ func (widget *extensionWidget) Render() template.HTML {
 type extensionType int
 
 const (
-	extensionContentHTML    extensionType = iota
-	extensionContentUnknown               = iota
+	extensionContentHTML extensionType = iota
+	extensionContentUnknown
 )
 
 var extensionStringToType = map[string]extensionType{
@@ -79,6 +83,7 @@ var extensionStringToType = map[string]extensionType{
 
 const (
 	extensionHeaderTitle            = "Widget-Title"
+	extensionHeaderTitleURL         = "Widget-Title-URL"
 	extensionHeaderContentType      = "Widget-Content-Type"
 	extensionHeaderContentFrameless = "Widget-Content-Frameless"
 )
@@ -93,6 +98,7 @@ type extensionRequestOptions struct {
 
 type extension struct {
 	Title     string
+	TitleURL  string
 	Content   template.HTML
 	Frameless bool
 }
@@ -140,6 +146,10 @@ func fetchExtension(options extensionRequestOptions) (extension, error) {
 		extension.Title = "Extension"
 	} else {
 		extension.Title = response.Header.Get(extensionHeaderTitle)
+	}
+
+	if response.Header.Get(extensionHeaderTitleURL) != "" {
+		extension.TitleURL = response.Header.Get(extensionHeaderTitleURL)
 	}
 
 	contentType, ok := extensionStringToType[response.Header.Get(extensionHeaderContentType)]
