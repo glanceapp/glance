@@ -82,6 +82,17 @@ theme:
   negative-color: 209 88 54
 ```
 
+### Dracula
+![screenshot](images/themes/dracula.png)
+```yaml
+theme:
+  background-color: 231 15 21
+  primary-color: 265 89 79
+  contrast-multiplier: 1.2
+  positive-color: 135 94 66
+  negative-color: 0 100 67
+```
+
 ## Light
 
 ### Catppuccin Latte
