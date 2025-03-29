@@ -514,6 +514,9 @@ var customAPITemplateFuncs = func() template.FuncMap {
 
 			return results
 		},
+		"concat": func(items ...string) string {
+			return strings.Join(items, "")
+		},
 	}
 
 	for key, value := range globalTemplateFunctions {
