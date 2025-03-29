@@ -2555,6 +2555,10 @@ Example:
 
 ```yaml
 - type: f1
+  session-type: all
+  show-last-race: true
+  show-wdc-order: true
+  show-wcc-order: true
 ```
 
 Preview:
@@ -2565,9 +2569,21 @@ Preview:
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | session-type | string | no | race |
+| show-last-race | boolean | no | false |
+| show-wdc-order | boolean | no | false |
+| show-wcc-order | boolean | no | false |
 
 ##### `session-type`
 The sessions you want to see in the widget. Can be one of the following:
 - `race`: only display time until next race
 - `major`: only display time until next qualifying or race
 - `all`: display time until nearest future session (includes free practice)
+
+##### `show-last-race`
+If true, shows the last race results (top 3).
+
+##### `show-wdc-order`
+If true, shows the World Drivers Championship standings (top 3).
+
+##### `show-wcc-order`
+If true, shows the World Constructors Championship standings (top 3).
