@@ -219,3 +219,58 @@ func (p *proxyOptionsField) UnmarshalYAML(node *yaml.Node) error {
 
 	return nil
 }
+
+type queryParametersField map[string][]string
+
+func (q *queryParametersField) UnmarshalYAML(node *yaml.Node) error {
+	var decoded map[string]any
+
+	if err := node.Decode(&decoded); err != nil {
+		return err
+	}
+
+	*q = make(queryParametersField)
+
+	// TODO: refactor the duplication in the switch cases if any more types get added
+	for key, value := range decoded {
+		switch v := value.(type) {
+		case string:
+			(*q)[key] = []string{v}
+		case int, int8, int16, int32, int64, float32, float64:
+			(*q)[key] = []string{fmt.Sprintf("%v", v)}
+		case bool:
+			(*q)[key] = []string{fmt.Sprintf("%t", v)}
+		case []string:
+			(*q)[key] = append((*q)[key], v...)
+		case []any:
+			for _, item := range v {
+				switch item := item.(type) {
+				case string:
+					(*q)[key] = append((*q)[key], item)
+				case int, int8, int16, int32, int64, float32, float64:
+					(*q)[key] = append((*q)[key], fmt.Sprintf("%v", item))
+				case bool:
+					(*q)[key] = append((*q)[key], fmt.Sprintf("%t", item))
+				default:
+					return fmt.Errorf("invalid query parameter value type: %T", item)
+				}
+			}
+		default:
+			return fmt.Errorf("invalid query parameter value type: %T", value)
+		}
+	}
+
+	return nil
+}
+
+func (q *queryParametersField) toQueryString() string {
+	query := url.Values{}
+
+	for key, values := range *q {
+		for _, value := range values {
+			query.Add(key, value)
+		}
+	}
+
+	return query.Encode()
+}

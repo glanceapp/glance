@@ -1839,7 +1839,7 @@ details[open] .summary::after {
         transform: translateY(calc(100% - var(--mobile-navigation-height)));
         left: var(--content-bounds-padding);
         right: var(--content-bounds-padding);
-        z-index: 10;
+        z-index: 11;
         background-color: var(--color-widget-background);
         border: 1px solid var(--color-widget-content-border);
         border-bottom: 0;

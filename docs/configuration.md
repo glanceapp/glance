@@ -9,7 +9,7 @@
 - [Document](#document)
 - [Branding](#branding)
 - [Theme](#theme)
-  - [Themes](#themes)
+  - [Available themes](#available-themes)
 - [Pages & Columns](#pages--columns)
 - [Widgets](#widgets)
   - [RSS](#rss)
@@ -274,7 +274,7 @@ theme:
   contrast-multiplier: 1.1
 ```
 
-### Themes
+### Available themes
 If you don't want to spend time configuring your own theme, there are [several available themes](themes.md) which you can simply copy the values for.
 
 ### Properties
@@ -365,7 +365,7 @@ pages:
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
 
-#### `title`
+#### `name`
 The name of the page which gets shown in the navigation bar.
 
 #### `slug`
@@ -1292,8 +1292,15 @@ Examples:
 | ---- | ---- | -------- | ------- |
 | url | string | yes | |
 | headers | key (string) & value (string) | no | |
+| method | string | no | GET |
+| body-type | string | no | json |
+| body | any | no | |
 | frameless | boolean | no | false |
+| allow-insecure | boolean | no | false |
+| skip-json-validation | boolean | no | false |
 | template | string | yes | |
+| parameters | key (string) & value (string|array) | no | |
+| subrequests | map of requests | no | |
 
 ##### `url`
 The URL to fetch the data from. It must be accessible from the server that Glance is running on.
@@ -1307,11 +1314,91 @@ headers:
   Accept: application/json
 ```
 
+##### `method`
+The HTTP method to use when making the request. Possible values are `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` and `HEAD`.
+
+##### `body-type`
+The type of the body that will be sent with the request. Possible values are `json`, and `string`.
+
+##### `body`
+The body that will be sent with the request. It can be a string or a map. Example:
+
+```yaml
+body-type: json
+body:
+  key1: value1
+  key2: value2
+  multiple-items:
+    - item1
+    - item2
+```
+
+```yaml
+body-type: string
+body: |
+  key1=value1&key2=value2
+```
+
 ##### `frameless`
 When set to `true`, removes the border and padding around the widget.
 
+##### `allow-insecure`
+Whether to ignore invalid/self-signed certificates.
+
+##### `skip-json-validation`
+When set to `true`, skips the JSON validation step. This is useful when the API returns JSON Lines/newline-delimited JSON, which is a format that consists of several JSON objects separated by newlines.
+
 ##### `template`
 The template that will be used to display the data. It relies on Go's `html/template` package so it's recommended to go through [its documentation](https://pkg.go.dev/text/template) to understand how to do basic things such as conditionals, loops, etc. In addition, it also uses [tidwall's gjson](https://github.com/tidwall/gjson) package to parse the JSON data so it's worth going through its documentation if you want to use more advanced JSON selectors. You can view additional examples with explanations and function definitions [here](custom-api.md).
+
+##### `parameters`
+A list of keys and values that will be sent to the custom-api as query paramters.
+
+##### `subrequests`
+A map of additional requests that will be executed concurrently and then made available in the template via the `.Subrequest` property. Example:
+
+```yaml
+- type: custom-api
+  cache: 2h
+  subrequests:
+    another-one:
+      url: https://uselessfacts.jsph.pl/api/v2/facts/random
+  title: Random Fact
+  url: https://uselessfacts.jsph.pl/api/v2/facts/random
+  template: |
+    <p class="size-h4 color-paragraph">{{ .JSON.String "text" }}</p>
+    <p class="size-h4 color-paragraph margin-top-15">{{ (.Subrequest "another-one").JSON.String "text" }}</p>
+```
+
+The subrequests support all the same properties as the main request, except for `subrequests` itself, so you can use `headers`, `parameters`, etc.
+
+`(.Subrequest "key")` can be a little cumbersome to write, so you can define a variable to make it easier:
+
+```yaml
+  template: |
+    {{ $anotherOne := .Subrequest "another-one" }}
+    <p>{{ $anotherOne.JSON.String "text" }}</p>
+```
+
+You can also access the `.Response` property of a subrequest as you would with the main request:
+
+```yaml
+  template: |
+    {{ $anotherOne := .Subrequest "another-one" }}
+    <p>{{ $anotherOne.Response.StatusCode }}</p>
+```
+
+> [!NOTE]
+>
+> Setting this property will override any query parameters that are already in the URL.
+
+```yaml
+parameters:
+  param1: value1
+  param2:
+    - item1
+    - item2
+```
 
 ### Extension
 Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
@@ -1330,6 +1417,7 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | url | string | yes | |
 | fallback-content-type | string | no | |
 | allow-potentially-dangerous-html | boolean | no | false |
+| headers | key & value | no | |
 | parameters | key & value | no | |
 
 ##### `url`
@@ -1337,6 +1425,14 @@ The URL of the extension. **Note that the query gets stripped from this URL and 
 
 ##### `fallback-content-type`
 Optionally specify the fallback content type of the extension if the URL does not return a valid `Widget-Content-Type` header. Currently the only supported value for this property is `html`.
+
+##### `headers`
+Optionally specify the headers that will be sent with the request. Example:
+
+```yaml
+headers:
+  x-api-key: ${SECRET_KEY}
+```
 
 ##### `allow-potentially-dangerous-html`
 Whether to allow the extension to display HTML.
