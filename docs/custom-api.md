@@ -226,10 +226,10 @@ JSON response:
 }
 ```
 
-Calculations can be performed, however all numbers must be converted to floats first if they are not already:
+Calculations can be performed on either ints or floats. If both numbers are ints, an int will be returned, otherwise a float will be returned. If you try to divide by zero, 0 will be returned. If you provide non-numeric values, `NaN` will be returned.
 
 ```html
-<div>{{ sub (.JSON.Int "price" | toFloat) (.JSON.Int "discount" | toFloat) }}</div>
+<div>{{ sub (.JSON.Int "price") (.JSON.Int "discount") }}</div>
 ```
 
 Output:
@@ -239,6 +239,57 @@ Output:
 ```
 
 Other operations include `add`, `mul`, and `div`.
+
+<hr>
+
+JSON response:
+
+```json
+{
+  "posts": [
+    {
+      "title": "Exploring the Depths of Quantum Computing",
+      "date": "2023-10-27T10:00:00Z"
+    },
+    {
+      "title": "A Beginner's Guide to Sustainable Living",
+      "date": "2023-11-15T14:30:00+01:00"
+    },
+    {
+      "title": "The Art of Baking Sourdough Bread",
+      "date": "2023-12-03T08:45:22-08:00"
+    }
+  ]
+}
+```
+
+To parse the date and display the relative time (e.g. 2h, 1d, etc), you would use the following:
+
+```
+{{ range .JSON.Array "posts" }}
+  <div>{{ .String "title" }}</div>
+  <div {{ .String "date" | parseTime "rfc3339" | toRelativeTime }}></div>
+{{ end }}
+```
+
+The `parseTime` function takes two arguments: the layout of the date string and the date string itself. The layout can be one of the following: "RFC3339", "RFC3339Nano", "DateTime", "DateOnly", "TimeOnly" or a custom layout in Go's [date format](https://pkg.go.dev/time#pkg-constants).
+
+Output:
+
+```html
+<div>Exploring the Depths of Quantum Computing</div>
+<div data-dynamic-relative-time="1698400800"></div>
+
+<div>A Beginner's Guide to Sustainable Living</div>
+<div data-dynamic-relative-time="1700055000"></div>
+
+<div>The Art of Baking Sourdough Bread</div>
+<div data-dynamic-relative-time="1701621922"></div>
+```
+
+You don't have to worry about the internal implementation, this will then be dynamically populated by Glance on the client side to show the correct relative time.
+
+The important thing to notice here is that the return value of `toRelativeTime` must be used as an attribute in an HTML tag, be it a `div`, `li`, `span`, etc.
 
 <hr>
 
@@ -258,6 +309,55 @@ You can also access the response headers:
 <div>{{ .Response.Header.Get "Content-Type" }}</div>
 ```
 
+<hr>
+
+JSON response:
+
+```json
+{"name": "Steve", "age": 30}
+{"name": "Alex", "age": 25}
+{"name": "John", "age": 35}
+```
+
+The above format is "[ndjson](https://docs.mulesoft.com/dataweave/latest/dataweave-formats-ndjson)" or "[JSON Lines](https://jsonlines.org/)", where each line is a separate JSON object. To parse this format, you must first disable the JSON validation check in your config, since by default the response is expected to be a single valid JSON object:
+
+```yaml
+- type: custom-api
+  skip-json-validation: true
+```
+
+Then, to iterate over each object you can use `.JSONLines`:
+
+```html
+{{ range .JSONLines }}
+  <p>{{ .String "name" }} is {{ .Int "age" }} years old</p>
+{{ end }}
+```
+
+Output:
+
+```html
+<p>Steve is 30 years old</p>
+<p>Alex is 25 years old</p>
+<p>John is 35 years old</p>
+```
+
+For other ways of selecting data from a JSON Lines response, have a look at the docs for [tidwall/gjson](https://github.com/tidwall/gjson/tree/master?tab=readme-ov-file#json-lines). For example, to  get an array of all names, you can use the following:
+
+```html
+{{ range .JSON.Array "..#.name" }}
+  <p>{{ .String "" }}</p>
+{{ end }}
+```
+
+Output:
+
+```html
+<p>Steve</p>
+<p>Alex</p>
+<p>John</p>
+```
+
 ## Functions
 
 The following functions are available on the `JSON` object:
@@ -273,12 +373,29 @@ The following helper functions provided by Glance are available:
 
 - `toFloat(i int) float`: Converts an integer to a float.
 - `toInt(f float) int`: Converts a float to an integer.
+- `toRelativeTime(t time.Time) template.HTMLAttr`: Converts Time to a relative time such as 2h, 1d, etc which dynamically updates. **NOTE:** the value of this function should be used as an attribute in an HTML tag, e.g. `<span {{ toRelativeTime .Time }}></span>`.
+- `now() time.Time`: Returns the current time.
+- `offsetNow(offset string) time.Time`: Returns the current time with an offset. The offset can be positive or negative and must be in the format "3h" "-1h" or "2h30m10s".
+- `duration(str string) time.Duration`: Parses a string such as `1h`, `24h`, `5h30m`, etc into a `time.Duration`.
+- `parseTime(layout string, s string) time.Time`: Parses a string into time.Time. The layout must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants). You can alternatively use these values instead of the literal format: "unix", "RFC3339", "RFC3339Nano", "DateTime", "DateOnly".
+- `parseRelativeTime(layout string, s string) time.Time`: A shorthand for `{{ .String "date" | parseTime "rfc3339" | toRelativeTime }}`.
 - `add(a, b float) float`: Adds two numbers.
 - `sub(a, b float) float`: Subtracts two numbers.
 - `mul(a, b float) float`: Multiplies two numbers.
 - `div(a, b float) float`: Divides two numbers.
 - `formatApproxNumber(n int) string`: Formats a number to be more human-readable, e.g. 1000 -> 1k.
 - `formatNumber(n float|int) string`: Formats a number with commas, e.g. 1000 -> 1,000.
+- `trimPrefix(prefix string, str string) string`: Trims the prefix from a string.
+- `trimSuffix(suffix string, str string) string`: Trims the suffix from a string.
+- `trimSpace(str string) string`: Trims whitespace from a string on both ends.
+- `replaceAll(old string, new string, str string) string`: Replaces all occurrences of a string in a string.
+- `findMatch(pattern string, str string) string`: Finds the first match of a regular expression in a string.
+- `findSubmatch(pattern string, str string) string`: Finds the first submatch of a regular expression in a string.
+- `sortByString(key string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by a string key in either ascending or descending order.
+- `sortByInt(key string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by an integer key in either ascending or descending order.
+- `sortByFloat(key string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by a float key in either ascending or descending order.
+- `sortByTime(key string, layout string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by a time key in either ascending or descending order. The format must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants).
+- `concat(strings ...string) string`: Concatenates multiple strings together.
 
 The following helper functions provided by Go's `text/template` are available:
 
