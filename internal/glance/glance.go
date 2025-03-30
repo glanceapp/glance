@@ -227,6 +227,9 @@ func (a *application) server() (func() error, func() error) {
 	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	
+	// Favicon proxy endpoint
+	mux.HandleFunc("GET /api/favicon", a.handleFaviconRequest)
 
 	mux.Handle(
 		fmt.Sprintf("GET /static/%s/{path...}", staticFSHash),
