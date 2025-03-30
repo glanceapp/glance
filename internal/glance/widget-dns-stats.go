@@ -855,18 +855,10 @@ func fetchOPNsenseUnboundStats(
 	type totalsResponseJson struct {
 		Total         int `json:"total"`
 		BlocklistSize int `json:"blocklist_size"`
-		Passed        int `json:"passed"`
-		Resolved      struct {
-			ResolvedTotal   int    `json:"total"`
-			ResolvedPercent string `json:"pcnt"`
-		} `json:"resolved"`
-		Blocked struct {
-			BlockedTotal   int    `json:"total"`
-			BlockedPercent string `json:"pcnt"`
+		Blocked       struct {
+			BlockedTotal int `json:"total"`
 		} `json:"blocked"`
-		WhitelistedDomains []string       `json:"whitelisted_domains"`
-		BlocklistedDomains []string       `json:"blocklisted_domains"`
-		TopBlockedDomains  map[string]any `json:"top_blocked"`
+		TopBlockedDomains map[string]any `json:"top_blocked"`
 	}
 
 	totalsRequest, _ := http.NewRequestWithContext(ctx, "GET", instanceURL+"/api/unbound/overview/totals/10", nil)
