@@ -3,43 +3,41 @@
 {{- define "widget-content" }}
 <ul class="dynamic-columns list-gap-20 list-with-separator">
     {{- range .Containers }}
-    <li>
-		<a href="{{ .URL | safeURL }}" class="docker-container flex items-center gap-15" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">
-			<div class="shrink-0" data-popover-type="html" data-popover-position="above" data-popover-offset="0.25" data-popover-margin="0.1rem" data-popover-max-width="400px" aria-hidden="true">
-				<img class="docker-container-icon{{ if .Icon.IsFlatIcon }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
-				<div data-popover-html>
-					<div class="color-highlight text-truncate block">{{ .Image }}</div>
-					<div>{{ .StateText }}</div>
-					{{- if .Children }}
-					<ul class="list list-gap-4 margin-top-10">
-						{{- range .Children }}
-						<li class="flex gap-7 items-center">
-							<div class="margin-bottom-3">{{ template "state-icon" .StateIcon }}</div>
-							<div class="color-highlight">{{ .Title }} <span class="size-h5 color-base">{{ .StateText }}</span></div>
-						</li>
-						{{- end }}
-					</ul>
-					{{- end }}
-				</div>
-			</div>
+    <li class="docker-container flex items-center gap-15">
+        <div class="shrink-0" data-popover-type="html" data-popover-position="above" data-popover-offset="0.25" data-popover-margin="0.1rem" data-popover-max-width="400px" aria-hidden="true">
+            <img class="docker-container-icon{{ if .Icon.IsFlatIcon }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
+            <div data-popover-html>
+                <div class="color-highlight text-truncate block">{{ .Image }}</div>
+                <div>{{ .StateText }}</div>
+                {{- if .Children }}
+                <ul class="list list-gap-4 margin-top-10">
+                    {{- range .Children }}
+                    <li class="flex gap-7 items-center">
+                        <div class="margin-bottom-3">{{ template "state-icon" .StateIcon }}</div>
+                        <div class="color-highlight">{{ .Title }} <span class="size-h5 color-base">{{ .StateText }}</span></div>
+                    </li>
+                    {{- end }}
+                </ul>
+                {{- end }}
+            </div>
+        </div>
 
-			<div class="min-width-0">
-				{{- if .URL }}
-				<div class="color-highlight size-title-dynamic block text-truncate">{{ .Title }}</div>
-				{{- else }}
-				<div class="color-highlight text-truncate size-title-dynamic">{{ .Title }}</div>
-				{{- end }}
-				{{- if .Description }}
-				<div class="text-truncate">{{ .Description }}</div>
-				{{- end }}
-			</div>
+        <div class="min-width-0 grow">
+            {{- if .URL }}
+            <a href="{{ .URL | safeURL }}" class="color-highlight size-title-dynamic block text-truncate" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
+            {{- else }}
+            <div class="color-highlight text-truncate size-title-dynamic">{{ .Title }}</div>
+            {{- end }}
+            {{- if .Description }}
+            <div class="text-truncate">{{ .Description }}</div>
+            {{- end }}
+        </div>
 
-			<div class="margin-left-auto shrink-0" data-popover-type="text" data-popover-position="above" data-popover-text="{{ .State }}" aria-label="{{ .State }}">
-			{{ template "state-icon" .StateIcon }}
-			</div>
+        <div class="margin-left-auto shrink-0" data-popover-type="text" data-popover-position="above" data-popover-text="{{ .State }}" aria-label="{{ .State }}">
+        {{ template "state-icon" .StateIcon }}
+        </div>
 
-			<div class="visually-hidden" aria-label="{{ .StateText }}"></div>
-		</a>
+        <div class="visually-hidden" aria-label="{{ .StateText }}"></div>
     </li>
     {{- else }}
     <div class="text-center">No containers available to show.</div>
