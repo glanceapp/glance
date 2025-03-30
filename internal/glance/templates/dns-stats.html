@@ -16,8 +16,9 @@
             <div class="color-highlight size-h3">{{ .Stats.ResponseTime | formatNumber }}ms</div>
             <div class="size-h6">LATENCY</div>
         </div>
-        {{ else }}
-        <div class="cursor-help" data-popover-type="text" data-popover-text="Total number of blocked domains from all adlists" data-popover-max-width="200px" data-popover-text-align="center">
+        {{ end }}
+        {{ if gt .Stats.DomainsBlocked 0 }}
+        <div class="cursor-help" data-popover-type="text" data-popover-text="Total number of blocked domains from all blacklists" data-popover-max-width="200px" data-popover-text-align="center">
             <div class="color-highlight size-h3">{{ .Stats.DomainsBlocked | formatApproxNumber }}</div>
             <div class="size-h6">DOMAINS</div>
         </div>
