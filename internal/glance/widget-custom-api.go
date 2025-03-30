@@ -25,15 +25,16 @@ var customAPIWidgetTemplate = mustParseTemplate("custom-api.html", "widget-base.
 
 // Needs to be exported for the YAML unmarshaler to work
 type CustomAPIRequest struct {
-	URL           string               `yaml:"url"`
-	AllowInsecure bool                 `yaml:"allow-insecure"`
-	Headers       map[string]string    `yaml:"headers"`
-	Parameters    queryParametersField `yaml:"parameters"`
-	Method        string               `yaml:"method"`
-	BodyType      string               `yaml:"body-type"`
-	Body          any                  `yaml:"body"`
-	bodyReader    io.ReadSeeker        `yaml:"-"`
-	httpRequest   *http.Request        `yaml:"-"`
+	URL                string               `yaml:"url"`
+	AllowInsecure      bool                 `yaml:"allow-insecure"`
+	Headers            map[string]string    `yaml:"headers"`
+	Parameters         queryParametersField `yaml:"parameters"`
+	Method             string               `yaml:"method"`
+	BodyType           string               `yaml:"body-type"`
+	Body               any                  `yaml:"body"`
+	SkipJSONValidation bool                 `yaml:"skip-json-validation"`
+	bodyReader         io.ReadSeeker        `yaml:"-"`
+	httpRequest        *http.Request        `yaml:"-"`
 }
 
 type customAPIWidget struct {
@@ -157,6 +158,17 @@ type customAPITemplateData struct {
 	subrequests map[string]*customAPIResponseData
 }
 
+func (data *customAPITemplateData) JSONLines() []decoratedGJSONResult {
+	result := make([]decoratedGJSONResult, 0, 5)
+
+	gjson.ForEachLine(data.JSON.Raw, func(line gjson.Result) bool {
+		result = append(result, decoratedGJSONResult{line})
+		return true
+	})
+
+	return result
+}
+
 func (data *customAPITemplateData) Subrequest(key string) *customAPIResponseData {
 	req, exists := data.subrequests[key]
 	if !exists {
@@ -190,7 +202,7 @@ func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customA
 
 	body := strings.TrimSpace(string(bodyBytes))
 
-	if body != "" && !gjson.Valid(body) {
+	if !req.SkipJSONValidation && body != "" && !gjson.Valid(body) {
 		truncatedBody, isTruncated := limitStringLength(body, 100)
 		if isTruncated {
 			truncatedBody += "... <truncated>"
@@ -342,6 +354,23 @@ func (r *decoratedGJSONResult) Bool(key string) bool {
 	return r.Get(key).Bool()
 }
 
+func customAPIDoMathOp[T int | float64](a, b T, op string) T {
+	switch op {
+	case "add":
+		return a + b
+	case "sub":
+		return a - b
+	case "mul":
+		return a * b
+	case "div":
+		if b == 0 {
+			return 0
+		}
+		return a / b
+	}
+	return 0
+}
+
 var customAPITemplateFuncs = func() template.FuncMap {
 	var regexpCacheMu sync.Mutex
 	var regexpCache = make(map[string]*regexp.Regexp)
@@ -359,6 +388,31 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		return regex
 	}
 
+	doMathOpWithAny := func(a, b any, op string) any {
+		switch at := a.(type) {
+		case int:
+			switch bt := b.(type) {
+			case int:
+				return customAPIDoMathOp(at, bt, op)
+			case float64:
+				return customAPIDoMathOp(float64(at), bt, op)
+			default:
+				return math.NaN()
+			}
+		case float64:
+			switch bt := b.(type) {
+			case int:
+				return customAPIDoMathOp(at, float64(bt), op)
+			case float64:
+				return customAPIDoMathOp(at, bt, op)
+			default:
+				return math.NaN()
+			}
+		default:
+			return math.NaN()
+		}
+	}
+
 	funcs := template.FuncMap{
 		"toFloat": func(a int) float64 {
 			return float64(a)
@@ -366,21 +420,35 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		"toInt": func(a float64) int {
 			return int(a)
 		},
-		"add": func(a, b float64) float64 {
-			return a + b
+		"add": func(a, b any) any {
+			return doMathOpWithAny(a, b, "add")
 		},
-		"sub": func(a, b float64) float64 {
-			return a - b
+		"sub": func(a, b any) any {
+			return doMathOpWithAny(a, b, "sub")
 		},
-		"mul": func(a, b float64) float64 {
-			return a * b
+		"mul": func(a, b any) any {
+			return doMathOpWithAny(a, b, "mul")
 		},
-		"div": func(a, b float64) float64 {
-			if b == 0 {
-				return math.NaN()
+		"div": func(a, b any) any {
+			return doMathOpWithAny(a, b, "div")
+		},
+		"now": func() time.Time {
+			return time.Now()
+		},
+		"offsetNow": func(offset string) time.Time {
+			d, err := time.ParseDuration(offset)
+			if err != nil {
+				return time.Now()
+			}
+			return time.Now().Add(d)
+		},
+		"duration": func(str string) time.Duration {
+			d, err := time.ParseDuration(str)
+			if err != nil {
+				return 0
 			}
 
-			return a / b
+			return d
 		},
 		"parseTime":      customAPIFuncParseTime,
 		"toRelativeTime": dynamicRelativeTimeAttrs,
@@ -464,6 +532,9 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			})
 
 			return results
+		},
+		"concat": func(items ...string) string {
+			return strings.Join(items, "")
 		},
 	}
 

@@ -17,7 +17,7 @@
 
         <div class="market-values shrink-0">
             <div class="size-h3 text-right {{ if eq .PercentChange 0.0 }}{{ else if gt .PercentChange 0.0 }}color-positive{{ else }}color-negative{{ end }}">{{ printf "%+.2f" .PercentChange }}%</div>
-            <div class="text-right">{{ .Currency }}{{ .Price | formatPrice }}</div>
+            <div class="text-right">{{ .Currency }}{{ .Price | formatPriceWithPrecision .PriceHint }}</div>
         </div>
     </div>
     {{ end }}
