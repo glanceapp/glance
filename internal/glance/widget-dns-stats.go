@@ -8,9 +8,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-
-	// "os"
-	// "log"
 	"log/slog"
 	"net/http"
 	"sort"
