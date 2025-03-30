@@ -226,10 +226,10 @@ JSON response:
 }
 ```
 
-Calculations can be performed, however all numbers must be converted to floats first if they are not already:
+Calculations can be performed on either ints or floats. If both numbers are ints, an int will be returned, otherwise a float will be returned. If you try to divide by zero, 0 will be returned. If you provide non-numeric values, `NaN` will be returned.
 
 ```html
-<div>{{ sub (.JSON.Int "price" | toFloat) (.JSON.Int "discount" | toFloat) }}</div>
+<div>{{ sub (.JSON.Int "price") (.JSON.Int "discount") }}</div>
 ```
 
 Output:
@@ -309,6 +309,55 @@ You can also access the response headers:
 <div>{{ .Response.Header.Get "Content-Type" }}</div>
 ```
 
+<hr>
+
+JSON response:
+
+```json
+{"name": "Steve", "age": 30}
+{"name": "Alex", "age": 25}
+{"name": "John", "age": 35}
+```
+
+The above format is "[ndjson](https://docs.mulesoft.com/dataweave/latest/dataweave-formats-ndjson)" or "[JSON Lines](https://jsonlines.org/)", where each line is a separate JSON object. To parse this format, you must first disable the JSON validation check in your config, since by default the response is expected to be a single valid JSON object:
+
+```yaml
+- type: custom-api
+  skip-json-validation: true
+```
+
+Then, to iterate over each object you can use `.JSONLines`:
+
+```html
+{{ range .JSONLines }}
+  <p>{{ .String "name" }} is {{ .Int "age" }} years old</p>
+{{ end }}
+```
+
+Output:
+
+```html
+<p>Steve is 30 years old</p>
+<p>Alex is 25 years old</p>
+<p>John is 35 years old</p>
+```
+
+For other ways of selecting data from a JSON Lines response, have a look at the docs for [tidwall/gjson](https://github.com/tidwall/gjson/tree/master?tab=readme-ov-file#json-lines). For example, to  get an array of all names, you can use the following:
+
+```html
+{{ range .JSON.Array "..#.name" }}
+  <p>{{ .String "" }}</p>
+{{ end }}
+```
+
+Output:
+
+```html
+<p>Steve</p>
+<p>Alex</p>
+<p>John</p>
+```
+
 ## Functions
 
 The following functions are available on the `JSON` object:
@@ -325,6 +374,9 @@ The following helper functions provided by Glance are available:
 - `toFloat(i int) float`: Converts an integer to a float.
 - `toInt(f float) int`: Converts a float to an integer.
 - `toRelativeTime(t time.Time) template.HTMLAttr`: Converts Time to a relative time such as 2h, 1d, etc which dynamically updates. **NOTE:** the value of this function should be used as an attribute in an HTML tag, e.g. `<span {{ toRelativeTime .Time }}></span>`.
+- `now() time.Time`: Returns the current time.
+- `offsetNow(offset string) time.Time`: Returns the current time with an offset. The offset can be positive or negative and must be in the format "3h" "-1h" or "2h30m10s".
+- `duration(str string) time.Duration`: Parses a string such as `1h`, `24h`, `5h30m`, etc into a `time.Duration`.
 - `parseTime(layout string, s string) time.Time`: Parses a string into time.Time. The layout must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants). You can alternatively use these values instead of the literal format: "unix", "RFC3339", "RFC3339Nano", "DateTime", "DateOnly".
 - `parseRelativeTime(layout string, s string) time.Time`: A shorthand for `{{ .String "date" | parseTime "rfc3339" | toRelativeTime }}`.
 - `add(a, b float) float`: Adds two numbers.
@@ -343,6 +395,7 @@ The following helper functions provided by Glance are available:
 - `sortByInt(key string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by an integer key in either ascending or descending order.
 - `sortByFloat(key string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by a float key in either ascending or descending order.
 - `sortByTime(key string, layout string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by a time key in either ascending or descending order. The format must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants).
+- `concat(strings ...string) string`: Concatenates multiple strings together.
 
 The following helper functions provided by Go's `text/template` are available:
 
