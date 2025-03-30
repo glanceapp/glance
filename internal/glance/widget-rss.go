@@ -60,6 +60,10 @@ func (widget *rssWidget) initialize() error {
 
 	if widget.Style == "detailed-list" {
 		for i := range widget.FeedRequests {
+			if widget.FeedRequests[i].FallbackImage != "" && widget.FeedRequests[i].FallbackIcon != "" {
+				return fmt.Errorf("RSS feed %s in widget %s has both fallback image and icon set", widget.FeedRequests[i].Title, widget.Title)
+			}
+
 			widget.FeedRequests[i].IsDetailed = true
 		}
 	}
@@ -104,14 +108,16 @@ func (widget *rssWidget) Render() template.HTML {
 }
 
 type rssFeedItem struct {
-	ChannelName string
-	ChannelURL  string
-	Title       string
-	Link        string
-	ImageURL    string
-	Categories  []string
-	Description string
-	PublishedAt time.Time
+	ChannelName      string
+	ChannelURL       string
+	Title            string
+	Link             string
+	ImageURL         string
+	FallbackIconURL  string
+	FallbackImageURL string
+	Categories       []string
+	Description      string
+	PublishedAt      time.Time
 }
 
 // doesn't cover all cases but works the vast majority of the time
@@ -146,6 +152,8 @@ func shortenFeedDescriptionLen(description string, maxLen int) string {
 type rssFeedRequest struct {
 	URL             string            `yaml:"url"`
 	Title           string            `yaml:"title"`
+	FallbackImage   string            `yaml:"fallback-image"`
+	FallbackIcon    string            `yaml:"fallback-icon"`
 	HideCategories  bool              `yaml:"hide-categories"`
 	HideDescription bool              `yaml:"hide-description"`
 	Limit           int               `yaml:"limit"`
@@ -278,6 +286,10 @@ func fetchItemsFromRSSFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
 			} else {
 				rssItem.ImageURL = feed.Image.URL
 			}
+		} else if request.FallbackIcon != "" {
+			rssItem.FallbackIconURL = newCustomIconField(request.FallbackIcon).URL
+		} else if request.FallbackImage != "" {
+			rssItem.FallbackImageURL = request.FallbackImage
 		}
 
 		if item.PublishedParsed != nil {
