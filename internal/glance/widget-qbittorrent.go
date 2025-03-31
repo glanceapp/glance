@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
-	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -104,7 +104,13 @@ func (widget *qbittorrentWidget) login() error {
 }
 
 func (widget *qbittorrentWidget) update(ctx context.Context) {
-	req, err := http.NewRequestWithContext(ctx, "GET", widget.URL+qBittorrentTorrentsPath, nil)
+	params := url.Values{}
+	params.Set("limit", strconv.Itoa(widget.Limit))
+	params.Set("sort", "dlspeed")
+	params.Set("reverse", "true")
+
+	requestURL := widget.URL + qBittorrentTorrentsPath + "?" + params.Encode()
+	req, err := http.NewRequestWithContext(ctx, "GET", requestURL, nil)
 	if err != nil {
 		widget.withError(fmt.Errorf("creating torrents request: %w", err))
 		return
@@ -131,14 +137,6 @@ func (widget *qbittorrentWidget) update(ctx context.Context) {
 	if err := json.NewDecoder(resp.Body).Decode(&torrents); err != nil {
 		widget.withError(fmt.Errorf("decoding torrents response: %w", err))
 		return
-	}
-
-	sort.Slice(torrents, func(i, j int) bool {
-		return torrents[i].Progress > torrents[j].Progress
-	})
-
-	if len(torrents) > widget.Limit {
-		torrents = torrents[:widget.Limit]
 	}
 
 	widget.Torrents = torrents
