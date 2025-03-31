@@ -117,7 +117,7 @@ func (p *page) updateOutdatedWidgets() {
 }
 
 func (a *application) transformUserDefinedAssetPath(path string) string {
-	if strings.HasPrefix(path, "/assets/") {
+	if strings.HasPrefix(path, "/assets/") || strings.HasPrefix(path, "/config/") {
 		return a.Config.Server.BaseURL + path
 	}
 
@@ -238,6 +238,7 @@ func (a *application) server() (func() error, func() error) {
 		absAssetsPath, _ = filepath.Abs(a.Config.Server.AssetsPath)
 		assetsFS := fileServerWithCache(http.Dir(a.Config.Server.AssetsPath), 2*time.Hour)
 		mux.Handle("/assets/{path...}", http.StripPrefix("/assets/", assetsFS))
+		mux.Handle("/config/{path...}", http.StripPrefix("/config/", assetsFS))
 	}
 
 	server := http.Server{
