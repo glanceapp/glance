@@ -117,6 +117,7 @@ type market struct {
 	Name           string
 	Currency       string
 	Price          float64
+	PriceHint      int
 	PercentChange  float64
 	SvgChartPoints string
 }
@@ -144,6 +145,7 @@ type marketResponseJson struct {
 				RegularMarketPrice float64 `json:"regularMarketPrice"`
 				ChartPreviousClose float64 `json:"chartPreviousClose"`
 				ShortName          string  `json:"shortName"`
+				PriceHint          int     `json:"priceHint"`
 			} `json:"meta"`
 			Indicators struct {
 				Quote []struct {
@@ -190,13 +192,14 @@ func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, erro
 			continue
 		}
 
-		prices := response.Chart.Result[0].Indicators.Quote[0].Close
+		result := &response.Chart.Result[0]
+		prices := result.Indicators.Quote[0].Close
 
 		if len(prices) > marketChartDays {
 			prices = prices[len(prices)-marketChartDays:]
 		}
 
-		previous := response.Chart.Result[0].Meta.RegularMarketPrice
+		previous := result.Meta.RegularMarketPrice
 
 		if len(prices) >= 2 && prices[len(prices)-2] != 0 {
 			previous = prices[len(prices)-2]
@@ -204,10 +207,9 @@ func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, erro
 
 		points := svgPolylineCoordsFromYValues(100, 50, maybeCopySliceWithoutZeroValues(prices))
 
-		currency, exists := currencyToSymbol[response.Chart.Result[0].Meta.Currency]
-
+		currency, exists := currencyToSymbol[strings.ToUpper(result.Meta.Currency)]
 		if !exists {
-			currency = response.Chart.Result[0].Meta.Currency
+			currency = result.Meta.Currency
 		}
 
 		if marketRequests[i].Currency != "" {
@@ -225,14 +227,15 @@ func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, erro
 
 		markets = append(markets, market{
 			marketRequest: marketRequests[i],
-			Price:         response.Chart.Result[0].Meta.RegularMarketPrice,
+			Price:         result.Meta.RegularMarketPrice,
 			Currency:      currency,
+			PriceHint:     result.Meta.PriceHint,
 			Name: ternary(marketRequests[i].CustomName == "",
-				response.Chart.Result[0].Meta.ShortName,
+				result.Meta.ShortName,
 				marketRequests[i].CustomName,
 			),
 			PercentChange: percentChange(
-				response.Chart.Result[0].Meta.RegularMarketPrice,
+				result.Meta.RegularMarketPrice,
 				previous,
 			),
 			SvgChartPoints: points,

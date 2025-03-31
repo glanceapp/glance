@@ -119,14 +119,6 @@ func parseRFC3339Time(t string) time.Time {
 	return parsed
 }
 
-func boolToString(b bool, trueValue, falseValue string) string {
-	if b {
-		return trueValue
-	}
-
-	return falseValue
-}
-
 func normalizeVersionFormat(version string) string {
 	version = strings.ToLower(strings.TrimSpace(version))
 
@@ -186,3 +178,7 @@ func ternary[T any](condition bool, a, b T) T {
 
 	return b
 }
+
+// Having compile time errors about unused variables is cool and all, but I don't want to
+// have to constantly comment out my code while I'm working on it and testing things out
+func ItsUsedTrustMeBro(...any) {}

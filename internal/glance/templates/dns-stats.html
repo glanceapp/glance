@@ -59,8 +59,8 @@
                     {{ if ne $column.Queries $column.Blocked }}
                         <div class="queries"></div>
                     {{ end }}
-                    {{ if or (gt $column.Blocked 0) (and (lt $column.PercentTotal 15) (lt $column.PercentBlocked 10)) }}
-                        <div class="blocked" style="flex-basis: {{ $column.PercentBlocked }}%"></div>
+                    {{ if gt $column.PercentBlocked 0 }}
+                        <div class="blocked" style="--percent: {{ $column.PercentBlocked }}%"></div>
                     {{ end }}
                 </div>
                 {{ end }}
@@ -76,7 +76,7 @@
         <summary class="summary">Top blocked domains</summary>
         <ul class="list list-gap-4 list-with-transition size-h5">
             {{ range .Stats.TopBlockedDomains }}
-            <li class="flex justify-between">
+            <li class="flex justify-between gap-10">
                 <div class="text-truncate rtl">{{ .Domain }}</div>
                 <div class="text-right" style="width: 4rem;"><span class="color-highlight">{{ .PercentBlocked }}</span>%</div>
             </li>

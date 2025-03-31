@@ -4,17 +4,18 @@
 
 {{ define "widget-content" }}
 <div class="widget-group-header">
-    <div class="widget-header gap-20">
-        {{ range $i, $widget := .Widgets }}
-            <button class="widget-group-title{{ if eq $i 0 }} widget-group-title-current{{ end }}"{{ if ne "" .TitleURL }} data-title-url="{{ .TitleURL }}"{{ end }}>{{ $widget.Title }}</button>
-        {{ end }}
+    <div class="widget-header gap-20" role="tablist">
+        {{- range $i, $widget := .Widgets }}
+        <button class="widget-group-title{{ if eq $i 0 }} widget-group-title-current{{ end }}"{{ if ne "" .TitleURL }} data-title-url="{{ .TitleURL }}"{{ end }} aria-selected="{{ if eq $i 0 }}true{{ else }}false{{ end }}" arial-level="2" role="tab" aria-controls="widget-{{ .GetID }}-tabpanel-{{ $i }}" id="widget-{{ .GetID }}-tab-{{ $i }}">{{ $widget.Title }}</button>
+        {{- end }}
     </div>
 </div>
 
 <div class="widget-group-contents">
-{{ range $i, $widget := .Widgets }}
-    <div class="widget-group-content{{ if eq $i 0 }} widget-group-content-current{{ end }}">{{ .Render }}</div>
-{{ end }}
+{{- range $i, $widget := .Widgets }}
+    <div class="widget-group-content{{ if eq $i 0 }} widget-group-content-current{{ end }}" id="widget-{{ .GetID }}-tabpanel-{{ $i }}" role="tabpanel" aria-labelledby="widget-{{ .GetID }}-tab-{{ $i }}" aria-hidden="{{ if eq $i 0 }}false{{ else }}true{{ end }}">
+        {{- .Render -}}
+    </div>
+{{- end }}
 </div>
-
 {{ end }}

@@ -1,24 +1,35 @@
 package glance
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
+	"io"
 	"log/slog"
 	"net/http"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
 var dnsStatsWidgetTemplate = mustParseTemplate("dns-stats.html", "widget-base.html")
 
+const (
+	dnsStatsBars            = 8
+	dnsStatsHoursSpan       = 24
+	dnsStatsHoursPerBar int = dnsStatsHoursSpan / dnsStatsBars
+)
+
 type dnsStatsWidget struct {
 	widgetBase `yaml:",inline"`
 
-	TimeLabels [8]string `yaml:"-"`
-	Stats      *dnsStats `yaml:"-"`
+	TimeLabels      [8]string `yaml:"-"`
+	Stats           *dnsStats `yaml:"-"`
+	piholeSessionID string    `yaml:"-"`
 
 	HourFormat     string `yaml:"hour-format"`
 	HideGraph      bool   `yaml:"hide-graph"`
@@ -31,11 +42,17 @@ type dnsStatsWidget struct {
 	Password       string `yaml:"password"`
 }
 
+const (
+	dnsServiceAdguard  = "adguard"
+	dnsServicePihole   = "pihole"
+	dnsServicePiholeV6 = "pihole-v6"
+)
+
 func makeDNSWidgetTimeLabels(format string) [8]string {
 	now := time.Now()
-	var labels [8]string
+	var labels [dnsStatsBars]string
 
-	for h := 24; h > 0; h -= 3 {
+	for h := dnsStatsHoursSpan; h > 0; h -= dnsStatsHoursPerBar {
 		labels[7-(h/3-1)] = strings.ToLower(now.Add(-time.Duration(h) * time.Hour).Format(format))
 	}
 
@@ -48,8 +65,12 @@ func (widget *dnsStatsWidget) initialize() error {
 		withTitleURL(string(widget.URL)).
 		withCacheDuration(10 * time.Minute)
 
-	if widget.Service != "adguard" && widget.Service != "pihole" {
-		return errors.New("service must be either 'adguard' or 'pihole'")
+	switch widget.Service {
+	case dnsServiceAdguard:
+	case dnsServicePiholeV6:
+	case dnsServicePihole:
+	default:
+		return fmt.Errorf("service must be one of: %s, %s, %s", dnsServiceAdguard, dnsServicePihole, dnsServicePiholeV6)
 	}
 
 	return nil
@@ -59,10 +80,24 @@ func (widget *dnsStatsWidget) update(ctx context.Context) {
 	var stats *dnsStats
 	var err error
 
-	if widget.Service == "adguard" {
+	switch widget.Service {
+	case dnsServiceAdguard:
 		stats, err = fetchAdguardStats(widget.URL, widget.AllowInsecure, widget.Username, widget.Password, widget.HideGraph)
-	} else {
-		stats, err = fetchPiholeStats(widget.URL, widget.AllowInsecure, widget.Token, widget.HideGraph)
+	case dnsServicePihole:
+		stats, err = fetchPihole5Stats(widget.URL, widget.AllowInsecure, widget.Token, widget.HideGraph)
+	case dnsServicePiholeV6:
+		var newSessionID string
+		stats, newSessionID, err = fetchPiholeStats(
+			widget.URL,
+			widget.AllowInsecure,
+			widget.Password,
+			widget.piholeSessionID,
+			!widget.HideGraph,
+			!widget.HideTopDomains,
+		)
+		if err == nil {
+			widget.piholeSessionID = newSessionID
+		}
 	}
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
@@ -84,11 +119,11 @@ func (widget *dnsStatsWidget) Render() template.HTML {
 
 type dnsStats struct {
 	TotalQueries      int
-	BlockedQueries    int
+	BlockedQueries    int // we don't actually use this anywhere in templates, maybe remove it later?
 	BlockedPercent    int
 	ResponseTime      int
 	DomainsBlocked    int
-	Series            [8]dnsStatsSeries
+	Series            [dnsStatsBars]dnsStatsSeries
 	TopBlockedDomains []dnsStatsBlockedDomain
 }
 
@@ -123,13 +158,7 @@ func fetchAdguardStats(instanceURL string, allowInsecure bool, username, passwor
 
 	request.SetBasicAuth(username, password)
 
-	var client requestDoer
-	if !allowInsecure {
-		client = defaultHTTPClient
-	} else {
-		client = defaultInsecureHTTPClient
-	}
-
+	var client = ternary(allowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
 	responseJson, err := decodeJsonFromRequest[adguardStatsResponse](client, request)
 	if err != nil {
 		return nil, err
@@ -150,7 +179,7 @@ func fetchAdguardStats(instanceURL string, allowInsecure bool, username, passwor
 
 	stats.BlockedPercent = int(float64(responseJson.BlockedQueries) / float64(responseJson.TotalQueries) * 100)
 
-	for i := 0; i < topBlockedDomainsCount; i++ {
+	for i := range topBlockedDomainsCount {
 		domain := responseJson.TopBlockedDomains[i]
 		var firstDomain string
 
@@ -179,31 +208,27 @@ func fetchAdguardStats(instanceURL string, allowInsecure bool, username, passwor
 	queriesSeries := responseJson.QueriesSeries
 	blockedSeries := responseJson.BlockedSeries
 
-	const bars = 8
-	const hoursSpan = 24
-	const hoursPerBar int = hoursSpan / bars
-
-	if len(queriesSeries) > hoursSpan {
-		queriesSeries = queriesSeries[len(queriesSeries)-hoursSpan:]
-	} else if len(queriesSeries) < hoursSpan {
-		queriesSeries = append(make([]int, hoursSpan-len(queriesSeries)), queriesSeries...)
+	if len(queriesSeries) > dnsStatsHoursSpan {
+		queriesSeries = queriesSeries[len(queriesSeries)-dnsStatsHoursSpan:]
+	} else if len(queriesSeries) < dnsStatsHoursSpan {
+		queriesSeries = append(make([]int, dnsStatsHoursSpan-len(queriesSeries)), queriesSeries...)
 	}
 
-	if len(blockedSeries) > hoursSpan {
-		blockedSeries = blockedSeries[len(blockedSeries)-hoursSpan:]
-	} else if len(blockedSeries) < hoursSpan {
-		blockedSeries = append(make([]int, hoursSpan-len(blockedSeries)), blockedSeries...)
+	if len(blockedSeries) > dnsStatsHoursSpan {
+		blockedSeries = blockedSeries[len(blockedSeries)-dnsStatsHoursSpan:]
+	} else if len(blockedSeries) < dnsStatsHoursSpan {
+		blockedSeries = append(make([]int, dnsStatsHoursSpan-len(blockedSeries)), blockedSeries...)
 	}
 
 	maxQueriesInSeries := 0
 
-	for i := 0; i < bars; i++ {
+	for i := range dnsStatsBars {
 		queries := 0
 		blocked := 0
 
-		for j := 0; j < hoursPerBar; j++ {
-			queries += queriesSeries[i*hoursPerBar+j]
-			blocked += blockedSeries[i*hoursPerBar+j]
+		for j := range dnsStatsHoursPerBar {
+			queries += queriesSeries[i*dnsStatsHoursPerBar+j]
+			blocked += blockedSeries[i*dnsStatsHoursPerBar+j]
 		}
 
 		stats.Series[i] = dnsStatsSeries{
@@ -220,35 +245,36 @@ func fetchAdguardStats(instanceURL string, allowInsecure bool, username, passwor
 		}
 	}
 
-	for i := 0; i < bars; i++ {
+	for i := range dnsStatsBars {
 		stats.Series[i].PercentTotal = int(float64(stats.Series[i].Queries) / float64(maxQueriesInSeries) * 100)
 	}
 
 	return stats, nil
 }
 
-type piholeStatsResponse struct {
-	TotalQueries      int                     `json:"dns_queries_today"`
-	QueriesSeries     piholeQueriesSeries     `json:"domains_over_time"`
-	BlockedQueries    int                     `json:"ads_blocked_today"`
-	BlockedSeries     map[int64]int           `json:"ads_over_time"`
-	BlockedPercentage float64                 `json:"ads_percentage_today"`
-	TopBlockedDomains piholeTopBlockedDomains `json:"top_ads"`
-	DomainsBlocked    int                     `json:"domains_being_blocked"`
+// Legacy Pi-hole stats response (before v6)
+type pihole5StatsResponse struct {
+	TotalQueries      int                      `json:"dns_queries_today"`
+	QueriesSeries     pihole5QueriesSeries     `json:"domains_over_time"`
+	BlockedQueries    int                      `json:"ads_blocked_today"`
+	BlockedSeries     map[int64]int            `json:"ads_over_time"`
+	BlockedPercentage float64                  `json:"ads_percentage_today"`
+	TopBlockedDomains pihole5TopBlockedDomains `json:"top_ads"`
+	DomainsBlocked    int                      `json:"domains_being_blocked"`
 }
 
 // If the user has query logging disabled it's possible for domains_over_time to be returned as an
 // empty array rather than a map which will prevent unmashalling the rest of the data so we use
 // custom unmarshal behavior to fallback to an empty map.
 // See https://github.com/glanceapp/glance/issues/289
-type piholeQueriesSeries map[int64]int
+type pihole5QueriesSeries map[int64]int
 
-func (p *piholeQueriesSeries) UnmarshalJSON(data []byte) error {
+func (p *pihole5QueriesSeries) UnmarshalJSON(data []byte) error {
 	temp := make(map[int64]int)
 
 	err := json.Unmarshal(data, &temp)
 	if err != nil {
-		*p = make(piholeQueriesSeries)
+		*p = make(pihole5QueriesSeries)
 	} else {
 		*p = temp
 	}
@@ -258,16 +284,16 @@ func (p *piholeQueriesSeries) UnmarshalJSON(data []byte) error {
 
 // If user has some level of privacy enabled on Pihole, `json:"top_ads"` is an empty array
 // Use custom unmarshal behavior to avoid not getting the rest of the valid data when unmarshalling
-type piholeTopBlockedDomains map[string]int
+type pihole5TopBlockedDomains map[string]int
 
-func (p *piholeTopBlockedDomains) UnmarshalJSON(data []byte) error {
+func (p *pihole5TopBlockedDomains) UnmarshalJSON(data []byte) error {
 	// NOTE: do not change to piholeTopBlockedDomains type here or it will cause a stack overflow
 	// because of the UnmarshalJSON method getting called recursively
 	temp := make(map[string]int)
 
 	err := json.Unmarshal(data, &temp)
 	if err != nil {
-		*p = make(piholeTopBlockedDomains)
+		*p = make(pihole5TopBlockedDomains)
 	} else {
 		*p = temp
 	}
@@ -275,7 +301,7 @@ func (p *piholeTopBlockedDomains) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGraph bool) (*dnsStats, error) {
+func fetchPihole5Stats(instanceURL string, allowInsecure bool, token string, noGraph bool) (*dnsStats, error) {
 	if token == "" {
 		return nil, errors.New("missing API token")
 	}
@@ -288,14 +314,8 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGr
 		return nil, err
 	}
 
-	var client requestDoer
-	if !allowInsecure {
-		client = defaultHTTPClient
-	} else {
-		client = defaultInsecureHTTPClient
-	}
-
-	responseJson, err := decodeJsonFromRequest[piholeStatsResponse](client, request)
+	var client = ternary(allowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
+	responseJson, err := decodeJsonFromRequest[pihole5StatsResponse](client, request)
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +359,6 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGr
 	}
 
 	var lowestTimestamp int64 = 0
-
 	for timestamp := range responseJson.QueriesSeries {
 		if lowestTimestamp == 0 || timestamp < lowestTimestamp {
 			lowestTimestamp = timestamp
@@ -348,11 +367,11 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGr
 
 	maxQueriesInSeries := 0
 
-	for i := 0; i < 8; i++ {
+	for i := range dnsStatsBars {
 		queries := 0
 		blocked := 0
 
-		for j := 0; j < 18; j++ {
+		for j := range 18 {
 			index := lowestTimestamp + int64(i*10800+j*600)
 
 			queries += responseJson.QueriesSeries[index]
@@ -373,9 +392,283 @@ func fetchPiholeStats(instanceURL string, allowInsecure bool, token string, noGr
 		}
 	}
 
-	for i := 0; i < 8; i++ {
+	for i := range dnsStatsBars {
 		stats.Series[i].PercentTotal = int(float64(stats.Series[i].Queries) / float64(maxQueriesInSeries) * 100)
 	}
 
 	return stats, nil
+}
+
+func fetchPiholeStats(
+	instanceURL string,
+	allowInsecure bool,
+	password string,
+	sessionID string,
+	includeGraph bool,
+	includeTopDomains bool,
+) (*dnsStats, string, error) {
+	instanceURL = strings.TrimRight(instanceURL, "/")
+	var client = ternary(allowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
+
+	fetchNewSessionID := func() error {
+		newSessionID, err := fetchPiholeSessionID(instanceURL, client, password)
+		if err != nil {
+			return err
+		}
+		sessionID = newSessionID
+		return nil
+	}
+
+	if sessionID == "" {
+		if err := fetchNewSessionID(); err != nil {
+			slog.Error("Failed to fetch Pihole v6 session ID", "error", err)
+			return nil, "", fmt.Errorf("fetching session ID: %v", err)
+		}
+	} else {
+		isValid, err := checkPiholeSessionIDIsValid(instanceURL, client, sessionID)
+		if err != nil {
+			slog.Error("Failed to check Pihole v6 session ID validity", "error", err)
+			return nil, "", fmt.Errorf("checking session ID: %v", err)
+		}
+
+		if !isValid {
+			if err := fetchNewSessionID(); err != nil {
+				slog.Error("Failed to renew Pihole v6 session ID", "error", err)
+				return nil, "", fmt.Errorf("renewing session ID: %v", err)
+			}
+		}
+	}
+
+	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	type statsResponseJson struct {
+		Queries struct {
+			Total          int     `json:"total"`
+			Blocked        int     `json:"blocked"`
+			PercentBlocked float64 `json:"percent_blocked"`
+		} `json:"queries"`
+		Gravity struct {
+			DomainsBlocked int `json:"domains_being_blocked"`
+		} `json:"gravity"`
+	}
+
+	statsRequest, _ := http.NewRequestWithContext(ctx, "GET", instanceURL+"/api/stats/summary", nil)
+	statsRequest.Header.Set("x-ftl-sid", sessionID)
+
+	var statsResponse statsResponseJson
+	var statsErr error
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		statsResponse, statsErr = decodeJsonFromRequest[statsResponseJson](client, statsRequest)
+		if statsErr != nil {
+			cancel()
+		}
+	}()
+
+	type seriesResponseJson struct {
+		History []struct {
+			Timestamp int64 `json:"timestamp"`
+			Total     int   `json:"total"`
+			Blocked   int   `json:"blocked"`
+		} `json:"history"`
+	}
+
+	var seriesResponse seriesResponseJson
+	var seriesErr error
+
+	if includeGraph {
+		seriesRequest, _ := http.NewRequestWithContext(ctx, "GET", instanceURL+"/api/history", nil)
+		seriesRequest.Header.Set("x-ftl-sid", sessionID)
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			seriesResponse, seriesErr = decodeJsonFromRequest[seriesResponseJson](client, seriesRequest)
+		}()
+	}
+
+	type topDomainsResponseJson struct {
+		Domains []struct {
+			Domain string `json:"domain"`
+			Count  int    `json:"count"`
+		} `json:"domains"`
+		TotalQueries   int     `json:"total_queries"`
+		BlockedQueries int     `json:"blocked_queries"`
+		Took           float64 `json:"took"`
+	}
+
+	var topDomainsResponse topDomainsResponseJson
+	var topDomainsErr error
+
+	if includeTopDomains {
+		topDomainsRequest, _ := http.NewRequestWithContext(ctx, "GET", instanceURL+"/api/stats/top_domains?blocked=true", nil)
+		topDomainsRequest.Header.Set("x-ftl-sid", sessionID)
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			topDomainsResponse, topDomainsErr = decodeJsonFromRequest[topDomainsResponseJson](client, topDomainsRequest)
+		}()
+	}
+
+	wg.Wait()
+	partialContent := false
+
+	if statsErr != nil {
+		return nil, "", fmt.Errorf("fetching stats: %v", statsErr)
+	}
+
+	if includeGraph && seriesErr != nil {
+		slog.Error("Failed to fetch Pihole v6 graph data", "error", seriesErr)
+		partialContent = true
+	}
+
+	if includeTopDomains && topDomainsErr != nil {
+		slog.Error("Failed to fetch Pihole v6 top domains", "error", topDomainsErr)
+		partialContent = true
+	}
+
+	stats := &dnsStats{
+		TotalQueries:   statsResponse.Queries.Total,
+		BlockedQueries: statsResponse.Queries.Blocked,
+		BlockedPercent: int(statsResponse.Queries.PercentBlocked),
+		DomainsBlocked: statsResponse.Gravity.DomainsBlocked,
+	}
+
+	if includeGraph && seriesErr == nil {
+		if len(seriesResponse.History) != 145 {
+			slog.Error(
+				"Pihole v6 graph data has unexpected length",
+				"length", len(seriesResponse.History),
+				"expected", 145,
+			)
+			partialContent = true
+		} else {
+			// The API from v5 used to return 144 data points, but v6 returns 145.
+			// We only show data from the last 24 hours hours, Pihole returns data
+			// points in a 10 minute interval, 24*(60/10) = 144. Why is there an extra
+			// data point? I don't know, but we'll just ignore the first one since it's
+			// the oldest data point.
+			history := seriesResponse.History[1:]
+
+			const interval = 10
+			const dataPointsPerBar = dnsStatsHoursPerBar * (60 / interval)
+
+			maxQueriesInSeries := 0
+
+			for i := range dnsStatsBars {
+				queries := 0
+				blocked := 0
+				for j := range dataPointsPerBar {
+					index := i*dataPointsPerBar + j
+					queries += history[index].Total
+					blocked += history[index].Blocked
+				}
+				if queries > maxQueriesInSeries {
+					maxQueriesInSeries = queries
+				}
+				stats.Series[i] = dnsStatsSeries{
+					Queries: queries,
+					Blocked: blocked,
+				}
+				if queries > 0 {
+					stats.Series[i].PercentBlocked = int(float64(blocked) / float64(queries) * 100)
+				}
+			}
+
+			for i := range dnsStatsBars {
+				stats.Series[i].PercentTotal = int(float64(stats.Series[i].Queries) / float64(maxQueriesInSeries) * 100)
+			}
+		}
+	}
+
+	if includeTopDomains && topDomainsErr == nil && len(topDomainsResponse.Domains) > 0 {
+		domains := make([]dnsStatsBlockedDomain, 0, len(topDomainsResponse.Domains))
+		for i := range topDomainsResponse.Domains {
+			d := &topDomainsResponse.Domains[i]
+			domains = append(domains, dnsStatsBlockedDomain{
+				Domain:         d.Domain,
+				PercentBlocked: int(float64(d.Count) / float64(statsResponse.Queries.Blocked) * 100),
+			})
+		}
+
+		sort.Slice(domains, func(a, b int) bool {
+			return domains[a].PercentBlocked > domains[b].PercentBlocked
+		})
+		stats.TopBlockedDomains = domains[:min(len(domains), 5)]
+	}
+
+	return stats, sessionID, ternary(partialContent, errPartialContent, nil)
+}
+
+func fetchPiholeSessionID(instanceURL string, client *http.Client, password string) (string, error) {
+	requestBody := []byte(`{"password":"` + password + `"}`)
+
+	request, err := http.NewRequest("POST", instanceURL+"/api/auth", bytes.NewBuffer(requestBody))
+	if err != nil {
+		return "", fmt.Errorf("creating authentication request: %v", err)
+	}
+	request.Header.Set("Content-Type", "application/json")
+
+	response, err := client.Do(request)
+	if err != nil {
+		return "", fmt.Errorf("sending authentication request: %v", err)
+	}
+	defer response.Body.Close()
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", fmt.Errorf("reading authentication response: %v", err)
+	}
+
+	var jsonResponse struct {
+		Session struct {
+			SID     string `json:"sid"`
+			Message string `json:"message"`
+		} `json:"session"`
+	}
+
+	if err := json.Unmarshal(body, &jsonResponse); err != nil {
+		return "", fmt.Errorf("parsing authentication response: %v", err)
+	}
+
+	if response.StatusCode != http.StatusOK {
+		return "", fmt.Errorf(
+			"authentication request returned status %s with message '%s'",
+			response.Status, jsonResponse.Session.Message,
+		)
+	}
+
+	if jsonResponse.Session.SID == "" {
+		return "", fmt.Errorf(
+			"authentication response returned empty session ID, status code %d, message '%s'",
+			response.StatusCode, jsonResponse.Session.Message,
+		)
+	}
+
+	return jsonResponse.Session.SID, nil
+}
+
+func checkPiholeSessionIDIsValid(instanceURL string, client *http.Client, sessionID string) (bool, error) {
+	request, err := http.NewRequest("GET", instanceURL+"/api/auth", nil)
+	if err != nil {
+		return false, fmt.Errorf("creating session ID check request: %v", err)
+	}
+	request.Header.Set("x-ftl-sid", sessionID)
+
+	response, err := client.Do(request)
+	if err != nil {
+		return false, err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusUnauthorized {
+		return false, fmt.Errorf("session ID check request returned status %s", response.Status)
+	}
+
+	return response.StatusCode == http.StatusOK, nil
 }

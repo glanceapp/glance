@@ -121,13 +121,13 @@ type widget interface {
 	// These need to be exported because they get called in templates
 	Render() template.HTML
 	GetType() string
+	GetID() uint64
 
 	initialize() error
 	requiresUpdate(*time.Time) bool
 	setProviders(*widgetProviders)
 	update(context.Context)
 	setID(uint64)
-	id() uint64
 	handleRequest(w http.ResponseWriter, r *http.Request)
 	setHideHeader(bool)
 }
@@ -184,7 +184,7 @@ func (w *widgetBase) update(ctx context.Context) {
 
 }
 
-func (w *widgetBase) id() uint64 {
+func (w *widgetBase) GetID() uint64 {
 	return w.ID
 }
 
