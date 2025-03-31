@@ -1950,7 +1950,7 @@ Whether to hide the swap usage.
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | cpu-temp-sensor | string | no |  |
-| hide-mointpoints-by-default | boolean | no | false |
+| hide-mountpoints-by-default | boolean | no | false |
 | mountpoints | map\[string\]object | no |  |
 
 ###### `cpu-temp-sensor`
