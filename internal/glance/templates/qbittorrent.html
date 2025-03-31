@@ -10,14 +10,14 @@
         </div>
         <div class="qbittorrent-torrent-progress flex items-center gap-10">
             <div class="progress-bar flex-1">
-                <div class="progress-value" style="--percent: {{ multiply .Progress 100 }};"></div>
+                <div class="progress-value" style="--percent: {{ (multiply .Progress 100) }};"></div>
             </div>
             <span class="qbittorrent-progress-text color-highlight text-very-compact">{{ printf "%.1f" (multiply
                 .Progress 100) }}
                 <span class="color-base">%</span></span>
         </div>
         <div class="qbittorrent-torrent-info">
-            <span class="qbittorrent-torrent-speed">{{ .Speed }}/s</span>
+            <span class="qbittorrent-torrent-speed">{{ .Speed | formatBytes }}/s</span>
         </div>
     </div>
     {{- end }}

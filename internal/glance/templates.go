@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"math"
 	"strconv"
+	"strings"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -32,27 +33,14 @@ var globalTemplateFunctions = template.FuncMap{
 		return intl.Sprintf("%."+strconv.Itoa(precision)+"f", price)
 	},
 	"dynamicRelativeTimeAttrs": dynamicRelativeTimeAttrs,
+	"formatBytes":              formatBytes,
 	"formatServerMegabytes": func(mb uint64) template.HTML {
-		var value string
-		var label string
-
-		if mb < 1_000 {
-			value = strconv.FormatUint(mb, 10)
-			label = "MB"
-		} else if mb < 1_000_000 {
-			if mb < 10_000 {
-				value = fmt.Sprintf("%.1f", float64(mb)/1_000)
-			} else {
-				value = strconv.FormatUint(mb/1_000, 10)
-			}
-
-			label = "GB"
-		} else {
-			value = fmt.Sprintf("%.1f", float64(mb)/1_000_000)
-			label = "TB"
+		formatted := formatBytes(mb * 1024 * 1024)
+		parts := strings.Split(formatted, " ")
+		if len(parts) == 2 {
+			return template.HTML(parts[0] + ` <span class="color-base size-h5">` + parts[1] + `</span>`)
 		}
-
-		return template.HTML(value + ` <span class="color-base size-h5">` + label + `</span>`)
+		return template.HTML(formatted)
 	},
 }
 
@@ -108,4 +96,40 @@ func multiply(a, b interface{}) float64 {
 	default:
 		panic("Unsupported type for 'b', only int and float64 are supported")
 	}
+}
+
+func formatBytes(bytes uint64) string {
+	var value string
+	var unit string
+
+	if bytes < 1024 {
+		value = strconv.FormatUint(bytes, 10)
+		unit = "B"
+	} else if bytes < 1024*1024 {
+		if bytes < 10*1024 {
+			value = fmt.Sprintf("%.1f", float64(bytes)/1024)
+		} else {
+			value = strconv.FormatUint(bytes/1024, 10)
+		}
+		unit = "KB"
+	} else if bytes < 1024*1024*1024 {
+		if bytes < 10*1024*1024 {
+			value = fmt.Sprintf("%.1f", float64(bytes)/(1024*1024))
+		} else {
+			value = strconv.FormatUint(bytes/(1024*1024), 10)
+		}
+		unit = "MB"
+	} else if bytes < 1024*1024*1024*1024 {
+		if bytes < 10*1024*1024*1024 {
+			value = fmt.Sprintf("%.1f", float64(bytes)/(1024*1024*1024))
+		} else {
+			value = strconv.FormatUint(bytes/(1024*1024*1024), 10)
+		}
+		unit = "GB"
+	} else {
+		value = fmt.Sprintf("%.1f", float64(bytes)/(1024*1024*1024*1024))
+		unit = "TB"
+	}
+
+	return value + " " + unit
 }

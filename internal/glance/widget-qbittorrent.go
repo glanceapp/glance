@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -105,8 +104,6 @@ func (widget *qbittorrentWidget) login() error {
 }
 
 func (widget *qbittorrentWidget) update(ctx context.Context) {
-	slog.Info("Updating qBittorrent widget", "url", widget.URL)
-
 	req, err := http.NewRequestWithContext(ctx, "GET", widget.URL+qBittorrentTorrentsPath, nil)
 	if err != nil {
 		widget.withError(fmt.Errorf("creating torrents request: %w", err))
