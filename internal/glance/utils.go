@@ -19,6 +19,16 @@ func percentChange(current, previous float64) float64 {
 	return (current/previous - 1) * 100
 }
 
+func computeLineStarts(contents []byte) []int {
+	lineStarts := []int{0}
+	for i, b := range contents {
+		if b == '\n' {
+			lineStarts = append(lineStarts, i+1)
+		}
+	}
+	return lineStarts
+}
+
 func extractDomainFromUrl(u string) string {
 	if u == "" {
 		return ""
