@@ -35,7 +35,12 @@ type config struct {
 	} `yaml:"server"`
 
 	Document struct {
-		Head template.HTML `yaml:"head"`
+		Head         template.HTML `yaml:"head"`
+		CustomJSFile struct {
+			Src   string `yaml:"src"`
+			Defer bool   `yaml:"defer"`
+			Async bool   `yaml:"async"`
+		} `yaml:"custom-js"`
 	} `yaml:"document"`
 
 	Theme struct {

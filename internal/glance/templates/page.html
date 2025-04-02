@@ -21,6 +21,17 @@
 {{ end }}
 
 {{ if ne "" .App.Config.Document.Head }}{{ .App.Config.Document.Head }}{{ end }}
+
+{{ if .App.Config.Document.CustomJSFile.Src }}
+<script src="{{ .App.Config.Document.CustomJSFile.Src }}?v={{ .App.Config.Server.StartedAt.Unix }}"
+    {{ if .App.Config.Document.CustomJSFile.Async }}
+        async
+    {{ else if .App.Config.Document.CustomJSFile.Defer }}
+        defer
+    {{ end }}
+></script>
+{{ end }}
+
 {{ end }}
 
 {{ define "navigation-links" }}
