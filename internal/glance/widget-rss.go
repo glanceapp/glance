@@ -150,6 +150,7 @@ type rssFeedRequest struct {
 	HideDescription bool              `yaml:"hide-description"`
 	Limit           int               `yaml:"limit"`
 	ItemLinkPrefix  string            `yaml:"item-link-prefix"`
+	ImageLinkPrefix  string            `yaml:"image-link-prefix"`
 	Headers         map[string]string `yaml:"headers"`
 	IsDetailed      bool              `yaml:"-"`
 }
@@ -278,6 +279,10 @@ func fetchItemsFromRSSFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
 			} else {
 				rssItem.ImageURL = feed.Image.URL
 			}
+		}
+
+		if request.ImageLinkPrefix != nil && rssItem.ImageURL != nil && rssItem.ImageURL != "" {
+			rssItem.ImageURL = request.ImageLinkPrefix + rssItem.ImageURL
 		}
 
 		if item.PublishedParsed != nil {
