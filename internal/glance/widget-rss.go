@@ -281,7 +281,7 @@ func fetchItemsFromRSSFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
 			}
 		}
 
-		if request.ImageLinkPrefix != nil && rssItem.ImageURL != nil && rssItem.ImageURL != "" {
+		if request.ImageLinkPrefix != "" && rssItem.ImageURL != "" {
 			rssItem.ImageURL = request.ImageLinkPrefix + rssItem.ImageURL
 		}
 
