@@ -18,18 +18,20 @@
 
 {{ if ne "" .App.Config.Theme.CustomCSSFile }}
 <link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.Config.Server.StartedAt.Unix }}">
+{{ else }}
+{{ range .App.Config.Theme.CustomCSSFiles }}
+<link rel="stylesheet" href="{{ . }}?v={{ $.App.Config.Server.StartedAt.Unix }}">
+{{ end }}
 {{ end }}
 
 {{ if ne "" .App.Config.Document.Head }}{{ .App.Config.Document.Head }}{{ end }}
 
-{{ if .App.Config.Document.CustomJSFile.Src }}
-<script src="{{ .App.Config.Document.CustomJSFile.Src }}?v={{ .App.Config.Server.StartedAt.Unix }}"
-    {{ if .App.Config.Document.CustomJSFile.Async }}
-        async
-    {{ else if .App.Config.Document.CustomJSFile.Defer }}
-        defer
-    {{ end }}
-></script>
+{{ if ne "" .App.Config.Document.CustomJSFile }}
+<script src="{{ .App.Config.Document.CustomJSFile }}?v={{ $.App.Config.Server.StartedAt.Unix }}"></script>
+{{ else }}
+{{ range .App.Config.Document.CustomJSFiles }}
+<script src="{{ .Src }}?v={{ $.App.Config.Server.StartedAt.Unix }}" {{ if .Async }} async{{ else if .Defer }} defer{{ end }}></script>
+{{ end }}
 {{ end }}
 
 {{ end }}

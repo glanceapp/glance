@@ -35,12 +35,13 @@ type config struct {
 	} `yaml:"server"`
 
 	Document struct {
-		Head         template.HTML `yaml:"head"`
-		CustomJSFile struct {
+		Head          template.HTML `yaml:"head"`
+		CustomJSFile  string        `yaml:"custom-js-file"`
+		CustomJSFiles []struct {
 			Src   string `yaml:"src"`
 			Defer bool   `yaml:"defer"`
 			Async bool   `yaml:"async"`
-		} `yaml:"custom-js"`
+		} `yaml:"custom-js-files"`
 	} `yaml:"document"`
 
 	Theme struct {
@@ -52,6 +53,7 @@ type config struct {
 		ContrastMultiplier       float32        `yaml:"contrast-multiplier"`
 		TextSaturationMultiplier float32        `yaml:"text-saturation-multiplier"`
 		CustomCSSFile            string         `yaml:"custom-css-file"`
+		CustomCSSFiles           []string       `yaml:"custom-css-files"`
 	} `yaml:"theme"`
 
 	Branding struct {
