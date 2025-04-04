@@ -2749,9 +2749,9 @@ Example:
   title: Plex
   apikey: ${X_PLEX_TOKEN}
   url: ${PLEX_URL}
-  progress-bar: true 
-  progress-type: ends-at-12 
-  thumbnails: false 
+  progress-bar: true
+  progress-type: ends-at-12
+  thumbnails: false
 ```
 
 Preview:
