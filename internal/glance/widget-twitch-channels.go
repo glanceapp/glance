@@ -196,6 +196,10 @@ func fetchChannelFromTwitchTask(channel string) (twitchChannel, error) {
 				slog.Warn("Failed to parse Twitch stream started at", "error", err, "started_at", streamMetadata.UserOrNull.Stream.StartedAt)
 			}
 		}
+	} else {
+		// This prevents live channels with 0 viewers from being
+		// incorrectly sorted lower than offline channels
+		result.ViewersCount = -1
 	}
 
 	return result, nil
