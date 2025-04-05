@@ -1,0 +1,39 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+{{ if not (and .ShowFailingOnly (not .HasFailing)) }}
+<ul class="dynamic-columns list-gap-8">
+    {{ range .Sites }}
+    {{ if and $.ShowFailingOnly (eq .StatusStyle "ok" ) }}{{ continue }}{{ end }}
+    <div class="flex items-center gap-12">
+        {{ template "site" . }}
+    </div>
+    {{ end }}
+</ul>
+{{ else }}
+<div class="flex items-center justify-center gap-10 padding-block-5">
+    <p>All sites are online</p>
+    <svg class="shrink-0" style="width: 1.7rem;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--color-positive)">
+        <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" />
+    </svg>
+</div>
+{{ end }}
+{{ end }}
+
+{{ define "site" }}
+<a class="size-title-dynamic color-highlight text-truncate block grow" href="{{ .URL | safeURL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
+{{ if not .Status.TimedOut }}<div>{{ .Status.ResponseTime.Milliseconds | formatNumber }}ms</div>{{ end }}
+{{ if eq .StatusStyle "ok" }}
+<div class="monitor-site-status-icon-compact" title="{{ .Status.Code }}">
+    <svg fill="var(--color-positive)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
+    </svg>
+</div>
+{{ else }}
+<div class="monitor-site-status-icon-compact" title="{{ if .Status.Error }}{{ .Status.Error }}{{ else }}{{ .Status.Code }}{{ end }}">
+    <svg fill="var(--color-negative)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" />
+    </svg>
+</div>
+{{ end }}
+{{ end }}

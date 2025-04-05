@@ -32,8 +32,10 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
+  - [Docker](#docker)
 
 ## Intro
+<!-- TODO: update -->
 Configuration is done via a single YAML file and a server restart is required in order for any changes to take effect. Trying to start the server with an invalid config file will result in an error.
 
 ## Preconfigured page
@@ -112,6 +114,8 @@ This will give you a page that looks like the following:
 ![](images/preconfigured-page-preview.png)
 
 Configure the widgets, add more of them, add extra pages, etc. Make it your own!
+
+<!-- TODO: update - add information about top level document key -->
 
 ## Server
 Server configuration is done through a top level `server` property. Example:
@@ -283,6 +287,7 @@ theme:
 > .widget-type-rss a {
 >     font-size: 1.5rem;
 > }
+> ```
 >
 > In addition, you can also use the `css-class` property which is available on every widget to set custom class names for individual widgets.
 
@@ -315,6 +320,7 @@ pages:
 | width | string | no | |
 | center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
+| expand-mobile-page-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
 
@@ -340,6 +346,9 @@ When set to `true`, vertically centers the content on the page. Has no effect if
 
 #### `hide-desktop-navigation`
 Whether to show the navigation links at the top of the page on desktop.
+
+#### `expand-mobile-page-navigation`
+Whether the mobile page navigation should be expanded by default.
 
 #### `show-mobile-header`
 Whether to show a header displaying the name of the page on mobile. The header purposefully has a lot of vertical whitespace in order to push the content down and make it easier to reach on tall devices.
@@ -579,7 +588,15 @@ Preview:
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
-A list of channel IDs. One way of getting the ID of a channel is going to the channel's page and clicking on its description:
+A list of channel or playlist IDs. To specify a playlist, use the `playlist:` prefix like such:
+
+```yaml
+channels:
+  - playlist:PL8mG-RkN2uTyZZ00ObwZxxoG_nJbs3qec
+  - playlist:PL8mG-RkN2uTxTK4m_Vl2dYR9yE41kRdBg
+```
+
+One way of getting the ID of a channel is going to the channel's page and clicking on its description:
 
 ![](images/videos-channel-description-example.png)
 
@@ -842,6 +859,7 @@ Preview:
 | <kbd>Enter</kbd> | Perform search in the same tab | Search input is focused and not empty |
 | <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Perform search in a new tab | Search input is focused and not empty |
 | <kbd>Escape</kbd> | Leave focus | Search input is focused |
+| <kbd>Up</kbd> | Insert the last search query since the page was opened into the input field | Search input is focused |
 
 > [!TIP]
 >
@@ -1028,7 +1046,7 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | parameters | key & value | no | |
 
 ##### `url`
-The URL of the extension.
+The URL of the extension. **Note that the query gets stripped from this URL and the one defined by `parameters` gets used instead.**
 
 ##### `fallback-content-type`
 Optionally specify the fallback content type of the extension if the URL does not return a valid `Widget-Content-Type` header. Currently the only supported value for this property is `html`.
@@ -1144,10 +1162,18 @@ You can hover over the "ERROR" text to view more information.
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | sites | array | yes | |
+| style | string | no | |
 | show-failing-only | boolean | no | false |
 
 ##### `show-failing-only`
 Shows only a list of failing sites when set to `true`.
+
+##### `style`
+Used to change the appearance of the widget. Possible values are `compact`.
+
+Preview of `compact`:
+
+![](images/monitor-widget-compact-preview.png)
 
 ##### `sites`
 
@@ -1177,7 +1203,7 @@ The URL which will be requested and its response will determine the status of th
 
 `icon`
 
-Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path). You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix:
+Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path). You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix or [Dashboard Icons](https://github.com/walkxcode/dashboard-icons) via a `di:` prefix:
 
 ```yaml
 icon: si:jellyfin
@@ -1327,14 +1353,20 @@ Preview:
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | service | string | no | pihole |
+| allow-insecure | bool | no | false |
 | url | string | yes |  |
 | username | string | when service is `adguard` |  |
 | password | string | when service is `adguard` |  |
 | token | string | when service is `pihole` |  |
+| hide-graph | bool | no | false |
+| hide-top-domains | bool | no | false |
 | hour-format | string | no | 12h |
 
 ##### `service`
 Either `adguard` or `pihole`.
+
+##### `allow-insecure`
+Whether to allow invalid/self-signed certificates when making the request to the service.
 
 ##### `url`
 The base URL of the service. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
@@ -1347,6 +1379,12 @@ Only required when using AdGuard Home. The password used to log into the admin d
 
 ##### `token`
 Only required when using Pi-hole. The API token which can be found in `Settings -> API -> Show API token`. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+
+##### `hide-graph`
+Whether to hide the graph showing the number of queries over time.
+
+##### `hide-top-domains`
+Whether to hide the list of top blocked domains.
 
 ##### `hour-format`
 Whether to display the relative time in the graph in `12h` or `24h` format.
@@ -1452,6 +1490,12 @@ An array of groups which can optionally have a title and a custom color.
 | title | string | no | |
 | color | HSL | no | the primary color of the theme |
 | links | array | yes | |
+| same-tab | boolean | no | false |
+| hide-arrow | boolean | no | false |
+
+> [!TIP]
+>
+> You can set `same-tab` and `hide-arrow` either on the group which will apply them to all links in that group, or on each individual link which will override the value set on the group.
 
 ###### Properties for each link
 | Name | Type | Required | Default |
@@ -1464,7 +1508,7 @@ An array of groups which can optionally have a title and a custom color.
 
 `icon`
 
-URL pointing to an image. You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix:
+URL pointing to an image. You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix or [Dashboard Icons](https://github.com/walkxcode/dashboard-icons) via a `di:` prefix:
 
 ```yaml
 icon: si:gmail
@@ -1583,15 +1627,25 @@ Example:
 
 ```yaml
 - type: calendar
+  start-sunday: false
 ```
 
 Preview:
 
 ![](images/calendar-widget-preview.png)
 
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| start-sunday | boolean | no | false |
+
+##### `start-sunday`
+Whether calendar weeks start on Sunday or Monday.
+
 > [!NOTE]
 >
-> There is currently no customizability available for the calendar. Extra features will be added in the future.
+> There is currently little customizability available for the calendar. Extra features will be added in the future.
 
 ### Markets
 Display a list of markets, their current value, change for the day and a small 21d chart. Data is taken from Yahoo Finance.
@@ -1763,3 +1817,75 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+### Docker Containers
+<!-- TODO: update -->
+The Docker widget allows you to monitor your Docker containers.
+To enable this feature, ensure that your setup provides access to the **docker.sock** file (also you may use a TCP connection).
+
+Add the following to your `docker-compose` or `docker run` command to enable the Docker widget:
+
+**Docker Example:**
+```bash
+docker run -d -p 8080:8080 \
+  -v ./glance.yml:/app/glance.yml \
+  -v /etc/timezone:/etc/timezone:ro \
+  -v /etc/localtime:/etc/localtime:ro \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  glanceapp/glance
+```
+
+**Docker Compose Example:**
+```yaml
+services:
+  glance:
+    image: glanceapp/glance
+    volumes:
+      - ./glance.yml:/app/glance.yml
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+```
+
+#### Configuration
+To integrate the Docker widget into your dashboard, include the following snippet in your `glance.yml` file:
+
+```yaml
+- type: docker
+  host-url: tcp://localhost:2375
+  cache: 1m
+```
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| host-url | string | no | `unix:///var/run/docker.sock` |
+
+#### Leveraging Container Labels
+You can use container labels to control visibility, URLs, icons, and titles within the Docker widget. Add the following labels to your container configuration for enhanced customization:
+
+```yaml
+labels:
+  - "glance.enable=true"       # Enable or disable visibility of the container (default: true)
+  - "glance.title=Glance"      # Optional friendly name (defaults to container name)
+  - "glance.url=https://app.example.com"  # Optional URL associated with the container
+  - "glance.iconUrl=si:docker" # Optional URL to an image which will be used as the icon for the site
+
+```
+
+**Default Values:**
+
+| Name           | Default    |
+|----------------|------------|
+| glance.enable  | true       |
+| glance.title   | Container name |
+| glance.url     | (none)     |
+| glance.iconUrl | si:docker  |
+
+Preview:
+
+![](images/docker-widget-preview.png)
