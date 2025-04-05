@@ -40,7 +40,7 @@ type rssWidget struct {
 }
 
 func (widget *rssWidget) initialize() error {
-	widget.withTitle("RSS Feed").withCacheDuration(1 * time.Hour)
+	widget.withTitle("RSS 资讯推送").withCacheDuration(1 * time.Hour)
 
 	if widget.Limit <= 0 {
 		widget.Limit = 25
