@@ -186,6 +186,7 @@ function setupSearchBoxes() {
         };
 
         const changeCurrentBang = (bang) => {
+			console.log(typeof(bang))
             currentBang = bang;
             bangElement.textContent = bang != null ? bang.dataset.title : "";
         }
@@ -196,6 +197,15 @@ function setupSearchBoxes() {
                 changeCurrentBang(bangsMap[value]);
                 return;
             }
+			if (value.startsWith("http") || isValidUrl(value)){
+				const bang = {
+					dataset: {
+						title: "URL",
+					}
+				}
+                changeCurrentBang(bang);
+                return;
+			}
 
             const words = value.split(" ");
             if (words.length >= 2 && words[0] in bangsMap) {
