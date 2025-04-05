@@ -15,6 +15,7 @@
             {{ end }}
             <a href="{{ .URL | safeURL }}" class="bookmarks-link {{ if .HideArrow }}bookmarks-link-no-arrow {{ end }}color-highlight size-h4" {{ if .Target }}target="{{ .Target }}"{{ end }} rel="noreferrer">{{ .Title }}</a>
         </li>
+        <p class="color-text size-h5">{{ .Description }}</p>
         {{ end }}
         </ul>
     </div>
