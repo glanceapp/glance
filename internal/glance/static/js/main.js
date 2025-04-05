@@ -94,6 +94,27 @@ function updateRelativeTimeForElements(elements)
     }
 }
 
+function isValidUrl(string){
+	let url;
+	try {
+		url = new URL(string);
+	} catch ({ name, message }) {
+		const pattern = /^(?:[a-z0-9-]+\.)+[a-z]+$/
+		if (pattern.test(string)){
+			return true;
+		}
+		return false;  
+	}
+	return url.protocol === "http:" || url.protocol === "https:";
+}
+
+function toUrl(link){
+	if (link.search(/^http[s]?\:\/\//) == -1) {
+        link = 'http://' + link;
+    }
+    return link;
+}
+
 function setupSearchBoxes() {
     const searchWidgets = document.getElementsByClassName("search");
 
@@ -126,6 +147,10 @@ function setupSearchBoxes() {
 
             if (event.key == "Enter") {
                 const input = inputElement.value.trim();
+				if (isValidUrl(input)) {
+					openURLInNewTab(toUrl(input));
+					return;
+				}
                 let query;
                 let searchUrlTemplate;
 
