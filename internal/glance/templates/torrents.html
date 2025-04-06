@@ -1,0 +1,27 @@
+{{ template "widget-base.html" . }} {{ define "widget-content" }}
+<div class="torrents flex flex-column gap-12">
+  {{- if .Torrents }} {{- range .Torrents }}
+  <div class="torrent gap-2">
+    <div class="torrent-header text-truncate">
+      <span class="torrent-name">{{ .Name }}</span>
+    </div>
+    <div class="torrent-progress flex items-center gap-10">
+      <div class="progress-bar flex-1">
+        <div class="progress-value" style="--percent: {{ .Progress }};"></div>
+      </div>
+      <span class="progress-text color-highlight text-very-compact"
+        >{{ .Progress }} <span class="color-base">%</span>
+    </div>
+    <div class="torrent-info">
+      {{- if eq .Progress 1.0 }}
+      <span class="torrent-completed color-primary">Completed</span>
+      {{- else }}
+      <span class="torrent-speed">{{ .Speed | formatBytes }}/s</span>
+      {{- end }}
+    </div>
+  </div>
+  {{- end }} {{- else }}
+  <div class="text-center color-subdue">No active torrents</div>
+  {{- end }}
+</div>
+{{ end }}

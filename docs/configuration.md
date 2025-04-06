@@ -25,6 +25,7 @@
   - [Weather](#weather)
   - [Monitor](#monitor)
   - [Releases](#releases)
+  - [Torrents](#torrents)
   - [Docker Containers](#docker-containers)
   - [DNS Stats](#dns-stats)
   - [Server Stats](#server-stats)
@@ -1725,6 +1726,32 @@ The maximum number of releases to show.
 
 #### `collapse-after`
 How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+### Torrents
+Displays the download progress of currently downloading torrents
+
+![](images/widget-torrent.png)
+
+
+```yaml
+- type: torrents
+  url: http://localhost:8112/
+  username: admin
+  password: deluge
+  limit: 10
+  client: deluge
+```
+
+
+#### Properties
+
+| Name | Type | Description |
+| ---- | ---- | -------- |
+| url | string | The url of the torrent cent |
+| username | string | The username to login |
+| password | string | The password to login |  |
+| limit | int | The maximum amount of torrents to show |
+| client | string | The torrent client. Supported values ["deluge"]
 
 ### Docker Containers
 
