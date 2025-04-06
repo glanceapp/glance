@@ -1728,7 +1728,7 @@ The maximum number of releases to show.
 How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
 ### Torrents
-Displays the download progress of currently downloading torrents
+Displays the current status and download/upload speeds of torrents
 
 ![](images/widget-torrent.png)
 
@@ -1738,7 +1738,6 @@ Displays the download progress of currently downloading torrents
   url: http://localhost:8112/
   username: admin
   password: deluge
-  limit: 10
   client: deluge
 ```
 
@@ -1750,7 +1749,6 @@ Displays the download progress of currently downloading torrents
 | url | string | The url of the torrent cent |
 | username | string | The username to login |
 | password | string | The password to login |  |
-| limit | int | The maximum amount of torrents to show |
 | client | string | The torrent client. Supported values ["deluge"]
 
 ### Docker Containers

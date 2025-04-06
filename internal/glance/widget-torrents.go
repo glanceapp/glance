@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"math"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
 	"sort"
 	"strings"
+	"time"
 )
 
 var torrentWidgetTemplate = mustParseTemplate("torrents.html", "widget-base.html")
@@ -27,13 +27,14 @@ type TorrentClient interface {
 }
 
 type Torrent struct {
-	Name        string  `json:"name"`
-	Progress    float64 `json:"progress"`
-	State       string  `json:"state"`
-	Size        uint64  `json:"size"`
-	Downloaded  uint64  `json:"downloaded"`
-	Speed       uint64  `json:"dlspeed"`
-	CompletedOn uint64  `json:"completed_on"`
+	Name          string  `json:"name"`
+	Progress      float64 `json:"progress"`
+	State         string  `json:"state"`
+	Size          uint64  `json:"size"`
+	Downloaded    uint64  `json:"downloaded"`
+	DownloadSpeed uint64  `json:"dlspeed"`
+	UploadSpeed   uint64  `json:"ulspeed"`
+	CompletedOn   uint64  `json:"completed_on"`
 }
 
 type torrentWidget struct {
@@ -41,7 +42,6 @@ type torrentWidget struct {
 	URL        string        `yaml:"url"`
 	Username   string        `yaml:"username"`
 	Password   string        `yaml:"password"`
-	Limit      int           `yaml:"limit"`
 	ClientType string        `yaml:"client"`
 	Torrents   []Torrent     `yaml:"-"`
 	client     TorrentClient `yaml:"-"`
@@ -51,7 +51,7 @@ func (widget *torrentWidget) initialize() error {
 	widget.
 		withTitle("Torrents").
 		withTitleURL(widget.URL).
-		withCacheDuration(-1)
+		withCacheDuration(time.Second * 15)
 
 	_, err := url.Parse(widget.URL)
 	if err != nil {
@@ -81,18 +81,21 @@ func (widget *torrentWidget) update(ctx context.Context) {
 		widget.withError(err)
 		return
 	}
-	// Sort torrents by progress
-	sort.Slice(torrents, func(i, j int) bool {
-		if torrents[i].Progress == 100 && torrents[j].Progress == 100 {
-			return torrents[i].CompletedOn > torrents[j].CompletedOn
-		}
-		return torrents[i].Progress < torrents[j].Progress
-	})
 
-	// Apply limit if necessary
-	if len(torrents) > widget.Limit {
-		torrents = torrents[:widget.Limit]
-	}
+	sort.Slice(torrents, func(i, j int) bool {
+		// Show incomplete downloading torrents first
+		if torrents[i].Progress < 100 || torrents[j].Progress < 100 {
+			return torrents[i].Progress < torrents[j].Progress
+		}
+
+		// Then show any actively being seeded
+		if torrents[i].UploadSpeed != 0 || torrents[j].UploadSpeed != 0 {
+			return torrents[i].UploadSpeed > torrents[j].UploadSpeed
+		}
+
+		// Then sort by most recently downloaded
+		return torrents[i].CompletedOn > torrents[j].CompletedOn
+	})
 
 	// Store the sorted torrents in the widget
 	widget.Torrents = torrents
@@ -129,6 +132,7 @@ type DelugeTorrent struct {
 	Size            uint64  `json:"total_size"`
 	Downloaded      uint64  `json:"all_time_download"`
 	DownloadSpeed   uint64  `json:"download_payload_rate"`
+	UploadSpeed     uint64  `json:"upload_payload_rate"`
 	CompletedOn     uint64  `json:"completed_time"`
 }
 
@@ -179,7 +183,7 @@ func rpcRequest[T interface{}](deluge *DelugeClient, method string, params []int
 
 func (deluge *DelugeClient) GetTorrents() ([]Torrent, error) {
 	filterDict := map[string]interface{}{}
-	keys := []string{"name", "state", "progress", "total_size", "all_time_download", "download_payload_rate", "completed_time"}
+	keys := []string{"name", "state", "progress", "total_size", "all_time_download", "download_payload_rate", "upload_payload_rate", "completed_time"}
 	res, err := rpcRequest[map[string]DelugeTorrent](deluge, "core.get_torrents_status", []interface{}{filterDict, keys})
 	if err != nil {
 		return nil, err
@@ -187,13 +191,14 @@ func (deluge *DelugeClient) GetTorrents() ([]Torrent, error) {
 	var torrents []Torrent
 	for _, torrent := range res.Result {
 		torrents = append(torrents, Torrent{
-			Name:        torrent.Name,
-			Progress:    math.Round(torrent.PercentProgress*100) / 100,
-			State:       torrent.Status,
-			Size:        torrent.Size,
-			Downloaded:  torrent.Downloaded,
-			Speed:       torrent.DownloadSpeed,
-			CompletedOn: torrent.CompletedOn,
+			Name:          torrent.Name,
+			Progress:      torrent.PercentProgress,
+			State:         torrent.Status,
+			Size:          torrent.Size,
+			Downloaded:    torrent.Downloaded,
+			DownloadSpeed: torrent.DownloadSpeed,
+			UploadSpeed:   torrent.UploadSpeed,
+			CompletedOn:   torrent.CompletedOn,
 		})
 	}
 	return torrents, nil
