@@ -23,7 +23,8 @@ type config struct {
 		Port       uint16    `yaml:"port"`
 		AssetsPath string    `yaml:"assets-path"`
 		BaseURL    string    `yaml:"base-url"`
-		StartedAt  time.Time `yaml:"-"` // used in custom css file
+		Language   string    `yaml:"language"` //define language selector
+		StartedAt  time.Time `yaml:"-"`        // used in custom css file
 	} `yaml:"server"`
 
 	Document struct {
@@ -51,6 +52,8 @@ type config struct {
 
 	Pages []page `yaml:"pages"`
 }
+
+var Cfg config // Global Config
 
 type page struct {
 	Title                      string `yaml:"name"`

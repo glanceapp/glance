@@ -26,7 +26,7 @@ type calendarWidget struct {
 }
 
 func (widget *calendarWidget) initialize() error {
-	widget.withTitle("日历").withError(nil)
+	widget.withTitle("Calendar").withError(nil)
 
 	if widget.FirstDayOfWeek == "" {
 		widget.FirstDayOfWeek = "monday"

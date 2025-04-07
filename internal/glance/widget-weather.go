@@ -91,8 +91,14 @@ type weather struct {
 }
 
 func (w *weather) WeatherCodeAsString() string {
-	if weatherCode, ok := weatherCodeTable[w.WeatherCode]; ok {
-		return weatherCode
+	if Cfg.Server.Language == "zh" {
+		if weatherCode, ok := zhWeatherCodeTable[w.WeatherCode]; ok {
+			return weatherCode
+		}
+	} else {
+		if weatherCode, ok := enWeatherCodeTable[w.WeatherCode]; ok {
+			return weatherCode
+		}
 	}
 
 	return ""
@@ -294,7 +300,7 @@ func fetchWeatherForOpenMeteoPlace(place *openMeteoPlaceResponseJson, units stri
 	}, nil
 }
 
-var weatherCodeTable = map[int]string{
+var zhWeatherCodeTable = map[int]string{
 	0:  "晴朗",
 	1:  "大致晴朗",
 	2:  "局部多云",
@@ -323,4 +329,35 @@ var weatherCodeTable = map[int]string{
 	95: "雷暴",
 	96: "强雷暴",
 	99: "严重雷暴",
+}
+
+var enWeatherCodeTable = map[int]string{
+	0:  "Clear Sky",
+	1:  "Mainly Clear",
+	2:  "Partly Cloudy",
+	3:  "Overcast",
+	45: "Fog",
+	48: "Rime Fog",
+	51: "Drizzle",
+	53: "Drizzle",
+	55: "Drizzle",
+	56: "Drizzle",
+	57: "Drizzle",
+	61: "Rain",
+	63: "Moderate Rain",
+	65: "Heavy Rain",
+	66: "Freezing Rain",
+	67: "Freezing Rain",
+	71: "Snow",
+	73: "Moderate Snow",
+	75: "Heavy Snow",
+	77: "Snow Grains",
+	80: "Rain",
+	81: "Moderate Rain",
+	82: "Heavy Rain",
+	85: "Snow",
+	86: "Snow",
+	95: "Thunderstorm",
+	96: "Thunderstorm",
+	99: "Thunderstorm",
 }

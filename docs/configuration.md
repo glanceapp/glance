@@ -964,10 +964,11 @@ Preview:
 ##### `search-engine`
 Either a value from the table below or a URL to a custom search engine. Use `{QUERY}` to indicate where the query value gets placed.
 
-| Name | URL |
-| ---- | --- |
+| Name       | URL |
+|------------| --- |
 | duckduckgo | `https://duckduckgo.com/?q={QUERY}` |
-| google | `https://www.google.com/search?q={QUERY}` |
+| google     | `https://www.google.com/search?q={QUERY}` |
+| baidu      | `https://www.baidu.com/s?wd={QUERY}` |
 
 ##### `new-tab`
 When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.

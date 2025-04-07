@@ -33,6 +33,7 @@ func convertSearchUrl(url string) string {
 var searchEngines = map[string]string{
 	"duckduckgo": "https://duckduckgo.com/?q={QUERY}",
 	"google":     "https://www.google.com/search?q={QUERY}",
+	"baidu":      "https://www.baidu.com/s?wd={QUERY}",
 }
 
 func (widget *searchWidget) initialize() error {
