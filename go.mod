@@ -1,6 +1,6 @@
 module github.com/glanceapp/glance
 
-go 1.23.6
+go 1.17
 
 require (
 	github.com/fsnotify/fsnotify v1.8.0

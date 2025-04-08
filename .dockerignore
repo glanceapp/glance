@@ -9,3 +9,5 @@
 !/go.mod
 !/go.sum
 !main.go
+!Dockerfile
+!Dockerfile.goreleaser
