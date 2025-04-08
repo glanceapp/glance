@@ -1746,7 +1746,7 @@ Displays the current status and download/upload speeds of torrents
 
 | Name | Type | Description |
 | ---- | ---- | -------- |
-| url | string | The url of the torrent cent |
+| url | string | The url of the torrent client |
 | username | string | The username to login |
 | password | string | The password to login |  |
 | client | string | The torrent client. Supported values ["deluge"]
