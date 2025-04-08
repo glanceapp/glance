@@ -34,6 +34,7 @@ type CustomAPIRequest struct {
 	Body               any                  `yaml:"body"`
 	SkipJSONValidation bool                 `yaml:"skip-json-validation"`
 	WaitLastRequest    bool                 `yaml:"wait-last-request"`
+	IgnoreTimeout     bool                 `yaml:"ignore-timeout"`
 	bodyReader         io.ReadSeeker        `yaml:"-"`
 	httpRequest        *http.Request        `yaml:"-"`
 }
@@ -192,7 +193,15 @@ func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customA
 	client := ternary(req.AllowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
 	resp, err := client.Do(req.httpRequest.WithContext(ctx))
 	if err != nil {
-		return nil, err
+		if req.IgnoreTimeout && errors.Is(err, context.DeadlineExceeded) {
+			resp = &http.Response{
+				Status: err.Error(),
+				StatusCode: 504,
+				Body:       http.NoBody,
+			}
+		} else {
+			return nil, err
+		}
 	}
 	defer resp.Body.Close()
 

@@ -1342,6 +1342,7 @@ Examples:
 | allow-insecure | boolean | no | false |
 | skip-json-validation | boolean | no | false |
 | wait-last-request | boolean | no | false |
+| ignore-timeout | boolean | no | false |
 | template | string | yes | |
 | parameters | key (string) & value (string|array) | no | |
 | subrequests | map of requests | no | |
@@ -1399,6 +1400,8 @@ When set to `true`, will wait for the previous request to finish before running.
 >
 > Multiple usage of this property will slow your page load time depending on the API's response time by another timeout time each succession of the property.
 
+#### `ignore-timeout`
+When set to `true`, ignores the timeout error that prevents the widget from loading entirely. This is useful when you have a query that only triggers an action and you don't necessarily need the data. You can still check for `.Response.Status` as it should return `504` before using the data if needed.
 
 ##### `template`
 The template that will be used to display the data. It relies on Go's `html/template` package so it's recommended to go through [its documentation](https://pkg.go.dev/text/template) to understand how to do basic things such as conditionals, loops, etc. In addition, it also uses [tidwall's gjson](https://github.com/tidwall/gjson) package to parse the JSON data so it's worth going through its documentation if you want to use more advanced JSON selectors. You can view additional examples with explanations and function definitions [here](custom-api.md).
