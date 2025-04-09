@@ -389,6 +389,7 @@ The following helper functions provided by Glance are available:
 - `trimSuffix(suffix string, str string) string`: Trims the suffix from a string.
 - `trimSpace(str string) string`: Trims whitespace from a string on both ends.
 - `replaceAll(old string, new string, str string) string`: Replaces all occurrences of a string in a string.
+- `replaceMatches(pattern string, replacement string, str string) string`: Replaces all occurrences of a regular expression in a string.
 - `findMatch(pattern string, str string) string`: Finds the first match of a regular expression in a string.
 - `findSubmatch(pattern string, str string) string`: Finds the first submatch of a regular expression in a string.
 - `sortByString(key string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by a string key in either ascending or descending order.

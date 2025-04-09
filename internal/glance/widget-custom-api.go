@@ -468,16 +468,15 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			return strings.TrimSuffix(s, suffix)
 		},
 		"trimSpace": strings.TrimSpace,
-		"replaceAll": func(oldOrPattern, new, s string) string {
+		"replaceAll": func(old, new, s string) string {
+			return strings.ReplaceAll(s, old, new)
+		},
+		"replaceMatches": func(pattern, replacement, s string) string {
 			if s == "" {
 				return ""
 			}
 
-			regex := getCachedRegexp(oldOrPattern)
-			if regex == nil {
-				return strings.ReplaceAll(s, oldOrPattern, new)
-			}
-			return regex.ReplaceAllString(s, new)
+			return getCachedRegexp(pattern).ReplaceAllString(s, replacement)
 		},
 		"findMatch": func(pattern, s string) string {
 			if s == "" {
