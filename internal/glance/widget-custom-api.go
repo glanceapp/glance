@@ -471,6 +471,13 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		"replaceAll": func(old, new, s string) string {
 			return strings.ReplaceAll(s, old, new)
 		},
+		"replaceMatches": func(pattern, replacement, s string) string {
+			if s == "" {
+				return ""
+			}
+
+			return getCachedRegexp(pattern).ReplaceAllString(s, replacement)
+		},
 		"findMatch": func(pattern, s string) string {
 			if s == "" {
 				return ""
