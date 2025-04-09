@@ -222,6 +222,59 @@ func (p *proxyOptionsField) UnmarshalYAML(node *yaml.Node) error {
 
 type queryParametersField map[string][]string
 
+func withOptionalArgs(fn func(baseTime time.Time, offsetDays, offsetHours int) time.Time) func(args ...string) string {
+	return func(args ...string) string {
+		now := time.Now()
+		location := now.Location()
+		offsetDays := 0
+		offsetHours := 0
+
+		for i := 0; i < len(args); i++ {
+			switch args[i] {
+			case "UTC":
+				location = time.UTC
+				now = now.In(location)
+			case "offsetDay":
+				if i+1 < len(args) {
+					offsetDays = parseArgToInt(args[i+1])
+					i++
+				}
+			case "offsetHour":
+				if i+1 < len(args) {
+					offsetHours = parseArgToInt(args[i+1])
+					i++
+				}
+			}
+		}
+
+		// Apply the function with parsed arguments
+		return fn(now.In(location), offsetDays, offsetHours).Format(time.RFC3339)
+	}
+}
+
+// Helper to parse string arguments to integers
+func parseArgToInt(arg string) int {
+	val, err := strconv.Atoi(arg)
+	if err != nil {
+		return 0 // Default to 0 if parsing fails
+	}
+	return val
+}
+
+var parameterFunctions = map[string]func(args ...string) string{
+	"now": withOptionalArgs(func(baseTime time.Time, offsetDays, offsetHours int) time.Time {
+		return baseTime.Add(time.Duration(offsetDays*24)*time.Hour + time.Duration(offsetHours)*time.Hour)
+	}),
+	"startOfDay": withOptionalArgs(func(baseTime time.Time, offsetDays, offsetHours int) time.Time {
+		baseTime = baseTime.AddDate(0, 0, offsetDays).Add(time.Duration(offsetHours) * time.Hour)
+		return time.Date(baseTime.Year(), baseTime.Month(), baseTime.Day(), 0, 0, 0, 0, baseTime.Location())
+	}),
+	"endOfDay": withOptionalArgs(func(baseTime time.Time, offsetDays, offsetHours int) time.Time {
+		baseTime = baseTime.AddDate(0, 0, offsetDays).Add(time.Duration(offsetHours) * time.Hour)
+		return time.Date(baseTime.Year(), baseTime.Month(), baseTime.Day(), 23, 59, 59, int(time.Second-time.Nanosecond), baseTime.Location())
+	}),
+}
+
 func (q *queryParametersField) UnmarshalYAML(node *yaml.Node) error {
 	var decoded map[string]any
 
@@ -242,6 +295,27 @@ func (q *queryParametersField) UnmarshalYAML(node *yaml.Node) error {
 			(*q)[key] = []string{fmt.Sprintf("%t", v)}
 		case []string:
 			(*q)[key] = append((*q)[key], v...)
+		case map[string]interface{}:
+			for fnExpression := range v {
+				fnParts := regexp.MustCompile(`\s+`).Split(fnExpression, -1)
+				
+				if len(fnParts) == 0 {
+					return fmt.Errorf("invalid function call: %s", fnExpression)
+				}
+
+				fnName := fnParts[0]
+				if fn, exists := parameterFunctions[fnName]; exists {
+					if len(fnParts) == 1 {
+						(*q)[key] = []string{fn()}
+					} else {
+						args := fnParts[1:]
+						(*q)[key] = []string{fn(args...)}
+					}
+				} else {
+					return fmt.Errorf("unknown custom function: %s", fnName)
+				}
+					
+			}
 		case []any:
 			for _, item := range v {
 				switch item := item.(type) {
