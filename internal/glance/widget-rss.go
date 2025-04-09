@@ -331,6 +331,7 @@ func fetchItemsFromRSSFeeds(requests []rssFeedRequest) (rssFeedItemList, error) 
 
 	failed := 0
 	entries := make(rssFeedItemList, 0, len(feeds)*10)
+	seen := make(map[string]struct{})
 
 	for i := range feeds {
 		if errs[i] != nil {
@@ -339,7 +340,13 @@ func fetchItemsFromRSSFeeds(requests []rssFeedRequest) (rssFeedItemList, error) 
 			continue
 		}
 
-		entries = append(entries, feeds[i]...)
+		for _, item := range feeds[i] {
+			if _, exists := seen[item.Link]; exists {
+				continue
+			}
+			entries = append(entries, item)
+			seen[item.Link] = struct{}{}
+		}
 	}
 
 	if failed == len(requests) {
