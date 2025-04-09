@@ -16,9 +16,11 @@ var dockerContainersWidgetTemplate = mustParseTemplate("docker-containers.html",
 
 type dockerContainersWidget struct {
 	widgetBase    `yaml:",inline"`
-	HideByDefault bool                `yaml:"hide-by-default"`
-	SockPath      string              `yaml:"sock-path"`
-	Containers    dockerContainerList `yaml:"-"`
+	HideByDefault bool                             `yaml:"hide-by-default"`
+	SockPath      string                           `yaml:"sock-path"`
+	ReadableNames bool                             `yaml:"readable-names"`
+	Containers    dockerContainerList              `yaml:"-"`
+	ContainerMap  map[string]dockerContainerConfig `yaml:"containers,omitempty"`
 }
 
 func (widget *dockerContainersWidget) initialize() error {
@@ -32,7 +34,7 @@ func (widget *dockerContainersWidget) initialize() error {
 }
 
 func (widget *dockerContainersWidget) update(ctx context.Context) {
-	containers, err := fetchDockerContainers(widget.SockPath, widget.HideByDefault)
+	containers, err := fetchDockerContainers(widget.SockPath, widget.HideByDefault, widget.ReadableNames, widget.ContainerMap)
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
@@ -110,6 +112,11 @@ type dockerContainer struct {
 	Children    dockerContainerList
 }
 
+type dockerContainerConfig struct {
+	dockerContainer `yaml:",inline"`
+	Hide            bool `yaml:"hide,omitempty"`
+}
+
 type dockerContainerList []dockerContainer
 
 func (containers dockerContainerList) sortByStateIconThenTitle() {
@@ -137,7 +144,16 @@ func dockerContainerStateToStateIcon(state string) string {
 	}
 }
 
-func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContainerList, error) {
+func formatReadableName(name string) string {
+	name = strings.NewReplacer("-", " ", "_", " ").Replace(name)
+	words := strings.Fields(name)
+	for i, word := range words {
+		words[i] = strings.Title(word)
+	}
+	return strings.Join(words, " ")
+}
+
+func fetchDockerContainers(socketPath string, hideByDefault bool, readableNames bool, containerOverrides map[string]dockerContainerConfig) (dockerContainerList, error) {
 	containers, err := fetchAllDockerContainersFromSock(socketPath)
 	if err != nil {
 		return nil, fmt.Errorf("fetching containers: %w", err)
@@ -149,15 +165,48 @@ func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContain
 	for i := range containers {
 		container := &containers[i]
 
+		containerName := ""
+		if len(container.Names) > 0 {
+			containerName = strings.TrimLeft(container.Names[0], "/")
+		}
+
 		dc := dockerContainer{
-			Title:       deriveDockerContainerTitle(container),
-			URL:         container.Labels.getOrDefault(dockerContainerLabelURL, ""),
-			Description: container.Labels.getOrDefault(dockerContainerLabelDescription, ""),
-			SameTab:     stringToBool(container.Labels.getOrDefault(dockerContainerLabelSameTab, "false")),
-			Image:       container.Image,
-			State:       strings.ToLower(container.State),
-			StateText:   strings.ToLower(container.Status),
-			Icon:        newCustomIconField(container.Labels.getOrDefault(dockerContainerLabelIcon, "si:docker")),
+			Image:     container.Image,
+			State:     strings.ToLower(container.State),
+			StateText: strings.ToLower(container.Status),
+			SameTab:   stringToBool(container.Labels.getOrDefault(dockerContainerLabelSameTab, "false")),
+		}
+
+		if override, exists := containerOverrides[containerName]; exists {
+			if override.Hide {
+				continue
+			}
+
+			if override.Title != "" {
+				dc.Title = override.Title
+			} else {
+				title := deriveDockerContainerTitle(container)
+				if readableNames {
+					title = formatReadableName(title)
+				}
+				dc.Title = title
+			}
+			dc.URL = override.URL
+			dc.Description = override.Description
+			if override.Icon != (customIconField{}) {
+				dc.Icon = override.Icon
+			} else {
+				dc.Icon = newCustomIconField(container.Labels.getOrDefault(dockerContainerLabelIcon, "si:docker"))
+			}
+		} else {
+			title := deriveDockerContainerTitle(container)
+			if readableNames {
+				title = formatReadableName(title)
+			}
+			dc.Title = title
+			dc.URL = container.Labels.getOrDefault(dockerContainerLabelURL, "")
+			dc.Description = container.Labels.getOrDefault(dockerContainerLabelDescription, "")
+			dc.Icon = newCustomIconField(container.Labels.getOrDefault(dockerContainerLabelIcon, "si:docker"))
 		}
 
 		if idValue := container.Labels.getOrDefault(dockerContainerLabelID, ""); idValue != "" {
@@ -270,4 +319,25 @@ func fetchAllDockerContainersFromSock(socketPath string) ([]dockerContainerJsonR
 	}
 
 	return containers, nil
+}
+
+func (widget *dockerContainersWidget) GetContainerNames() ([]string, error) {
+	containers, err := fetchAllDockerContainersFromSock(widget.SockPath)
+	if err != nil {
+		return nil, fmt.Errorf("fetching containers: %w", err)
+	}
+
+	names := make([]string, 0, len(containers))
+	for _, container := range containers {
+		if !isDockerContainerHidden(&container, widget.HideByDefault) {
+			// Get the clean container name without the leading '/'
+			name := strings.TrimLeft(itemAtIndexOrDefault(container.Names, 0, ""), "/")
+			if name != "" {
+				names = append(names, name)
+			}
+		}
+	}
+
+	sort.Strings(names)
+	return names, nil
 }
