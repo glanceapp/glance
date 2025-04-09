@@ -15,6 +15,7 @@ import (
 var (
 	redditWidgetHorizontalCardsTemplate = mustParseTemplate("reddit-horizontal-cards.html", "widget-base.html")
 	redditWidgetVerticalCardsTemplate   = mustParseTemplate("reddit-vertical-cards.html", "widget-base.html")
+	redditWidgetDetailedListTemplate    = mustParseTemplate("reddit-detailed-list.html", "widget-base.html")
 )
 
 type redditWidget struct {
@@ -33,6 +34,7 @@ type redditWidget struct {
 	Limit               int               `yaml:"limit"`
 	CollapseAfter       int               `yaml:"collapse-after"`
 	RequestUrlTemplate  string            `yaml:"request-url-template"`
+	IsDetailed          bool              `yaml:"is_detailed"`
 }
 
 func (widget *redditWidget) initialize() error {
@@ -60,6 +62,10 @@ func (widget *redditWidget) initialize() error {
 		if !strings.Contains(widget.RequestUrlTemplate, "{REQUEST-URL}") {
 			return errors.New("no `{REQUEST-URL}` placeholder specified")
 		}
+	}
+
+	if widget.Style == "detailed-list" {
+		widget.IsDetailed = true
 	}
 
 	widget.
@@ -97,6 +103,7 @@ func (widget *redditWidget) update(ctx context.Context) {
 		widget.RequestUrlTemplate,
 		widget.Proxy.client,
 		widget.ShowFlairs,
+		widget.IsDetailed,
 	)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
@@ -124,6 +131,10 @@ func (widget *redditWidget) Render() template.HTML {
 		return widget.renderTemplate(widget, redditWidgetVerticalCardsTemplate)
 	}
 
+	if widget.Style == "detailed-list" {
+		return widget.renderTemplate(widget, redditWidgetDetailedListTemplate)
+	}
+
 	return widget.renderTemplate(widget, forumPostsTemplate)
 
 }
@@ -145,6 +156,7 @@ type subredditResponseJson struct {
 				IsSelf        bool    `json:"is_self"`
 				Thumbnail     string  `json:"thumbnail"`
 				Flair         string  `json:"link_flair_text"`
+				Selftext      string  `json:"selftext"`
 				ParentList    []struct {
 					Id        string `json:"id"`
 					Subreddit string `json:"subreddit"`
@@ -153,6 +165,19 @@ type subredditResponseJson struct {
 			} `json:"data"`
 		} `json:"children"`
 	} `json:"data"`
+}
+
+func shortenTextPreviewLen(textPreview string, maxLen int) string {
+	textPreview, _ = limitStringLength(textPreview, 1000)
+	textPreview = strings.ReplaceAll(textPreview, "\n", " ")
+	textPreview = strings.TrimSpace(textPreview)
+	textPreview, limited := limitStringLength(textPreview, maxLen)
+
+	if limited {
+		textPreview += "…"
+	}
+
+	return textPreview
 }
 
 func templateRedditCommentsURL(template, subreddit, postId, postPath string) string {
@@ -172,6 +197,7 @@ func fetchSubredditPosts(
 	requestUrlTemplate string,
 	proxyClient *http.Client,
 	showFlairs bool,
+	isDetailed bool,
 ) (forumPostList, error) {
 	query := url.Values{}
 	var requestUrl string
@@ -239,6 +265,10 @@ func fetchSubredditPosts(
 			CommentCount:    post.CommentsCount,
 			Score:           post.Upvotes,
 			TimePosted:      time.Unix(int64(post.Time), 0),
+		}
+
+		if isDetailed {
+			forumPost.TextPreview = shortenTextPreviewLen(post.Selftext, 200)
 		}
 
 		if post.Thumbnail != "" && post.Thumbnail != "self" && post.Thumbnail != "default" && post.Thumbnail != "nsfw" {
