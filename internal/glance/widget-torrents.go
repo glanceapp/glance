@@ -43,6 +43,7 @@ type torrentWidget struct {
 	Username   string        `yaml:"username"`
 	Password   string        `yaml:"password"`
 	ClientType string        `yaml:"client"`
+	States     []string      `yaml:"states"`
 	Torrents   []Torrent     `yaml:"-"`
 	client     TorrentClient `yaml:"-"`
 }
@@ -53,6 +54,10 @@ func (widget *torrentWidget) initialize() error {
 		withTitleURL(widget.URL).
 		withCacheDuration(time.Second * 15)
 
+	if widget.States == nil {
+		widget.States = []string{}
+	}
+
 	_, err := url.Parse(widget.URL)
 	if err != nil {
 		return fmt.Errorf("parsing URL: %v", err)
@@ -62,7 +67,7 @@ func (widget *torrentWidget) initialize() error {
 	switch widget.ClientType {
 	case delugeClient:
 		url := strings.TrimRight(widget.URL, "/") + "/json"
-		client, err = createDelugeClient(url, widget.Password)
+		client, err = createDelugeClient(url, widget.Password, widget.States)
 	default:
 		return errors.New("unsupported torrent client type")
 	}
@@ -105,6 +110,7 @@ func (widget *torrentWidget) update(ctx context.Context) {
 type DelugeClient struct {
 	client *http.Client
 	url    string
+	states []string
 	id     uint64
 }
 
@@ -136,13 +142,13 @@ type DelugeTorrent struct {
 	CompletedOn     uint64  `json:"completed_time"`
 }
 
-func createDelugeClient(url, password string) (*DelugeClient, error) {
+func createDelugeClient(url, password string, states []string) (*DelugeClient, error) {
 	jar, _ := cookiejar.New(nil)
 	http := &http.Client{
 		Jar: jar,
 	}
 
-	client := DelugeClient{http, url, 0}
+	client := DelugeClient{http, url, states, 0}
 
 	res, err := rpcRequest[bool](&client, "auth.login", []interface{}{password})
 	if err != nil {
@@ -183,6 +189,9 @@ func rpcRequest[T interface{}](deluge *DelugeClient, method string, params []int
 
 func (deluge *DelugeClient) GetTorrents() ([]Torrent, error) {
 	filterDict := map[string]interface{}{}
+	if len(deluge.states) > 0 {
+		filterDict["state"] = deluge.states
+	}
 	keys := []string{"name", "state", "progress", "total_size", "all_time_download", "download_payload_rate", "upload_payload_rate", "completed_time"}
 	res, err := rpcRequest[map[string]DelugeTorrent](deluge, "core.get_torrents_status", []interface{}{filterDict, keys})
 	if err != nil {

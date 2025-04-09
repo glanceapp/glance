@@ -1750,6 +1750,7 @@ Displays the current status and download/upload speeds of torrents
 | username | string | The username to login |
 | password | string | The password to login |  |
 | client | string | The torrent client. Supported values ["deluge"]
+| states | string[] | Allows filtering of torrents by state. For example ["Downloading"] will only show downloading torrents. Possible values include ["Downloading", "Seeding", "Paused", "Error", "Checking","Queued","Moving""Allocating","Stopped"]. By default, shows all torrents
 
 ### Docker Containers
 
