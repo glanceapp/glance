@@ -81,7 +81,9 @@ var diagnosticSteps = []diagnosticStep{
 	{
 		name: "fetch data from Yahoo finance API",
 		fn: func() (string, error) {
-			return testHttpRequest("GET", "https://query1.finance.yahoo.com/v8/finance/chart/NVDA", 200)
+			return testHttpRequestWithHeaders("GET", "https://query1.finance.yahoo.com/v8/finance/chart/NVDA", map[string]string{
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
+			}, 200)
 		},
 	},
 	{
