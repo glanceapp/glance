@@ -1,0 +1,23 @@
+<div class="widget{{if .CSSClass}} {{.CSSClass}}{{end}}"{{if .ID}} id="widget-{{.ID}}"{{end}}>
+    {{if not .HideHeader}}
+    <div class="widget-header">
+        {{if .TitleURL}}<a href="{{.TitleURL}}">{{end}}
+        <h3>{{if .Title}}{{.Title}}{{else}}FAQ{{end}}</h3>
+        {{if .TitleURL}}</a>{{end}}
+    </div>
+    {{end}}
+    <div class="widget-content">
+        {{if .Error}}
+        <div class="widget-error">{{.Error}}</div>
+        {{else}}
+        <div class="list list-gap-10">
+            {{range .Questions}}
+            <details>
+                <summary class="summary">{{.Question}}</summary>
+                <div>{{.Answer}}</div>
+            </details>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+</div>
