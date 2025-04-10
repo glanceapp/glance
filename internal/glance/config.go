@@ -50,11 +50,13 @@ type config struct {
 	} `yaml:"theme"`
 
 	Branding struct {
-		HideFooter   bool          `yaml:"hide-footer"`
-		CustomFooter template.HTML `yaml:"custom-footer"`
-		LogoText     string        `yaml:"logo-text"`
-		LogoURL      string        `yaml:"logo-url"`
-		FaviconURL   string        `yaml:"favicon-url"`
+		HideFooter   	bool          `yaml:"hide-footer"`
+		CustomFooter 	template.HTML `yaml:"custom-footer"`
+		LogoText     	string        `yaml:"logo-text"`
+		LogoURL      	string        `yaml:"logo-url"`
+		FaviconURL   	string        `yaml:"favicon-url"`
+		AppleTouchIcon	string        `yaml:"apple-touch-icon-url"`
+		ManifestURL   	string        `yaml:"manifest-url"`
 	} `yaml:"branding"`
 
 	Pages []page `yaml:"pages"`
