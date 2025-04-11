@@ -86,6 +86,12 @@ func cliSensorsPrint() int {
 	tempSensors, err := sensors.SensorsTemperatures()
 	if err != nil {
 		fmt.Printf("Failed to retrieve list of sensors: %v\n", err)
+		if warns, ok := err.(*sensors.Warnings); ok {
+			for _, w := range warns.List {
+				fmt.Printf(" - %v\n", w)
+			}
+		}
+
 		return 1
 	}
 
