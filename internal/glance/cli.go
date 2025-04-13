@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/shirou/gopsutil/v4/sensors"
 )
 
@@ -18,11 +19,13 @@ const (
 	cliIntentConfigPrint
 	cliIntentDiagnose
 	cliIntentSensorsPrint
+	cliIntentMountpointInfo
 )
 
 type cliOptions struct {
 	intent     cliIntent
 	configPath string
+	args       []string
 }
 
 func parseCliOptions() (*cliOptions, error) {
@@ -46,6 +49,7 @@ func parseCliOptions() (*cliOptions, error) {
 		fmt.Println("  config:validate     Validate the config file")
 		fmt.Println("  config:print        Print the parsed config file with embedded includes")
 		fmt.Println("  sensors:print       List all sensors")
+		fmt.Println("  mountpoint:info     Print information about a given mountpoint path")
 		fmt.Println("  diagnose            Run diagnostic checks")
 	}
 	configPath := flags.String("config", "glance.yml", "Set config path")
@@ -72,6 +76,12 @@ func parseCliOptions() (*cliOptions, error) {
 		} else {
 			return nil, unknownCommandErr
 		}
+	} else if len(args) == 2 {
+		if args[0] == "mountpoint:info" {
+			intent = cliIntentMountpointInfo
+		} else {
+			return nil, unknownCommandErr
+		}
 	} else {
 		return nil, unknownCommandErr
 	}
@@ -79,6 +89,7 @@ func parseCliOptions() (*cliOptions, error) {
 	return &cliOptions{
 		intent:     intent,
 		configPath: *configPath,
+		args:       args,
 	}, nil
 }
 
@@ -102,6 +113,26 @@ func cliSensorsPrint() int {
 	for _, sensor := range tempSensors {
 		fmt.Printf("%s: %.1f°C\n", sensor.SensorKey, sensor.Temperature)
 	}
+
+	return 0
+}
+
+func cliMountpointInfo(requestedPath string) int {
+	usage, err := disk.Usage(requestedPath)
+	if err != nil {
+		fmt.Printf("Failed to retrieve info for path %s: %v\n", requestedPath, err)
+		if warns, ok := err.(*disk.Warnings); ok {
+			for _, w := range warns.List {
+				fmt.Printf(" - %v\n", w)
+			}
+		}
+
+		return 1
+	}
+
+	fmt.Println("Path:", usage.Path)
+	fmt.Println("FS type:", ternary(usage.Fstype == "", "unknown", usage.Fstype))
+	fmt.Printf("Used percent: %.1f%%", usage.UsedPercent)
 
 	return 0
 }
