@@ -547,6 +547,18 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		"concat": func(items ...string) string {
 			return strings.Join(items, "")
 		},
+		"unique": func(key string, results []decoratedGJSONResult) []decoratedGJSONResult {
+			seen := make(map[string]struct{})
+			out := make([]decoratedGJSONResult, 0, len(results))
+			for _, result := range results {
+				val := result.String(key)
+				if _, ok := seen[val]; !ok {
+					seen[val] = struct{}{}
+					out = append(out, result)
+				}
+			}
+			return out
+		},
 	}
 
 	for key, value := range globalTemplateFunctions {
