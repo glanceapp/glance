@@ -22,7 +22,7 @@
             </div>
         </div>
 
-        <div class="min-width-0">
+        <div class="min-width-0 grow">
             {{- if .URL }}
             <a href="{{ .URL | safeURL }}" class="color-highlight size-title-dynamic block text-truncate" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
             {{- else }}
