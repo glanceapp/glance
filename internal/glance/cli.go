@@ -133,7 +133,7 @@ func cliMountpointInfo(requestedPath string) int {
 
 	fmt.Println("Path:", usage.Path)
 	fmt.Println("FS type:", ternary(usage.Fstype == "", "unknown", usage.Fstype))
-	fmt.Printf("Used percent: %.1f%%", usage.UsedPercent)
+	fmt.Printf("Used percent: %.1f%%\n", usage.UsedPercent)
 
 	return 0
 }
