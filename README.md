@@ -195,6 +195,7 @@ services:
   glance:
     container_name: glance
     image: glanceapp/glance
+    restart: unless-stopped
     volumes:
       - ./config:/app/config
     ports:
