@@ -91,7 +91,6 @@ func cliSensorsPrint() int {
 				fmt.Printf(" - %v\n", w)
 			}
 		}
-
 		return 1
 	}
 
