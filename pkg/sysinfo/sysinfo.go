@@ -205,7 +205,7 @@ func Collect(req *SystemInfoRequest) (*SystemInfo, []error) {
 	// also disabled on openbsd because it's not implemented by go-psutil
 	if runtime.GOOS != "windows" && runtime.GOOS != "openbsd" {
 		sensorReadings, err := sensors.SensorsTemperatures()
-		if err == nil {
+		if sensorReadings != nil && len(sensorReadings) > 0 {
 			if req.CPUTempSensor != "" {
 				for i := range sensorReadings {
 					if sensorReadings[i].SensorKey == req.CPUTempSensor {
