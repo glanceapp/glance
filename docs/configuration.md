@@ -39,6 +39,7 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
+  - [Proxmox](#proxmox)
 
 
 ## Preconfigured page
@@ -2493,3 +2494,38 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
+
+### Proxmox
+Display a Proxmox server stats.
+
+Example:
+
+```yaml
+- type: proxmox
+  url: https://proxmox.local
+  token: root@pam!glance
+  secret: 5f9b473d-0519-42f6-bdb9-44b4cbca6283
+```
+
+Preview:
+![](images/proxmox-preview.png)
+
+#### Properties
+| Name | Type   | Required | Default |
+| ---- |--------|----------| ------ |
+| url | string | yes      |  |
+| token | string | yes      |  |
+| secret | string | yes      |  |
+| hide-swap | boolean | no | false |
+
+###### `url`
+The URL and port of the server to fetch the statistics from.
+
+###### `token`
+The authentication token to use when fetching the statistics.
+
+##### `secret`
+The authentication secret to use when fetching the statistics.
+
+###### `hide-swap`
+Whether to hide the swap usage.
