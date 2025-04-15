@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -120,50 +121,116 @@ var configVariablePattern = regexp.MustCompile(`(^|.)\$\{(?:([a-zA-Z]+):)?([a-zA
 // TODO: don't match against commented out sections, not sure exactly how since
 // variables can be placed anywhere and used to modify the YAML structure itself
 func parseConfigVariables(contents []byte) ([]byte, error) {
-	var err error
-
-	replaced := configVariablePattern.ReplaceAllFunc(contents, func(match []byte) []byte {
-		if err != nil {
-			return nil
+	lineStarts := computeLineStarts(contents)
+	matches := configVariablePattern.FindAllSubmatchIndex(contents, -1)
+	var result []byte
+	lastIndex := 0
+	for _, matchIndices := range matches {
+		matchStart := matchIndices[0]
+		matchEnd := matchIndices[1]
+		// Find line number
+		line := sort.Search(len(lineStarts), func(i int) bool {
+			return lineStarts[i] > matchStart
+		}) - 1
+		if line < 0 {
+			line = 0
 		}
-
+		lineStart := lineStarts[line]
+		var lineEnd int
+		if line+1 < len(lineStarts) {
+			lineEnd = lineStarts[line+1]
+		} else {
+			lineEnd = len(contents)
+		}
+		lineContent := string(contents[lineStart:lineEnd])
+		commentStartInLine := findCommentStart(lineContent)
+		isInComment := false
+		if commentStartInLine != -1 {
+			commentStartAbs := lineStart + commentStartInLine
+			if matchStart >= commentStartAbs {
+				isInComment = true
+			}
+		}
+		if isInComment {
+			result = append(result, contents[lastIndex:matchEnd]...)
+			lastIndex = matchEnd
+			continue
+		}
+		match := contents[matchStart:matchEnd]
 		groups := configVariablePattern.FindSubmatch(match)
 		if len(groups) != 4 {
-			// we can't handle this match, this shouldn't happen unless the number of groups
-			// in the regex has been changed without updating the below code
-			return match
+			// should not happen
+			result = append(result, match...)
+			continue
 		}
-
 		prefix := string(groups[1])
 		if prefix == `\` {
 			if len(match) >= 2 {
-				return match[1:]
+				result = append(result, contents[lastIndex:matchStart]...)
+				result = append(result, match[1:]...)
+				lastIndex = matchEnd
+				continue
 			} else {
-				return nil
+				result = append(result, match...)
+				continue
 			}
 		}
-
-		typeAsString, variableName := string(groups[2]), string(groups[3])
+		typeAsString := string(groups[2])
+		variableName := string(groups[3])
 		variableType := ternary(typeAsString == "", configVarTypeEnv, typeAsString)
-
-		parsedValue, returnOriginal, localErr := parseConfigVariableOfType(variableType, variableName)
-		if localErr != nil {
-			err = fmt.Errorf("parsing variable: %v", localErr)
-			return nil
+		parsedValue, returnOriginal, err := parseConfigVariableOfType(variableType, variableName)
+		if err != nil {
+			return nil, fmt.Errorf("parsing variable at position %d: %v", matchStart, err)
 		}
-
 		if returnOriginal {
-			return match
+			result = append(result, contents[lastIndex:matchEnd]...)
+		} else {
+			result = append(result, contents[lastIndex:matchStart]...)
+			result = append(result, []byte(prefix+parsedValue)...)
+			lastIndex = matchEnd
 		}
-
-		return []byte(prefix + parsedValue)
-	})
-
-	if err != nil {
-		return nil, err
 	}
+	// append the remaining part
+	result = append(result, contents[lastIndex:]...)
+	return result, nil
+}
 
-	return replaced, nil
+func findCommentStart(line string) int {
+	inSingleQuote := false
+	inDoubleQuote := false
+	for i := 0; i < len(line); i++ {
+		char := line[i]
+		if inSingleQuote {
+			if char == '\'' {
+				if i+1 < len(line) && line[i+1] == '\'' {
+					// escaped single quote skip next char
+					i++
+				} else {
+					// end of single quote
+					inSingleQuote = false
+				}
+			}
+			// continue as were in single quote
+		} else if inDoubleQuote {
+			if char == '"' && (i == 0 || line[i-1] != '\\') {
+				// end of double quote if not escaped
+				inDoubleQuote = false
+			} else if char == '\\' {
+				// skip next char as its escaped
+				i++
+			}
+			// continue as were in double quote
+		} else {
+			if char == '\'' {
+				inSingleQuote = true
+			} else if char == '"' {
+				inDoubleQuote = true
+			} else if char == '#' {
+				return i
+			}
+		}
+	}
+	return -1
 }
 
 // When the bool return value is true, it indicates that the caller should use the original value
