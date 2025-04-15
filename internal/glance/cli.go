@@ -96,15 +96,19 @@ func parseCliOptions() (*cliOptions, error) {
 func cliSensorsPrint() int {
 	tempSensors, err := sensors.SensorsTemperatures()
 	if err != nil {
-		fmt.Printf("Errors encountered while retrieving list of sensors:\n %v\n", err)
 		if warns, ok := err.(*sensors.Warnings); ok {
+			fmt.Printf("Could not retrieve information for some sensors (%v):\n", err)
 			for _, w := range warns.List {
 				fmt.Printf(" - %v\n", w)
 			}
+			fmt.Println()
+		} else {
+			fmt.Printf("Failed to retrieve sensor information: %v\n", err)
+			return 1
 		}
 	}
 
-	if tempSensors == nil || len(tempSensors) == 0 {
+	if len(tempSensors) == 0 {
 		fmt.Println("No sensors found")
 		return 0
 	}
