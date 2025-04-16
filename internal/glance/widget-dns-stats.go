@@ -43,10 +43,11 @@ type dnsStatsWidget struct {
 }
 
 const (
-	dnsServiceAdguard    = "adguard"
-	dnsServicePihole     = "pihole"
-	dnsServiceTechnitium = "technitium"
-	dnsServicePiholeV6   = "pihole-v6"
+	dnsServiceAdguard         = "adguard"
+	dnsServicePihole          = "pihole"
+	dnsServiceTechnitium      = "technitium"
+	dnsServicePiholeV6        = "pihole-v6"
+	dnsServiceOPNsenseUnbound = "opnsense-unbound"
 )
 
 func makeDNSWidgetTimeLabels(format string) [8]string {
@@ -77,8 +78,9 @@ func (widget *dnsStatsWidget) initialize() error {
 	case dnsServicePiholeV6:
 	case dnsServicePihole:
 	case dnsServiceTechnitium:
+	case dnsServiceOPNsenseUnbound:
 	default:
-		return fmt.Errorf("service must be one of: %s, %s, %s, %s", dnsServiceAdguard, dnsServicePihole, dnsServicePiholeV6, dnsServiceTechnitium)
+		return fmt.Errorf("service must be one of: %s, %s, %s, %s, %s", dnsServiceAdguard, dnsServicePihole, dnsServicePiholeV6, dnsServiceTechnitium, dnsServiceOPNsenseUnbound)
 	}
 
 	return nil
@@ -108,6 +110,14 @@ func (widget *dnsStatsWidget) update(ctx context.Context) {
 		if err == nil {
 			widget.piholeSessionID = newSessionID
 		}
+	case dnsServiceOPNsenseUnbound:
+		stats, err = fetchOPNsenseUnboundStats(
+			widget.URL,
+			widget.AllowInsecure,
+			widget.Username,
+			widget.Password,
+			!widget.HideGraph,
+			!widget.HideTopDomains)
 	}
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
@@ -814,6 +824,180 @@ func fetchTechnitiumStats(instanceUrl string, allowInsecure bool, token string, 
 
 	for i := 0; i < dnsStatsBars; i++ {
 		stats.Series[i].PercentTotal = int(float64(stats.Series[i].Queries) / float64(maxQueriesInSeries) * 100)
+	}
+
+	return stats, nil
+}
+
+func fetchOPNsenseUnboundStats(
+	instanceURL string,
+	allowInsecure bool,
+	username string,
+	password string,
+	includeGraph bool,
+	includeTopDomains bool,
+) (*dnsStats, error) {
+
+	if username == "" || password == "" {
+		return nil, errors.New("missing username or password for OPNsense Unbound dns stats")
+	}
+
+	instanceURL = strings.TrimRight(instanceURL, "/")
+	var client = ternary(allowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
+
+	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	type totalsResponseJson struct {
+		Total         int `json:"total"`
+		BlocklistSize int `json:"blocklist_size"`
+		Blocked       struct {
+			BlockedTotal int `json:"total"`
+		} `json:"blocked"`
+		TopBlockedDomains map[string]any `json:"top_blocked"`
+	}
+
+	totalsRequest, _ := http.NewRequestWithContext(ctx, "GET", instanceURL+"/api/unbound/overview/totals/10", nil)
+	totalsRequest.SetBasicAuth(username, password)
+
+	var totalsResponse totalsResponseJson
+	var totalsErr error
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		totalsResponse, totalsErr = decodeJsonFromRequest[totalsResponseJson](client, totalsRequest)
+		if totalsErr != nil {
+			cancel()
+		}
+	}()
+
+	type seriesResponseJson map[string]any
+
+	var seriesResponse seriesResponseJson
+	var seriesErr error
+
+	if includeGraph {
+		seriesRequest, _ := http.NewRequestWithContext(ctx, "GET", instanceURL+"/api/unbound/overview/rolling/24", nil)
+		seriesRequest.SetBasicAuth(username, password)
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			seriesResponse, seriesErr = decodeJsonFromRequest[seriesResponseJson](client, seriesRequest)
+		}()
+	}
+
+	wg.Wait()
+
+	if totalsErr != nil {
+		return nil, fmt.Errorf("error fetching data: %v", totalsErr)
+	}
+
+	if includeGraph && seriesErr != nil {
+		slog.Error("Failed to fetch OPNsense Unbound graph data.", "error", seriesErr)
+	}
+
+	stats := &dnsStats{
+		TotalQueries:   totalsResponse.Total,
+		BlockedQueries: totalsResponse.Blocked.BlockedTotal,
+		DomainsBlocked: totalsResponse.BlocklistSize,
+	}
+
+	stats.BlockedPercent = int(float64(totalsResponse.Blocked.BlockedTotal) / float64(totalsResponse.Total) * 100)
+
+	if includeGraph && seriesErr == nil {
+		// Similar to Pihole, OPNsense returns 144 data points for the last 24 hours in a 10 minute interval. The endpoint is hardcoded to
+		// return 24 hours of data, so we don't need to check the length of the response. This could be replaced by a variable in the future if
+		// needed.
+
+		// API response is a struct of structs. The keys of the top level response are the timestamps of the data points so we need to
+		// unmarshal it into a map[string]any and then convert it to a array of structs.
+
+		type seriesItemJson struct {
+			Timestamp     string `json:"timestamp"`
+			SeriesTotal   int    `json:"total"`
+			SeriesBlocked int    `json:"blocked"`
+		}
+
+		var seriesArray []seriesItemJson
+
+		for key, value := range seriesResponse {
+			if item, ok := value.(map[string]any); ok {
+				seriesArray = append(seriesArray, seriesItemJson{
+					Timestamp:     key,
+					SeriesTotal:   int(item["total"].(float64)),   // Convert float64 to int
+					SeriesBlocked: int(item["blocked"].(float64)), // Convert float64 to int
+				})
+			}
+		}
+
+		const interval = 10
+		const dataPointsPerBar = dnsStatsHoursPerBar * (60 / interval)
+
+		maxQueriesInSeries := 0
+
+		for i := range dnsStatsBars {
+			queries := 0
+			blocked := 0
+			for j := range dataPointsPerBar {
+				index := i*dataPointsPerBar + j
+				queries += seriesArray[index].SeriesTotal
+				blocked += seriesArray[index].SeriesBlocked
+			}
+			if queries > maxQueriesInSeries {
+				maxQueriesInSeries = queries
+			}
+			stats.Series[i] = dnsStatsSeries{
+				Queries: queries,
+				Blocked: blocked,
+			}
+			if queries > 0 {
+				stats.Series[i].PercentBlocked = int(float64(blocked) / float64(queries) * 100)
+			}
+		}
+
+		for i := range dnsStatsBars {
+			stats.Series[i].PercentTotal = int(float64(stats.Series[i].Queries) / float64(maxQueriesInSeries) * 100)
+		}
+	}
+
+	if includeTopDomains {
+
+		type topDomainJson struct {
+			Domain         string `json:"domain"`
+			Total          int    `json:"total"`
+			PercentBlocked int    `json:"pcnt"`
+		}
+
+		var domainsArray []topDomainJson
+
+		for key, value := range totalsResponse.TopBlockedDomains {
+			if item, ok := value.(map[string]any); ok {
+				domainsArray = append(domainsArray, topDomainJson{
+					Domain:         key,
+					Total:          int(item["total"].(float64)),
+					PercentBlocked: int(item["total"].(float64) / float64(totalsResponse.Total) * 100),
+				})
+			}
+		}
+
+		sort.Slice(domainsArray, func(a, b int) bool {
+			return domainsArray[a].Total > domainsArray[b].Total
+		})
+
+		domains := make([]dnsStatsBlockedDomain, 0, len(domainsArray))
+
+		for i := range domainsArray {
+			d := &domainsArray[i]
+			domains = append(domains, dnsStatsBlockedDomain{
+				Domain:         d.Domain,
+				PercentBlocked: d.PercentBlocked,
+			})
+		}
+
+		stats.TopBlockedDomains = domains[:min(len(domains), 5)]
 	}
 
 	return stats, nil
