@@ -21,16 +21,18 @@ var (
 )
 
 type videosWidget struct {
-	widgetBase        `yaml:",inline"`
-	Videos            videoList `yaml:"-"`
-	VideoUrlTemplate  string    `yaml:"video-url-template"`
-	Style             string    `yaml:"style"`
-	CollapseAfter     int       `yaml:"collapse-after"`
-	CollapseAfterRows int       `yaml:"collapse-after-rows"`
-	Channels          []string  `yaml:"channels"`
-	Playlists         []string  `yaml:"playlists"`
-	Limit             int       `yaml:"limit"`
-	IncludeShorts     bool      `yaml:"include-shorts"`
+	widgetBase           `yaml:",inline"`
+	Videos               videoList `yaml:"-"`
+	VideoUrlTemplate     string    `yaml:"video-url-template"`
+	Style                string    `yaml:"style"`
+	CollapseAfter        int       `yaml:"collapse-after"`
+	CollapseAfterRows    int       `yaml:"collapse-after-rows"`
+	Channels             []string  `yaml:"channels"`
+	Playlists            []string  `yaml:"playlists"`
+	Limit                int       `yaml:"limit"`
+	IncludeShorts        bool      `yaml:"include-shorts"`
+	UseDearrowTitles     bool      `yaml:"use-dearrow-titles"`
+	UseDearrowThumbnails bool      `yaml:"use-dearrow-thumbnails"`
 }
 
 func (widget *videosWidget) initialize() error {
@@ -64,7 +66,7 @@ func (widget *videosWidget) initialize() error {
 }
 
 func (widget *videosWidget) update(ctx context.Context) {
-	videos, err := fetchYoutubeChannelUploads(widget.Channels, widget.VideoUrlTemplate, widget.IncludeShorts)
+	videos, err := fetchYoutubeChannelUploads(widget.Channels, widget.VideoUrlTemplate, widget.IncludeShorts, widget.UseDearrowTitles, widget.UseDearrowThumbnails)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
@@ -110,6 +112,46 @@ type youtubeFeedResponseXml struct {
 	} `xml:"entry"`
 }
 
+type dearrowBrandingResponseJson struct {
+	Titles []struct {
+		Title    string `json:"title"`
+		Original bool   `json:"original"`
+		Votes    int    `json:"votes"`
+		Locked   bool   `json:"locked"`
+		UUID     string `json:"UUID"`
+		UserID   string `json:"userID,omitempty"`
+	} `json:"titles"`
+	Thumbnails []struct {
+		Timestamp float32 `json:"timestamp"`
+		Original  bool    `json:"original"`
+		Votes     int     `json:"votes"`
+		Locked    bool    `json:"locked"`
+		UUID      string  `json:"UUID"`
+		UserID    string  `json:"userID,omitempty"`
+	} `json:"thumbnails"`
+	RandomTime    float32  `json:"randomTime"`
+	VideoDuration *float32 `json:"videoDuration"`
+}
+
+func dearrowGetFirstMatchingTitle(response dearrowBrandingResponseJson) (string, bool) {
+	// https://wiki.sponsor.ajay.app/w/API_Docs/DeArrow for why
+	if len(response.Titles) > 0 {
+		for _, title := range response.Titles {
+			if title.Locked || title.Votes >= 0 {
+				return title.Title, true
+			}
+		}
+	}
+
+	for _, thumbnail := range response.Thumbnails {
+		if thumbnail.Locked || thumbnail.Votes >= 0 {
+			return "", true
+		}
+	}
+
+	return "", false
+}
+
 func parseYoutubeFeedTime(t string) time.Time {
 	parsedTime, err := time.Parse("2006-01-02T15:04:05-07:00", t)
 	if err != nil {
@@ -138,7 +180,7 @@ func (v videoList) sortByNewest() videoList {
 	return v
 }
 
-func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate string, includeShorts bool) (videoList, error) {
+func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate string, includeShorts bool, useDearrowTitles bool, useDearrowThumbnails bool) (videoList, error) {
 	requests := make([]*http.Request, 0, len(channelOrPlaylistIDs))
 
 	for i := range channelOrPlaylistIDs {
@@ -204,6 +246,58 @@ func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate 
 
 	if len(videos) == 0 {
 		return nil, errNoContent
+	}
+
+	// Only run dearrow requests if one of the dearrow options is enabled.
+	if useDearrowTitles || useDearrowThumbnails {
+		var dearrowRequests []*http.Request
+		var dearrowIndices []int
+
+		for i, vid := range videos {
+			if vid.Url == "#" {
+				continue
+			}
+			parsedUrl, err := url.Parse(vid.Url)
+			if err != nil {
+				slog.Error("Failed to parse video URL for dearrow", "url", vid.Url, "error", err)
+				continue
+			}
+			videoID := parsedUrl.Query().Get("v")
+			if videoID == "" {
+				continue
+			}
+			req, err := http.NewRequest("GET", fmt.Sprintf("https://sponsor.ajay.app/api/branding?videoID=%s", videoID), nil)
+			if err != nil {
+				slog.Error("Failed to create dearrow branding request", "videoID", videoID, "error", err)
+				continue
+			}
+			dearrowRequests = append(dearrowRequests, req)
+			dearrowIndices = append(dearrowIndices, i)
+		}
+
+		jobDearrow := newJob(decodeJsonFromRequestTask[dearrowBrandingResponseJson](defaultHTTPClient), dearrowRequests).withWorkers(30)
+		dearrowResponses, dearrowErrs, err := workerPoolDo(jobDearrow)
+		if err != nil {
+			slog.Error("Failed to complete dearrow branding job pool", "error", err)
+		}
+
+		for j, videoIndex := range dearrowIndices {
+			if dearrowErrs[j] != nil {
+				continue
+			}
+
+			brandingResponse := dearrowResponses[j]
+			if useDearrowTitles {
+				if newTitle, ok := dearrowGetFirstMatchingTitle(brandingResponse); ok && newTitle != "" {
+					videos[videoIndex].Title = newTitle
+				}
+			}
+
+			if useDearrowThumbnails {
+				// TODO: implement thumbnail processing based on the branding response.
+			}
+		}
+
 	}
 
 	videos.sortByNewest()

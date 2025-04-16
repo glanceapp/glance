@@ -637,6 +637,8 @@ Preview:
 | collapse-after-rows | integer | no | 4 |
 | include-shorts | boolean | no | false |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
+| use-dearrow-title | bool | no | false |
+| use-dearrow-thumbnail | bool | no | false |
 
 ##### `channels`
 A list of channels IDs.
@@ -690,6 +692,12 @@ video-url-template: https://invidious.your-domain.com/watch?v={VIDEO-ID}
 Placeholders:
 
 `{VIDEO-ID}` - the ID of the video
+
+##### `use-dearrow-title`
+Tries to switch the video titles with a more precise one using the [DeArrow API](https://dearrow.ajay.app/).
+
+##### `use-dearrow-thumbnail`
+Tries to switch the video thumbails with a less distracting one using the [DeArrow API](https://dearrow.ajay.app/).
 
 ### Hacker News
 Display a list of posts from [Hacker News](https://news.ycombinator.com/).
