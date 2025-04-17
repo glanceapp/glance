@@ -203,13 +203,18 @@ func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customA
 	body := strings.TrimSpace(string(bodyBytes))
 
 	if !req.SkipJSONValidation && body != "" && !gjson.Valid(body) {
-		truncatedBody, isTruncated := limitStringLength(body, 100)
-		if isTruncated {
-			truncatedBody += "... <truncated>"
+		if 200 <= resp.StatusCode && resp.StatusCode < 300 {
+			truncatedBody, isTruncated := limitStringLength(body, 100)
+			if isTruncated {
+				truncatedBody += "... <truncated>"
+			}
+
+			slog.Error("Invalid response JSON in custom API widget", "url", req.httpRequest.URL.String(), "body", truncatedBody)
+			return nil, errors.New("invalid response JSON")
 		}
 
-		slog.Error("Invalid response JSON in custom API widget", "url", req.httpRequest.URL.String(), "body", truncatedBody)
-		return nil, errors.New("invalid response JSON")
+		return nil, errors.New(fmt.Sprintf("%d %s", resp.StatusCode, http.StatusText(resp.StatusCode)))
+
 	}
 
 	data := &customAPIResponseData{
