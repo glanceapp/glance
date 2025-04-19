@@ -471,6 +471,13 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		"replaceAll": func(old, new, s string) string {
 			return strings.ReplaceAll(s, old, new)
 		},
+		"replaceMatches": func(pattern, replacement, s string) string {
+			if s == "" {
+				return ""
+			}
+
+			return getCachedRegexp(pattern).ReplaceAllString(s, replacement)
+		},
 		"findMatch": func(pattern, s string) string {
 			if s == "" {
 				return ""
@@ -535,6 +542,18 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		},
 		"concat": func(items ...string) string {
 			return strings.Join(items, "")
+		},
+		"unique": func(key string, results []decoratedGJSONResult) []decoratedGJSONResult {
+			seen := make(map[string]struct{})
+			out := make([]decoratedGJSONResult, 0, len(results))
+			for _, result := range results {
+				val := result.String(key)
+				if _, ok := seen[val]; !ok {
+					seen[val] = struct{}{}
+					out = append(out, result)
+				}
+			}
+			return out
 		},
 	}
 

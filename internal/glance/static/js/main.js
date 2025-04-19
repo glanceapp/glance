@@ -649,7 +649,7 @@ function setupTruncatedElementTitles() {
 
     for (let i = 0; i < elements.length; i++) {
         const element = elements[i];
-        if (element.title === "") element.title = element.textContent;
+        if (element.getAttribute("title") === null) element.title = element.textContent;
     }
 }
 

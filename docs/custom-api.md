@@ -389,6 +389,7 @@ The following helper functions provided by Glance are available:
 - `trimSuffix(suffix string, str string) string`: Trims the suffix from a string.
 - `trimSpace(str string) string`: Trims whitespace from a string on both ends.
 - `replaceAll(old string, new string, str string) string`: Replaces all occurrences of a string in a string.
+- `replaceMatches(pattern string, replacement string, str string) string`: Replaces all occurrences of a regular expression in a string.
 - `findMatch(pattern string, str string) string`: Finds the first match of a regular expression in a string.
 - `findSubmatch(pattern string, str string) string`: Finds the first submatch of a regular expression in a string.
 - `sortByString(key string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by a string key in either ascending or descending order.
@@ -396,6 +397,7 @@ The following helper functions provided by Glance are available:
 - `sortByFloat(key string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by a float key in either ascending or descending order.
 - `sortByTime(key string, layout string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by a time key in either ascending or descending order. The format must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants).
 - `concat(strings ...string) string`: Concatenates multiple strings together.
+- `unique(key string, arr []JSON) []JSON`: Returns a unique array of JSON objects based on the given key.
 
 The following helper functions provided by Go's `text/template` are available:
 
