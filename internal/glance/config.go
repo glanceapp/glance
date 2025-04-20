@@ -55,6 +55,9 @@ type config struct {
 		LogoText     string        `yaml:"logo-text"`
 		LogoURL      string        `yaml:"logo-url"`
 		FaviconURL   string        `yaml:"favicon-url"`
+		AppName      string        `yaml:"app-name"`
+		AppIconURL   string        `yaml:"app-icon-url"`
+		AppBgColor   string        `yaml:"app-bg-color"`
 	} `yaml:"branding"`
 
 	Pages []page `yaml:"pages"`

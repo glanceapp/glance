@@ -96,6 +96,18 @@ func newApplication(config *config) (*application, error) {
 		config.Branding.FaviconURL = app.transformUserDefinedAssetPath(config.Branding.FaviconURL)
 	}
 
+	if config.Branding.AppName == "" {
+		config.Branding.AppName = "Glance"
+	}
+
+	if config.Branding.AppIconURL == "" {
+		config.Branding.AppIconURL = app.AssetPath("app-icon.png")
+	}
+
+	if config.Branding.AppBgColor == "" {
+		config.Branding.AppBgColor = "#151519"
+	}
+
 	config.Branding.LogoURL = app.transformUserDefinedAssetPath(config.Branding.LogoURL)
 
 	return app, nil
@@ -255,6 +267,26 @@ func (a *application) server() (func() error, func() error) {
 		w.Header().Add("Cache-Control", cssBundleCacheControlValue)
 		w.Header().Add("Content-Type", "text/css; charset=utf-8")
 		w.Write(bundledCSSContents)
+	})
+
+	mux.HandleFunc(fmt.Sprintf("GET /static/%s/manifest.json", staticFSHash), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Cache-Control", cssBundleCacheControlValue)
+		w.Header().Add("Content-Type", "application/json")
+
+		template, err := template.New("manifest.json").
+			Funcs(globalTemplateFunctions).
+			ParseFS(templateFS, "manifest.json")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Error parsing manifest.json template: %v", err)))
+			return
+		}
+
+		if err := template.Execute(w, pageTemplateData{App: a}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Error executing manifest.json template: %v", err)))
+			return
+		}
 	})
 
 	var absAssetsPath string
