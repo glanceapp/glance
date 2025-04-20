@@ -430,8 +430,32 @@ func isConfigStateValid(config *config) error {
 	}
 
 	if config.Server.AssetsPath != "" {
-		if _, err := os.Stat(config.Server.AssetsPath); os.IsNotExist(err) {
-			return fmt.Errorf("assets directory does not exist: %s", config.Server.AssetsPath)
+		if _, err := os.Stat(config.Server.AssetsPath); err == nil {
+			return nil
+		}
+
+		workingDir, err := os.Getwd()
+		if err != nil {
+			return fmt.Errorf("directory does not exist: %v", err)
+		}
+
+		// Try these paths in order:
+		possiblePaths := []string{
+			config.Server.AssetsPath,                            // Original path
+			filepath.Join(workingDir, "config"),                 // Local config directory
+			filepath.Join(workingDir, config.Server.AssetsPath), // Relative to working dir
+			"/app/config", 										 // Docker path
+		}
+
+		for _, path := range possiblePaths {
+			if _, err := os.Stat(path); err == nil {
+				config.Server.AssetsPath = path
+				return nil
+			}
+		}
+
+		if !strings.HasPrefix(config.Server.AssetsPath, "/app/") {
+			return fmt.Errorf("assets directory not found in any of the expected locations. Tried: %v", possiblePaths)
 		}
 	}
 
