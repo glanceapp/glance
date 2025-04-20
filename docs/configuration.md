@@ -2119,36 +2119,82 @@ Example:
 
 ```yaml
 - type: bookmarks
+  layout: grid
   groups:
     - links:
         - title: Gmail
           url: https://mail.google.com/mail/u/0/
+          icon: si:gmail
         - title: Amazon
-          url: https://www.amazon.com/
+          url: https://amazon.com/
+          icon: si:amazon
         - title: Github
           url: https://github.com/
-        - title: Wikipedia
-          url: https://en.wikipedia.org/
+          icon: si:github
     - title: Entertainment
       color: 10 70 50
       links:
         - title: Netflix
           url: https://www.netflix.com/
+          icon: si:netflix
         - title: Disney+
-          url: https://www.disneyplus.com/
+          url: https://www.disney.com/
         - title: YouTube
           url: https://www.youtube.com/
+          icon: si:youtube
         - title: Prime Video
           url: https://www.primevideo.com/
+          icon: si:primevideo
     - title: Social
       color: 200 50 50
       links:
         - title: Reddit
           url: https://www.reddit.com/
-        - title: Twitter
-          url: https://twitter.com/
+          icon: si:reddit	
+        - title: X
+          url: https://www.x.com/
+          icon: si:x
         - title: Instagram
           url: https://www.instagram.com/
+          icon: si:instagram
+- type: bookmarks
+  groups:
+    - links:
+        - title: Gmail
+          url: https://mail.google.com/mail/u/0/
+          icon: si:gmail
+        - title: Amazon
+          url: https://amazon.com/
+          icon: si:amazon
+        - title: Github
+          url: https://github.com/
+          icon: si:github
+    - title: Entertainment
+      color: 10 70 50
+      links:
+        - title: Netflix
+          url: https://www.netflix.com/
+          icon: si:netflix
+        - title: Disney+
+          url: https://www.disneyplus.com/
+        - title: YouTube
+          url: https://www.youtube.com/
+          icon: si:youtube
+        - title: Prime Video
+          url: https://www.primevideo.com/
+          icon: si:primevideo
+    - title: Social
+      color: 200 50 50
+      links:
+        - title: Reddit
+          url: https://www.reddit.com/
+          icon: si:reddit	
+        - title: X
+          url: https://www.x.com/
+          icon: si:x
+        - title: Instagram
+          url: https://www.instagram.com/
+          icon: si:instagram
 ```
 
 Preview:
@@ -2161,9 +2207,13 @@ Preview:
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | groups | array | yes |
+| layout | string | no |
 
 ##### `groups`
 An array of groups which can optionally have a title and a custom color.
+
+##### `layout`
+The layout of the bookmarks. By default is displayed as a list but can be set to `grid` to show instead a grid of icons.
 
 ###### Properties for each group
 | Name | Type | Required | Default |

@@ -9,6 +9,7 @@ var bookmarksWidgetTemplate = mustParseTemplate("bookmarks.html", "widget-base.h
 type bookmarksWidget struct {
 	widgetBase `yaml:",inline"`
 	cachedHTML template.HTML `yaml:"-"`
+	Layout 	   string 		 `yaml:"layout"`
 	Groups     []struct {
 		Title     string         `yaml:"title"`
 		Color     *hslColorField `yaml:"color"`

@@ -7,6 +7,22 @@
         {{- if ne .Title "" }}
         <div class="bookmarks-group-title size-h3 margin-bottom-3">{{ .Title }}</div>
         {{- end }}
+        {{ if eq $.Layout "grid" }}
+        <div class="flex flex-wrap gap-10">
+            {{ range .Links }}
+            <a href="{{ .URL | safeURL }}" class="bookmarks-icon-link-grid gap-2 color-highlight size-h4" {{ if .Target }}target="{{ .Target }}"{{ end }} rel="noreferrer" title="{{ .Title }}">
+                <div class="bookmarks-icon-container bookmarks-icon-grid">
+                    {{ if ne "" .Icon.URL }}
+                    <img class="bookmarks-icon{{ if .Icon.IsFlatIcon }} flat-icon{{ end }} bookmarks-icon-grid" src="{{ .Icon.URL }}" alt="{{ .Title }}" loading="lazy">
+                    {{ else }}
+                    <p class="bookmarks-icon bookmarks-icon-grid text-center">{{ if ne .Title "" }}{{ slice .Title 0 1 }}{{ else }}G{{ end}}</p>
+                    {{ end }}
+                </div>
+                <span class="text-center">{{ .Title }}</span>
+            </a>
+            {{ end }}
+        </div>
+        {{ else }}
         <ul class="list list-gap-2">
         {{- range .Links }}
         <li>
@@ -24,6 +40,7 @@
         </li>
         {{- end }}
         </ul>
+        {{ end }}
     </div>
     {{- end }}
 </div>
