@@ -2158,9 +2158,15 @@ Preview:
 
 #### Properties
 
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| groups | array | yes |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| groups | array | yes | |
+| style | string | no | list |
+
+##### `style`
+The display style of the bookmarks. Possible values are:
+- `list` - Traditional list view (default)
+- `cards` - Grid of cards with icons and descriptions. Cards automatically adjust their height based on content.
 
 ##### `groups`
 An array of groups which can optionally have a title and a custom color.
