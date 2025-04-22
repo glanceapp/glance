@@ -106,8 +106,6 @@ func cliSensorsPrint() int {
 			fmt.Printf("Failed to retrieve sensor information: %v\n", err)
 			return 1
 		}
-
-		return 1
 	}
 
 	if len(tempSensors) == 0 {
