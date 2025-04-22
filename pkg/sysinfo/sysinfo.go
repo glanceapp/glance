@@ -227,35 +227,50 @@ func Collect(req *SystemInfoRequest) (*SystemInfo, []error) {
 		}
 	}
 
-	filesystems, err := disk.Partitions(false)
-	if err == nil {
-		for _, fs := range filesystems {
-			mpReq, ok := req.Mountpoints[fs.Mountpoint]
-			isHidden := req.HideMountpointsByDefault
-			if ok && mpReq.Hide != nil {
-				isHidden = *mpReq.Hide
-			}
-			if isHidden {
-				continue
-			}
-
-			usage, err := disk.Usage(fs.Mountpoint)
-			if err == nil {
-				mpInfo := MountpointInfo{
-					Path:        fs.Mountpoint,
-					Name:        mpReq.Name,
-					TotalMB:     usage.Total / 1024 / 1024,
-					UsedMB:      usage.Used / 1024 / 1024,
-					UsedPercent: uint8(math.Min(usage.UsedPercent, 100)),
-				}
-
-				info.Mountpoints = append(info.Mountpoints, mpInfo)
-			} else {
-				addErr(fmt.Errorf("getting filesystem usage for %s: %v", fs.Mountpoint, err))
-			}
+	addedMountpoints := map[string]struct{}{}
+	addMountpointInfo := func(requestedPath string, mpReq MointpointRequest) {
+		if _, exists := addedMountpoints[requestedPath]; exists {
+			return
 		}
-	} else {
-		addErr(fmt.Errorf("getting filesystems: %v", err))
+
+		isHidden := req.HideMountpointsByDefault
+		if mpReq.Hide != nil {
+			isHidden = *mpReq.Hide
+		}
+		if isHidden {
+			return
+		}
+
+		usage, err := disk.Usage(requestedPath)
+		if err == nil {
+			mpInfo := MountpointInfo{
+				Path:        requestedPath,
+				Name:        mpReq.Name,
+				TotalMB:     usage.Total / 1024 / 1024,
+				UsedMB:      usage.Used / 1024 / 1024,
+				UsedPercent: uint8(math.Min(usage.UsedPercent, 100)),
+			}
+
+			info.Mountpoints = append(info.Mountpoints, mpInfo)
+			addedMountpoints[requestedPath] = struct{}{}
+		} else {
+			addErr(fmt.Errorf("getting filesystem usage for %s: %v", requestedPath, err))
+		}
+	}
+
+	if !req.HideMountpointsByDefault {
+		filesystems, err := disk.Partitions(false)
+		if err == nil {
+			for _, fs := range filesystems {
+				addMountpointInfo(fs.Mountpoint, req.Mountpoints[fs.Mountpoint])
+			}
+		} else {
+			addErr(fmt.Errorf("getting filesystems: %v", err))
+		}
+	}
+
+	for mountpoint, mpReq := range req.Mountpoints {
+		addMountpointInfo(mountpoint, mpReq)
 	}
 
 	sort.Slice(info.Mountpoints, func(a, b int) bool {
