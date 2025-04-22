@@ -958,6 +958,7 @@ Preview:
 | search-engine | string | no | duckduckgo |
 | new-tab | boolean | no | false |
 | autofocus | boolean | no | false |
+| target | string | no | _blank |
 | placeholder | string | no | Type here to search… |
 | bangs | array | no | |
 
@@ -974,6 +975,9 @@ When set to `true`, swaps the shortcuts for showing results in the same or new t
 
 ##### `autofocus`
 When set to `true`, automatically focuses the search input on page load.
+
+##### `target`
+The target to use when opening the search results in a new tab. Possible values are `_blank`, `_self`, `_parent` and `_top`.
 
 ##### `placeholder`
 When set, modifies the text displayed in the input field before typing.
