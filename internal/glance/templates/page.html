@@ -17,7 +17,7 @@
 {{ .App.ParsedThemeStyle }}
 
 {{ if ne "" .App.Config.Theme.CustomCSSFile }}
-<link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.Config.Server.StartedAt.Unix }}">
+<link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.CreatedAt.Unix }}">
 {{ end }}
 
 {{ if ne "" .App.Config.Document.Head }}{{ .App.Config.Document.Head }}{{ end }}

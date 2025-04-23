@@ -1,7 +1,7 @@
 {
     "name": "{{ .App.Config.Branding.AppName }}",
     "display": "standalone",
-    "background_color": "{{ .App.Config.Branding.AppBgColor }}",
+    "background_color": "{{ .App.Config.Branding.AppBackgroundColor }}",
     "scope": "/",
     "start_url": "/",
     "icons": [
@@ -11,4 +11,4 @@
             "sizes": "512x512"
         }
     ]
-} 
+}

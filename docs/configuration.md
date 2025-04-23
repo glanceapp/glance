@@ -270,7 +270,7 @@ branding:
   favicon-url: /assets/logo.png
   app-name: "My Dashboard"
   app-icon-url: "/assets/app-icon.png"
-  app-bg-color: "#151519"
+  app-background-color: "#151519"
 ```
 
 ### Properties
@@ -283,8 +283,8 @@ branding:
 | logo-url | string | no | |
 | favicon-url | string | no | |
 | app-name | string | no | Glance |
-| app-icon-url | string | no | |
-| app-bg-color | string | no | #151519 |
+| app-icon-url | string | no | Glance's default icon |
+| app-background-color | string | no | Glance's default background color |
 
 #### `hide-footer`
 Hides the footer when set to `true`.
@@ -302,13 +302,13 @@ Specify a URL to a custom image to use instead of the "G" found in the navigatio
 Specify a URL to a custom image to use for the favicon.
 
 #### `app-name`
-Specify the name of the web app shown in browser tab and PWA. Defaults to "Glance".
+Specify the name of the web app shown in browser tab and PWA.
 
 #### `app-icon-url`
-Specify URL for PWA and browser tab icon (512x512 PNG). Defaults to Glance icon if not set.
+Specify URL for PWA and browser tab icon (512x512 PNG).
 
-#### `app-bg-color`
-Specify background color for PWA. Must be a valid CSS color. Defaults to "#151519".
+#### `app-background-color`
+Specify background color for PWA. Must be a valid CSS color.
 
 ## Theme
 Theming is done through a top level `theme` property. Values for the colors are in [HSL](https://giggster.com/guide/basics/hue-saturation-lightness/) (hue, saturation, lightness) format. You can use a color picker [like this one](https://hslpicker.com/) to convert colors from other formats to HSL. The values are separated by a space and `%` is not required for any of the numbers.
