@@ -93,13 +93,13 @@ func newApplication(config *config) (*application, error) {
 	config = &app.Config
 
 	config.Server.BaseURL = strings.TrimRight(config.Server.BaseURL, "/")
-	config.Theme.CustomCSSFile = app.transformUserDefinedAssetPath(config.Theme.CustomCSSFile)
-	config.Branding.LogoURL = app.transformUserDefinedAssetPath(config.Branding.LogoURL)
+	config.Theme.CustomCSSFile = app.resolveUserDefinedAssetPath(config.Theme.CustomCSSFile)
+	config.Branding.LogoURL = app.resolveUserDefinedAssetPath(config.Branding.LogoURL)
 
 	if config.Branding.FaviconURL == "" {
 		config.Branding.FaviconURL = app.StaticAssetPath("favicon.png")
 	} else {
-		config.Branding.FaviconURL = app.transformUserDefinedAssetPath(config.Branding.FaviconURL)
+		config.Branding.FaviconURL = app.resolveUserDefinedAssetPath(config.Branding.FaviconURL)
 	}
 
 	if config.Branding.AppName == "" {
@@ -152,7 +152,7 @@ func (p *page) updateOutdatedWidgets() {
 	wg.Wait()
 }
 
-func (a *application) transformUserDefinedAssetPath(path string) string {
+func (a *application) resolveUserDefinedAssetPath(path string) string {
 	if strings.HasPrefix(path, "/assets/") {
 		return a.Config.Server.BaseURL + path
 	}
