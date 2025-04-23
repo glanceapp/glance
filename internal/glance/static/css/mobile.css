@@ -60,7 +60,7 @@
 
     .mobile-navigation-page-links {
         border-top: 1px solid var(--color-widget-content-border);
-        padding: 15px var(--content-bounds-padding);
+        padding: 20px var(--content-bounds-padding);
         display: flex;
         align-items: center;
         overflow-x: auto;
