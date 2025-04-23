@@ -39,6 +39,7 @@ type config struct {
 
 	Theme struct {
 		BackgroundColor          *hslColorField `yaml:"background-color"`
+		BackgroundColorAsHex     string         `yaml:"-"`
 		PrimaryColor             *hslColorField `yaml:"primary-color"`
 		PositiveColor            *hslColorField `yaml:"positive-color"`
 		NegativeColor            *hslColorField `yaml:"negative-color"`

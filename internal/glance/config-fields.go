@@ -32,6 +32,10 @@ func (c *hslColorField) String() string {
 	return fmt.Sprintf("hsl(%.1f, %.1f%%, %.1f%%)", c.Hue, c.Saturation, c.Lightness)
 }
 
+func (c *hslColorField) ToHex() string {
+	return hslToHex(c.Hue, c.Saturation, c.Lightness)
+}
+
 func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	var value string
 

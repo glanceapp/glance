@@ -96,6 +96,12 @@ func newApplication(config *config) (*application, error) {
 	config.Theme.CustomCSSFile = app.resolveUserDefinedAssetPath(config.Theme.CustomCSSFile)
 	config.Branding.LogoURL = app.resolveUserDefinedAssetPath(config.Branding.LogoURL)
 
+	if config.Theme.BackgroundColor != nil {
+		config.Theme.BackgroundColorAsHex = config.Theme.BackgroundColor.ToHex()
+	} else {
+		config.Theme.BackgroundColorAsHex = "#151519"
+	}
+
 	if config.Branding.FaviconURL == "" {
 		config.Branding.FaviconURL = app.StaticAssetPath("favicon.png")
 	} else {
@@ -111,11 +117,7 @@ func newApplication(config *config) (*application, error) {
 	}
 
 	if config.Branding.AppBackgroundColor == "" {
-		config.Branding.AppBackgroundColor = ternary(
-			config.Theme.BackgroundColor != nil,
-			config.Theme.BackgroundColor.String(),
-			"hsl(240, 8%, 9%)",
-		)
+		config.Branding.AppBackgroundColor = config.Theme.BackgroundColorAsHex
 	}
 
 	var manifestWriter bytes.Buffer

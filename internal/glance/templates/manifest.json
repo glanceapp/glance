@@ -2,6 +2,7 @@
     "name": "{{ .App.Config.Branding.AppName }}",
     "display": "standalone",
     "background_color": "{{ .App.Config.Branding.AppBackgroundColor }}",
+    "theme_color": "{{ .App.Config.Branding.AppBackgroundColor }}",
     "scope": "/",
     "start_url": "/",
     "icons": [
