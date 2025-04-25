@@ -17,20 +17,20 @@
 {{ .App.ParsedThemeStyle }}
 
 {{ if ne "" .App.Config.Theme.CustomCSSFile }}
-<link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.Config.Server.StartedAt.Unix }}">
+<link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.CreatedAt.Unix }}">
 {{ else }}
 {{ range .App.Config.Theme.CustomCSSFiles }}
-<link rel="stylesheet" href="{{ . }}?v={{ $.App.Config.Server.StartedAt.Unix }}">
+<link rel="stylesheet" href="{{ . }}?v={{ $.App.CreatedAt.Unix }}">
 {{ end }}
 {{ end }}
 
 {{ if ne "" .App.Config.Document.Head }}{{ .App.Config.Document.Head }}{{ end }}
 
 {{ if ne "" .App.Config.Document.CustomJSFile }}
-<script src="{{ .App.Config.Document.CustomJSFile }}?v={{ $.App.Config.Server.StartedAt.Unix }}"></script>
+<script src="{{ .App.Config.Document.CustomJSFile }}?v={{ .App.CreatedAt.Unix }}"></script>
 {{ else }}
 {{ range .App.Config.Document.CustomJSFiles }}
-<script src="{{ .Src }}?v={{ $.App.Config.Server.StartedAt.Unix }}" {{ if .Async }} async{{ else if .Defer }} defer{{ end }}></script>
+<script src="{{ .Src }}?v={{ $.App.CreatedAt.Unix }}" {{ if .Async }} async{{ else if .Defer }} defer{{ end }}></script>
 {{ end }}
 {{ end }}
 

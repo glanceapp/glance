@@ -27,11 +27,10 @@ const (
 
 type config struct {
 	Server struct {
-		Host       string    `yaml:"host"`
-		Port       uint16    `yaml:"port"`
-		AssetsPath string    `yaml:"assets-path"`
-		BaseURL    string    `yaml:"base-url"`
-		StartedAt  time.Time `yaml:"-"` // used in custom css file
+		Host       string `yaml:"host"`
+		Port       uint16 `yaml:"port"`
+		AssetsPath string `yaml:"assets-path"`
+		BaseURL    string `yaml:"base-url"`
 	} `yaml:"server"`
 
 	Document struct {
@@ -46,6 +45,7 @@ type config struct {
 
 	Theme struct {
 		BackgroundColor          *hslColorField `yaml:"background-color"`
+		BackgroundColorAsHex     string         `yaml:"-"`
 		PrimaryColor             *hslColorField `yaml:"primary-color"`
 		PositiveColor            *hslColorField `yaml:"positive-color"`
 		NegativeColor            *hslColorField `yaml:"negative-color"`
@@ -57,11 +57,14 @@ type config struct {
 	} `yaml:"theme"`
 
 	Branding struct {
-		HideFooter   bool          `yaml:"hide-footer"`
-		CustomFooter template.HTML `yaml:"custom-footer"`
-		LogoText     string        `yaml:"logo-text"`
-		LogoURL      string        `yaml:"logo-url"`
-		FaviconURL   string        `yaml:"favicon-url"`
+		HideFooter         bool          `yaml:"hide-footer"`
+		CustomFooter       template.HTML `yaml:"custom-footer"`
+		LogoText           string        `yaml:"logo-text"`
+		LogoURL            string        `yaml:"logo-url"`
+		FaviconURL         string        `yaml:"favicon-url"`
+		AppName            string        `yaml:"app-name"`
+		AppIconURL         string        `yaml:"app-icon-url"`
+		AppBackgroundColor string        `yaml:"app-background-color"`
 	} `yaml:"branding"`
 
 	Pages []page `yaml:"pages"`

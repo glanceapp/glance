@@ -1,6 +1,7 @@
 <p align="center"><em>What if you could see everything at a...</em></p>
 <h1 align="center">Glance</h1>
-<p align="center"><a href="#installation">Install</a> • <a href="docs/configuration.md">Configuration</a> • <a href="docs/preconfigured-pages.md">Preconfigured pages</a> • <a href="docs/themes.md">Themes</a> • <a href="https://discord.com/invite/7KQ7Xa9kJd">Discord</a></p>
+<p align="center"><a href="#installation">Install</a> • <a href="docs/configuration.md">Configuration</a> • <a href="https://discord.com/invite/7KQ7Xa9kJd">Discord</a> • <a href="https://github.com/sponsors/glanceapp">Sponsor</a></p>
+<p align="center"><a href="https://github.com/glanceapp/community-widgets">Community widgets</a> • <a href="docs/preconfigured-pages.md">Preconfigured pages</a> • <a href="docs/themes.md">Themes</a></p>
 
 ![](docs/images/readme-main-image.png)
 
@@ -194,6 +195,7 @@ services:
   glance:
     container_name: glance
     image: glanceapp/glance
+    restart: unless-stopped
     volumes:
       - ./config:/app/config
     ports:

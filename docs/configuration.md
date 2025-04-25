@@ -268,6 +268,9 @@ branding:
     <p>Powered by <a href="https://github.com/glanceapp/glance">Glance</a></p>
   logo-url: /assets/logo.png
   favicon-url: /assets/logo.png
+  app-name: "My Dashboard"
+  app-icon-url: "/assets/app-icon.png"
+  app-background-color: "#151519"
 ```
 
 ### Properties
@@ -279,6 +282,9 @@ branding:
 | logo-text | string | no | G |
 | logo-url | string | no | |
 | favicon-url | string | no | |
+| app-name | string | no | Glance |
+| app-icon-url | string | no | Glance's default icon |
+| app-background-color | string | no | Glance's default background color |
 
 #### `hide-footer`
 Hides the footer when set to `true`.
@@ -294,6 +300,15 @@ Specify a URL to a custom image to use instead of the "G" found in the navigatio
 
 #### `favicon-url`
 Specify a URL to a custom image to use for the favicon.
+
+#### `app-name`
+Specify the name of the web app shown in browser tab and PWA.
+
+#### `app-icon-url`
+Specify URL for PWA and browser tab icon (512x512 PNG).
+
+#### `app-background-color`
+Specify background color for PWA. Must be a valid CSS color.
 
 ## Theme
 Theming is done through a top level `theme` property. Values for the colors are in [HSL](https://giggster.com/guide/basics/hue-saturation-lightness/) (hue, saturation, lightness) format. You can use a color picker [like this one](https://hslpicker.com/) to convert colors from other formats to HSL. The values are separated by a space and `%` is not required for any of the numbers.
@@ -997,6 +1012,7 @@ Preview:
 | search-engine | string | no | duckduckgo |
 | new-tab | boolean | no | false |
 | autofocus | boolean | no | false |
+| target | string | no | _blank |
 | placeholder | string | no | Type here to search… |
 | bangs | array | no | |
 
@@ -1017,6 +1033,9 @@ When set to `true`, swaps the shortcuts for showing results in the same or new t
 
 ##### `autofocus`
 When set to `true`, automatically focuses the search input on page load.
+
+##### `target`
+The target to use when opening the search results in a new tab. Possible values are `_blank`, `_self`, `_parent` and `_top`.
 
 ##### `placeholder`
 When set, modifies the text displayed in the input field before typing.
@@ -2006,7 +2025,7 @@ Whether to hide the swap usage.
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | cpu-temp-sensor | string | no |  |
-| hide-mointpoints-by-default | boolean | no | false |
+| hide-mountpoints-by-default | boolean | no | false |
 | mountpoints | map\[string\]object | no |  |
 
 ###### `cpu-temp-sensor`

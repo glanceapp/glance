@@ -480,6 +480,7 @@ details[open] .summary::after {
 }
 
 .cursor-help { cursor: help; }
+.rounded { border-radius: var(--border-radius); }
 .break-all { word-break: break-all; }
 .text-left { text-align: left; }
 .text-right { text-align: right; }
