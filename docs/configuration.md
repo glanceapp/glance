@@ -5,6 +5,7 @@
   - [Auto reload](#auto-reload)
   - [Environment variables](#environment-variables)
   - [Including other config files](#including-other-config-files)
+  - [Config schema](#config-schema)
 - [Server](#server)
 - [Document](#document)
 - [Branding](#branding)
@@ -148,6 +149,10 @@ docker run --rm -v ./glance.yml:/app/config/glance.yml glanceapp/glance config:p
 ```
 
 This assumes that the config you want to print is in your current working directory and is named `glance.yml`.
+
+## Config schema
+
+For property descriptions, validation and autocompletion of the config within your IDE, @not-first has kindly created a [schema](https://github.com/not-first/glance-schema). Massive thanks to them for this, go check it out and give them a star!
 
 ## Server
 Server configuration is done through a top level `server` property. Example:
