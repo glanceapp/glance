@@ -1886,12 +1886,66 @@ If any of the child containers are down, their status will propagate up to the p
 | ---- | ---- | -------- | ------- |
 | hide-by-default | boolean | no | false |
 | sock-path | string | no | /var/run/docker.sock |
+| category | string | no | |
+| running-only | boolean | no | false |
 
 ##### `hide-by-default`
 Whether to hide the containers by default. If set to `true` you'll have to manually add a `glance.hide: false` label to each container you want to display. By default all containers will be shown and if you want to hide a specific container you can add a `glance.hide: true` label.
 
 ##### `sock-path`
-The path to the Docker socket.
+The path to the Docker socket. This can also be a [remote socket](https://docs.docker.com/engine/daemon/remote-access/) or proxied socket using something like [docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy).
+
+###### `category`
+Filter to only the containers which have this category specified via the `glance.category` label. Useful if you want to have multiple containers widgets, each showing a different set of containers.
+
+<details>
+<summary>View example</summary>
+<br>
+
+
+```yaml
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    labels:
+      glance.name: Jellyfin
+      glance.icon: si:jellyfin
+      glance.url: https://jellyfin.domain.com
+      glance.category: media
+
+  gitea:
+    image: gitea/gitea:latest
+    labels:
+      glance.name: Gitea
+      glance.icon: si:gitea
+      glance.url: https://gitea.domain.com
+      glance.category: dev-tools
+
+  vaultwarden:
+    image: vaultwarden/server:latest
+    labels:
+      glance.name: Vaultwarden
+      glance.icon: si:vaultwarden
+      glance.url: https://vaultwarden.domain.com
+      glance.category: dev-tools
+```
+
+Then you can use the `category` property to filter the containers:
+
+```yaml
+- type: docker-containers
+  title: Dev tool containers
+  category: dev-tools
+
+- type: docker-containers
+  title: Media containers
+  category: media
+```
+
+</details>
+
+##### `running-only`
+Whether to only show running containers. If set to `true` only containers that are currently running will be displayed. If set to `false` all containers will be displayed regardless of their state.
 
 #### Labels
 | Name | Description |
@@ -1904,6 +1958,7 @@ The path to the Docker socket.
 | glance.hide | Whether to hide the container. If set to `true` the container will not be displayed. Defaults to `false`. |
 | glance.id | The custom ID of the container. Used to group containers under a single parent. |
 | glance.parent | The ID of the parent container. Used to group containers under a single parent. |
+| glance.category | The category of the container. Used to filter containers by category. |
 
 ### DNS Stats
 Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home, Pi-hole, or Technitium.

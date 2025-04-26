@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -17,6 +18,8 @@ var dockerContainersWidgetTemplate = mustParseTemplate("docker-containers.html",
 type dockerContainersWidget struct {
 	widgetBase    `yaml:",inline"`
 	HideByDefault bool                `yaml:"hide-by-default"`
+	RunningOnly   bool                `yaml:"running-only"`
+	Category      string              `yaml:"category"`
 	SockPath      string              `yaml:"sock-path"`
 	Containers    dockerContainerList `yaml:"-"`
 }
@@ -32,7 +35,7 @@ func (widget *dockerContainersWidget) initialize() error {
 }
 
 func (widget *dockerContainersWidget) update(ctx context.Context) {
-	containers, err := fetchDockerContainers(widget.SockPath, widget.HideByDefault)
+	containers, err := fetchDockerContainers(widget.SockPath, widget.HideByDefault, widget.Category, widget.RunningOnly)
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
@@ -54,6 +57,7 @@ const (
 	dockerContainerLabelIcon        = "glance.icon"
 	dockerContainerLabelID          = "glance.id"
 	dockerContainerLabelParent      = "glance.parent"
+	dockerContainerLabelCategory    = "glance.category"
 )
 
 const (
@@ -137,8 +141,8 @@ func dockerContainerStateToStateIcon(state string) string {
 	}
 }
 
-func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContainerList, error) {
-	containers, err := fetchAllDockerContainersFromSock(socketPath)
+func fetchDockerContainers(socketPath string, hideByDefault bool, category string, runningOnly bool) (dockerContainerList, error) {
+	containers, err := fetchDockerContainersFromSource(socketPath, category, runningOnly)
 	if err != nil {
 		return nil, fmt.Errorf("fetching containers: %w", err)
 	}
@@ -239,17 +243,48 @@ func isDockerContainerHidden(container *dockerContainerJsonResponse, hideByDefau
 	return hideByDefault
 }
 
-func fetchAllDockerContainersFromSock(socketPath string) ([]dockerContainerJsonResponse, error) {
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-		Transport: &http.Transport{
-			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", socketPath)
+func fetchDockerContainersFromSource(source string, category string, runningOnly bool) ([]dockerContainerJsonResponse, error) {
+	var hostname string
+
+	var client *http.Client
+	if strings.HasPrefix(source, "tcp://") || strings.HasPrefix(source, "http://") {
+		client = &http.Client{}
+		parsed, err := url.Parse(source)
+		if err != nil {
+			return nil, fmt.Errorf("parsing URL: %w", err)
+		}
+
+		port := parsed.Port()
+		if port == "" {
+			port = "80"
+		}
+
+		hostname = parsed.Hostname() + ":" + port
+	} else {
+		hostname = "docker"
+		client = &http.Client{
+			Transport: &http.Transport{
+				DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+					return net.Dial("unix", source)
+				},
 			},
-		},
+		}
 	}
 
-	request, err := http.NewRequest("GET", "http://docker/containers/json?all=true", nil)
+	query := url.Values{}
+	query.Set("all", ternary(runningOnly, "false", "true"))
+
+	if category != "" {
+		query.Set(
+			"filters",
+			fmt.Sprintf(`{"label": ["%s=%s"]}`, dockerContainerLabelCategory, category),
+		)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	request, err := http.NewRequestWithContext(ctx, "GET", "http://"+hostname+"/containers/json?"+query.Encode(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
