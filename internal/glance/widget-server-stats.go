@@ -91,6 +91,7 @@ type serverStatsRequest struct {
 	StatusText                 string              `yaml:"-"`
 	Name                       string              `yaml:"name"`
 	HideSwap                   bool                `yaml:"hide-swap"`
+	MountBarLimit   		   int                 `yaml:"mount-bar-limit"`
 	Type                       string              `yaml:"type"`
 	URL                        string              `yaml:"url"`
 	Token                      string              `yaml:"token"`
