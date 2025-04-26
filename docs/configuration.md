@@ -1583,7 +1583,7 @@ The title used to indicate the site.
 
 `url`
 
-The public facing URL of a monitored service, the user will be redirected here. If `check-url` is not specified, this is used as the status check.
+The URL of the monitored service, which must be reachable by Glance, and will be used as the link to go to when clicking on the title. If `check-url` is not specified, this is used as the status check.
 
 `check-url`
 
