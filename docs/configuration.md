@@ -1701,10 +1701,7 @@ Display the status of your Docker containers along with an icon and an optional 
 ```yaml
 - type: docker-containers
   hide-by-default: false
-  readable-names: false
 ```
-
-The `readable-names` will try to auto format your container names by capitalizing the first letter and converting `-` and `_` characters to spaces.
 
 > [!NOTE]
 >
@@ -1730,18 +1727,16 @@ Configuration of the containers is done via labels applied to each container:
       glance.description: Movies & shows
 ```
 
-Configuration of the containers can also be overridden using `glance.yml`.  Containers are specified by their container names, these will take preference over any docker labels that are set:
+Alternatively, you can also define the values within your `glance.yml` via the `containers` property, where the key is the container name and each value is the same as the labels but without the "glance." prefix:
 
 ```yaml
 - type: docker-containers
-  hide-by-default: false
-  readable-names: false
-  containers: # Alternative to using docker labels
-    container_name_1:  # This is the actual container name
-      title: "Test Container Name"
-      description: "test-description"
-      url: "127.0.0.1:3011/test"
-      icon: "si:jellyfin"
+  containers:
+    container_name_1:
+      title: Container Name
+      description: Description of the container
+      url: https://container.domain.com
+      icon: si:container-icon
       hide: false
 ```
 
@@ -1796,10 +1791,14 @@ If any of the child containers are down, their status will propagate up to the p
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | hide-by-default | boolean | no | false |
+| format-container-names | boolean | no | false |
 | sock-path | string | no | /var/run/docker.sock |
 
 ##### `hide-by-default`
 Whether to hide the containers by default. If set to `true` you'll have to manually add a `glance.hide: false` label to each container you want to display. By default all containers will be shown and if you want to hide a specific container you can add a `glance.hide: true` label.
+
+##### `format-container-names`
+When set to `true`, automatically converts container names such as `container_name_1` into `Container Name 1`.
 
 ##### `sock-path`
 The path to the Docker socket.
