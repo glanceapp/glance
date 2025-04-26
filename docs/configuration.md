@@ -4,12 +4,13 @@
 - [The config file](#the-config-file)
   - [Auto reload](#auto-reload)
   - [Environment variables](#environment-variables)
+    - [Other ways of providing tokens/passwords/secrets](#other-ways-of-providing-tokenspasswordssecrets)
   - [Including other config files](#including-other-config-files)
 - [Server](#server)
 - [Document](#document)
 - [Branding](#branding)
 - [Theme](#theme)
-  - [Themes](#themes)
+  - [Available themes](#available-themes)
 - [Pages & Columns](#pages--columns)
 - [Widgets](#widgets)
   - [RSS](#rss)
@@ -91,6 +92,38 @@ If you need to use the syntax `${NAME}` in your config without it being interpre
 ```yaml
 something: \${NOT_AN_ENV_VAR}
 ```
+
+#### Other ways of providing tokens/passwords/secrets
+
+You can use [Docker secrets](https://docs.docker.com/compose/how-tos/use-secrets/) with the following syntax:
+
+```yaml
+# This will be replaced with the contents of the file /run/secrets/github_token
+# so long as the secret `github_token` is provided to the container
+token: ${secret:github_token}
+```
+
+Alternatively, you can load the contents of a file who's path is provided by an environment variable:
+
+`docker-compose.yml`
+```yaml
+services:
+  glance:
+    image: glanceapp/glance
+    environment:
+      - TOKEN_FILE=/home/user/token
+    volumes:
+      - /home/user/token:/home/user/token
+```
+
+`glance.yml`
+```yaml
+token: ${readFileFromEnv:TOKEN_FILE}
+```
+
+> [!NOTE]
+>
+> The contents of the file will be stripped of any leading/trailing whitespace before being used.
 
 ### Including other config files
 Including config files from within your main config file is supported. This is done via the `$include` directive along with a relative or absolute path to the file you want to include. If the path is relative, it will be relative to the main config file. Additionally, environment variables can be used within included files, and changes to the included files will trigger an automatic reload. Example:
@@ -235,6 +268,9 @@ branding:
     <p>Powered by <a href="https://github.com/glanceapp/glance">Glance</a></p>
   logo-url: /assets/logo.png
   favicon-url: /assets/logo.png
+  app-name: "My Dashboard"
+  app-icon-url: "/assets/app-icon.png"
+  app-background-color: "#151519"
 ```
 
 ### Properties
@@ -246,6 +282,9 @@ branding:
 | logo-text | string | no | G |
 | logo-url | string | no | |
 | favicon-url | string | no | |
+| app-name | string | no | Glance |
+| app-icon-url | string | no | Glance's default icon |
+| app-background-color | string | no | Glance's default background color |
 
 #### `hide-footer`
 Hides the footer when set to `true`.
@@ -262,6 +301,15 @@ Specify a URL to a custom image to use instead of the "G" found in the navigatio
 #### `favicon-url`
 Specify a URL to a custom image to use for the favicon.
 
+#### `app-name`
+Specify the name of the web app shown in browser tab and PWA.
+
+#### `app-icon-url`
+Specify URL for PWA and browser tab icon (512x512 PNG).
+
+#### `app-background-color`
+Specify background color for PWA. Must be a valid CSS color.
+
 ## Theme
 Theming is done through a top level `theme` property. Values for the colors are in [HSL](https://giggster.com/guide/basics/hue-saturation-lightness/) (hue, saturation, lightness) format. You can use a color picker [like this one](https://hslpicker.com/) to convert colors from other formats to HSL. The values are separated by a space and `%` is not required for any of the numbers.
 
@@ -274,7 +322,7 @@ theme:
   contrast-multiplier: 1.1
 ```
 
-### Themes
+### Available themes
 If you don't want to spend time configuring your own theme, there are [several available themes](themes.md) which you can simply copy the values for.
 
 ### Properties
@@ -359,22 +407,28 @@ pages:
 | name | string | yes | |
 | slug | string | no | |
 | width | string | no | |
+| desktop-navigation-width | string | no | |
 | center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
 | expand-mobile-page-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
 
-#### `title`
+#### `name`
 The name of the page which gets shown in the navigation bar.
 
 #### `slug`
 The URL friendly version of the title which is used to access the page. For example if the title of the page is "RSS Feeds" you can make the page accessible via `localhost:8080/feeds` by setting the slug to `feeds`. If not defined, it will automatically be generated from the title.
 
 #### `width`
-The maximum width of the page on desktop. Possible values are `slim` and `wide`.
+The maximum width of the page on desktop. Possible values are `default`, `slim` and `wide`.
 
-* default: `1600px` (when no value is specified)
+#### `desktop-navigation-width`
+The maximum width of the desktop navigation. Useful if you have a few pages that use a different width than the rest and don't want the navigation to jump abruptly when going to and away from those pages. Possible values are `default`, `slim` and `wide`.
+
+Here are the pixel equivalents for each value:
+
+* default: `1600px`
 * slim: `1100px`
 * wide: `1920px`
 
@@ -958,6 +1012,7 @@ Preview:
 | search-engine | string | no | duckduckgo |
 | new-tab | boolean | no | false |
 | autofocus | boolean | no | false |
+| target | string | no | _blank |
 | placeholder | string | no | Type here to search… |
 | bangs | array | no | |
 
@@ -968,12 +1023,19 @@ Either a value from the table below or a URL to a custom search engine. Use `{QU
 | ---- | --- |
 | duckduckgo | `https://duckduckgo.com/?q={QUERY}` |
 | google | `https://www.google.com/search?q={QUERY}` |
+| bing | `https://www.bing.com/search?q={QUERY}` |
+| perplexity | `https://www.perplexity.ai/search?q={QUERY}` |
+| kagi | `https://kagi.com/search?q={QUERY}` |
+| startpage | `https://www.startpage.com/search?q={QUERY}` |
 
 ##### `new-tab`
 When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
 
 ##### `autofocus`
 When set to `true`, automatically focuses the search input on page load.
+
+##### `target`
+The target to use when opening the search results in a new tab. Possible values are `_blank`, `_self`, `_parent` and `_top`.
 
 ##### `placeholder`
 When set, modifies the text displayed in the input field before typing.
@@ -1292,7 +1354,12 @@ Examples:
 | ---- | ---- | -------- | ------- |
 | url | string | yes | |
 | headers | key (string) & value (string) | no | |
+| method | string | no | GET |
+| body-type | string | no | json |
+| body | any | no | |
 | frameless | boolean | no | false |
+| allow-insecure | boolean | no | false |
+| skip-json-validation | boolean | no | false |
 | template | string | yes | |
 | parameters | key (string) & value (string|array) | no | |
 | subrequests | map of requests | no | |
@@ -1309,8 +1376,39 @@ headers:
   Accept: application/json
 ```
 
+##### `method`
+The HTTP method to use when making the request. Possible values are `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` and `HEAD`.
+
+##### `body-type`
+The type of the body that will be sent with the request. Possible values are `json`, and `string`.
+
+##### `body`
+The body that will be sent with the request. It can be a string or a map. Example:
+
+```yaml
+body-type: json
+body:
+  key1: value1
+  key2: value2
+  multiple-items:
+    - item1
+    - item2
+```
+
+```yaml
+body-type: string
+body: |
+  key1=value1&key2=value2
+```
+
 ##### `frameless`
 When set to `true`, removes the border and padding around the widget.
+
+##### `allow-insecure`
+Whether to ignore invalid/self-signed certificates.
+
+##### `skip-json-validation`
+When set to `true`, skips the JSON validation step. This is useful when the API returns JSON Lines/newline-delimited JSON, which is a format that consists of several JSON objects separated by newlines.
 
 ##### `template`
 The template that will be used to display the data. It relies on Go's `html/template` package so it's recommended to go through [its documentation](https://pkg.go.dev/text/template) to understand how to do basic things such as conditionals, loops, etc. In addition, it also uses [tidwall's gjson](https://github.com/tidwall/gjson) package to parse the JSON data so it's worth going through its documentation if you want to use more advanced JSON selectors. You can view additional examples with explanations and function definitions [here](custom-api.md).
@@ -1381,6 +1479,7 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | url | string | yes | |
 | fallback-content-type | string | no | |
 | allow-potentially-dangerous-html | boolean | no | false |
+| headers | key & value | no | |
 | parameters | key & value | no | |
 
 ##### `url`
@@ -1388,6 +1487,14 @@ The URL of the extension. **Note that the query gets stripped from this URL and 
 
 ##### `fallback-content-type`
 Optionally specify the fallback content type of the extension if the URL does not return a valid `Widget-Content-Type` header. Currently the only supported value for this property is `html`.
+
+##### `headers`
+Optionally specify the headers that will be sent with the request. Example:
+
+```yaml
+headers:
+  x-api-key: ${SECRET_KEY}
+```
 
 ##### `allow-potentially-dangerous-html`
 Whether to allow the extension to display HTML.
@@ -1793,6 +1900,8 @@ If any of the child containers are down, their status will propagate up to the p
 | hide-by-default | boolean | no | false |
 | format-container-names | boolean | no | false |
 | sock-path | string | no | /var/run/docker.sock |
+| category | string | no | |
+| running-only | boolean | no | false |
 
 ##### `hide-by-default`
 Whether to hide the containers by default. If set to `true` you'll have to manually add a `glance.hide: false` label to each container you want to display. By default all containers will be shown and if you want to hide a specific container you can add a `glance.hide: true` label.
@@ -1801,7 +1910,59 @@ Whether to hide the containers by default. If set to `true` you'll have to manua
 When set to `true`, automatically converts container names such as `container_name_1` into `Container Name 1`.
 
 ##### `sock-path`
-The path to the Docker socket.
+The path to the Docker socket. This can also be a [remote socket](https://docs.docker.com/engine/daemon/remote-access/) or proxied socket using something like [docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy).
+
+###### `category`
+Filter to only the containers which have this category specified via the `glance.category` label. Useful if you want to have multiple containers widgets, each showing a different set of containers.
+
+<details>
+<summary>View example</summary>
+<br>
+
+
+```yaml
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    labels:
+      glance.name: Jellyfin
+      glance.icon: si:jellyfin
+      glance.url: https://jellyfin.domain.com
+      glance.category: media
+
+  gitea:
+    image: gitea/gitea:latest
+    labels:
+      glance.name: Gitea
+      glance.icon: si:gitea
+      glance.url: https://gitea.domain.com
+      glance.category: dev-tools
+
+  vaultwarden:
+    image: vaultwarden/server:latest
+    labels:
+      glance.name: Vaultwarden
+      glance.icon: si:vaultwarden
+      glance.url: https://vaultwarden.domain.com
+      glance.category: dev-tools
+```
+
+Then you can use the `category` property to filter the containers:
+
+```yaml
+- type: docker-containers
+  title: Dev tool containers
+  category: dev-tools
+
+- type: docker-containers
+  title: Media containers
+  category: media
+```
+
+</details>
+
+##### `running-only`
+Whether to only show running containers. If set to `true` only containers that are currently running will be displayed. If set to `false` all containers will be displayed regardless of their state.
 
 #### Labels
 | Name | Description |
@@ -1814,6 +1975,7 @@ The path to the Docker socket.
 | glance.hide | Whether to hide the container. If set to `true` the container will not be displayed. Defaults to `false`. |
 | glance.id | The custom ID of the container. Used to group containers under a single parent. |
 | glance.parent | The ID of the parent container. Used to group containers under a single parent. |
+| glance.category | The category of the container. Used to filter containers by category. |
 
 ### DNS Stats
 Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home, Pi-hole, or Technitium.
@@ -1844,14 +2006,14 @@ Preview:
 | allow-insecure | bool | no | false |
 | url | string | yes |  |
 | username | string | when service is `adguard` |  |
-| password | string | when service is `adguard` |  |
+| password | string | when service is `adguard` or `pihole-v6` |  |
 | token | string | when service is `pihole` |  |
 | hide-graph | bool | no | false |
 | hide-top-domains | bool | no | false |
 | hour-format | string | no | 12h |
 
 ##### `service`
-Either `adguard`, `pihole`, or `technitium`.
+Either `adguard`, `technitium`, or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
 
 ##### `allow-insecure`
 Whether to allow invalid/self-signed certificates when making the request to the service.
@@ -1863,10 +2025,14 @@ The base URL of the service.
 Only required when using AdGuard Home. The username used to log into the admin dashboard.
 
 ##### `password`
-Only required when using AdGuard Home. The password used to log into the admin dashboard.
+Required when using AdGuard Home, where the password is the one used to log into the admin dashboard.
+
+Also required when using Pi-hole major version 6 and above, where the password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
 
 ##### `token`
-Only required when using Pi-hole or Technitium. For Pi-hole, the API token which can be found in `Settings -> API -> Show API token`; for Technitium, an API token can be generated at `Administration -> Sessions -> Create Token`.
+Required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`.
+
+Also required when using Technitium, an API token can be generated at `Administration -> Sessions -> Create Token`.
 
 ##### `hide-graph`
 Whether to hide the graph showing the number of queries over time.
@@ -1931,7 +2097,7 @@ Whether to hide the swap usage.
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | cpu-temp-sensor | string | no |  |
-| hide-mointpoints-by-default | boolean | no | false |
+| hide-mountpoints-by-default | boolean | no | false |
 | mountpoints | map\[string\]object | no |  |
 
 ###### `cpu-temp-sensor`

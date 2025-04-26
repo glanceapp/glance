@@ -3,6 +3,7 @@ package glance
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -10,6 +11,9 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -21,10 +25,16 @@ var customAPIWidgetTemplate = mustParseTemplate("custom-api.html", "widget-base.
 
 // Needs to be exported for the YAML unmarshaler to work
 type CustomAPIRequest struct {
-	URL         string               `json:"url"`
-	Headers     map[string]string    `json:"headers"`
-	Parameters  queryParametersField `json:"parameters"`
-	httpRequest *http.Request        `yaml:"-"`
+	URL                string               `yaml:"url"`
+	AllowInsecure      bool                 `yaml:"allow-insecure"`
+	Headers            map[string]string    `yaml:"headers"`
+	Parameters         queryParametersField `yaml:"parameters"`
+	Method             string               `yaml:"method"`
+	BodyType           string               `yaml:"body-type"`
+	Body               any                  `yaml:"body"`
+	SkipJSONValidation bool                 `yaml:"skip-json-validation"`
+	bodyReader         io.ReadSeeker        `yaml:"-"`
+	httpRequest        *http.Request        `yaml:"-"`
 }
 
 type customAPIWidget struct {
@@ -82,13 +92,51 @@ func (req *CustomAPIRequest) initialize() error {
 		return errors.New("URL is required")
 	}
 
-	httpReq, err := http.NewRequest(http.MethodGet, req.URL, nil)
+	if req.Body != nil {
+		if req.Method == "" {
+			req.Method = http.MethodPost
+		}
+
+		if req.BodyType == "" {
+			req.BodyType = "json"
+		}
+
+		if req.BodyType != "json" && req.BodyType != "string" {
+			return errors.New("invalid body type, must be either 'json' or 'string'")
+		}
+
+		switch req.BodyType {
+		case "json":
+			encoded, err := json.Marshal(req.Body)
+			if err != nil {
+				return fmt.Errorf("marshaling body: %v", err)
+			}
+
+			req.bodyReader = bytes.NewReader(encoded)
+		case "string":
+			bodyAsString, ok := req.Body.(string)
+			if !ok {
+				return errors.New("body must be a string when body-type is 'string'")
+			}
+
+			req.bodyReader = strings.NewReader(bodyAsString)
+		}
+
+	} else if req.Method == "" {
+		req.Method = http.MethodGet
+	}
+
+	httpReq, err := http.NewRequest(strings.ToUpper(req.Method), req.URL, req.bodyReader)
 	if err != nil {
 		return err
 	}
 
 	if len(req.Parameters) > 0 {
 		httpReq.URL.RawQuery = req.Parameters.toQueryString()
+	}
+
+	if req.BodyType == "json" {
+		httpReq.Header.Set("Content-Type", "application/json")
 	}
 
 	for key, value := range req.Headers {
@@ -110,6 +158,17 @@ type customAPITemplateData struct {
 	subrequests map[string]*customAPIResponseData
 }
 
+func (data *customAPITemplateData) JSONLines() []decoratedGJSONResult {
+	result := make([]decoratedGJSONResult, 0, 5)
+
+	gjson.ForEachLine(data.JSON.Raw, func(line gjson.Result) bool {
+		result = append(result, decoratedGJSONResult{line})
+		return true
+	})
+
+	return result
+}
+
 func (data *customAPITemplateData) Subrequest(key string) *customAPIResponseData {
 	req, exists := data.subrequests[key]
 	if !exists {
@@ -125,7 +184,12 @@ func (data *customAPITemplateData) Subrequest(key string) *customAPIResponseData
 }
 
 func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customAPIResponseData, error) {
-	resp, err := defaultHTTPClient.Do(req.httpRequest.WithContext(ctx))
+	if req.bodyReader != nil {
+		req.bodyReader.Seek(0, io.SeekStart)
+	}
+
+	client := ternary(req.AllowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
+	resp, err := client.Do(req.httpRequest.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -138,14 +202,19 @@ func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customA
 
 	body := strings.TrimSpace(string(bodyBytes))
 
-	if body != "" && !gjson.Valid(body) {
-		truncatedBody, isTruncated := limitStringLength(body, 100)
-		if isTruncated {
-			truncatedBody += "... <truncated>"
+	if !req.SkipJSONValidation && body != "" && !gjson.Valid(body) {
+		if 200 <= resp.StatusCode && resp.StatusCode < 300 {
+			truncatedBody, isTruncated := limitStringLength(body, 100)
+			if isTruncated {
+				truncatedBody += "... <truncated>"
+			}
+
+			slog.Error("Invalid response JSON in custom API widget", "url", req.httpRequest.URL.String(), "body", truncatedBody)
+			return nil, errors.New("invalid response JSON")
 		}
 
-		slog.Error("Invalid response JSON in custom API widget", "url", req.httpRequest.URL.String(), "body", truncatedBody)
-		return nil, errors.New("invalid response JSON")
+		return nil, errors.New(fmt.Sprintf("%d %s", resp.StatusCode, http.StatusText(resp.StatusCode)))
+
 	}
 
 	data := &customAPIResponseData{
@@ -247,7 +316,7 @@ func gJsonResultArrayToDecoratedResultArray(results []gjson.Result) []decoratedG
 }
 
 func (r *decoratedGJSONResult) Exists(key string) bool {
-	return r.Get(key).Exists()
+	return r.Result.Get(key).Exists()
 }
 
 func (r *decoratedGJSONResult) Array(key string) []decoratedGJSONResult {
@@ -255,7 +324,7 @@ func (r *decoratedGJSONResult) Array(key string) []decoratedGJSONResult {
 		return gJsonResultArrayToDecoratedResultArray(r.Result.Array())
 	}
 
-	return gJsonResultArrayToDecoratedResultArray(r.Get(key).Array())
+	return gJsonResultArrayToDecoratedResultArray(r.Result.Get(key).Array())
 }
 
 func (r *decoratedGJSONResult) String(key string) string {
@@ -263,15 +332,15 @@ func (r *decoratedGJSONResult) String(key string) string {
 		return r.Result.String()
 	}
 
-	return r.Get(key).String()
+	return r.Result.Get(key).String()
 }
 
-func (r *decoratedGJSONResult) Int(key string) int64 {
+func (r *decoratedGJSONResult) Int(key string) int {
 	if key == "" {
-		return r.Result.Int()
+		return int(r.Result.Int())
 	}
 
-	return r.Get(key).Int()
+	return int(r.Result.Get(key).Int())
 }
 
 func (r *decoratedGJSONResult) Float(key string) float64 {
@@ -279,7 +348,7 @@ func (r *decoratedGJSONResult) Float(key string) float64 {
 		return r.Result.Float()
 	}
 
-	return r.Get(key).Float()
+	return r.Result.Get(key).Float()
 }
 
 func (r *decoratedGJSONResult) Bool(key string) bool {
@@ -287,55 +356,219 @@ func (r *decoratedGJSONResult) Bool(key string) bool {
 		return r.Result.Bool()
 	}
 
-	return r.Get(key).Bool()
+	return r.Result.Get(key).Bool()
+}
+
+func (r *decoratedGJSONResult) Get(key string) *decoratedGJSONResult {
+	return &decoratedGJSONResult{r.Result.Get(key)}
+}
+
+func customAPIDoMathOp[T int | float64](a, b T, op string) T {
+	switch op {
+	case "add":
+		return a + b
+	case "sub":
+		return a - b
+	case "mul":
+		return a * b
+	case "div":
+		if b == 0 {
+			return 0
+		}
+		return a / b
+	}
+	return 0
 }
 
 var customAPITemplateFuncs = func() template.FuncMap {
-	funcs := template.FuncMap{
-		"toFloat": func(a int64) float64 {
-			return float64(a)
-		},
-		"toInt": func(a float64) int64 {
-			return int64(a)
-		},
-		"add": func(a, b float64) float64 {
-			return a + b
-		},
-		"sub": func(a, b float64) float64 {
-			return a - b
-		},
-		"mul": func(a, b float64) float64 {
-			return a * b
-		},
-		"div": func(a, b float64) float64 {
-			if b == 0 {
+	var regexpCacheMu sync.Mutex
+	var regexpCache = make(map[string]*regexp.Regexp)
+
+	getCachedRegexp := func(pattern string) *regexp.Regexp {
+		regexpCacheMu.Lock()
+		defer regexpCacheMu.Unlock()
+
+		regex, exists := regexpCache[pattern]
+		if !exists {
+			regex = regexp.MustCompile(pattern)
+			regexpCache[pattern] = regex
+		}
+
+		return regex
+	}
+
+	doMathOpWithAny := func(a, b any, op string) any {
+		switch at := a.(type) {
+		case int:
+			switch bt := b.(type) {
+			case int:
+				return customAPIDoMathOp(at, bt, op)
+			case float64:
+				return customAPIDoMathOp(float64(at), bt, op)
+			default:
 				return math.NaN()
 			}
+		case float64:
+			switch bt := b.(type) {
+			case int:
+				return customAPIDoMathOp(at, float64(bt), op)
+			case float64:
+				return customAPIDoMathOp(at, bt, op)
+			default:
+				return math.NaN()
+			}
+		default:
+			return math.NaN()
+		}
+	}
 
-			return a / b
+	funcs := template.FuncMap{
+		"toFloat": func(a int) float64 {
+			return float64(a)
+		},
+		"toInt": func(a float64) int {
+			return int(a)
+		},
+		"add": func(a, b any) any {
+			return doMathOpWithAny(a, b, "add")
+		},
+		"sub": func(a, b any) any {
+			return doMathOpWithAny(a, b, "sub")
+		},
+		"mul": func(a, b any) any {
+			return doMathOpWithAny(a, b, "mul")
+		},
+		"div": func(a, b any) any {
+			return doMathOpWithAny(a, b, "div")
+		},
+		"now": func() time.Time {
+			return time.Now()
+		},
+		"offsetNow": func(offset string) time.Time {
+			d, err := time.ParseDuration(offset)
+			if err != nil {
+				return time.Now()
+			}
+			return time.Now().Add(d)
+		},
+		"duration": func(str string) time.Duration {
+			d, err := time.ParseDuration(str)
+			if err != nil {
+				return 0
+			}
+
+			return d
 		},
 		"parseTime": func(layout, value string) time.Time {
-			switch strings.ToLower(layout) {
-			case "rfc3339":
-				layout = time.RFC3339
-			case "rfc3339nano":
-				layout = time.RFC3339Nano
-			case "datetime":
-				layout = time.DateTime
-			case "dateonly":
-				layout = time.DateOnly
-			case "timeonly":
-				layout = time.TimeOnly
-			}
-
-			parsed, err := time.Parse(layout, value)
-			if err != nil {
-				return time.Unix(0, 0)
-			}
-
-			return parsed
+			return customAPIFuncParseTimeInLocation(layout, value, time.UTC)
+		},
+		"parseLocalTime": func(layout, value string) time.Time {
+			return customAPIFuncParseTimeInLocation(layout, value, time.Local)
 		},
 		"toRelativeTime": dynamicRelativeTimeAttrs,
+		"parseRelativeTime": func(layout, value string) template.HTMLAttr {
+			// Shorthand to do both of the above with a single function call
+			return dynamicRelativeTimeAttrs(customAPIFuncParseTimeInLocation(layout, value, time.UTC))
+		},
+		// The reason we flip the parameter order is so that you can chain multiple calls together like this:
+		// {{ .JSON.String "foo" | trimPrefix "bar" | doSomethingElse }}
+		// instead of doing this:
+		// {{ trimPrefix (.JSON.String "foo") "bar" | doSomethingElse }}
+		// since the piped value gets passed as the last argument to the function.
+		"trimPrefix": func(prefix, s string) string {
+			return strings.TrimPrefix(s, prefix)
+		},
+		"trimSuffix": func(suffix, s string) string {
+			return strings.TrimSuffix(s, suffix)
+		},
+		"trimSpace": strings.TrimSpace,
+		"replaceAll": func(old, new, s string) string {
+			return strings.ReplaceAll(s, old, new)
+		},
+		"replaceMatches": func(pattern, replacement, s string) string {
+			if s == "" {
+				return ""
+			}
+
+			return getCachedRegexp(pattern).ReplaceAllString(s, replacement)
+		},
+		"findMatch": func(pattern, s string) string {
+			if s == "" {
+				return ""
+			}
+
+			return getCachedRegexp(pattern).FindString(s)
+		},
+		"findSubmatch": func(pattern, s string) string {
+			if s == "" {
+				return ""
+			}
+
+			regex := getCachedRegexp(pattern)
+			return itemAtIndexOrDefault(regex.FindStringSubmatch(s), 1, "")
+		},
+		"sortByString": func(key, order string, results []decoratedGJSONResult) []decoratedGJSONResult {
+			sort.Slice(results, func(a, b int) bool {
+				if order == "asc" {
+					return results[a].String(key) < results[b].String(key)
+				}
+
+				return results[a].String(key) > results[b].String(key)
+			})
+
+			return results
+		},
+		"sortByInt": func(key, order string, results []decoratedGJSONResult) []decoratedGJSONResult {
+			sort.Slice(results, func(a, b int) bool {
+				if order == "asc" {
+					return results[a].Int(key) < results[b].Int(key)
+				}
+
+				return results[a].Int(key) > results[b].Int(key)
+			})
+
+			return results
+		},
+		"sortByFloat": func(key, order string, results []decoratedGJSONResult) []decoratedGJSONResult {
+			sort.Slice(results, func(a, b int) bool {
+				if order == "asc" {
+					return results[a].Float(key) < results[b].Float(key)
+				}
+
+				return results[a].Float(key) > results[b].Float(key)
+			})
+
+			return results
+		},
+		"sortByTime": func(key, layout, order string, results []decoratedGJSONResult) []decoratedGJSONResult {
+			sort.Slice(results, func(a, b int) bool {
+				timeA := customAPIFuncParseTimeInLocation(layout, results[a].String(key), time.UTC)
+				timeB := customAPIFuncParseTimeInLocation(layout, results[b].String(key), time.UTC)
+
+				if order == "asc" {
+					return timeA.Before(timeB)
+				}
+
+				return timeA.After(timeB)
+			})
+
+			return results
+		},
+		"concat": func(items ...string) string {
+			return strings.Join(items, "")
+		},
+		"unique": func(key string, results []decoratedGJSONResult) []decoratedGJSONResult {
+			seen := make(map[string]struct{})
+			out := make([]decoratedGJSONResult, 0, len(results))
+			for _, result := range results {
+				val := result.String(key)
+				if _, ok := seen[val]; !ok {
+					seen[val] = struct{}{}
+					out = append(out, result)
+				}
+			}
+			return out
+		},
 	}
 
 	for key, value := range globalTemplateFunctions {
@@ -346,3 +579,30 @@ var customAPITemplateFuncs = func() template.FuncMap {
 
 	return funcs
 }()
+
+func customAPIFuncParseTimeInLocation(layout, value string, loc *time.Location) time.Time {
+	switch strings.ToLower(layout) {
+	case "unix":
+		asInt, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return time.Unix(0, 0)
+		}
+
+		return time.Unix(asInt, 0)
+	case "rfc3339":
+		layout = time.RFC3339
+	case "rfc3339nano":
+		layout = time.RFC3339Nano
+	case "datetime":
+		layout = time.DateTime
+	case "dateonly":
+		layout = time.DateOnly
+	}
+
+	parsed, err := time.ParseInLocation(layout, value, loc)
+	if err != nil {
+		return time.Unix(0, 0)
+	}
+
+	return parsed
+}

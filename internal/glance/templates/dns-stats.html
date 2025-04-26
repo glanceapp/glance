@@ -59,8 +59,8 @@
                     {{ if ne $column.Queries $column.Blocked }}
                         <div class="queries"></div>
                     {{ end }}
-                    {{ if or (gt $column.Blocked 0) (and (lt $column.PercentTotal 15) (lt $column.PercentBlocked 10)) }}
-                        <div class="blocked" style="flex-basis: {{ $column.PercentBlocked }}%"></div>
+                    {{ if gt $column.PercentBlocked 0 }}
+                        <div class="blocked" style="--percent: {{ $column.PercentBlocked }}%"></div>
                     {{ end }}
                 </div>
                 {{ end }}

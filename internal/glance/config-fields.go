@@ -3,6 +3,7 @@ package glance
 import (
 	"crypto/tls"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -13,7 +14,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var hslColorFieldPattern = regexp.MustCompile(`^(?:hsla?\()?(\d{1,3})(?: |,)+(\d{1,3})%?(?: |,)+(\d{1,3})%?\)?$`)
+var hslColorFieldPattern = regexp.MustCompile(`^(?:hsla?\()?([\d\.]+)(?: |,)+([\d\.]+)%?(?: |,)+([\d\.]+)%?\)?$`)
 
 const (
 	hslHueMax        = 360
@@ -22,13 +23,17 @@ const (
 )
 
 type hslColorField struct {
-	Hue        uint16
-	Saturation uint8
-	Lightness  uint8
+	Hue        float64
+	Saturation float64
+	Lightness  float64
 }
 
 func (c *hslColorField) String() string {
-	return fmt.Sprintf("hsl(%d, %d%%, %d%%)", c.Hue, c.Saturation, c.Lightness)
+	return fmt.Sprintf("hsl(%.1f, %.1f%%, %.1f%%)", c.Hue, c.Saturation, c.Lightness)
+}
+
+func (c *hslColorField) ToHex() string {
+	return hslToHex(c.Hue, c.Saturation, c.Lightness)
 }
 
 func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
@@ -44,7 +49,7 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 		return fmt.Errorf("invalid HSL color format: %s", value)
 	}
 
-	hue, err := strconv.ParseUint(matches[1], 10, 16)
+	hue, err := strconv.ParseFloat(matches[1], 64)
 	if err != nil {
 		return err
 	}
@@ -53,7 +58,7 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 		return fmt.Errorf("HSL hue must be between 0 and %d", hslHueMax)
 	}
 
-	saturation, err := strconv.ParseUint(matches[2], 10, 8)
+	saturation, err := strconv.ParseFloat(matches[2], 64)
 	if err != nil {
 		return err
 	}
@@ -62,7 +67,7 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 		return fmt.Errorf("HSL saturation must be between 0 and %d", hslSaturationMax)
 	}
 
-	lightness, err := strconv.ParseUint(matches[3], 10, 8)
+	lightness, err := strconv.ParseFloat(matches[3], 64)
 	if err != nil {
 		return err
 	}
@@ -71,9 +76,9 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 		return fmt.Errorf("HSL lightness must be between 0 and %d", hslLightnessMax)
 	}
 
-	c.Hue = uint16(hue)
-	c.Saturation = uint8(saturation)
-	c.Lightness = uint8(lightness)
+	c.Hue = hue
+	c.Saturation = saturation
+	c.Lightness = lightness
 
 	return nil
 }
@@ -115,7 +120,7 @@ func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 }
 
 type customIconField struct {
-	URL        string
+	URL        template.URL
 	IsFlatIcon bool
 	// TODO: along with whether the icon is flat, we also need to know
 	// whether the icon is black or white by default in order to properly
@@ -127,13 +132,13 @@ func newCustomIconField(value string) customIconField {
 
 	prefix, icon, found := strings.Cut(value, ":")
 	if !found {
-		field.URL = value
+		field.URL = template.URL(value)
 		return field
 	}
 
 	switch prefix {
 	case "si":
-		field.URL = "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + icon + ".svg"
+		field.URL = template.URL("https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + icon + ".svg")
 		field.IsFlatIcon = true
 	case "di", "sh":
 		// syntax: di:<icon_name>[.svg|.png]
@@ -152,12 +157,12 @@ func newCustomIconField(value string) customIconField {
 		}
 
 		if prefix == "di" {
-			field.URL = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/" + ext + "/" + basename + "." + ext
+			field.URL = template.URL("https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/" + ext + "/" + basename + "." + ext)
 		} else {
-			field.URL = "https://cdn.jsdelivr.net/gh/selfhst/icons/" + ext + "/" + basename + "." + ext
+			field.URL = template.URL("https://cdn.jsdelivr.net/gh/selfhst/icons/" + ext + "/" + basename + "." + ext)
 		}
 	default:
-		field.URL = value
+		field.URL = template.URL(value)
 	}
 
 	return field
