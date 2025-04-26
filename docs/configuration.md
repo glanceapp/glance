@@ -1834,6 +1834,19 @@ Configuration of the containers is done via labels applied to each container:
       glance.description: Movies & shows
 ```
 
+Alternatively, you can also define the values within your `glance.yml` via the `containers` property, where the key is the container name and each value is the same as the labels but without the "glance." prefix:
+
+```yaml
+- type: docker-containers
+  containers:
+    container_name_1:
+      title: Container Name
+      description: Description of the container
+      url: https://container.domain.com
+      icon: si:container-icon
+      hide: false
+```
+
 For services with multiple containers you can specify a `glance.id` on the "main" container and `glance.parent` on each "child" container:
 
 <details>
@@ -1885,12 +1898,16 @@ If any of the child containers are down, their status will propagate up to the p
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | hide-by-default | boolean | no | false |
+| format-container-names | boolean | no | false |
 | sock-path | string | no | /var/run/docker.sock |
 | category | string | no | |
 | running-only | boolean | no | false |
 
 ##### `hide-by-default`
 Whether to hide the containers by default. If set to `true` you'll have to manually add a `glance.hide: false` label to each container you want to display. By default all containers will be shown and if you want to hide a specific container you can add a `glance.hide: true` label.
+
+##### `format-container-names`
+When set to `true`, automatically converts container names such as `container_name_1` into `Container Name 1`.
 
 ##### `sock-path`
 The path to the Docker socket. This can also be a [remote socket](https://docs.docker.com/engine/daemon/remote-access/) or proxied socket using something like [docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy).
