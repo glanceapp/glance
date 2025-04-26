@@ -26,6 +26,7 @@
   - [Weather](#weather)
   - [Monitor](#monitor)
   - [Releases](#releases)
+  - [Torrents](#torrents)
   - [Docker Containers](#docker-containers)
   - [DNS Stats](#dns-stats)
   - [Server Stats](#server-stats)
@@ -1734,6 +1735,31 @@ The maximum number of releases to show.
 
 #### `collapse-after`
 How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+### Torrents
+Displays the current status and download/upload speeds of torrents
+
+![](images/widget-torrent.png)
+
+
+```yaml
+- type: torrents
+  url: http://localhost:8112/
+  username: admin
+  password: deluge
+  client: deluge
+```
+
+
+#### Properties
+
+| Name | Type | Description |
+| ---- | ---- | -------- |
+| url | string | The url of the torrent client |
+| username | string | The username to login |
+| password | string | The password to login |  |
+| client | string | The torrent client. Supported values ["deluge"]
+| states | string[] | Allows filtering of torrents by state. For example ["Downloading"] will only show downloading torrents. Possible values include ["Downloading", "Seeding", "Paused", "Error", "Checking","Queued","Moving""Allocating","Stopped"]. By default, shows all torrents
 
 ### Docker Containers
 

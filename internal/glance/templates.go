@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"math"
 	"strconv"
+	"strings"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -31,27 +32,14 @@ var globalTemplateFunctions = template.FuncMap{
 		return intl.Sprintf("%."+strconv.Itoa(precision)+"f", price)
 	},
 	"dynamicRelativeTimeAttrs": dynamicRelativeTimeAttrs,
+	"formatBytes":              formatBytes,
 	"formatServerMegabytes": func(mb uint64) template.HTML {
-		var value string
-		var label string
-
-		if mb < 1_000 {
-			value = strconv.FormatUint(mb, 10)
-			label = "MB"
-		} else if mb < 1_000_000 {
-			if mb < 10_000 {
-				value = fmt.Sprintf("%.1f", float64(mb)/1_000)
-			} else {
-				value = strconv.FormatUint(mb/1_000, 10)
-			}
-
-			label = "GB"
-		} else {
-			value = fmt.Sprintf("%.1f", float64(mb)/1_000_000)
-			label = "TB"
+		formatted := formatBytes(mb * 1024 * 1024)
+		parts := strings.Split(formatted, " ")
+		if len(parts) == 2 {
+			return template.HTML(parts[0] + ` <span class="color-base size-h5">` + parts[1] + `</span>`)
 		}
-
-		return template.HTML(value + ` <span class="color-base size-h5">` + label + `</span>`)
+		return template.HTML(formatted)
 	},
 }
 
@@ -85,4 +73,29 @@ func formatApproxNumber(count int) string {
 
 func dynamicRelativeTimeAttrs(t interface{ Unix() int64 }) template.HTMLAttr {
 	return template.HTMLAttr(`data-dynamic-relative-time="` + strconv.FormatInt(t.Unix(), 10) + `"`)
+}
+
+func formatBytes(bytes uint64) string {
+	type unitInfo struct {
+		threshold uint64
+		label     string
+	}
+
+	units := []unitInfo{
+		{1 << 40, "TB"},
+		{1 << 30, "GB"},
+		{1 << 20, "MB"},
+		{1 << 10, "KB"},
+	}
+
+	for _, u := range units {
+		if bytes >= u.threshold {
+			if bytes < 10*u.threshold {
+				return fmt.Sprintf("%.1f %s", float64(bytes)/float64(u.threshold), u.label)
+			}
+			return fmt.Sprintf("%d %s", bytes/u.threshold, u.label)
+		}
+	}
+
+	return fmt.Sprintf("%d B", bytes)
 }

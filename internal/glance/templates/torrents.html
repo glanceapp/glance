@@ -1,0 +1,39 @@
+{{ template "widget-base.html" . }} {{ define "widget-content" }}
+<div class="torrents flex flex-column gap-12">
+  <ul class="list list-gap-10 collapsible-container" data-collapse-after="5">
+  {{- if .Torrents }} {{- range .Torrents }}
+    <li>
+      <div class="torrent-header text-truncate">
+        <span class="torrent-name">{{ .Name }}</span>
+      </div>
+      <div class="torrent-progress flex items-center gap-10">
+        <div class="progress-bar flex-1">
+          <div class="progress-value" style="--percent: {{ .Progress }};"></div>
+        </div>
+        <span class="progress-text color-highlight text-very-compact"
+          > {{ printf "%.0f" .Progress }} <span class="color-base">%</span>
+      </div>
+      <ul class="list-horizontal-text">
+        <li class="torrent-completed color-primary">{{ .State }}</li>
+        {{- if gt .DownloadSpeed 0 }}
+          <li class="torrent-speed flex flex-row items-center gap-5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.3rem" height="1.3rem" stroke="var(--color-primary)" fill="none" viewBox="0 0 24 24" stroke-width="5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+            {{ .DownloadSpeed | formatBytes }}/s</li>
+        {{ end }}
+        {{- if gt .UploadSpeed 0 }}
+          <li class="torrent-speed flex flex-row items-center gap-5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.3rem" height="1.3rem" stroke="var(--color-primary)" fill="none" viewBox="0 0 24 24" stroke-width="5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+            </svg>
+            {{ .UploadSpeed | formatBytes }}/s</li>
+        {{ end }}
+        </ul>
+    </li>
+  {{- end }} {{- else }}
+  <div class="text-center color-subdue">No active torrents</div>
+  {{- end }}
+  </ul>
+</div>
+{{ end }}
