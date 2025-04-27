@@ -9,7 +9,7 @@
 
 {{ if gt (len .Repository.Commits) 0 }}
 <hr class="margin-block-8">
-<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/commits" target="_blank" rel="noreferrer">Last {{ .CommitsLimit }} commits</a>
+<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/commits/{{ .RepositoryBranch}}" target="_blank" rel="noreferrer">Last {{ .CommitsLimit }} commits <span class="color-primary">{{ .RepositoryBranch }}</span></a>
 <div class="flex gap-7 size-h5 margin-top-3">
     <ul class="list list-gap-2">
         {{ range .Repository.Commits }}
