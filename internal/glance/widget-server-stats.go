@@ -45,6 +45,9 @@ func (widget *serverStatsWidget) update(context.Context) {
 
 	for i := range widget.Servers {
 		serv := &widget.Servers[i]
+		if serv.MountBarLimit == 0 {
+			serv.MountBarLimit = 2
+		}
 
 		if serv.Type == "local" {
 			info, errs := sysinfo.Collect(serv.SystemInfoRequest)
