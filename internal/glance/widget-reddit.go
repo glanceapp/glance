@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -182,6 +183,10 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 			"Authorization": []string{"Bearer " + app.accessToken},
 			"User-Agent":    []string{app.Name + "/1.0"},
 		}
+	}
+
+	if widget.Limit > 25 {
+		query.Set("limit", strconv.Itoa(widget.Limit))
 	}
 
 	if widget.Search != "" {
