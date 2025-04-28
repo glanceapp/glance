@@ -23,6 +23,7 @@ type config struct {
 		Port       uint16    `yaml:"port"`
 		AssetsPath string    `yaml:"assets-path"`
 		BaseURL    string    `yaml:"base-url"`
+		CachePath  string    `yaml:"cache-path"`
 		StartedAt  time.Time `yaml:"-"` // used in custom css file
 	} `yaml:"server"`
 
