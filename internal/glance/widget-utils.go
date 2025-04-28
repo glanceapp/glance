@@ -40,13 +40,17 @@ type requestDoer interface {
 
 var userAgentPersistentVersion atomic.Int32
 
-func setBrowserUserAgentHeader(request *http.Request) {
+func getBrowserUserAgentHeader() string {
 	if rand.IntN(2000) == 0 {
 		userAgentPersistentVersion.Store(rand.Int32N(5))
 	}
 
 	version := strconv.Itoa(130 + int(userAgentPersistentVersion.Load()))
-	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:"+version+".0) Gecko/20100101 Firefox/"+version+".0")
+	return "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:" + version + ".0) Gecko/20100101 Firefox/" + version + ".0"
+}
+
+func setBrowserUserAgentHeader(request *http.Request) {
+	request.Header.Set("User-Agent", getBrowserUserAgentHeader())
 }
 
 func decodeJsonFromRequest[T any](client requestDoer, request *http.Request) (T, error) {

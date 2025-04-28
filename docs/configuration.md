@@ -843,7 +843,10 @@ Display a list of posts from a specific subreddit.
 
 > [!WARNING]
 >
-> Reddit does not allow unauthorized API access from VPS IPs, if you're hosting Glance on a VPS you will get a 403 response. As a workaround you can route the traffic from Glance through a VPN or your own HTTP proxy using the `request-url-template` property.
+> Reddit does not allow unauthorized API access from VPS IPs, if you're hosting Glance on a VPS you will get a 403
+> response. As a workaround you can either [register an app on Reddit](https://ssl.reddit.com/prefs/apps/) and use the
+> generated ID and secret in the widget configuration to authenticate your requests (see `app-auth` property), use a proxy
+> (see `proxy` property) or route the traffic from Glance through a VPN.
 
 Example:
 
@@ -868,6 +871,7 @@ Example:
 | top-period | string | no | day |
 | search | string | no | |
 | extra-sort-by | string | no | |
+| app-auth | object | no | |
 
 ##### `subreddit`
 The subreddit for which to fetch the posts from.
@@ -974,6 +978,17 @@ Keywords to search for. Searching within specific fields is also possible, **tho
 Can be used to specify an additional sort which will be applied on top of the already sorted posts. By default does not apply any extra sorting and the only available option is `engagement`.
 
 The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
+
+##### `app-auth`
+```yaml
+widgets:
+  - type: reddit
+    subreddit: technology
+    app-auth:
+      name: ${REDDIT_APP_NAME}
+      id: ${REDDIT_APP_CLIENT_ID}
+      secret: ${REDDIT_APP_SECRET}
+```
 
 ### Search Widget
 Display a search bar that can be used to search for specific terms on various search engines.
