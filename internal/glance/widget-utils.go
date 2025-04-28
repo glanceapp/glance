@@ -24,6 +24,9 @@ var (
 const defaultClientTimeout = 5 * time.Second
 
 var defaultHTTPClient = &http.Client{
+	Transport: &http.Transport{
+		MaxIdleConnsPerHost: 10,
+	},
 	Timeout: defaultClientTimeout,
 }
 
