@@ -128,10 +128,16 @@ type customIconField struct {
 }
 
 func newCustomIconField(value string) customIconField {
+	const autoInvertPrefix = "auto-invert "
 	field := customIconField{}
 
 	prefix, icon, found := strings.Cut(value, ":")
 	if !found {
+		if strings.HasPrefix(value, autoInvertPrefix) {
+			field.IsFlatIcon = true
+			value = strings.TrimPrefix(value, autoInvertPrefix)
+		}
+
 		field.URL = template.URL(value)
 		return field
 	}
