@@ -1613,7 +1613,6 @@ Example:
     - title: Vaultwarden
       url: https://vault.yourdomain.com
       icon: /assets/vaultwarden-logo.png
-
 ```
 
 Preview:
@@ -1651,6 +1650,7 @@ Properties for each site:
 | check-url | string | no | |
 | error-url | string | no | |
 | icon | string | no | |
+| timeout | string | no | 3s |
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
 | alt-status-codes | array | no | |
@@ -1685,6 +1685,10 @@ icon: si:adguard
 > [!WARNING]
 >
 > Simple Icons are loaded externally and are hosted on `cdn.jsdelivr.net`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+
+`timeout`
+
+How long to wait for a response from the server before considering it unreachable. The value is a string and must be a number followed by one of s, m, h, d. Example: `5s` for 5 seconds, `1m` for 1 minute, etc.
 
 `allow-insecure`
 
