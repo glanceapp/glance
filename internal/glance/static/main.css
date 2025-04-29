@@ -1726,6 +1726,11 @@ details[open] .summary::after {
     height: 8.7rem;
 }
 
+.fallback-icon-thumbnail {
+    margin: auto;
+    height: 100%;
+}
+
 .twitch-category-thumbnail {
     width: 5rem;
     aspect-ratio: 3 / 4;
