@@ -1,0 +1,66 @@
+@font-face {
+    font-family: 'JetBrains Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+
+:root {
+    font-size: 10px;
+
+    --scheme: ;
+    --bgh: 240;
+    --bgs: 8%;
+    --bgl: 9%;
+    --bghs: var(--bgh), var(--bgs);
+    --cm: 1;
+    --tsm: 1;
+
+    --widget-gap: 23px;
+    --widget-content-vertical-padding: 15px;
+    --widget-content-horizontal-padding: 17px;
+    --widget-content-padding: var(--widget-content-vertical-padding) var(--widget-content-horizontal-padding);
+    --content-bounds-padding: 15px;
+    --border-radius: 5px;
+    --mobile-navigation-height: 50px;
+
+    --color-primary: hsl(43, 50%, 70%);
+    --color-positive: var(--color-primary);
+    --color-negative: hsl(0, 70%, 70%);
+    --color-background: hsl(var(--bghs), var(--bgl));
+    --color-widget-background-hsl-values: var(--bghs), calc(var(--bgl) + 1%);
+    --color-widget-background: hsl(var(--color-widget-background-hsl-values));
+    --color-separator: hsl(var(--bghs), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 4% * var(--cm))));
+    --color-widget-content-border: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 4%)));
+    --color-widget-background-highlight: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 4%)));
+    --color-popover-background: hsl(var(--bgh), calc(var(--bgs) + 3%), calc(var(--bgl) + 3%));
+    --color-popover-border: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 12%)));
+    --color-progress-border: hsl(var(--bghs), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 10% * var(--cm))));
+    --color-progress-value: hsl(var(--bgh), calc(var(--bgs) * var(--tsm)), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 26% * var(--cm))));
+    --color-vertical-progress-value: hsl(var(--bgh), calc(var(--bgs) * var(--tsm)), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 28% * var(--cm))));
+    --color-graph-gridlines: hsl(var(--bghs), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 6% * var(--cm))));
+
+    --ths: var(--bgh), calc(var(--bgs) * var(--tsm));
+    --color-text-highlight: hsl(var(--ths), calc(var(--scheme) var(--cm) * 85%));
+    --color-text-paragraph: hsl(var(--ths), calc(var(--scheme) var(--cm) * 73%));
+    --color-text-base: hsl(var(--ths), calc(var(--scheme) var(--cm) * 58%));
+    --color-text-base-muted: hsl(var(--ths), calc(var(--scheme) var(--cm) * 52%));
+    --color-text-subdue: hsl(var(--ths), calc(var(--scheme) var(--cm) * 35%));
+
+    --font-size-h1: 1.7rem;
+    --font-size-h2: 1.6rem;
+    --font-size-h3: 1.5rem;
+    --font-size-h4: 1.4rem;
+    --font-size-base: 1.3rem;
+    --font-size-h5: 1.2rem;
+    --font-size-h6: 1.1rem;
+}
+
+/* Do not change the order of the below imports unless you know what you're doing */
+
+@import "site.css";
+@import "widgets.css";
+@import "popover.css";
+@import "utils.css";
+@import "mobile.css";

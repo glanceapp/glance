@@ -18,6 +18,10 @@ import (
 var widgetIDCounter atomic.Uint64
 
 func newWidget(widgetType string) (widget, error) {
+	if widgetType == "" {
+		return nil, errors.New("widget 'type' property is empty or not specified")
+	}
+
 	var w widget
 
 	switch widgetType {
@@ -104,7 +108,7 @@ func (w *widgets) UnmarshalYAML(node *yaml.Node) error {
 
 		widget, err := newWidget(meta.Type)
 		if err != nil {
-			return err
+			return fmt.Errorf("line %d: %w", node.Line, err)
 		}
 
 		if err = node.Decode(widget); err != nil {

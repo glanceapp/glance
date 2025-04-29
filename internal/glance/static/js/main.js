@@ -104,6 +104,7 @@ function setupSearchBoxes() {
     for (let i = 0; i < searchWidgets.length; i++) {
         const widget = searchWidgets[i];
         const defaultSearchUrl = widget.dataset.defaultSearchUrl;
+        const target = widget.dataset.target || "_blank";
         const newTab = widget.dataset.newTab === "true";
         const inputElement = widget.getElementsByClassName("search-input")[0];
         const bangElement = widget.getElementsByClassName("search-bang")[0];
@@ -143,7 +144,7 @@ function setupSearchBoxes() {
                 const url = searchUrlTemplate.replace("!QUERY!", encodeURIComponent(query));
 
                 if (newTab && !event.ctrlKey || !newTab && event.ctrlKey) {
-                    window.open(url, '_blank').focus();
+                    window.open(url, target).focus();
                 } else {
                     window.location.href = url;
                 }
@@ -649,7 +650,7 @@ function setupTruncatedElementTitles() {
 
     for (let i = 0; i < elements.length; i++) {
         const element = elements[i];
-        if (element.title === "") element.title = element.textContent;
+        if (element.getAttribute("title") === null) element.title = element.textContent;
     }
 }
 

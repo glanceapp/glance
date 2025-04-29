@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"math"
 	"strconv"
+	"strings"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -27,9 +28,10 @@ var globalTemplateFunctions = template.FuncMap{
 	"formatPrice": func(price float64) string {
 		return intl.Sprintf("%.2f", price)
 	},
-	"dynamicRelativeTimeAttrs": func(t interface{ Unix() int64 }) template.HTMLAttr {
-		return template.HTMLAttr(`data-dynamic-relative-time="` + strconv.FormatInt(t.Unix(), 10) + `"`)
+	"formatPriceWithPrecision": func(precision int, price float64) string {
+		return intl.Sprintf("%."+strconv.Itoa(precision)+"f", price)
 	},
+	"dynamicRelativeTimeAttrs": dynamicRelativeTimeAttrs,
 	"formatServerMegabytes": func(mb uint64) template.HTML {
 		var value string
 		var label string
@@ -52,6 +54,7 @@ var globalTemplateFunctions = template.FuncMap{
 
 		return template.HTML(value + ` <span class="color-base size-h5">` + label + `</span>`)
 	},
+	"hasPrefix": strings.HasPrefix,
 }
 
 func mustParseTemplate(primary string, dependencies ...string) *template.Template {
@@ -80,4 +83,8 @@ func formatApproxNumber(count int) string {
 	}
 
 	return strconv.FormatFloat(float64(count)/1_000_000, 'f', 1, 64) + "m"
+}
+
+func dynamicRelativeTimeAttrs(t interface{ Unix() int64 }) template.HTMLAttr {
+	return template.HTMLAttr(`data-dynamic-relative-time="` + strconv.FormatInt(t.Unix(), 10) + `"`)
 }
