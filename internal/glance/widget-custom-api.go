@@ -213,7 +213,7 @@ func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customA
 			return nil, errors.New("invalid response JSON")
 		}
 
-		return nil, errors.New(fmt.Sprintf("%d %s", resp.StatusCode, http.StatusText(resp.StatusCode)))
+		return nil, fmt.Errorf("%d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
 
 	}
 
