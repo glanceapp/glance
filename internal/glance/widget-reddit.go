@@ -280,7 +280,7 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 	return posts, nil
 }
 
-func (widget *redditWidget) fetchNewAppAccessToken() (err error) {
+func (widget *redditWidget) fetchNewAppAccessToken() error {
 	body := strings.NewReader("grant_type=client_credentials")
 	req, err := http.NewRequest("POST", "https://www.reddit.com/api/v1/access_token", body)
 	if err != nil {
@@ -300,7 +300,7 @@ func (widget *redditWidget) fetchNewAppAccessToken() (err error) {
 	client := ternary(widget.Proxy.client != nil, widget.Proxy.client, defaultHTTPClient)
 	response, err := decodeJsonFromRequest[tokenResponse](client, req)
 	if err != nil {
-		return fmt.Errorf("decoding Reddit API response: %v", err)
+		return err
 	}
 
 	app.accessToken = response.AccessToken

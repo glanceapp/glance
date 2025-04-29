@@ -74,7 +74,7 @@ func decodeJsonFromRequest[T any](client requestDoer, request *http.Request) (T,
 		truncatedBody, _ := limitStringLength(string(body), 256)
 
 		return result, fmt.Errorf(
-			"unexpected status code %d for %s, response: %s",
+			"unexpected status code %d from %s, response: %s",
 			response.StatusCode,
 			request.URL,
 			truncatedBody,
