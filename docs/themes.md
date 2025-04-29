@@ -53,6 +53,16 @@ theme:
   primary-color: 97 13 80
 ```
 
+### Gruvbox Dark
+![screenshot](images/themes/gruvbox.png)
+```yaml
+theme:
+  background-color: 0 0 16
+  primary-color: 43 59 81
+  positive-color: 61 66 44
+  negative-color: 6 96 59
+```
+
 ### Kanagawa Dark
 ![screenshot](images/themes/kanagawa-dark.png)
 ```yaml
@@ -70,6 +80,17 @@ theme:
   background-color: 50 1 6
   primary-color: 24 97 58
   negative-color: 209 88 54
+```
+
+### Dracula
+![screenshot](images/themes/dracula.png)
+```yaml
+theme:
+  background-color: 231 15 21
+  primary-color: 265 89 79
+  contrast-multiplier: 1.2
+  positive-color: 135 94 66
+  negative-color: 0 100 67
 ```
 
 ## Light

@@ -1,11 +1,17 @@
-# Configuration
+# Configuring Glance
 
-- [Intro](#intro)
 - [Preconfigured page](#preconfigured-page)
+- [The config file](#the-config-file)
+  - [Auto reload](#auto-reload)
+  - [Environment variables](#environment-variables)
+    - [Other ways of providing tokens/passwords/secrets](#other-ways-of-providing-tokenspasswordssecrets)
+  - [Including other config files](#including-other-config-files)
+  - [Config schema](#config-schema)
 - [Server](#server)
+- [Document](#document)
 - [Branding](#branding)
 - [Theme](#theme)
-  - [Themes](#themes)
+  - [Available themes](#available-themes)
 - [Pages & Columns](#pages--columns)
 - [Widgets](#widgets)
   - [RSS](#rss)
@@ -21,10 +27,13 @@
   - [Weather](#weather)
   - [Monitor](#monitor)
   - [Releases](#releases)
+  - [Docker Containers](#docker-containers)
   - [DNS Stats](#dns-stats)
+  - [Server Stats](#server-stats)
   - [Repository](#repository)
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
+  - [Calendar (legacy)](#calendar-legacy)
   - [ChangeDetection.io](#changedetectionio)
   - [Clock](#clock)
   - [Markets](#markets)
@@ -32,90 +41,151 @@
   - [Twitch Top Games](#twitch-top-games)
   - [iframe](#iframe)
   - [HTML](#html)
-  - [Docker](#docker)
 
-## Intro
-<!-- TODO: update -->
-Configuration is done via a single YAML file and a server restart is required in order for any changes to take effect. Trying to start the server with an invalid config file will result in an error.
 
 ## Preconfigured page
-If you don't want to spend time reading through all the available configuration options and just want something to get you going quickly you can use the following `glance.yml` and make changes as you see fit:
-
-```yaml
-pages:
-  - name: Home
-    columns:
-      - size: small
-        widgets:
-          - type: calendar
-
-          - type: rss
-            limit: 10
-            collapse-after: 3
-            cache: 3h
-            feeds:
-              - url: https://ciechanow.ski/atom.xml
-              - url: https://www.joshwcomeau.com/rss.xml
-                title: Josh Comeau
-              - url: https://samwho.dev/rss.xml
-              - url: https://awesomekling.github.io/feed.xml
-              - url: https://ishadeed.com/feed.xml
-                title: Ahmad Shadeed
-
-          - type: twitch-channels
-            channels:
-              - theprimeagen
-              - cohhcarnage
-              - christitustech
-              - blurbs
-              - asmongold
-              - jembawls
-
-      - size: full
-        widgets:
-          - type: hacker-news
-
-          - type: videos
-            channels:
-              - UCR-DXc1voovS8nhAvccRZhg # Jeff Geerling
-              - UCv6J_jJa8GJqFwQNgNrMuww # ServeTheHome
-              - UCOk-gHyjcWZNj3Br4oxwh0A # Techno Tim
-
-          - type: reddit
-            subreddit: selfhosted
-
-      - size: small
-        widgets:
-          - type: weather
-            location: London, United Kingdom
-
-          - type: markets
-            markets:
-              - symbol: SPY
-                name: S&P 500
-              - symbol: BTC-USD
-                name: Bitcoin
-              - symbol: NVDA
-                name: NVIDIA
-              - symbol: AAPL
-                name: Apple
-              - symbol: MSFT
-                name: Microsoft
-              - symbol: GOOGL
-                name: Google
-              - symbol: AMD
-                name: AMD
-              - symbol: RDDT
-                name: Reddit
-```
-
-This will give you a page that looks like the following:
+If you don't want to spend time reading through all the available configuration options and just want something to get you going quickly you can use [this `glance.yml` file](glance.yml) and make changes to it as you see fit. It will give you a page that looks like the following:
 
 ![](images/preconfigured-page-preview.png)
 
 Configure the widgets, add more of them, add extra pages, etc. Make it your own!
 
-<!-- TODO: update - add information about top level document key -->
+## The config file
+
+### Auto reload
+Automatic config reload is supported, meaning that you can make changes to the config file and have them take effect on save without having to restart the container/service. Making changes to environment variables does not trigger a reload and requires manual restart. Deleting a config file will stop that file from being watched, even if it is recreated.
+
+> [!NOTE]
+>
+> If you attempt to start Glance with an invalid config it will exit with an error outright. If you successfully started Glance with a valid config and then made changes to it which result in an error, you'll see that error in the console and Glance will continue to run with the old configuration. You can then continue to make changes and when there are no errors the new configuration will be loaded.
+
+> [!CAUTION]
+>
+> Reloading the configuration file clears your cached data, meaning that you have to request the data anew each time you do this. This can lead to rate limiting for some APIs if you do it too frequently. Having a cache that persists between reloads will be added in the future.
+
+### Environment variables
+Inserting environment variables is supported anywhere in the config. This is done via the `${ENV_VAR}` syntax. Attempting to use an environment variable that doesn't exist will result in an error and Glance will either not start or load your new config on save. Example:
+
+```yaml
+server:
+  host: ${HOST}
+  port: ${PORT}
+```
+
+Can also be in the middle of a string:
+
+```yaml
+- type: rss
+  title: ${RSS_TITLE}
+  feeds:
+    - url: http://domain.com/rss/${RSS_CATEGORY}.xml
+```
+
+Works with any type of value, not just strings:
+
+```yaml
+- type: rss
+  limit: ${RSS_LIMIT}
+```
+
+If you need to use the syntax `${NAME}` in your config without it being interpreted as an environment variable, you can escape it by prefixing with a backslash `\`:
+
+```yaml
+something: \${NOT_AN_ENV_VAR}
+```
+
+#### Other ways of providing tokens/passwords/secrets
+
+You can use [Docker secrets](https://docs.docker.com/compose/how-tos/use-secrets/) with the following syntax:
+
+```yaml
+# This will be replaced with the contents of the file /run/secrets/github_token
+# so long as the secret `github_token` is provided to the container
+token: ${secret:github_token}
+```
+
+Alternatively, you can load the contents of a file who's path is provided by an environment variable:
+
+`docker-compose.yml`
+```yaml
+services:
+  glance:
+    image: glanceapp/glance
+    environment:
+      - TOKEN_FILE=/home/user/token
+    volumes:
+      - /home/user/token:/home/user/token
+```
+
+`glance.yml`
+```yaml
+token: ${readFileFromEnv:TOKEN_FILE}
+```
+
+> [!NOTE]
+>
+> The contents of the file will be stripped of any leading/trailing whitespace before being used.
+
+### Including other config files
+Including config files from within your main config file is supported. This is done via the `$include` directive along with a relative or absolute path to the file you want to include. If the path is relative, it will be relative to the main config file. Additionally, environment variables can be used within included files, and changes to the included files will trigger an automatic reload. Example:
+
+```yaml
+pages:
+  - $include: home.yml
+  - $include: videos.yml
+  - $include: homelab.yml
+```
+
+The file you are including should not have any additional indentation, its values should be at the top level and the appropriate amount of indentation will be added automatically depending on where the file is included. Example:
+
+`glance.yml`
+
+```yaml
+pages:
+  - name: Home
+    columns:
+      - size: full
+        widgets:
+          $include: rss.yml
+  - name: News
+    columns:
+      - size: full
+        widgets:
+          - type: group
+            widgets:
+              $include: rss.yml
+              - type: reddit
+                subreddit: news
+```
+
+`rss.yml`
+
+```yaml
+- type: rss
+  title: News
+  feeds:
+    - url: ${RSS_URL}
+```
+
+The `$include` directive can be used anywhere in the config file, not just in the `pages` property, however it must be on its own line and have the appropriate indentation.
+
+If you encounter YAML parsing errors when using the `$include` directive, the reported line numbers will likely be incorrect. This is because the inclusion of files is done before the YAML is parsed, as YAML itself does not support file inclusion. To help with debugging in cases like this, you can use the `config:print` command and pipe it into `less -N` to see the full config file with includes resolved and line numbers added:
+
+```sh
+glance --config /path/to/glance.yml config:print | less -N
+```
+
+This is a bit more convoluted when running Glance inside a Docker container:
+
+```sh
+docker run --rm -v ./glance.yml:/app/config/glance.yml glanceapp/glance config:print | less -N
+```
+
+This assumes that the config you want to print is in your current working directory and is named `glance.yml`.
+
+## Config schema
+
+For property descriptions, validation and autocompletion of the config within your IDE, @not-first has kindly created a [schema](https://github.com/not-first/glance-schema). Massive thanks to them for this, go check it out and give them a star!
 
 ## Server
 Server configuration is done through a top level `server` property. Example:
@@ -185,6 +255,15 @@ To be able to point to an asset from your assets path, use the `/assets/` path l
 icon: /assets/gitea-icon.png
 ```
 
+## Document
+If you want to insert custom HTML into the `<head>` of the document for all pages, you can do so by using the `document` property. Example:
+
+```yaml
+document:
+  head: |
+    <script src="/assets/custom.js"></script>
+```
+
 ## Branding
 You can adjust the various parts of the branding through a top level `branding` property. Example:
 
@@ -194,6 +273,9 @@ branding:
     <p>Powered by <a href="https://github.com/glanceapp/glance">Glance</a></p>
   logo-url: /assets/logo.png
   favicon-url: /assets/logo.png
+  app-name: "My Dashboard"
+  app-icon-url: "/assets/app-icon.png"
+  app-background-color: "#151519"
 ```
 
 ### Properties
@@ -205,6 +287,9 @@ branding:
 | logo-text | string | no | G |
 | logo-url | string | no | |
 | favicon-url | string | no | |
+| app-name | string | no | Glance |
+| app-icon-url | string | no | Glance's default icon |
+| app-background-color | string | no | Glance's default background color |
 
 #### `hide-footer`
 Hides the footer when set to `true`.
@@ -220,6 +305,15 @@ Specify a URL to a custom image to use instead of the "G" found in the navigatio
 
 #### `favicon-url`
 Specify a URL to a custom image to use for the favicon.
+
+#### `app-name`
+Specify the name of the web app shown in browser tab and PWA.
+
+#### `app-icon-url`
+Specify URL for PWA and browser tab icon (512x512 PNG).
+
+#### `app-background-color`
+Specify background color for PWA. Must be a valid CSS color.
 
 ## Theme
 Theming is done through a top level `theme` property. Values for the colors are in [HSL](https://giggster.com/guide/basics/hue-saturation-lightness/) (hue, saturation, lightness) format. You can use a color picker [like this one](https://hslpicker.com/) to convert colors from other formats to HSL. The values are separated by a space and `%` is not required for any of the numbers.
@@ -248,7 +342,7 @@ theme:
       negative-color: 347 87 44
 ```
 
-### Themes
+### Available themes
 If you don't want to spend time configuring your own theme, there are [several available themes](themes.md) which you can simply copy the values for.
 
 ### Properties
@@ -351,23 +445,29 @@ pages:
 ### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| title | string | yes | |
+| name | string | yes | |
 | slug | string | no | |
 | width | string | no | |
+| desktop-navigation-width | string | no | |
 | center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
 | expand-mobile-page-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
 
-#### `title`
+#### `name`
 The name of the page which gets shown in the navigation bar.
 
 #### `slug`
 The URL friendly version of the title which is used to access the page. For example if the title of the page is "RSS Feeds" you can make the page accessible via `localhost:8080/feeds` by setting the slug to `feeds`. If not defined, it will automatically be generated from the title.
 
 #### `width`
-The maximum width of the page on desktop. Possible values are `slim` and `wide`.
+The maximum width of the page on desktop. Possible values are `default`, `slim` and `wide`.
+
+#### `desktop-navigation-width`
+The maximum width of the desktop navigation. Useful if you have a few pages that use a different width than the rest and don't want the navigation to jump abruptly when going to and away from those pages. Possible values are `default`, `slim` and `wide`.
+
+Here are the pixel equivalents for each value:
 
 * default: `1600px`
 * slim: `1100px`
@@ -526,8 +626,21 @@ Example:
 | thumbnail-height | float | no | 10 |
 | card-height | float | no | 27 |
 | limit | integer | no | 25 |
+| preserve-order | bool | no | false |
 | single-line-titles | boolean | no | false |
 | collapse-after | integer | no | 5 |
+
+##### `limit`
+The maximum number of articles to show.
+
+##### `collapse-after`
+How many articles are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
+
+##### `preserve-order`
+When set to `true`, the order of the articles will be preserved as they are in the feeds. Useful if a feed uses its own sorting order which denotes the importance of the articles. If you use this property while having a lot of feeds, it's recommended to set a `limit` to each individual feed since if the first defined feed has 15 articles, the articles from the second feed will start after the 15th article in the list.
+
+##### `single-line-titles`
+When set to `true`, truncates the title of each post if it exceeds one line. Only applies when the style is set to `vertical-list`.
 
 ##### `style`
 Used to change the appearance of the widget. Possible values are:
@@ -571,8 +684,12 @@ An array of RSS/atom feeds. The title can optionally be changed.
 | title | string | no | the title provided by the feed | |
 | hide-categories | boolean | no | false | Only applicable for `detailed-list` style |
 | hide-description | boolean | no | false | Only applicable for `detailed-list` style |
+| limit | integer | no | | |
 | item-link-prefix | string | no | | |
 | headers | key (string) & value (string) | no | | |
+
+###### `limit`
+The maximum number of articles to show from that specific feed. Useful if you have a feed which posts a lot of articles frequently and you want to prevent it from excessively pushing down articles from other feeds.
 
 ###### `item-link-prefix`
 If an RSS feed isn't returning item links with a base domain and Glance has failed to automatically detect the correct domain you can manually add a prefix to each link with this property.
@@ -587,15 +704,6 @@ Optionally specify the headers that will be sent with the request. Example:
       headers:
         User-Agent: Custom User Agent
 ```
-
-##### `limit`
-The maximum number of articles to show.
-
-##### `single-line-titles`
-When set to `true`, truncates the title of each post if it exceeds one line. Only applies when the style is set to `vertical-list`.
-
-##### `collapse-after`
-How many articles are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
 ### Videos
 Display a list of the latest videos from specific YouTube channels.
@@ -617,20 +725,16 @@ Preview:
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | channels | array | yes | |
+| playlists | array | no | |
 | limit | integer | no | 25 |
 | style | string | no | horizontal-cards |
+| collapse-after | integer | no | 7 |
 | collapse-after-rows | integer | no | 4 |
 | include-shorts | boolean | no | false |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
-A list of channel or playlist IDs. To specify a playlist, use the `playlist:` prefix like such:
-
-```yaml
-channels:
-  - playlist:PL8mG-RkN2uTyZZ00ObwZxxoG_nJbs3qec
-  - playlist:PL8mG-RkN2uTxTK4m_Vl2dYR9yE41kRdBg
-```
+A list of channels IDs.
 
 One way of getting the ID of a channel is going to the channel's page and clicking on its description:
 
@@ -640,14 +744,32 @@ Then scroll down and click on "Share channel", then "Copy channel ID":
 
 ![](images/videos-copy-channel-id-example.png)
 
+##### `playlists`
+
+A list of playlist IDs:
+
+```yaml
+- type: videos
+  playlists:
+    - PL8mG-RkN2uTyZZ00ObwZxxoG_nJbs3qec
+    - PL8mG-RkN2uTxTK4m_Vl2dYR9yE41kRdBg
+```
+
 ##### `limit`
 The maximum number of videos to show.
+
+##### `collapse-after`
+Specify the number of videos to show when using the `vertical-list` style before the "SHOW MORE" button appears.
 
 ##### `collapse-after-rows`
 Specify the number of rows to show when using the `grid-cards` style before the "SHOW MORE" button appears.
 
 ##### `style`
-Used to change the appearance of the widget. Possible values are `horizontal-cards` and `grid-cards`.
+Used to change the appearance of the widget. Possible values are `horizontal-cards`, `vertical-list` and `grid-cards`.
+
+Preview of `vertical-list`:
+
+![](images/videos-widget-vertical-list-preview.png)
 
 Preview of `grid-cards`:
 
@@ -762,7 +884,10 @@ Display a list of posts from a specific subreddit.
 
 > [!WARNING]
 >
-> Reddit does not allow unauthorized API access from VPS IPs, if you're hosting Glance on a VPS you will get a 403 response. As a workaround you can route the traffic from Glance through a VPN or your own HTTP proxy using the `request-url-template` property.
+> Reddit does not allow unauthorized API access from VPS IPs, if you're hosting Glance on a VPS you will get a 403
+> response. As a workaround you can either [register an app on Reddit](https://ssl.reddit.com/prefs/apps/) and use the
+> generated ID and secret in the widget configuration to authenticate your requests (see `app-auth` property), use a proxy
+> (see `proxy` property) or route the traffic from Glance through a VPN.
 
 Example:
 
@@ -782,10 +907,12 @@ Example:
 | collapse-after | integer | no | 5 |
 | comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
 | request-url-template | string | no |  |
+| proxy | string or multiple parameters | no |  |
 | sort-by | string | no | hot |
 | top-period | string | no | day |
 | search | string | no | |
 | extra-sort-by | string | no | |
+| app-auth | object | no | |
 
 ##### `subreddit`
 The subreddit for which to fetch the posts from.
@@ -843,7 +970,7 @@ r/selfhosted/comments/bsp01i/welcome_to_rselfhosted_please_read_this_first/
 `{SUBREDDIT}` - the subreddit name
 
 ##### `request-url-template`
-A custom request url that will be used to fetch the data instead. This is useful when you're hosting Glance on a VPS and Reddit is blocking the requests, and you want to route it through an HTTP proxy.
+A custom request URL that will be used to fetch the data. This is useful when you're hosting Glance on a VPS where Reddit is blocking the requests and you want to route them through a proxy that accepts the URL as either a part of the path or a query parameter.
 
 Placeholders:
 
@@ -853,6 +980,29 @@ Placeholders:
 https://proxy/{REQUEST-URL}
 https://your.proxy/?url={REQUEST-URL}
 ```
+
+##### `proxy`
+A custom HTTP/HTTPS proxy URL that will be used to fetch the data. This is useful when you're hosting Glance on a VPS where Reddit is blocking the requests and you want to bypass the restriction by routing the requests through a proxy. Example:
+
+```yaml
+proxy: http://user:pass@proxy.com:8080
+proxy: https://user:pass@proxy.com:443
+```
+
+Alternatively, you can specify the proxy URL as well as additional options by using multiple parameters:
+
+```yaml
+proxy:
+  url: http://proxy.com:8080
+  allow-insecure: true
+  timeout: 10s
+```
+
+###### `allow-insecure`
+When set to `true`, allows the use of insecure connections such as when the proxy has a self-signed certificate.
+
+###### `timeout`
+The maximum time to wait for a response from the proxy. The value is a string and must be a number followed by one of s, m, h, d. Example: `10s` for 10 seconds, `1m` for 1 minute, etc
 
 ##### `sort-by`
 Can be used to specify the order in which the posts should get returned. Possible values are `hot`, `new`, `top` and `rising`.
@@ -869,6 +1019,17 @@ Keywords to search for. Searching within specific fields is also possible, **tho
 Can be used to specify an additional sort which will be applied on top of the already sorted posts. By default does not apply any extra sorting and the only available option is `engagement`.
 
 The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
+
+##### `app-auth`
+```yaml
+widgets:
+  - type: reddit
+    subreddit: technology
+    app-auth:
+      name: ${REDDIT_APP_NAME}
+      id: ${REDDIT_APP_CLIENT_ID}
+      secret: ${REDDIT_APP_SECRET}
+```
 
 ### Search Widget
 Display a search bar that can be used to search for specific terms on various search engines.
@@ -907,6 +1068,7 @@ Preview:
 | search-engine | string | no | duckduckgo |
 | new-tab | boolean | no | false |
 | autofocus | boolean | no | false |
+| target | string | no | _blank |
 | placeholder | string | no | Type here to search… |
 | bangs | array | no | |
 
@@ -917,12 +1079,19 @@ Either a value from the table below or a URL to a custom search engine. Use `{QU
 | ---- | --- |
 | duckduckgo | `https://duckduckgo.com/?q={QUERY}` |
 | google | `https://www.google.com/search?q={QUERY}` |
+| bing | `https://www.bing.com/search?q={QUERY}` |
+| perplexity | `https://www.perplexity.ai/search?q={QUERY}` |
+| kagi | `https://kagi.com/search?q={QUERY}` |
+| startpage | `https://www.startpage.com/search?q={QUERY}` |
 
 ##### `new-tab`
 When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
 
 ##### `autofocus`
 When set to `true`, automatically focuses the search input on page load.
+
+##### `target`
+The target to use when opening the search results in a new tab. Possible values are `_blank`, `_self`, `_parent` and `_top`.
 
 ##### `placeholder`
 When set, modifies the text displayed in the input field before typing.
@@ -1006,65 +1175,348 @@ Example:
 ```
 
 ### Split Column
-<!-- TODO: update -->
-Splits a full sized column in half, allowing you to place widgets side by side. This is converted to a single column on mobile devices or if not enough width is available. Widgets are defined using a `widgets` property exactly as you would on a page column.
+Splits a full sized column in half, allowing you to place widgets side by side horizontally. This is converted to a single column on mobile devices or if not enough width is available. Widgets are defined using a `widgets` property exactly as you would on a page column.
 
-Example of a full page with an effective 4 column layout using two split column widgets inside of two full sized columns:
+Two widgets side by side in a `full` column:
+
+![](images/split-column-widget-preview.png)
 
 <details>
-<summary>View config</summary>
+<summary>View <code>glance.yml</code></summary>
+<br>
 
 ```yaml
-shared:
-  - &reddit-props
-    type: reddit
-    collapse-after: 4
-    show-thumbnails: true
+# ...
+- size: full
+  widgets:
+    - type: split-column
+      widgets:
+        - type: hacker-news
+          collapse-after: 3
+        - type: lobsters
+          collapse-after: 3
 
+    - type: videos
+# ...
+```
+</details>
+<br>
+
+You can also achieve a number of different full page layouts using just this widget, such as:
+
+3 column layout where all columns have equal width:
+
+![](images/split-column-widget-3-columns.png)
+
+<details>
+<summary>View <code>glance.yml</code></summary>
+<br>
+
+```yaml
 pages:
-  - name: Split Column Demo
+  - name: Home
+    columns:
+      - size: full
+        widgets:
+          - type: split-column
+            max-columns: 3
+            widgets:
+              - type: reddit
+                subreddit: selfhosted
+                collapse-after: 15
+              - type: reddit
+                subreddit: homelab
+                collapse-after: 15
+              - type: reddit
+                subreddit: sysadmin
+                collapse-after: 15
+```
+</details>
+<br>
+
+4 column layout where all columns have equal width (and the page is set to `width: wide`):
+
+![](images/split-column-widget-4-columns.png)
+
+<details>
+<summary>View <code>glance.yml</code></summary>
+<br>
+
+```yaml
+pages:
+  - name: Home
     width: wide
     columns:
       - size: full
         widgets:
           - type: split-column
+            max-columns: 4
             widgets:
-              - subreddit: gaming
-                <<: *reddit-props
-              - subreddit: worldnews
-                <<: *reddit-props
-              - subreddit: lifeprotips
-                <<: *reddit-props
-                show-thumbnails: false
-              - subreddit: askreddit
-                <<: *reddit-props
-                show-thumbnails: false
+              - type: reddit
+                subreddit: selfhosted
+                collapse-after: 15
+              - type: reddit
+                subreddit: homelab
+                collapse-after: 15
+              - type: reddit
+                subreddit: linux
+                collapse-after: 15
+              - type: reddit
+                subreddit: sysadmin
+                collapse-after: 15
+```
+</details>
+<br>
 
+Masonry layout with up to 5 columns where all columns have equal width (and the page is set to `width: wide`):
+
+![](images/split-column-widget-masonry.png)
+
+<details>
+<summary>View <code>glance.yml</code></summary>
+<br>
+
+```yaml
+define:
+  - &subreddit-settings
+    type: reddit
+    collapse-after: 5
+
+pages:
+  - name: Home
+    width: wide
+    columns:
       - size: full
         widgets:
           - type: split-column
+            max-columns: 5
             widgets:
-              - subreddit: todayilearned
-                <<: *reddit-props
-                collapse-after: 2
-              - subreddit: aww
-                <<: *reddit-props
-              - subreddit: science
-                <<: *reddit-props
-              - subreddit: showerthoughts
-                <<: *reddit-props
-                show-thumbnails: false
+              - subreddit: selfhosted
+                <<: *subreddit-settings
+              - subreddit: homelab
+                <<: *subreddit-settings
+              - subreddit: linux
+                <<: *subreddit-settings
+              - subreddit: sysadmin
+                <<: *subreddit-settings
+              - subreddit: DevOps
+                <<: *subreddit-settings
+              - subreddit: Networking
+                <<: *subreddit-settings
+              - subreddit: DataHoarding
+                <<: *subreddit-settings
+              - subreddit: OpenSource
+                <<: *subreddit-settings
+              - subreddit: Privacy
+                <<: *subreddit-settings
+              - subreddit: FreeSoftware
+                <<: *subreddit-settings
+```
+</details>
+<br>
+
+Just like the `group` widget, you can insert any widget type, you can even insert a `group` widget inside of a `split-column` widget, but you can't insert a `split-column` widget inside of a `group` widget.
+
+
+### Custom API
+
+Display data from a JSON API using a custom template.
+
+> [!NOTE]
+>
+> The configuration of this widget requires some basic knowledge of programming, HTML, CSS, the Go template language and Glance-specific concepts.
+
+Examples:
+
+![](images/custom-api-preview-1.png)
+
+<details>
+<summary>View <code>glance.yml</code></summary>
+<br>
+
+```yaml
+- type: custom-api
+  title: Random Fact
+  cache: 6h
+  url: https://uselessfacts.jsph.pl/api/v2/facts/random
+  template: |
+    <p class="size-h4 color-paragraph">{{ .JSON.String "text" }}</p>
+```
+</details>
+<br>
+
+![](images/custom-api-preview-2.png)
+
+<details>
+<summary>View <code>glance.yml</code></summary>
+<br>
+
+```yaml
+- type: custom-api
+  title: Immich stats
+  cache: 1d
+  url: https://${IMMICH_URL}/api/server/statistics
+  headers:
+    x-api-key: ${IMMICH_API_KEY}
+    Accept: application/json
+  template: |
+    <div class="flex justify-between text-center">
+      <div>
+          <div class="color-highlight size-h3">{{ .JSON.Int "photos" | formatNumber }}</div>
+          <div class="size-h6">PHOTOS</div>
+      </div>
+      <div>
+          <div class="color-highlight size-h3">{{ .JSON.Int "videos" | formatNumber }}</div>
+          <div class="size-h6">VIDEOS</div>
+      </div>
+      <div>
+          <div class="color-highlight size-h3">{{ div (.JSON.Int "usage" | toFloat) 1073741824 | toInt | formatNumber }}GB</div>
+          <div class="size-h6">USAGE</div>
+      </div>
+    </div>
+```
+</details>
+<br>
+
+![](images/custom-api-preview-3.png)
+
+<details>
+<summary>View <code>glance.yml</code></summary>
+<br>
+
+```yaml
+- type: custom-api
+  title: Steam Specials
+  cache: 12h
+  url: https://store.steampowered.com/api/featuredcategories?cc=us
+  template: |
+    <ul class="list list-gap-10 collapsible-container" data-collapse-after="5">
+    {{ range .JSON.Array "specials.items" }}
+      <li>
+        <a class="size-h4 color-highlight block text-truncate" href="https://store.steampowered.com/app/{{ .Int "id" }}/">{{ .String "name" }}</a>
+        <ul class="list-horizontal-text">
+          <li>{{ div (.Int "final_price" | toFloat) 100 | printf "$%.2f" }}</li>
+          {{ $discount := .Int "discount_percent" }}
+          <li{{ if ge $discount 40 }} class="color-positive"{{ end }}>{{ $discount }}% off</li>
+        </ul>
+      </li>
+    {{ end }}
+    </ul>
 ```
 </details>
 
-<br>
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| url | string | yes | |
+| headers | key (string) & value (string) | no | |
+| method | string | no | GET |
+| body-type | string | no | json |
+| body | any | no | |
+| frameless | boolean | no | false |
+| allow-insecure | boolean | no | false |
+| skip-json-validation | boolean | no | false |
+| template | string | yes | |
+| parameters | key (string) & value (string|array) | no | |
+| subrequests | map of requests | no | |
 
-Preview:
+##### `url`
+The URL to fetch the data from. It must be accessible from the server that Glance is running on.
 
-![](images/split-column-widget-preview.png)
+##### `headers`
+Optionally specify the headers that will be sent with the request. Example:
 
-### Custom API
-<!-- TODO -->
+```yaml
+headers:
+  x-api-key: your-api-key
+  Accept: application/json
+```
+
+##### `method`
+The HTTP method to use when making the request. Possible values are `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` and `HEAD`.
+
+##### `body-type`
+The type of the body that will be sent with the request. Possible values are `json`, and `string`.
+
+##### `body`
+The body that will be sent with the request. It can be a string or a map. Example:
+
+```yaml
+body-type: json
+body:
+  key1: value1
+  key2: value2
+  multiple-items:
+    - item1
+    - item2
+```
+
+```yaml
+body-type: string
+body: |
+  key1=value1&key2=value2
+```
+
+##### `frameless`
+When set to `true`, removes the border and padding around the widget.
+
+##### `allow-insecure`
+Whether to ignore invalid/self-signed certificates.
+
+##### `skip-json-validation`
+When set to `true`, skips the JSON validation step. This is useful when the API returns JSON Lines/newline-delimited JSON, which is a format that consists of several JSON objects separated by newlines.
+
+##### `template`
+The template that will be used to display the data. It relies on Go's `html/template` package so it's recommended to go through [its documentation](https://pkg.go.dev/text/template) to understand how to do basic things such as conditionals, loops, etc. In addition, it also uses [tidwall's gjson](https://github.com/tidwall/gjson) package to parse the JSON data so it's worth going through its documentation if you want to use more advanced JSON selectors. You can view additional examples with explanations and function definitions [here](custom-api.md).
+
+##### `parameters`
+A list of keys and values that will be sent to the custom-api as query paramters.
+
+##### `subrequests`
+A map of additional requests that will be executed concurrently and then made available in the template via the `.Subrequest` property. Example:
+
+```yaml
+- type: custom-api
+  cache: 2h
+  subrequests:
+    another-one:
+      url: https://uselessfacts.jsph.pl/api/v2/facts/random
+  title: Random Fact
+  url: https://uselessfacts.jsph.pl/api/v2/facts/random
+  template: |
+    <p class="size-h4 color-paragraph">{{ .JSON.String "text" }}</p>
+    <p class="size-h4 color-paragraph margin-top-15">{{ (.Subrequest "another-one").JSON.String "text" }}</p>
+```
+
+The subrequests support all the same properties as the main request, except for `subrequests` itself, so you can use `headers`, `parameters`, etc.
+
+`(.Subrequest "key")` can be a little cumbersome to write, so you can define a variable to make it easier:
+
+```yaml
+  template: |
+    {{ $anotherOne := .Subrequest "another-one" }}
+    <p>{{ $anotherOne.JSON.String "text" }}</p>
+```
+
+You can also access the `.Response` property of a subrequest as you would with the main request:
+
+```yaml
+  template: |
+    {{ $anotherOne := .Subrequest "another-one" }}
+    <p>{{ $anotherOne.Response.StatusCode }}</p>
+```
+
+> [!NOTE]
+>
+> Setting this property will override any query parameters that are already in the URL.
+
+```yaml
+parameters:
+  param1: value1
+  param2:
+    - item1
+    - item2
+```
 
 ### Extension
 Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
@@ -1083,6 +1535,7 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | url | string | yes | |
 | fallback-content-type | string | no | |
 | allow-potentially-dangerous-html | boolean | no | false |
+| headers | key & value | no | |
 | parameters | key & value | no | |
 
 ##### `url`
@@ -1090,6 +1543,14 @@ The URL of the extension. **Note that the query gets stripped from this URL and 
 
 ##### `fallback-content-type`
 Optionally specify the fallback content type of the extension if the URL does not return a valid `Widget-Content-Type` header. Currently the only supported value for this property is `html`.
+
+##### `headers`
+Optionally specify the headers that will be sent with the request. Example:
+
+```yaml
+headers:
+  x-api-key: ${SECRET_KEY}
+```
 
 ##### `allow-potentially-dangerous-html`
 Whether to allow the extension to display HTML.
@@ -1224,10 +1685,12 @@ Properties for each site:
 | title | string | yes | |
 | url | string | yes | |
 | check-url | string | no | |
+| error-url | string | no | |
 | icon | string | no | |
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
 | alt-status-codes | array | no | |
+| basic-auth | object | no | |
 
 `title`
 
@@ -1235,11 +1698,15 @@ The title used to indicate the site.
 
 `url`
 
-The public facing URL of a monitored service, the user will be redirected here. If `check-url` is not specified, this is used as the status check.
+The URL of the monitored service, which must be reachable by Glance, and will be used as the link to go to when clicking on the title. If `check-url` is not specified, this is used as the status check.
 
 `check-url`
 
 The URL which will be requested and its response will determine the status of the site. If not specified, the `url` property is used.
+
+`error-url`
+
+If the monitored service returns an error, the user will be redirected here. If not specified, the `url` property is used.
 
 `icon`
 
@@ -1270,6 +1737,16 @@ Status codes other than 200 that you want to return "OK".
 ```yaml
 alt-status-codes:
   - 403
+```
+
+`basic-auth`
+
+HTTP Basic Authentication credentials for protected sites.
+
+```yaml
+basic-auth:
+  usename: your-username
+  password: your-password
 ```
 
 ### Releases
@@ -1314,7 +1791,7 @@ repositories:
   - codeberg:redict/redict
 ```
 
-Official images on Docker Hub can be specified by ommiting the owner:
+Official images on Docker Hub can be specified by omitting the owner:
 
 ```yaml
 repositories:
@@ -1323,7 +1800,7 @@ repositories:
   - dockerhub:alpine
 ```
 
-You can also specify specific tags for Docker Hub images:
+You can also specify exact tags for Docker Hub images:
 
 ```yaml
 repositories:
@@ -1331,6 +1808,17 @@ repositories:
   - dockerhub:nginx:stable-alpine
 ```
 
+To include prereleases you can specify the repository as an object and use the `include-prereleases` property:
+
+**Note: This feature is currently only available for GitHub repositories.**
+
+```yaml
+repositories:
+  - gitlab:inkscape/inkscape
+  - repository: glanceapp/glance
+    include-prereleases: true
+  - codeberg:redict/redict
+```
 
 ##### `show-source-icon`
 Shows an icon of the source (GitHub/GitLab/Codeberg/Docker Hub) next to the repository name when set to `true`.
@@ -1345,7 +1833,7 @@ services:
   glance:
     image: glanceapp/glance
     environment:
-      - GITHUB_TOKEN: <your token>
+      - GITHUB_TOKEN=<your token>
 ```
 
 and then use it in your `glance.yml` like this:
@@ -1367,8 +1855,186 @@ The maximum number of releases to show.
 #### `collapse-after`
 How many releases are visible before the "SHOW MORE" button appears. Set to `-1` to never collapse.
 
+### Docker Containers
+
+Display the status of your Docker containers along with an icon and an optional short description.
+
+![](images/docker-containers-preview.png)
+
+```yaml
+- type: docker-containers
+  hide-by-default: false
+```
+
+> [!NOTE]
+>
+> The widget requires access to `docker.sock`. If you're running Glance inside a container, this can be done by mounting the socket as a volume:
+>
+> ```yaml
+> services:
+>   glance:
+>     image: glanceapp/glance
+>     volumes:
+>       - /var/run/docker.sock:/var/run/docker.sock
+> ```
+
+Configuration of the containers is done via labels applied to each container:
+
+```yaml
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    labels:
+      glance.name: Jellyfin
+      glance.icon: si:jellyfin
+      glance.url: https://jellyfin.domain.com
+      glance.description: Movies & shows
+```
+
+Alternatively, you can also define the values within your `glance.yml` via the `containers` property, where the key is the container name and each value is the same as the labels but without the "glance." prefix:
+
+```yaml
+- type: docker-containers
+  containers:
+    container_name_1:
+      title: Container Name
+      description: Description of the container
+      url: https://container.domain.com
+      icon: si:container-icon
+      hide: false
+```
+
+For services with multiple containers you can specify a `glance.id` on the "main" container and `glance.parent` on each "child" container:
+
+<details>
+<summary>View <code>docker-compose.yml</code></summary>
+<br>
+
+```yaml
+services:
+  immich-server:
+    image: ghcr.io/immich-app/immich-server
+    labels:
+      glance.name: Immich
+      glance.icon: si:immich
+      glance.url: https://immich.domain.com
+      glance.description: Image & video management
+      glance.id: immich
+
+  redis:
+    image: docker.io/redis:6.2-alpine
+    labels:
+      glance.parent: immich
+      glance.name: Redis
+
+  database:
+    image: docker.io/tensorchord/pgvecto-rs:pg14-v0.2.0
+    labels:
+      glance.parent: immich
+      glance.name: DB
+
+  proxy:
+    image: nginx:stable
+    labels:
+      glance.parent: immich
+      glance.name: Proxy
+```
+</details>
+<br>
+
+This will place all child containers under the `Immich` container when hovering over its icon:
+
+![](images/docker-container-parent.png)
+
+If any of the child containers are down, their status will propagate up to the parent container:
+
+![](images/docker-container-parent2.png)
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| hide-by-default | boolean | no | false |
+| format-container-names | boolean | no | false |
+| sock-path | string | no | /var/run/docker.sock |
+| category | string | no | |
+| running-only | boolean | no | false |
+
+##### `hide-by-default`
+Whether to hide the containers by default. If set to `true` you'll have to manually add a `glance.hide: false` label to each container you want to display. By default all containers will be shown and if you want to hide a specific container you can add a `glance.hide: true` label.
+
+##### `format-container-names`
+When set to `true`, automatically converts container names such as `container_name_1` into `Container Name 1`.
+
+##### `sock-path`
+The path to the Docker socket. This can also be a [remote socket](https://docs.docker.com/engine/daemon/remote-access/) or proxied socket using something like [docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy).
+
+###### `category`
+Filter to only the containers which have this category specified via the `glance.category` label. Useful if you want to have multiple containers widgets, each showing a different set of containers.
+
+<details>
+<summary>View example</summary>
+<br>
+
+
+```yaml
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    labels:
+      glance.name: Jellyfin
+      glance.icon: si:jellyfin
+      glance.url: https://jellyfin.domain.com
+      glance.category: media
+
+  gitea:
+    image: gitea/gitea:latest
+    labels:
+      glance.name: Gitea
+      glance.icon: si:gitea
+      glance.url: https://gitea.domain.com
+      glance.category: dev-tools
+
+  vaultwarden:
+    image: vaultwarden/server:latest
+    labels:
+      glance.name: Vaultwarden
+      glance.icon: si:vaultwarden
+      glance.url: https://vaultwarden.domain.com
+      glance.category: dev-tools
+```
+
+Then you can use the `category` property to filter the containers:
+
+```yaml
+- type: docker-containers
+  title: Dev tool containers
+  category: dev-tools
+
+- type: docker-containers
+  title: Media containers
+  category: media
+```
+
+</details>
+
+##### `running-only`
+Whether to only show running containers. If set to `true` only containers that are currently running will be displayed. If set to `false` all containers will be displayed regardless of their state.
+
+#### Labels
+| Name | Description |
+| ---- | ----------- |
+| glance.name | The name displayed in the UI. If not specified, the name of the container will be used. |
+| glance.icon | The icon displayed in the UI. Can be an external URL or an icon prefixed with si:, sh: or di: like with the bookmarks and monitor widgets |
+| glance.url | The URL that the user will be redirected to when clicking on the container. |
+| glance.same-tab | Whether to open the link in the same or a new tab. Default is `false`. |
+| glance.description | A short description displayed in the UI. Default is empty. |
+| glance.hide | Whether to hide the container. If set to `true` the container will not be displayed. Defaults to `false`. |
+| glance.id | The custom ID of the container. Used to group containers under a single parent. |
+| glance.parent | The ID of the parent container. Used to group containers under a single parent. |
+| glance.category | The category of the container. Used to filter containers by category. |
+
 ### DNS Stats
-Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home or Pi-hole.
+Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home, Pi-hole, or Technitium.
 
 Example:
 
@@ -1386,7 +2052,7 @@ Preview:
 
 > [!NOTE]
 >
-> When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole it will be the total number of blocked domains from all adlists.
+> When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole or Technitium it will be the total number of blocked domains from all adlists.
 
 #### Properties
 
@@ -1396,29 +2062,33 @@ Preview:
 | allow-insecure | bool | no | false |
 | url | string | yes |  |
 | username | string | when service is `adguard` |  |
-| password | string | when service is `adguard` |  |
+| password | string | when service is `adguard` or `pihole-v6` |  |
 | token | string | when service is `pihole` |  |
 | hide-graph | bool | no | false |
 | hide-top-domains | bool | no | false |
 | hour-format | string | no | 12h |
 
 ##### `service`
-Either `adguard` or `pihole`.
+Either `adguard`, `technitium`, or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
 
 ##### `allow-insecure`
 Whether to allow invalid/self-signed certificates when making the request to the service.
 
 ##### `url`
-The base URL of the service. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+The base URL of the service.
 
 ##### `username`
-Only required when using AdGuard Home. The username used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Only required when using AdGuard Home. The username used to log into the admin dashboard.
 
 ##### `password`
-Only required when using AdGuard Home. The password used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Required when using AdGuard Home, where the password is the one used to log into the admin dashboard.
+
+Also required when using Pi-hole major version 6 and above, where the password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
 
 ##### `token`
-Only required when using Pi-hole. The API token which can be found in `Settings -> API -> Show API token`. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`.
+
+Also required when using Technitium, an API token can be generated at `Administration -> Sessions -> Create Token`.
 
 ##### `hide-graph`
 Whether to hide the graph showing the number of queries over time.
@@ -1428,6 +2098,124 @@ Whether to hide the list of top blocked domains.
 
 ##### `hour-format`
 Whether to display the relative time in the graph in `12h` or `24h` format.
+
+### Server Stats
+Display statistics such as CPU usage, memory usage and disk usage of the server Glance is running on or other servers.
+
+Example:
+
+```yaml
+- type: server-stats
+  servers:
+    - type: local
+      name: Services
+```
+
+Preview:
+
+![](images/server-stats-preview.gif)
+
+> [!NOTE]
+>
+> This widget is currently under development, some features might not function as expected or may change.
+
+To display data from a remote server you need to have the Glance Agent running on that server. You can download the agent from [here](https://github.com/glanceapp/agent), though keep in mind that it is still in development and may not work as expected. Support for other providers such as Glances will be added in the future.
+
+In the event that the CPU temperature goes over 80°C, a flame icon will appear next to the CPU. The progress indicators will also turn red (or the equivalent of your negative color) to hopefully grab your attention if anything is unusually high:
+
+![](images/server-stats-flame-icon.png)
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| servers | array | no |  |
+
+##### `servers`
+If not provided it will display the statistics of the server Glance is running on.
+
+##### Properties for both `local` and `remote` servers
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| type | string | yes |  |
+| name | string | no |  |
+| hide-swap | boolean | no | false |
+
+###### `type`
+Whether to display statistics for the local server or a remote server. Possible values are `local` and `remote`.
+
+###### `name`
+The name of the server which will be displayed on the widget. If not provided it will default to the server's hostname.
+
+###### `hide-swap`
+Whether to hide the swap usage.
+
+##### Properties for the `local` server
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| cpu-temp-sensor | string | no |  |
+| hide-mountpoints-by-default | boolean | no | false |
+| mountpoints | map\[string\]object | no |  |
+
+###### `cpu-temp-sensor`
+The name of the sensor to use for the CPU temperature. When not provided the widget will attempt to find the correct one, if it fails to do so the temperature will not be displayed. To view the available sensors you can use `sensors` command.
+
+###### `hide-mountpoints-by-default`
+If set to `true` you'll have to manually make each mountpoint visible by adding a `hide: false` property to it like so:
+
+```yaml
+- type: server-stats
+  servers:
+    - type: local
+      hide-mountpoints-by-default: true
+      mountpoints:
+        "/":
+          hide: false
+        "/mnt/data":
+          hide: false
+```
+
+This is useful if you're running Glance inside of a container which usually mounts a lot of irrelevant filesystems.
+
+###### `mountpoints`
+A map of mountpoints to display disk usage for. The key is the path to the mountpoint and the value is an object with optional properties. Example:
+
+```yaml
+mountpoints:
+  "/":
+    name: Root
+  "/mnt/data":
+    name: Data
+  "/boot/efi":
+    hide: true
+```
+
+##### Properties for each `mountpoint`
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| name | string | no |  |
+| hide | boolean | no | false |
+
+###### `name`
+The name of the mountpoint which will be displayed on the widget. If not provided it will default to the mountpoint's path.
+
+###### `hide`
+Whether to hide this mountpoint from the widget.
+
+##### Properties for `remote` servers
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| url | string | yes |  |
+| token | string | no |  |
+| timeout | string | no | 3s |
+
+###### `url`
+The URL and port of the server to fetch the statistics from.
+
+###### `token`
+The authentication token to use when fetching the statistics.
+
+###### `timeout`
+The maximum time to wait for a response from the server. The value is a string and must be a number followed by one of s, m, h, d. Example: `10s` for 10 seconds, `1m` for 1 minute, etc
 
 ### Repository
 Display general information about a repository as well as a list of the latest open pull requests and issues.
@@ -1532,19 +2320,22 @@ An array of groups which can optionally have a title and a custom color.
 | links | array | yes | |
 | same-tab | boolean | no | false |
 | hide-arrow | boolean | no | false |
+| target | string | no | |
 
 > [!TIP]
 >
-> You can set `same-tab` and `hide-arrow` either on the group which will apply them to all links in that group, or on each individual link which will override the value set on the group.
+> You can set `same-tab`, `hide-arrow` and `target` either on the group which will apply them to all links in that group, or on each individual link which will override the value set on the group.
 
 ###### Properties for each link
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | title | string | yes | |
 | url | string | yes | |
+| description | string | no | |
 | icon | string | no | |
 | same-tab | boolean | no | false |
 | hide-arrow | boolean | no | false |
+| target | string | no | |
 
 `icon`
 
@@ -1567,6 +2358,10 @@ Whether to open the link in the same tab or a new one.
 `hide-arrow`
 
 Whether to hide the colored arrow on each link.
+
+`target`
+
+Set a custom value for the link's `target` attribute. Possible values are `_blank`, `_self`, `_parent` and `_top`, you can read more about what they do [here](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target). This property has precedence over `same-tab`.
 
 ### ChangeDetection.io
 Display a list watches from changedetection.io.
@@ -1667,12 +2462,39 @@ Example:
 
 ```yaml
 - type: calendar
-  start-sunday: false
+  first-day-of-week: monday
 ```
 
 Preview:
 
 ![](images/calendar-widget-preview.png)
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| first-day-of-week | string | no | monday |
+
+##### `first-day-of-week`
+The day of the week that the calendar starts on. All week days are available as possible values.
+
+### Calendar (legacy)
+Display a calendar.
+
+Example:
+
+```yaml
+- type: calendar-legacy
+  start-sunday: false
+```
+
+Preview:
+
+![](images/calendar-legacy-widget-preview.png)
+
+> [!NOTE]
+>
+> This widget is deprecated and may be removed in a future version.
 
 #### Properties
 
@@ -1717,6 +2539,8 @@ Preview:
 | ---- | ---- | -------- |
 | markets | array | yes |
 | sort-by | string | no |
+| chart-link-template | string | no |
+| symbol-link-template | string | no |
 
 ##### `markets`
 An array of markets for which to display information about.
@@ -1724,7 +2548,21 @@ An array of markets for which to display information about.
 ##### `sort-by`
 By default the markets are displayed in the order they were defined. You can customize their ordering by setting the `sort-by` property to `change` for descending order based on the stock's percentage change (e.g. 1% would be sorted higher than -1%) or `absolute-change` for descending order based on the stock's absolute price change (e.g. -1% would be sorted higher than +0.5%).
 
-###### Properties for each stock
+##### `chart-link-template`
+A template for the link to go to when clicking on the chart that will be applied to all markets. The value `{SYMBOL}` will be replaced with the symbol of the market. You can override this on a per-market basis by specifying a `chart-link` property. Example:
+
+```yaml
+chart-link-template: https://www.tradingview.com/chart/?symbol={SYMBOL}
+```
+
+##### `symbol-link-template`
+A template for the link to go to when clicking on the symbol that will be applied to all markets. The value `{SYMBOL}` will be replaced with the symbol of the market. You can override this on a per-market basis by specifying a `symbol-link` property. Example:
+
+```yaml
+symbol-link-template: https://www.google.com/search?tbm=nws&q={SYMBOL}
+```
+
+###### Properties for each market
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | symbol | string | yes |
@@ -1741,9 +2579,11 @@ The symbol, as seen in Yahoo Finance.
 The name that will be displayed under the symbol.
 
 `symbol-link`
+
 The link to go to when clicking on the symbol.
 
 `chart-link`
+
 The link to go to when clicking on the chart.
 
 ### Twitch Channels
@@ -1857,75 +2697,3 @@ Example:
 ```
 
 Note the use of `|` after `source:`, this allows you to insert a multi-line string.
-
-### Docker Containers
-<!-- TODO: update -->
-The Docker widget allows you to monitor your Docker containers.
-To enable this feature, ensure that your setup provides access to the **docker.sock** file (also you may use a TCP connection).
-
-Add the following to your `docker-compose` or `docker run` command to enable the Docker widget:
-
-**Docker Example:**
-```bash
-docker run -d -p 8080:8080 \
-  -v ./glance.yml:/app/glance.yml \
-  -v /etc/timezone:/etc/timezone:ro \
-  -v /etc/localtime:/etc/localtime:ro \
-  -v /var/run/docker.sock:/var/run/docker.sock:ro \
-  glanceapp/glance
-```
-
-**Docker Compose Example:**
-```yaml
-services:
-  glance:
-    image: glanceapp/glance
-    volumes:
-      - ./glance.yml:/app/glance.yml
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    ports:
-      - 8080:8080
-    restart: unless-stopped
-```
-
-#### Configuration
-To integrate the Docker widget into your dashboard, include the following snippet in your `glance.yml` file:
-
-```yaml
-- type: docker
-  host-url: tcp://localhost:2375
-  cache: 1m
-```
-
-#### Properties
-
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| host-url | string | no | `unix:///var/run/docker.sock` |
-
-#### Leveraging Container Labels
-You can use container labels to control visibility, URLs, icons, and titles within the Docker widget. Add the following labels to your container configuration for enhanced customization:
-
-```yaml
-labels:
-  - "glance.enable=true"       # Enable or disable visibility of the container (default: true)
-  - "glance.title=Glance"      # Optional friendly name (defaults to container name)
-  - "glance.url=https://app.example.com"  # Optional URL associated with the container
-  - "glance.iconUrl=si:docker" # Optional URL to an image which will be used as the icon for the site
-
-```
-
-**Default Values:**
-
-| Name           | Default    |
-|----------------|------------|
-| glance.enable  | true       |
-| glance.title   | Container name |
-| glance.url     | (none)     |
-| glance.iconUrl | si:docker  |
-
-Preview:
-
-![](images/docker-widget-preview.png)

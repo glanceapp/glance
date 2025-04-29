@@ -18,6 +18,8 @@ func Main() int {
 	}
 
 	switch options.intent {
+	case cliIntentVersionPrint:
+		fmt.Println(buildVersion)
 	case cliIntentServe:
 		// remove in v0.10.0
 		if serveUpdateNoticeIfConfigLocationNotMigrated(options.configPath) {
@@ -47,6 +49,10 @@ func Main() int {
 		}
 
 		fmt.Println(string(contents))
+	case cliIntentSensorsPrint:
+		return cliSensorsPrint()
+	case cliIntentMountpointInfo:
+		return cliMountpointInfo(options.args[1])
 	case cliIntentDiagnose:
 		runDiagnostic()
 	}
@@ -56,8 +62,6 @@ func Main() int {
 
 func serveApp(configPath string) error {
 	exitChannel := make(chan struct{})
-	// the onChange method gets called at most once per 500ms due to debouncing so we shouldn't
-	// need to use atomic.Bool here unless newConfigFromYAML is very slow for some reason
 	hadValidConfigOnStartup := false
 	var stopServer func() error
 
@@ -153,9 +157,9 @@ func serveUpdateNoticeIfConfigLocationNotMigrated(configPath string) bool {
 	templateFile, _ := templateFS.Open("v0.7-update-notice-page.html")
 	bodyContents, _ := io.ReadAll(templateFile)
 
-	// TODO: update - add link
 	fmt.Println("!!! WARNING !!!")
-	fmt.Println("The default location of glance.yml in the Docker image has changed starting from v0.7.0, please see <link> for more information.")
+	fmt.Println("The default location of glance.yml in the Docker image has changed starting from v0.7.0.")
+	fmt.Println("Please see https://github.com/glanceapp/glance/blob/main/docs/v0.7.0-upgrade.md for more information.")
 
 	mux := http.NewServeMux()
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))

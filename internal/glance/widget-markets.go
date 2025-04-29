@@ -8,17 +8,20 @@ import (
 	"math"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 )
 
 var marketsWidgetTemplate = mustParseTemplate("markets.html", "widget-base.html")
 
 type marketsWidget struct {
-	widgetBase     `yaml:",inline"`
-	StocksRequests []marketRequest `yaml:"stocks"`
-	MarketRequests []marketRequest `yaml:"markets"`
-	Sort           string          `yaml:"sort-by"`
-	Markets        marketList      `yaml:"-"`
+	widgetBase         `yaml:",inline"`
+	StocksRequests     []marketRequest `yaml:"stocks"`
+	MarketRequests     []marketRequest `yaml:"markets"`
+	ChartLinkTemplate  string          `yaml:"chart-link-template"`
+	SymbolLinkTemplate string          `yaml:"symbol-link-template"`
+	Sort               string          `yaml:"sort-by"`
+	Markets            marketList      `yaml:"-"`
 }
 
 func (widget *marketsWidget) initialize() error {
@@ -27,6 +30,18 @@ func (widget *marketsWidget) initialize() error {
 	// legacy support, remove in v0.10.0
 	if len(widget.MarketRequests) == 0 {
 		widget.MarketRequests = widget.StocksRequests
+	}
+
+	for i := range widget.MarketRequests {
+		m := &widget.MarketRequests[i]
+
+		if widget.ChartLinkTemplate != "" && m.ChartLink == "" {
+			m.ChartLink = strings.ReplaceAll(widget.ChartLinkTemplate, "{SYMBOL}", m.Symbol)
+		}
+
+		if widget.SymbolLinkTemplate != "" && m.SymbolLink == "" {
+			m.SymbolLink = strings.ReplaceAll(widget.SymbolLinkTemplate, "{SYMBOL}", m.Symbol)
+		}
 	}
 
 	return nil
@@ -41,9 +56,7 @@ func (widget *marketsWidget) update(ctx context.Context) {
 
 	if widget.Sort == "absolute-change" {
 		markets.sortByAbsChange()
-	}
-
-	if widget.Sort == "change" {
+	} else if widget.Sort == "change" {
 		markets.sortByChange()
 	}
 
@@ -55,7 +68,7 @@ func (widget *marketsWidget) Render() template.HTML {
 }
 
 type marketRequest struct {
-	Name       string `yaml:"name"`
+	CustomName string `yaml:"name"`
 	Symbol     string `yaml:"symbol"`
 	ChartLink  string `yaml:"chart-link"`
 	SymbolLink string `yaml:"symbol-link"`
@@ -63,8 +76,10 @@ type marketRequest struct {
 
 type market struct {
 	marketRequest
+	Name           string
 	Currency       string
 	Price          float64
+	PriceHint      int
 	PercentChange  float64
 	SvgChartPoints string
 }
@@ -91,6 +106,8 @@ type marketResponseJson struct {
 				Symbol             string  `json:"symbol"`
 				RegularMarketPrice float64 `json:"regularMarketPrice"`
 				ChartPreviousClose float64 `json:"chartPreviousClose"`
+				ShortName          string  `json:"shortName"`
+				PriceHint          int     `json:"priceHint"`
 			} `json:"meta"`
 			Indicators struct {
 				Quote []struct {
@@ -109,6 +126,7 @@ func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, erro
 
 	for i := range marketRequests {
 		request, _ := http.NewRequest("GET", fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=1mo&interval=1d", marketRequests[i].Symbol), nil)
+		setBrowserUserAgentHeader(request)
 		requests = append(requests, request)
 	}
 
@@ -136,13 +154,14 @@ func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, erro
 			continue
 		}
 
-		prices := response.Chart.Result[0].Indicators.Quote[0].Close
+		result := &response.Chart.Result[0]
+		prices := result.Indicators.Quote[0].Close
 
 		if len(prices) > marketChartDays {
 			prices = prices[len(prices)-marketChartDays:]
 		}
 
-		previous := response.Chart.Result[0].Meta.RegularMarketPrice
+		previous := result.Meta.RegularMarketPrice
 
 		if len(prices) >= 2 && prices[len(prices)-2] != 0 {
 			previous = prices[len(prices)-2]
@@ -150,18 +169,22 @@ func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, erro
 
 		points := svgPolylineCoordsFromYValues(100, 50, maybeCopySliceWithoutZeroValues(prices))
 
-		currency, exists := currencyToSymbol[response.Chart.Result[0].Meta.Currency]
-
+		currency, exists := currencyToSymbol[strings.ToUpper(result.Meta.Currency)]
 		if !exists {
-			currency = response.Chart.Result[0].Meta.Currency
+			currency = result.Meta.Currency
 		}
 
 		markets = append(markets, market{
 			marketRequest: marketRequests[i],
-			Price:         response.Chart.Result[0].Meta.RegularMarketPrice,
+			Price:         result.Meta.RegularMarketPrice,
 			Currency:      currency,
+			PriceHint:     result.Meta.PriceHint,
+			Name: ternary(marketRequests[i].CustomName == "",
+				result.Meta.ShortName,
+				marketRequests[i].CustomName,
+			),
 			PercentChange: percentChange(
-				response.Chart.Result[0].Meta.RegularMarketPrice,
+				result.Meta.RegularMarketPrice,
 				previous,
 			),
 			SvgChartPoints: points,

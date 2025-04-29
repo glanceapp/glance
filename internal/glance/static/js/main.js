@@ -128,6 +128,7 @@ function setupSearchBoxes() {
     for (let i = 0; i < searchWidgets.length; i++) {
         const widget = searchWidgets[i];
         const defaultSearchUrl = widget.dataset.defaultSearchUrl;
+        const target = widget.dataset.target || "_blank";
         const newTab = widget.dataset.newTab === "true";
         const inputElement = widget.getElementsByClassName("search-input")[0];
         const bangElement = widget.getElementsByClassName("search-bang")[0];
@@ -167,7 +168,7 @@ function setupSearchBoxes() {
                 const url = searchUrlTemplate.replace("!QUERY!", encodeURIComponent(query));
 
                 if (newTab && !event.ctrlKey || !newTab && event.ctrlKey) {
-                    window.open(url, '_blank').focus();
+                    window.open(url, target).focus();
                 } else {
                     window.location.href = url;
                 }
@@ -308,7 +309,9 @@ function setupGroups() {
 
                 for (let i = 0; i < titles.length; i++) {
                     titles[i].classList.remove("widget-group-title-current");
+                    titles[i].setAttribute("aria-selected", "false");
                     tabs[i].classList.remove("widget-group-content-current");
+                    tabs[i].setAttribute("aria-hidden", "true");
                 }
 
                 if (current < t) {
@@ -320,7 +323,9 @@ function setupGroups() {
                 current = t;
 
                 title.classList.add("widget-group-title-current");
+                title.setAttribute("aria-selected", "true");
                 tabs[t].classList.add("widget-group-content-current");
+                tabs[t].setAttribute("aria-hidden", "false");
             });
         }
     }
@@ -463,7 +468,7 @@ function setupCollapsibleGrids() {
 
         let cardsPerRow;
 
-        const resolveCollapsibleItems = () => {
+        const resolveCollapsibleItems = () => requestAnimationFrame(() => {
             const hideItemsAfterIndex = cardsPerRow * collapseAfterRows;
 
             if (hideItemsAfterIndex >= gridElement.children.length) {
@@ -489,7 +494,7 @@ function setupCollapsibleGrids() {
                     child.style.removeProperty("animation-delay");
                 }
             }
-        };
+        });
 
         const observer = new ResizeObserver(() => {
             if (!isElementVisible(gridElement)) {
@@ -649,6 +654,17 @@ function setupClocks() {
     updateClocks();
 }
 
+async function setupCalendars() {
+    const elems = document.getElementsByClassName("calendar");
+    if (elems.length == 0) return;
+
+    // TODO: implement prefetching, currently loads as a nasty waterfall of requests
+    const calendar = await import ('./calendar.js');
+
+    for (let i = 0; i < elems.length; i++)
+        calendar.default(elems[i]);
+}
+
 function setupTruncatedElementTitles() {
     const elements = document.querySelectorAll(".text-truncate, .single-line-titles .title, .text-truncate-2-lines, .text-truncate-3-lines");
 
@@ -658,7 +674,7 @@ function setupTruncatedElementTitles() {
 
     for (let i = 0; i < elements.length; i++) {
         const element = elements[i];
-        if (element.title === "") element.title = element.textContent;
+        if (element.getAttribute("title") === null) element.title = element.textContent;
     }
 }
 
@@ -768,6 +784,7 @@ async function setupPage() {
         setupThemeSwitcher();
         setupPopovers();
         setupClocks()
+        await setupCalendars();
         setupCarousels();
         setupSearchBoxes();
         setupCollapsibleLists();
@@ -778,6 +795,7 @@ async function setupPage() {
         setupLazyImages();
     } finally {
         pageElement.classList.add("content-ready");
+        pageElement.setAttribute("aria-busy", "false");
 
         for (let i = 0; i < contentReadyCallbacks.length; i++) {
             contentReadyCallbacks[i]();

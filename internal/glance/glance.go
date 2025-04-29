@@ -19,12 +19,18 @@ var (
 	pageTemplate           = mustParseTemplate("page.html", "document.html")
 	pageContentTemplate    = mustParseTemplate("page-content.html")
 	pageThemeStyleTemplate = mustParseTemplate("theme-style.gotmpl")
+	manifestTemplate       = mustParseTemplate("manifest.json")
 )
+
+const STATIC_ASSETS_CACHE_DURATION = 24 * time.Hour
 
 type application struct {
 	Version          string
+	CreatedAt        time.Time
 	Config           config
 	ParsedThemeStyle template.HTML
+
+	parsedManifest []byte
 
 	slugToPage map[string]*page
 	widgetByID map[uint64]widget
@@ -33,6 +39,7 @@ type application struct {
 func newApplication(config *config) (*application, error) {
 	app := &application{
 		Version:    buildVersion,
+		CreatedAt:  time.Now(),
 		Config:     *config,
 		slugToPage: make(map[string]*page),
 		widgetByID: make(map[uint64]widget),
@@ -41,7 +48,7 @@ func newApplication(config *config) (*application, error) {
 	app.slugToPage[""] = &config.Pages[0]
 
 	providers := &widgetProviders{
-		assetResolver: app.AssetPath,
+		assetResolver: app.StaticAssetPath,
 	}
 
 	var err error
@@ -60,6 +67,14 @@ func newApplication(config *config) (*application, error) {
 
 		app.slugToPage[page.Slug] = page
 
+		if page.Width == "default" {
+			page.Width = ""
+		}
+
+		if page.DesktopNavigationWidth == "" && page.DesktopNavigationWidth != "default" {
+			page.DesktopNavigationWidth = page.Width
+		}
+
 		for c := range page.Columns {
 			column := &page.Columns[c]
 
@@ -69,7 +84,7 @@ func newApplication(config *config) (*application, error) {
 
 			for w := range column.Widgets {
 				widget := column.Widgets[w]
-				app.widgetByID[widget.id()] = widget
+				app.widgetByID[widget.GetID()] = widget
 
 				widget.setProviders(providers)
 			}
@@ -79,15 +94,38 @@ func newApplication(config *config) (*application, error) {
 	config = &app.Config
 
 	config.Server.BaseURL = strings.TrimRight(config.Server.BaseURL, "/")
-	config.Theme.CustomCSSFile = app.transformUserDefinedAssetPath(config.Theme.CustomCSSFile)
+	config.Theme.CustomCSSFile = app.resolveUserDefinedAssetPath(config.Theme.CustomCSSFile)
+	config.Branding.LogoURL = app.resolveUserDefinedAssetPath(config.Branding.LogoURL)
 
-	if config.Branding.FaviconURL == "" {
-		config.Branding.FaviconURL = app.AssetPath("favicon.png")
+	if config.Theme.BackgroundColor != nil {
+		config.Theme.BackgroundColorAsHex = config.Theme.BackgroundColor.ToHex()
 	} else {
-		config.Branding.FaviconURL = app.transformUserDefinedAssetPath(config.Branding.FaviconURL)
+		config.Theme.BackgroundColorAsHex = "#151519"
 	}
 
-	config.Branding.LogoURL = app.transformUserDefinedAssetPath(config.Branding.LogoURL)
+	if config.Branding.FaviconURL == "" {
+		config.Branding.FaviconURL = app.StaticAssetPath("favicon.png")
+	} else {
+		config.Branding.FaviconURL = app.resolveUserDefinedAssetPath(config.Branding.FaviconURL)
+	}
+
+	if config.Branding.AppName == "" {
+		config.Branding.AppName = "Glance"
+	}
+
+	if config.Branding.AppIconURL == "" {
+		config.Branding.AppIconURL = app.StaticAssetPath("app-icon.png")
+	}
+
+	if config.Branding.AppBackgroundColor == "" {
+		config.Branding.AppBackgroundColor = config.Theme.BackgroundColorAsHex
+	}
+
+	var manifestWriter bytes.Buffer
+	if err := manifestTemplate.Execute(&manifestWriter, pageTemplateData{App: app}); err != nil {
+		return nil, fmt.Errorf("parsing manifest.json: %v", err)
+	}
+	app.parsedManifest = manifestWriter.Bytes()
 
 	return app, nil
 }
@@ -117,7 +155,7 @@ func (p *page) updateOutdatedWidgets() {
 	wg.Wait()
 }
 
-func (a *application) transformUserDefinedAssetPath(path string) string {
+func (a *application) resolveUserDefinedAssetPath(path string) string {
 	if strings.HasPrefix(path, "/assets/") {
 		return a.Config.Server.BaseURL + path
 	}
@@ -223,8 +261,13 @@ func (a *application) handleWidgetRequest(w http.ResponseWriter, r *http.Request
 	widget.handleRequest(w, r)
 }
 
-func (a *application) AssetPath(asset string) string {
+func (a *application) StaticAssetPath(asset string) string {
 	return a.Config.Server.BaseURL + "/static/" + staticFSHash + "/" + asset
+}
+
+func (a *application) VersionedAssetPath(asset string) string {
+	return a.Config.Server.BaseURL + asset +
+		"?v=" + strconv.FormatInt(a.CreatedAt.Unix(), 10)
 }
 
 func (a *application) server() (func() error, func() error) {
@@ -243,8 +286,28 @@ func (a *application) server() (func() error, func() error) {
 
 	mux.Handle(
 		fmt.Sprintf("GET /static/%s/{path...}", staticFSHash),
-		http.StripPrefix("/static/"+staticFSHash, fileServerWithCache(http.FS(staticFS), 24*time.Hour)),
+		http.StripPrefix(
+			"/static/"+staticFSHash,
+			fileServerWithCache(http.FS(staticFS), STATIC_ASSETS_CACHE_DURATION),
+		),
 	)
+
+	assetCacheControlValue := fmt.Sprintf(
+		"public, max-age=%d",
+		int(STATIC_ASSETS_CACHE_DURATION.Seconds()),
+	)
+
+	mux.HandleFunc(fmt.Sprintf("GET /static/%s/css/bundle.css", staticFSHash), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Cache-Control", assetCacheControlValue)
+		w.Header().Add("Content-Type", "text/css; charset=utf-8")
+		w.Write(bundledCSSContents)
+	})
+
+	mux.HandleFunc("GET /manifest.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Cache-Control", assetCacheControlValue)
+		w.Header().Add("Content-Type", "application/json")
+		w.Write(a.parsedManifest)
+	})
 
 	var absAssetsPath string
 	if a.Config.Server.AssetsPath != "" {
@@ -259,7 +322,6 @@ func (a *application) server() (func() error, func() error) {
 	}
 
 	start := func() error {
-		a.Config.Server.StartedAt = time.Now()
 		log.Printf("Starting server on %s:%d (base-url: \"%s\", assets-path: \"%s\")\n",
 			a.Config.Server.Host,
 			a.Config.Server.Port,

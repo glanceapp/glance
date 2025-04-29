@@ -1,0 +1,37 @@
+name: Bug report
+description: Let us know if something isn't working as expected
+labels: ["bug report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!NOTE]
+        >
+        > Do not prefix your title with "[BUG]", "[Bug report]", etc., a label will be added automatically.
+
+        If you're unsure whether you're experiencing a bug or not, consider using the [Discussions](https://github.com/glanceapp/glance/discussions) or [Discord](https://discord.com/invite/7KQ7Xa9kJd) to ask for help.
+
+        Please include only the information you think is relevant to the bug:
+
+        * How did you install Glance? (Docker container, manual binary install, etc)
+        * Which version of Glance are you using?
+        * Include the relevant parts of your `glance.yml` if applicable (widget, data source, properties used, etc)
+        * Include any relevant logs or screenshots if applicable
+        * Is the issue specific to a certain browser or OS?
+        * Steps to reliably reproduce the issue
+        * Are you hosting Glance on a VPS?
+        * Anything else you think might be relevant
+
+        **No need to copy the above list into your description, it's just a guide to help you provide the most useful information.**
+
+  - type: textarea
+    id: description
+    validations:
+      required: true
+    attributes:
+      label: Description
+
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to submit a bug report.

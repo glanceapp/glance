@@ -17,23 +17,20 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type CssProperties struct {
-	BackgroundColor          *hslColorField `yaml:"background-color"`
-	PrimaryColor             *hslColorField `yaml:"primary-color"`
-	PositiveColor            *hslColorField `yaml:"positive-color"`
-	NegativeColor            *hslColorField `yaml:"negative-color"`
-	Light                    bool           `yaml:"light"`
-	ContrastMultiplier       float32        `yaml:"contrast-multiplier"`
-	TextSaturationMultiplier float32        `yaml:"text-saturation-multiplier"`
-}
+const CONFIG_INCLUDE_RECURSION_DEPTH_LIMIT = 20
+
+const (
+	configVarTypeEnv         = "env"
+	configVarTypeSecret      = "secret"
+	configVarTypeFileFromEnv = "readFileFromEnv"
+)
 
 type config struct {
 	Server struct {
-		Host       string    `yaml:"host"`
-		Port       uint16    `yaml:"port"`
-		AssetsPath string    `yaml:"assets-path"`
-		BaseURL    string    `yaml:"base-url"`
-		StartedAt  time.Time `yaml:"-"` // used in custom css file
+		Host       string `yaml:"host"`
+		Port       uint16 `yaml:"port"`
+		AssetsPath string `yaml:"assets-path"`
+		BaseURL    string `yaml:"base-url"`
 	} `yaml:"server"`
 
 	Document struct {
@@ -43,6 +40,7 @@ type config struct {
 	Theme struct {
 		// Todo : Find a way to use CssProperties struct to avoid duplicates
 		BackgroundColor          *hslColorField `yaml:"background-color"`
+		BackgroundColorAsHex     string         `yaml:"-"`
 		PrimaryColor             *hslColorField `yaml:"primary-color"`
 		PositiveColor            *hslColorField `yaml:"positive-color"`
 		NegativeColor            *hslColorField `yaml:"negative-color"`
@@ -55,20 +53,34 @@ type config struct {
 	} `yaml:"theme"`
 
 	Branding struct {
-		HideFooter   bool          `yaml:"hide-footer"`
-		CustomFooter template.HTML `yaml:"custom-footer"`
-		LogoText     string        `yaml:"logo-text"`
-		LogoURL      string        `yaml:"logo-url"`
-		FaviconURL   string        `yaml:"favicon-url"`
+		HideFooter         bool          `yaml:"hide-footer"`
+		CustomFooter       template.HTML `yaml:"custom-footer"`
+		LogoText           string        `yaml:"logo-text"`
+		LogoURL            string        `yaml:"logo-url"`
+		FaviconURL         string        `yaml:"favicon-url"`
+		AppName            string        `yaml:"app-name"`
+		AppIconURL         string        `yaml:"app-icon-url"`
+		AppBackgroundColor string        `yaml:"app-background-color"`
 	} `yaml:"branding"`
 
 	Pages []page `yaml:"pages"`
+}
+
+type CssProperties struct {
+	BackgroundColor          *hslColorField `yaml:"background-color"`
+	PrimaryColor             *hslColorField `yaml:"primary-color"`
+	PositiveColor            *hslColorField `yaml:"positive-color"`
+	NegativeColor            *hslColorField `yaml:"negative-color"`
+	Light                    bool           `yaml:"light"`
+	ContrastMultiplier       float32        `yaml:"contrast-multiplier"`
+	TextSaturationMultiplier float32        `yaml:"text-saturation-multiplier"`
 }
 
 type page struct {
 	Title                      string `yaml:"name"`
 	Slug                       string `yaml:"slug"`
 	Width                      string `yaml:"width"`
+	DesktopNavigationWidth     string `yaml:"desktop-navigation-width"`
 	ShowMobileHeader           bool   `yaml:"show-mobile-header"`
 	ExpandMobilePageNavigation bool   `yaml:"expand-mobile-page-navigation"`
 	HideDesktopNavigation      bool   `yaml:"hide-desktop-navigation"`
@@ -82,7 +94,7 @@ type page struct {
 }
 
 func newConfigFromYAML(contents []byte) (*config, error) {
-	contents, err := parseConfigEnvVariables(contents)
+	contents, err := parseConfigVariables(contents)
 	if err != nil {
 		return nil, err
 	}
@@ -112,22 +124,33 @@ func newConfigFromYAML(contents []byte) (*config, error) {
 	return config, nil
 }
 
-var configEnvVariablePattern = regexp.MustCompile(`(^|.)\$\{([A-Z0-9_]+)\}`)
+var envVariableNamePattern = regexp.MustCompile(`^[A-Z0-9_]+$`)
+var configVariablePattern = regexp.MustCompile(`(^|.)\$\{(?:([a-zA-Z]+):)?([a-zA-Z0-9_-]+)\}`)
 
-func parseConfigEnvVariables(contents []byte) ([]byte, error) {
+// Parses variables defined in the config such as:
+// ${API_KEY} 				            - gets replaced with the value of the API_KEY environment variable
+// \${API_KEY} 					        - escaped, gets used as is without the \ in the config
+// ${secret:api_key} 			        - value gets loaded from /run/secrets/api_key
+// ${readFileFromEnv:PATH_TO_SECRET}    - value gets loaded from the file path specified in the environment variable PATH_TO_SECRET
+//
+// TODO: don't match against commented out sections, not sure exactly how since
+// variables can be placed anywhere and used to modify the YAML structure itself
+func parseConfigVariables(contents []byte) ([]byte, error) {
 	var err error
 
-	replaced := configEnvVariablePattern.ReplaceAllFunc(contents, func(match []byte) []byte {
+	replaced := configVariablePattern.ReplaceAllFunc(contents, func(match []byte) []byte {
 		if err != nil {
 			return nil
 		}
 
-		groups := configEnvVariablePattern.FindSubmatch(match)
-		if len(groups) != 3 {
+		groups := configVariablePattern.FindSubmatch(match)
+		if len(groups) != 4 {
+			// we can't handle this match, this shouldn't happen unless the number of groups
+			// in the regex has been changed without updating the below code
 			return match
 		}
 
-		prefix, key := string(groups[1]), string(groups[2])
+		prefix := string(groups[1])
 		if prefix == `\` {
 			if len(match) >= 2 {
 				return match[1:]
@@ -136,13 +159,20 @@ func parseConfigEnvVariables(contents []byte) ([]byte, error) {
 			}
 		}
 
-		value, found := os.LookupEnv(key)
-		if !found {
-			err = fmt.Errorf("environment variable %s not found", key)
+		typeAsString, variableName := string(groups[2]), string(groups[3])
+		variableType := ternary(typeAsString == "", configVarTypeEnv, typeAsString)
+
+		parsedValue, returnOriginal, localErr := parseConfigVariableOfType(variableType, variableName)
+		if localErr != nil {
+			err = fmt.Errorf("parsing variable: %v", localErr)
 			return nil
 		}
 
-		return []byte(prefix + value)
+		if returnOriginal {
+			return match
+		}
+
+		return []byte(prefix + parsedValue)
 	})
 
 	if err != nil {
@@ -152,33 +182,90 @@ func parseConfigEnvVariables(contents []byte) ([]byte, error) {
 	return replaced, nil
 }
 
+// When the bool return value is true, it indicates that the caller should use the original value
+func parseConfigVariableOfType(variableType, variableName string) (string, bool, error) {
+	switch variableType {
+	case configVarTypeEnv:
+		if !envVariableNamePattern.MatchString(variableName) {
+			return "", true, nil
+		}
+
+		v, found := os.LookupEnv(variableName)
+		if !found {
+			return "", false, fmt.Errorf("environment variable %s not found", variableName)
+		}
+
+		return v, false, nil
+	case configVarTypeSecret:
+		secretPath := filepath.Join("/run/secrets", variableName)
+		secret, err := os.ReadFile(secretPath)
+		if err != nil {
+			return "", false, fmt.Errorf("reading secret file: %v", err)
+		}
+
+		return strings.TrimSpace(string(secret)), false, nil
+	case configVarTypeFileFromEnv:
+		if !envVariableNamePattern.MatchString(variableName) {
+			return "", true, nil
+		}
+
+		filePath, found := os.LookupEnv(variableName)
+		if !found {
+			return "", false, fmt.Errorf("readFileFromEnv: environment variable %s not found", variableName)
+		}
+
+		if !filepath.IsAbs(filePath) {
+			return "", false, fmt.Errorf("readFileFromEnv: file path %s is not absolute", filePath)
+		}
+
+		fileContents, err := os.ReadFile(filePath)
+		if err != nil {
+			return "", false, fmt.Errorf("readFileFromEnv: reading file from %s: %v", variableName, err)
+		}
+
+		return strings.TrimSpace(string(fileContents)), false, nil
+	default:
+		return "", true, nil
+	}
+}
+
 func formatWidgetInitError(err error, w widget) error {
 	return fmt.Errorf("%s widget: %v", w.GetType(), err)
 }
 
-var includePattern = regexp.MustCompile(`(?m)^(\s*)!include:\s*(.+)$`)
+var configIncludePattern = regexp.MustCompile(`(?m)^([ \t]*)(?:-[ \t]*)?(?:!|\$)include:[ \t]*(.+)$`)
 
 func parseYAMLIncludes(mainFilePath string) ([]byte, map[string]struct{}, error) {
+	return recursiveParseYAMLIncludes(mainFilePath, nil, 0)
+}
+
+func recursiveParseYAMLIncludes(mainFilePath string, includes map[string]struct{}, depth int) ([]byte, map[string]struct{}, error) {
+	if depth > CONFIG_INCLUDE_RECURSION_DEPTH_LIMIT {
+		return nil, nil, fmt.Errorf("recursion depth limit of %d reached", CONFIG_INCLUDE_RECURSION_DEPTH_LIMIT)
+	}
+
 	mainFileContents, err := os.ReadFile(mainFilePath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("reading main YAML file: %w", err)
+		return nil, nil, fmt.Errorf("reading %s: %w", mainFilePath, err)
 	}
 
 	mainFileAbsPath, err := filepath.Abs(mainFilePath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("getting absolute path of main YAML file: %w", err)
+		return nil, nil, fmt.Errorf("getting absolute path of %s: %w", mainFilePath, err)
 	}
 	mainFileDir := filepath.Dir(mainFileAbsPath)
 
-	includes := make(map[string]struct{})
+	if includes == nil {
+		includes = make(map[string]struct{})
+	}
 	var includesLastErr error
 
-	mainFileContents = includePattern.ReplaceAllFunc(mainFileContents, func(match []byte) []byte {
+	mainFileContents = configIncludePattern.ReplaceAllFunc(mainFileContents, func(match []byte) []byte {
 		if includesLastErr != nil {
 			return nil
 		}
 
-		matches := includePattern.FindSubmatch(match)
+		matches := configIncludePattern.FindSubmatch(match)
 		if len(matches) != 3 {
 			includesLastErr = fmt.Errorf("invalid include match: %v", matches)
 			return nil
@@ -193,13 +280,14 @@ func parseYAMLIncludes(mainFilePath string) ([]byte, map[string]struct{}, error)
 		var fileContents []byte
 		var err error
 
-		fileContents, err = os.ReadFile(includeFilePath)
+		includes[includeFilePath] = struct{}{}
+
+		fileContents, includes, err = recursiveParseYAMLIncludes(includeFilePath, includes, depth+1)
 		if err != nil {
-			includesLastErr = fmt.Errorf("reading included file %s: %w", includeFilePath, err)
+			includesLastErr = err
 			return nil
 		}
 
-		includes[includeFilePath] = struct{}{}
 		return []byte(prefixStringLines(indent, string(fileContents)))
 	})
 
@@ -254,7 +342,7 @@ func configFilesWatcher(
 	// needed for lastContents and lastIncludes because they get updated in multiple goroutines
 	mu := sync.Mutex{}
 
-	checkForContentChangesBeforeCallback := func() {
+	parseAndCompareBeforeCallback := func() {
 		currentContents, currentIncludes, err := parseYAMLIncludes(mainFilePath)
 		if err != nil {
 			onErr(fmt.Errorf("parsing main file contents for comparison: %w", err))
@@ -280,13 +368,20 @@ func configFilesWatcher(
 
 	const debounceDuration = 500 * time.Millisecond
 	var debounceTimer *time.Timer
-	debouncedCallback := func() {
+	debouncedParseAndCompareBeforeCallback := func() {
 		if debounceTimer != nil {
 			debounceTimer.Stop()
 			debounceTimer.Reset(debounceDuration)
 		} else {
-			debounceTimer = time.AfterFunc(debounceDuration, checkForContentChangesBeforeCallback)
+			debounceTimer = time.AfterFunc(debounceDuration, parseAndCompareBeforeCallback)
 		}
+	}
+
+	deleteLastInclude := func(filePath string) {
+		mu.Lock()
+		defer mu.Unlock()
+		fileAbsPath, _ := filepath.Abs(filePath)
+		delete(lastIncludes, fileAbsPath)
 	}
 
 	go func() {
@@ -297,16 +392,33 @@ func configFilesWatcher(
 					return
 				}
 				if event.Has(fsnotify.Write) {
-					debouncedCallback()
-				} else if event.Has(fsnotify.Remove) {
-					func() {
-						mu.Lock()
-						defer mu.Unlock()
-						fileAbsPath, _ := filepath.Abs(event.Name)
-						delete(lastIncludes, fileAbsPath)
-					}()
+					debouncedParseAndCompareBeforeCallback()
+				} else if event.Has(fsnotify.Rename) {
+					// on linux the file will no longer be watched after a rename, on windows
+					// it will continue to be watched with the new name but we have no access to
+					// the new name in this event in order to stop watching it manually and match the
+					// behavior in linux, may lead to weird unintended behaviors on windows as we're
+					// only handling renames from linux's perspective
+					// see https://github.com/fsnotify/fsnotify/issues/255
 
-					debouncedCallback()
+					// remove the old file from our manually tracked includes, calling
+					// debouncedParseAndCompareBeforeCallback will re-add it if it's still
+					// required after it triggers
+					deleteLastInclude(event.Name)
+
+					// wait for file to maybe get created again
+					// see https://github.com/glanceapp/glance/pull/358
+					for range 10 {
+						if _, err := os.Stat(event.Name); err == nil {
+							break
+						}
+						time.Sleep(200 * time.Millisecond)
+					}
+
+					debouncedParseAndCompareBeforeCallback()
+				} else if event.Has(fsnotify.Remove) {
+					deleteLastInclude(event.Name)
+					debouncedParseAndCompareBeforeCallback()
 				}
 			case err, isOpen := <-watcher.Errors:
 				if !isOpen {
@@ -340,36 +452,46 @@ func isConfigStateValid(config *config) error {
 	}
 
 	for i := range config.Pages {
-		if config.Pages[i].Title == "" {
+		page := &config.Pages[i]
+
+		if page.Title == "" {
 			return fmt.Errorf("page %d has no name", i+1)
 		}
 
-		if config.Pages[i].Width != "" && (config.Pages[i].Width != "wide" && config.Pages[i].Width != "slim") {
+		if page.Width != "" && (page.Width != "wide" && page.Width != "slim" && page.Width != "default") {
 			return fmt.Errorf("page %d: width can only be either wide or slim", i+1)
 		}
 
-		if len(config.Pages[i].Columns) == 0 {
+		if page.DesktopNavigationWidth != "" {
+			if page.DesktopNavigationWidth != "wide" && page.DesktopNavigationWidth != "slim" && page.DesktopNavigationWidth != "default" {
+				return fmt.Errorf("page %d: desktop-navigation-width can only be either wide or slim", i+1)
+			}
+		}
+
+		if len(page.Columns) == 0 {
 			return fmt.Errorf("page %d has no columns", i+1)
 		}
 
-		if config.Pages[i].Width == "slim" {
-			if len(config.Pages[i].Columns) > 2 {
+		if page.Width == "slim" {
+			if len(page.Columns) > 2 {
 				return fmt.Errorf("page %d is slim and cannot have more than 2 columns", i+1)
 			}
 		} else {
-			if len(config.Pages[i].Columns) > 3 {
+			if len(page.Columns) > 3 {
 				return fmt.Errorf("page %d has more than 3 columns", i+1)
 			}
 		}
 
 		columnSizesCount := make(map[string]int)
 
-		for j := range config.Pages[i].Columns {
-			if config.Pages[i].Columns[j].Size != "small" && config.Pages[i].Columns[j].Size != "full" {
+		for j := range page.Columns {
+			column := &page.Columns[j]
+
+			if column.Size != "small" && column.Size != "full" {
 				return fmt.Errorf("column %d of page %d: size can only be either small or full", j+1, i+1)
 			}
 
-			columnSizesCount[config.Pages[i].Columns[j].Size]++
+			columnSizesCount[page.Columns[j].Size]++
 		}
 
 		full := columnSizesCount["full"]
