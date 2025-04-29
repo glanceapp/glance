@@ -42,8 +42,8 @@ type rssWidget struct {
 	Items          rssFeedItemList `yaml:"-"`
 	NoItemsMessage string          `yaml:"-"`
 
-	feedCacheMutex sync.Mutex
-	cachedFeeds    map[string]*cachedRSSFeed `yaml:"-"`
+	cachedFeedsMutex sync.Mutex
+	cachedFeeds      map[string]*cachedRSSFeed `yaml:"-"`
 }
 
 func (widget *rssWidget) initialize() error {
@@ -197,7 +197,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 
 	req.Header.Add("User-Agent", glanceUserAgentString)
 
-	widget.feedCacheMutex.Lock()
+	widget.cachedFeedsMutex.Lock()
 	cache, isCached := widget.cachedFeeds[request.URL]
 	if isCached {
 		if cache.etag != "" {
@@ -207,7 +207,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 			req.Header.Add("If-Modified-Since", cache.lastModified)
 		}
 	}
-	widget.feedCacheMutex.Unlock()
+	widget.cachedFeedsMutex.Unlock()
 
 	for key, value := range request.Headers {
 		req.Header.Set(key, value)
@@ -331,13 +331,13 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 	}
 
 	if resp.Header.Get("ETag") != "" || resp.Header.Get("Last-Modified") != "" {
-		widget.feedCacheMutex.Lock()
+		widget.cachedFeedsMutex.Lock()
 		widget.cachedFeeds[request.URL] = &cachedRSSFeed{
 			etag:         resp.Header.Get("ETag"),
 			lastModified: resp.Header.Get("Last-Modified"),
 			items:        items,
 		}
-		widget.feedCacheMutex.Unlock()
+		widget.cachedFeedsMutex.Unlock()
 	}
 
 	return items, nil
