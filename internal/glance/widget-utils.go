@@ -41,6 +41,7 @@ type requestDoer interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
+var glanceUserAgentString = "Glance/" + buildVersion + " +https://github.com/glanceapp/glance"
 var userAgentPersistentVersion atomic.Int32
 
 func getBrowserUserAgentHeader() string {
