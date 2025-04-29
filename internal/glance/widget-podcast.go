@@ -14,8 +14,11 @@ import (
 	"github.com/antchfx/htmlquery"
 )
 
-// podcastChannelWidgetTemplate power by  rssWidgetTemplate
+// podcastChannelWidgetTemplate inspired by  rssWidgetTemplate
 var podcastChannelWidgetTemplate = mustParseTemplate("podcast-list.html", "widget-base.html")
+
+// podcastHorizontalWidgetTemplate inspired by videosWidgetTemplate
+var podcastHorizontalWidgetTemplate = mustParseTemplate("podcast-horizontal-cards.html", "widget-base.html", "podcast-card-contents.html")
 
 type podcastChannel struct {
 	PodcastID string `yaml:"podcast_id"` // apple podcast id
@@ -34,14 +37,15 @@ type podcastEpisode struct {
 
 type podcastWidget struct {
 	// style params
-	widgetBase       `yaml:",inline"`
-	Style            string  `yaml:"style"`
-	ThumbnailHeight  float64 `yaml:"thumbnail-height"`
-	CardHeight       float64 `yaml:"card-height"`
-	Limit            int     `yaml:"limit"`
-	CollapseAfter    int     `yaml:"collapse-after"`
-	SingleLineTitles bool    `yaml:"single-line-titles"`
-	NoItemsMessage   string  `yaml:"-"`
+	widgetBase          `yaml:",inline"`
+	Style               string  `yaml:"style"`
+	ThumbnailHeight     float64 `yaml:"thumbnail-height"`
+	CardHeight          float64 `yaml:"card-height"`
+	Limit               int     `yaml:"limit"`
+	CollapseAfter       int     `yaml:"collapse-after"`
+	SingleLineTitles    bool    `yaml:"single-line-titles"`
+	CoverWithoutProcess bool    `yaml:"cover-without-process"`
+	NoItemsMessage      string  `yaml:"-"`
 
 	// podcast fetch param
 	DefaultRegion   string            `yaml:"Region"`
@@ -52,7 +56,7 @@ type podcastWidget struct {
 }
 
 func (widget *podcastWidget) initialize() error {
-	widget.withTitle("Apple Podcast").withCacheDuration(1 * time.Hour)
+	widget.withTitle("Podcast").withCacheDuration(1 * time.Hour)
 	testInfo, _ := json.Marshal(widget.PodcastChannels)
 	slog.Info("podcast config", "channels", string(testInfo))
 	widget.DefaultRegion = lo.If(len(widget.DefaultRegion) != 0, widget.DefaultRegion).Else("cn")
@@ -103,9 +107,9 @@ func (widget *podcastWidget) update(ctx context.Context) {
 }
 
 func (widget *podcastWidget) Render() template.HTML {
-	//if widget.Style == "horizontal-cards" {
-	//	return widget.renderTemplate(widget, rssWidgetHorizontalCardsTemplate)
-	//}
+	if widget.Style == "horizontal-cards" {
+		return widget.renderTemplate(widget, podcastHorizontalWidgetTemplate)
+	}
 	//
 	//if widget.Style == "horizontal-cards-2" {
 	//	return widget.renderTemplate(widget, rssWidgetHorizontalCards2Template)
