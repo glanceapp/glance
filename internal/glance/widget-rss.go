@@ -2,7 +2,6 @@ package glance
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"html"
 	"html/template"
@@ -13,6 +12,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mmcdole/gofeed"
@@ -26,29 +26,28 @@ var (
 	rssWidgetHorizontalCards2Template = mustParseTemplate("rss-horizontal-cards-2.html", "widget-base.html")
 )
 
-type cachedFeed struct {
-	LastModified time.Time
-	Etag         string
-	Items        rssFeedItemList
-}
+var feedParser = gofeed.NewParser()
 
 type rssWidget struct {
 	widgetBase       `yaml:",inline"`
-	FeedRequests     []rssFeedRequest      `yaml:"feeds"`
-	Style            string                `yaml:"style"`
-	ThumbnailHeight  float64               `yaml:"thumbnail-height"`
-	CardHeight       float64               `yaml:"card-height"`
-	Items            rssFeedItemList       `yaml:"-"`
-	Limit            int                   `yaml:"limit"`
-	CollapseAfter    int                   `yaml:"collapse-after"`
-	SingleLineTitles bool                  `yaml:"single-line-titles"`
-	PreserveOrder    bool                  `yaml:"preserve-order"`
-	NoItemsMessage   string                `yaml:"-"`
-	CachedFeeds      map[string]cachedFeed `yaml:"-"`
+	FeedRequests     []rssFeedRequest `yaml:"feeds"`
+	Style            string           `yaml:"style"`
+	ThumbnailHeight  float64          `yaml:"thumbnail-height"`
+	CardHeight       float64          `yaml:"card-height"`
+	Limit            int              `yaml:"limit"`
+	CollapseAfter    int              `yaml:"collapse-after"`
+	SingleLineTitles bool             `yaml:"single-line-titles"`
+	PreserveOrder    bool             `yaml:"preserve-order"`
+
+	Items          rssFeedItemList `yaml:"-"`
+	NoItemsMessage string          `yaml:"-"`
+
+	feedCacheMutex sync.Mutex
+	cachedFeeds    map[string]*cachedRSSFeed `yaml:"-"`
 }
 
 func (widget *rssWidget) initialize() error {
-	widget.withTitle("RSS Feed").withCacheDuration(1 * time.Hour)
+	widget.withTitle("RSS Feed").withCacheDuration(2 * time.Hour)
 
 	if widget.Limit <= 0 {
 		widget.Limit = 25
@@ -73,46 +72,27 @@ func (widget *rssWidget) initialize() error {
 	}
 
 	widget.NoItemsMessage = "No items were returned from the feeds."
+	widget.cachedFeeds = make(map[string]*cachedRSSFeed)
 
 	return nil
 }
 
 func (widget *rssWidget) update(ctx context.Context) {
-	// Populate If-Modified-Since header and Etag
-	for i, req := range widget.FeedRequests {
-		if cachedFeed, ok := widget.CachedFeeds[req.URL]; ok {
-			widget.FeedRequests[i].IfModifiedSince = cachedFeed.LastModified
-			widget.FeedRequests[i].Etag = cachedFeed.Etag
-		}
-	}
-
-	allItems, feeds, err := fetchItemsFromRSSFeeds(widget.FeedRequests, widget.CachedFeeds)
+	items, err := widget.fetchItemsFromFeeds()
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
 
 	if !widget.PreserveOrder {
-		allItems.sortByNewest()
+		items.sortByNewest()
 	}
 
-	if len(allItems) > widget.Limit {
-		allItems = allItems[:widget.Limit]
+	if len(items) > widget.Limit {
+		items = items[:widget.Limit]
 	}
 
-	widget.Items = allItems
-
-	cachedFeeds := make(map[string]cachedFeed)
-	for _, feed := range feeds {
-		if !feed.LastModified.IsZero() || feed.Etag != "" {
-			cachedFeeds[feed.URL] = cachedFeed{
-				LastModified: feed.LastModified,
-				Etag:         feed.Etag,
-				Items:        feed.Items,
-			}
-		}
-	}
-	widget.CachedFeeds = cachedFeeds
+	widget.Items = items
 }
 
 func (widget *rssWidget) Render() template.HTML {
@@ -131,6 +111,12 @@ func (widget *rssWidget) Render() template.HTML {
 	return widget.renderTemplate(widget, rssWidgetTemplate)
 }
 
+type cachedRSSFeed struct {
+	etag         string
+	lastModified string
+	items        []rssFeedItem
+}
+
 type rssFeedItem struct {
 	ChannelName string
 	ChannelURL  string
@@ -142,35 +128,6 @@ type rssFeedItem struct {
 	PublishedAt time.Time
 }
 
-// doesn't cover all cases but works the vast majority of the time
-var htmlTagsWithAttributesPattern = regexp.MustCompile(`<\/?[a-zA-Z0-9-]+ *(?:[a-zA-Z-]+=(?:"|').*?(?:"|') ?)* *\/?>`)
-
-func sanitizeFeedDescription(description string) string {
-	if description == "" {
-		return ""
-	}
-
-	description = strings.ReplaceAll(description, "\n", " ")
-	description = htmlTagsWithAttributesPattern.ReplaceAllString(description, "")
-	description = sequentialWhitespacePattern.ReplaceAllString(description, " ")
-	description = strings.TrimSpace(description)
-	description = html.UnescapeString(description)
-
-	return description
-}
-
-func shortenFeedDescriptionLen(description string, maxLen int) string {
-	description, _ = limitStringLength(description, 1000)
-	description = sanitizeFeedDescription(description)
-	description, limited := limitStringLength(description, maxLen)
-
-	if limited {
-		description += "…"
-	}
-
-	return description
-}
-
 type rssFeedRequest struct {
 	URL             string            `yaml:"url"`
 	Title           string            `yaml:"title"`
@@ -180,18 +137,9 @@ type rssFeedRequest struct {
 	ItemLinkPrefix  string            `yaml:"item-link-prefix"`
 	Headers         map[string]string `yaml:"headers"`
 	IsDetailed      bool              `yaml:"-"`
-	IfModifiedSince time.Time         `yaml:"-"`
-	Etag            string            `yaml:"-"`
 }
 
 type rssFeedItemList []rssFeedItem
-
-type rssFeedResponse struct {
-	URL          string
-	Items        rssFeedItemList
-	LastModified time.Time
-	Etag         string
-}
 
 func (f rssFeedItemList) sortByNewest() rssFeedItemList {
 	sort.Slice(f, func(i, j int) bool {
@@ -201,69 +149,99 @@ func (f rssFeedItemList) sortByNewest() rssFeedItemList {
 	return f
 }
 
-var feedParser = gofeed.NewParser()
+func (widget *rssWidget) fetchItemsFromFeeds() (rssFeedItemList, error) {
+	requests := widget.FeedRequests
 
-func fetchItemsFromRSSFeedTask(request rssFeedRequest) (rssFeedResponse, error) {
-	feedResponse := rssFeedResponse{URL: request.URL}
+	job := newJob(widget.fetchItemsFromFeedTask, requests).withWorkers(30)
+	feeds, errs, err := workerPoolDo(job)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", errNoContent, err)
+	}
 
+	failed := 0
+	entries := make(rssFeedItemList, 0, len(feeds)*10)
+	seen := make(map[string]struct{})
+
+	for i := range feeds {
+		if errs[i] != nil {
+			failed++
+			slog.Error("Failed to get RSS feed", "url", requests[i].URL, "error", errs[i])
+			continue
+		}
+
+		for _, item := range feeds[i] {
+			if _, exists := seen[item.Link]; exists {
+				continue
+			}
+			entries = append(entries, item)
+			seen[item.Link] = struct{}{}
+		}
+	}
+
+	if failed == len(requests) {
+		return nil, errNoContent
+	}
+
+	if failed > 0 {
+		return entries, fmt.Errorf("%w: missing %d RSS feeds", errPartialContent, failed)
+	}
+
+	return entries, nil
+}
+
+func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
 	req, err := http.NewRequest("GET", request.URL, nil)
 	if err != nil {
-		return feedResponse, err
+		return nil, err
 	}
 
-	req.Header.Add("User-Agent", fmt.Sprintf("Glance v%s", buildVersion))
+	req.Header.Add("User-Agent", glanceUserAgentString)
+
+	widget.feedCacheMutex.Lock()
+	cache, isCached := widget.cachedFeeds[request.URL]
+	if isCached {
+		if cache.etag != "" {
+			req.Header.Add("If-None-Match", cache.etag)
+		}
+		if cache.lastModified != "" {
+			req.Header.Add("If-Modified-Since", cache.lastModified)
+		}
+	}
+	widget.feedCacheMutex.Unlock()
 
 	for key, value := range request.Headers {
-		req.Header.Add(key, value)
-	}
-
-	if !request.IfModifiedSince.IsZero() {
-		req.Header.Add("If-Modified-Since", request.IfModifiedSince.Format(http.TimeFormat))
-	}
-
-	if request.Etag != "" {
-		req.Header.Add("If-None-Match", request.Etag)
+		req.Header.Set(key, value)
 	}
 
 	resp, err := defaultHTTPClient.Do(req)
 	if err != nil {
-		return feedResponse, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusNotModified {
-		return feedResponse, errNotModified
+	if resp.StatusCode == http.StatusNotModified && isCached {
+		return cache.items, nil
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return feedResponse, fmt.Errorf("unexpected status code %d from %s", resp.StatusCode, request.URL)
+		return nil, fmt.Errorf("unexpected status code %d from %s", resp.StatusCode, request.URL)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return feedResponse, err
+		return nil, err
 	}
 
 	feed, err := feedParser.ParseString(string(body))
 	if err != nil {
-		return feedResponse, err
+		return nil, err
 	}
 
 	if request.Limit > 0 && len(feed.Items) > request.Limit {
 		feed.Items = feed.Items[:request.Limit]
 	}
 
-	items := make([]rssFeedItem, 0, len(feed.Items))
-
-	if lastModified := resp.Header.Get("Last-Modified"); lastModified != "" {
-		if t, err := time.Parse(http.TimeFormat, lastModified); err == nil {
-			feedResponse.LastModified = t
-		}
-	}
-
-	if etag := resp.Header.Get("Etag"); etag != "" {
-		feedResponse.Etag = etag
-	}
+	items := make(rssFeedItemList, 0, len(feed.Items))
 
 	for i := range feed.Items {
 		item := feed.Items[i]
@@ -352,8 +330,27 @@ func fetchItemsFromRSSFeedTask(request rssFeedRequest) (rssFeedResponse, error) 
 		items = append(items, rssItem)
 	}
 
-	feedResponse.Items = items
-	return feedResponse, nil
+	if resp.Header.Get("ETag") != "" || resp.Header.Get("Last-Modified") != "" {
+		widget.feedCacheMutex.Lock()
+		widget.cachedFeeds[request.URL] = &cachedRSSFeed{
+			etag:         resp.Header.Get("ETag"),
+			lastModified: resp.Header.Get("Last-Modified"),
+			items:        items,
+		}
+		widget.feedCacheMutex.Unlock()
+	}
+
+	return items, nil
+}
+
+func findThumbnailInItemExtensions(item *gofeed.Item) string {
+	media, ok := item.Extensions["media"]
+
+	if !ok {
+		return ""
+	}
+
+	return recursiveFindThumbnailInExtensions(media)
 }
 
 func recursiveFindThumbnailInExtensions(extensions map[string][]gofeedext.Extension) string {
@@ -376,48 +373,30 @@ func recursiveFindThumbnailInExtensions(extensions map[string][]gofeedext.Extens
 	return ""
 }
 
-func findThumbnailInItemExtensions(item *gofeed.Item) string {
-	media, ok := item.Extensions["media"]
+var htmlTagsWithAttributesPattern = regexp.MustCompile(`<\/?[a-zA-Z0-9-]+ *(?:[a-zA-Z-]+=(?:"|').*?(?:"|') ?)* *\/?>`)
 
-	if !ok {
+func sanitizeFeedDescription(description string) string {
+	if description == "" {
 		return ""
 	}
 
-	return recursiveFindThumbnailInExtensions(media)
+	description = strings.ReplaceAll(description, "\n", " ")
+	description = htmlTagsWithAttributesPattern.ReplaceAllString(description, "")
+	description = sequentialWhitespacePattern.ReplaceAllString(description, " ")
+	description = strings.TrimSpace(description)
+	description = html.UnescapeString(description)
+
+	return description
 }
 
-func fetchItemsFromRSSFeeds(requests []rssFeedRequest, cachedFeeds map[string]cachedFeed) (rssFeedItemList, []rssFeedResponse, error) {
-	job := newJob(fetchItemsFromRSSFeedTask, requests).withWorkers(30)
-	feeds, errs, err := workerPoolDo(job)
-	if err != nil {
-		return nil, nil, fmt.Errorf("%w: %v", errNoContent, err)
+func shortenFeedDescriptionLen(description string, maxLen int) string {
+	description, _ = limitStringLength(description, 1000)
+	description = sanitizeFeedDescription(description)
+	description, limited := limitStringLength(description, maxLen)
+
+	if limited {
+		description += "…"
 	}
 
-	failed := 0
-	notModified := 0
-
-	entries := make(rssFeedItemList, 0, len(feeds)*10)
-
-	for i := range feeds {
-		if errs[i] == nil {
-			entries = append(entries, feeds[i].Items...)
-		} else if errors.Is(errs[i], errNotModified) {
-			notModified++
-			entries = append(entries, cachedFeeds[feeds[i].URL].Items...)
-			slog.Debug("Feed not modified", "url", requests[i].URL, "debug", errs[i])
-		} else {
-			failed++
-			slog.Error("Failed to get RSS feed", "url", requests[i].URL, "error", errs[i])
-		}
-	}
-
-	if failed == len(requests) {
-		return nil, nil, errNoContent
-	}
-
-	if failed > 0 {
-		return entries, feeds, fmt.Errorf("%w: missing %d RSS feeds", errPartialContent, failed)
-	}
-
-	return entries, feeds, nil
+	return description
 }
