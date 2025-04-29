@@ -2,6 +2,7 @@ package glance
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/samber/lo"
 	"html/template"
@@ -13,23 +14,17 @@ import (
 	"github.com/antchfx/htmlquery"
 )
 
+// podcastChannelWidgetTemplate power by  rssWidgetTemplate
+var podcastChannelWidgetTemplate = mustParseTemplate("podcast-list.html", "widget-base.html")
+
 type podcastChannel struct {
-	podcastID string `yaml:"podcast_id"` // apple podcast id
-	region    string `yaml:"-"`
-	// podcastNameAlias string `yaml:"podcast_name"` // apple podcast id
+	PodcastID string `yaml:"podcast_id"` // apple podcast id
+	Region    string `yaml:"Region"`
 }
 
-type podcastChannelXML struct {
-	Head struct {
-		Script []struct {
-			// ID          *string `xml:"id,attr"`
-			PodcastJson string `xml:",chardata"`
-		} `xml:"script"`
-	} `xml:"head"`
-}
-
-type podcastChannelInfo struct {
+type podcastEpisode struct {
 	PodcastName           string
+	PodcastChannelURL     string
 	PodcastEpisodeName    string
 	PodcastEpisodeURL     string
 	PodcastEpisodeIconURL string
@@ -38,30 +33,43 @@ type podcastChannelInfo struct {
 }
 
 type podcastWidget struct {
+	// style params
 	widgetBase       `yaml:",inline"`
-	podcastChannels  []podcastChannel `yaml:"channels"`
-	Style            string           `yaml:"style"`
-	ThumbnailHeight  float64          `yaml:"thumbnail-height"`
-	CardHeight       float64          `yaml:"card-height"`
-	Items            rssFeedItemList  `yaml:"-"`
-	Limit            int              `yaml:"limit"`
-	CollapseAfter    int              `yaml:"collapse-after"`
-	SingleLineTitles bool             `yaml:"single-line-titles"`
-	PreserveOrder    bool             `yaml:"preserve-order"`
-	NoItemsMessage   string           `yaml:"-"`
-	Region           string           `yaml:"region"`
+	Style            string  `yaml:"style"`
+	ThumbnailHeight  float64 `yaml:"thumbnail-height"`
+	CardHeight       float64 `yaml:"card-height"`
+	Limit            int     `yaml:"limit"`
+	CollapseAfter    int     `yaml:"collapse-after"`
+	SingleLineTitles bool    `yaml:"single-line-titles"`
+	NoItemsMessage   string  `yaml:"-"`
+
+	// podcast fetch param
+	DefaultRegion   string            `yaml:"Region"`
+	PodcastChannels []*podcastChannel `yaml:"channels"`
+
+	// output to html response
+	PodcastEpisodes []*podcastEpisode `yaml:"-"`
 }
 
 func (widget *podcastWidget) initialize() error {
-	// widget.withTitle("RSS Feed").withCacheDuration(1 * time.Hour)
+	widget.withTitle("Apple Podcast").withCacheDuration(1 * time.Hour)
+	testInfo, _ := json.Marshal(widget.PodcastChannels)
+	slog.Info("podcast config", "channels", string(testInfo))
+	widget.DefaultRegion = lo.If(len(widget.DefaultRegion) != 0, widget.DefaultRegion).Else("cn")
+	widget.PodcastChannels = lo.Map(widget.PodcastChannels, func(podcastChannel *podcastChannel, index int) *podcastChannel {
+		if len(podcastChannel.Region) == 0 {
+			podcastChannel.Region = widget.DefaultRegion
+		}
+		return podcastChannel
+	})
 
-	// if widget.Limit <= 0 {
-	// 	widget.Limit = 25
-	// }
+	if widget.Limit <= 0 {
+		widget.Limit = 25
+	}
 
-	// if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-	// 	widget.CollapseAfter = 5
-	// }
+	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
+		widget.CollapseAfter = 5
+	}
 
 	// if widget.ThumbnailHeight < 0 {
 	// 	widget.ThumbnailHeight = 0
@@ -77,53 +85,50 @@ func (widget *podcastWidget) initialize() error {
 	// 	}
 	// }
 
-	// widget.NoItemsMessage = "No items were returned from the feeds."
+	widget.NoItemsMessage = "No items were returned from the feeds."
 
 	return nil
 }
 
 func (widget *podcastWidget) update(ctx context.Context) {
-	// items, err := fetchItemsFromRSSFeeds(widget.FeedRequests)
-
-	// if !widget.canContinueUpdateAfterHandlingErr(err) {
-	// 	return
-	// }
-
-	// if !widget.PreserveOrder {
-	// 	items.sortByNewest()
-	// }
-
-	// if len(items) > widget.Limit {
-	// 	items = items[:widget.Limit]
-	// }
-
-	// widget.Items = items
+	podcastEpisodes, err := fetchPodcastChannels(widget.PodcastChannels)
+	if err != nil {
+		return
+	}
+	if !widget.canContinueUpdateAfterHandlingErr(err) {
+		return
+	}
+	widget.PodcastEpisodes = lo.Slice(widget.PodcastEpisodes, 0, widget.Limit)
+	widget.PodcastEpisodes = podcastEpisodes
 }
 
 func (widget *podcastWidget) Render() template.HTML {
-	if widget.Style == "horizontal-cards" {
-		return widget.renderTemplate(widget, rssWidgetHorizontalCardsTemplate)
-	}
+	//if widget.Style == "horizontal-cards" {
+	//	return widget.renderTemplate(widget, rssWidgetHorizontalCardsTemplate)
+	//}
+	//
+	//if widget.Style == "horizontal-cards-2" {
+	//	return widget.renderTemplate(widget, rssWidgetHorizontalCards2Template)
+	//}
+	//
+	//if widget.Style == "detailed-list" {
+	//	return widget.renderTemplate(widget, podcastChannelWidgetTemplate)
+	//}
 
-	if widget.Style == "horizontal-cards-2" {
-		return widget.renderTemplate(widget, rssWidgetHorizontalCards2Template)
-	}
-
-	if widget.Style == "detailed-list" {
-		return widget.renderTemplate(widget, rssWidgetDetailedListTemplate)
-	}
-
-	return widget.renderTemplate(widget, rssWidgetTemplate)
+	return widget.renderTemplate(widget, podcastChannelWidgetTemplate)
 }
 
-func fetchPodcastChannels(channels []*podcastChannel) ([]*podcastChannelInfo, error) {
+func fetchPodcastChannels(channels []*podcastChannel) ([]*podcastEpisode, error) {
 	job := newJob(fetchPodcastChannel, channels).withWorkers(30)
 	podcastChannelInfoGroups, errs, err := workerPoolDo(job)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errNoContent, err)
 	}
-	if lo.CoalesceOrEmpty(errs...) != nil {
-		return nil, fmt.Errorf("fetchPodcastChannel error, err: %v", errs)
+	errs = lo.Filter(errs, func(err error, _ int) bool {
+		return err != nil
+	})
+	if len(errs) == len(channels) {
+		return nil, errNoContent
 	}
 	podcastChannelInfos := lo.Flatten(podcastChannelInfoGroups)
 	sort.Slice(podcastChannelInfos, func(i, j int) bool {
@@ -134,16 +139,16 @@ func fetchPodcastChannels(channels []*podcastChannel) ([]*podcastChannelInfo, er
 		}
 		return iPubDate > jPubDate
 	})
-	return podcastChannelInfos, nil
+	return podcastChannelInfos, lo.FirstOrEmpty[error](errs)
 }
 
-func fetchPodcastChannel(channel *podcastChannel) ([]*podcastChannelInfo, error) {
+func fetchPodcastChannel(channel *podcastChannel) ([]*podcastEpisode, error) {
 	const applePodcastURL = "https://podcasts.apple.com/%s/podcast/%s"
-	requestURL := fmt.Sprintf(applePodcastURL, channel.region, channel.podcastID)
+	requestURL := fmt.Sprintf(applePodcastURL, channel.Region, channel.PodcastID)
 	fmt.Printf("requestURL: %+v", requestURL)
 	request, err := http.NewRequest(http.MethodGet, requestURL, nil)
 	if err != nil {
-		slog.Error("fetch podcast channel request error", "error", err, "url", requestURL)
+		slog.Error("build podcast channel request error", "error", err, "url", requestURL)
 		return nil, err
 	}
 	xmlQueryNode, err := getHtmlQueryFileFromRequest(defaultHTTPClient, request)
@@ -160,19 +165,20 @@ func fetchPodcastChannel(channel *podcastChannel) ([]*podcastChannelInfo, error)
 		slog.Error("failed to unmarshal schema show node", "err", err)
 		return nil, err
 	}
-	return lo.FilterMap(podcastSchemaShowNode.WorkExample, func(e *PodcastWorkExample, index int) (*podcastChannelInfo, bool) {
+	return lo.FilterMap(podcastSchemaShowNode.WorkExample, func(e *PodcastWorkExample, index int) (*podcastEpisode, bool) {
 		pubDate, err := time.ParseInLocation(time.DateOnly, e.DatePublished, time.Local)
 		if err != nil {
 			slog.Error("parse episode date failed", "pub_date", e.DatePublished, "err", err)
 			return nil, false
 		}
-		return &podcastChannelInfo{
+		return &podcastEpisode{
 			PodcastName:           podcastSchemaShowNode.Name,
 			PodcastEpisodeName:    e.Name,
 			PodcastEpisodeURL:     e.Url,
 			PodcastEpisodeIconURL: e.ThumbnailUrl,
 			PodcastEpisodeSummary: e.Duration,
 			PodcastEpisodeDate:    pubDate,
+			PodcastChannelURL:     podcastSchemaShowNode.Url,
 		}, true
 	}), nil
 }

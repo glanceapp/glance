@@ -1,0 +1,19 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<ul class="list list-gap-14 collapsible-container{{ if .SingleLineTitles }} single-line-titles{{ end }}" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .PodcastEpisodes }}
+    <li>
+        <a class="title size-title-dynamic color-primary-if-not-visited" href="{{ .PodcastEpisodeURL }}" target="_blank" rel="noreferrer">{{ .PodcastEpisodeName }}</a>
+        <ul class="list-horizontal-text flex-nowrap">
+            <li {{ dynamicRelativeTimeAttrs .PodcastEpisodeDate }}></li>
+            <li class="min-width-0">
+                <a class="block text-truncate" href="{{ .PodcastChannelURL }}" target="_blank" rel="noreferrer">{{ .PodcastName }}</a>
+            </li>
+        </ul>
+    </li>
+    {{ else }}
+    <li>{{ .NoItemsMessage }}</li>
+    {{ end }}
+</ul>
+{{ end }}

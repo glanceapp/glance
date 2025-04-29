@@ -9,8 +9,8 @@ import (
 // TestFetchPodcastChannel test fetch single channel
 func TestFetchPodcastChannel(t *testing.T) {
 	channel := &podcastChannel{
-		podcastID: "1482731836",
-		region:    "cn",
+		PodcastID: "1482731836",
+		Region:    "cn",
 	}
 	resp, err := fetchPodcastChannel(channel)
 	if err != nil {
@@ -23,8 +23,8 @@ func TestFetchPodcastChannel(t *testing.T) {
 // TestFetchPodcastChannels test fetch single channel
 func TestFetchPodcastChannels(t *testing.T) {
 	channel := &podcastChannel{
-		podcastID: "1482731836",
-		region:    "cn",
+		PodcastID: "1482731836",
+		Region:    "cn",
 	}
 	resp, err := fetchPodcastChannels([]*podcastChannel{channel})
 	if err != nil {
