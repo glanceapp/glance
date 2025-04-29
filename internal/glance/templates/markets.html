@@ -11,7 +11,7 @@
 
         <a class="market-chart" {{ if ne "" .ChartLink }} href="{{ .ChartLink }}" target="_blank" rel="noreferrer"{{ end }}>
             <svg class="market-chart shrink-0" viewBox="0 0 100 50">
-                <polyline fill="none" stroke="var(--color-text-subdue)" stroke-width="1.5px" points="{{ .SvgChartPoints }}" vector-effect="non-scaling-stroke"></polyline>
+                <polyline fill="none" stroke="var(--color-text-subdue)" stroke-linecap="round" stroke-width="1.5px" points="{{ .SvgChartPoints }}" vector-effect="non-scaling-stroke"></polyline>
             </svg>
         </a>
 
