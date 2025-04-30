@@ -43,9 +43,10 @@ type dnsStatsWidget struct {
 }
 
 const (
-	dnsServiceAdguard  = "adguard"
-	dnsServicePihole   = "pihole"
-	dnsServicePiholeV6 = "pihole-v6"
+	dnsServiceAdguard    = "adguard"
+	dnsServicePihole     = "pihole"
+	dnsServiceTechnitium = "technitium"
+	dnsServicePiholeV6   = "pihole-v6"
 )
 
 func makeDNSWidgetTimeLabels(format string) [8]string {
@@ -60,17 +61,24 @@ func makeDNSWidgetTimeLabels(format string) [8]string {
 }
 
 func (widget *dnsStatsWidget) initialize() error {
+	titleURL := strings.TrimRight(widget.URL, "/")
+	switch widget.Service {
+	case dnsServicePihole, dnsServicePiholeV6:
+		titleURL = titleURL + "/admin"
+	}
+
 	widget.
 		withTitle("DNS Stats").
-		withTitleURL(string(widget.URL)).
+		withTitleURL(titleURL).
 		withCacheDuration(10 * time.Minute)
 
 	switch widget.Service {
 	case dnsServiceAdguard:
 	case dnsServicePiholeV6:
 	case dnsServicePihole:
+	case dnsServiceTechnitium:
 	default:
-		return fmt.Errorf("service must be one of: %s, %s, %s", dnsServiceAdguard, dnsServicePihole, dnsServicePiholeV6)
+		return fmt.Errorf("service must be one of: %s, %s, %s, %s", dnsServiceAdguard, dnsServicePihole, dnsServicePiholeV6, dnsServiceTechnitium)
 	}
 
 	return nil
@@ -85,6 +93,8 @@ func (widget *dnsStatsWidget) update(ctx context.Context) {
 		stats, err = fetchAdguardStats(widget.URL, widget.AllowInsecure, widget.Username, widget.Password, widget.HideGraph)
 	case dnsServicePihole:
 		stats, err = fetchPihole5Stats(widget.URL, widget.AllowInsecure, widget.Token, widget.HideGraph)
+	case dnsServiceTechnitium:
+		stats, err = fetchTechnitiumStats(widget.URL, widget.AllowInsecure, widget.Token, widget.HideGraph)
 	case dnsServicePiholeV6:
 		var newSessionID string
 		stats, newSessionID, err = fetchPiholeStats(
@@ -671,4 +681,140 @@ func checkPiholeSessionIDIsValid(instanceURL string, client *http.Client, sessio
 	}
 
 	return response.StatusCode == http.StatusOK, nil
+}
+
+type technitiumStatsResponse struct {
+	Response struct {
+		Stats struct {
+			TotalQueries   int `json:"totalQueries"`
+			BlockedQueries int `json:"totalBlocked"`
+			BlockedZones   int `json:"blockedZones"`
+			BlockListZones int `json:"blockListZones"`
+		} `json:"stats"`
+		MainChartData struct {
+			Datasets []struct {
+				Label string `json:"label"`
+				Data  []int  `json:"data"`
+			} `json:"datasets"`
+		} `json:"mainChartData"`
+		TopBlockedDomains []struct {
+			Domain string `json:"name"`
+			Count  int    `json:"hits"`
+		}
+	} `json:"response"`
+}
+
+func fetchTechnitiumStats(instanceUrl string, allowInsecure bool, token string, noGraph bool) (*dnsStats, error) {
+	if token == "" {
+		return nil, errors.New("missing API token")
+	}
+
+	requestURL := strings.TrimRight(instanceUrl, "/") + "/api/dashboard/stats/get?token=" + token + "&type=LastDay"
+
+	request, err := http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var client requestDoer
+	if !allowInsecure {
+		client = defaultHTTPClient
+	} else {
+		client = defaultInsecureHTTPClient
+	}
+
+	responseJson, err := decodeJsonFromRequest[technitiumStatsResponse](client, request)
+	if err != nil {
+		return nil, err
+	}
+
+	var topBlockedDomainsCount = min(len(responseJson.Response.TopBlockedDomains), 5)
+
+	stats := &dnsStats{
+		TotalQueries:      responseJson.Response.Stats.TotalQueries,
+		BlockedQueries:    responseJson.Response.Stats.BlockedQueries,
+		TopBlockedDomains: make([]dnsStatsBlockedDomain, 0, topBlockedDomainsCount),
+		DomainsBlocked:    responseJson.Response.Stats.BlockedZones + responseJson.Response.Stats.BlockListZones,
+	}
+
+	if stats.TotalQueries <= 0 {
+		return stats, nil
+	}
+
+	stats.BlockedPercent = int(float64(responseJson.Response.Stats.BlockedQueries) / float64(responseJson.Response.Stats.TotalQueries) * 100)
+
+	for i := 0; i < topBlockedDomainsCount; i++ {
+		domain := responseJson.Response.TopBlockedDomains[i]
+		firstDomain := domain.Domain
+
+		if firstDomain == "" {
+			continue
+		}
+
+		stats.TopBlockedDomains = append(stats.TopBlockedDomains, dnsStatsBlockedDomain{
+			Domain: firstDomain,
+		})
+
+		if stats.BlockedQueries > 0 {
+			stats.TopBlockedDomains[i].PercentBlocked = int(float64(domain.Count) / float64(responseJson.Response.Stats.BlockedQueries) * 100)
+		}
+	}
+
+	if noGraph {
+		return stats, nil
+	}
+
+	var queriesSeries, blockedSeries []int
+
+	for _, label := range responseJson.Response.MainChartData.Datasets {
+		switch label.Label {
+		case "Total":
+			queriesSeries = label.Data
+		case "Blocked":
+			blockedSeries = label.Data
+		}
+	}
+
+	if len(queriesSeries) > dnsStatsHoursSpan {
+		queriesSeries = queriesSeries[len(queriesSeries)-dnsStatsHoursSpan:]
+	} else if len(queriesSeries) < dnsStatsHoursSpan {
+		queriesSeries = append(make([]int, dnsStatsHoursSpan-len(queriesSeries)), queriesSeries...)
+	}
+
+	if len(blockedSeries) > dnsStatsHoursSpan {
+		blockedSeries = blockedSeries[len(blockedSeries)-dnsStatsHoursSpan:]
+	} else if len(blockedSeries) < dnsStatsHoursSpan {
+		blockedSeries = append(make([]int, dnsStatsHoursSpan-len(blockedSeries)), blockedSeries...)
+	}
+
+	maxQueriesInSeries := 0
+
+	for i := 0; i < dnsStatsBars; i++ {
+		queries := 0
+		blocked := 0
+
+		for j := 0; j < dnsStatsHoursPerBar; j++ {
+			queries += queriesSeries[i*dnsStatsHoursPerBar+j]
+			blocked += blockedSeries[i*dnsStatsHoursPerBar+j]
+		}
+
+		stats.Series[i] = dnsStatsSeries{
+			Queries: queries,
+			Blocked: blocked,
+		}
+
+		if queries > 0 {
+			stats.Series[i].PercentBlocked = int(float64(blocked) / float64(queries) * 100)
+		}
+
+		if queries > maxQueriesInSeries {
+			maxQueriesInSeries = queries
+		}
+	}
+
+	for i := 0; i < dnsStatsBars; i++ {
+		stats.Series[i].PercentTotal = int(float64(stats.Series[i].Queries) / float64(maxQueriesInSeries) * 100)
+	}
+
+	return stats, nil
 }

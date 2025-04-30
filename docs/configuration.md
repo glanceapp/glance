@@ -4,7 +4,9 @@
 - [The config file](#the-config-file)
   - [Auto reload](#auto-reload)
   - [Environment variables](#environment-variables)
+    - [Other ways of providing tokens/passwords/secrets](#other-ways-of-providing-tokenspasswordssecrets)
   - [Including other config files](#including-other-config-files)
+  - [Config schema](#config-schema)
 - [Server](#server)
 - [Document](#document)
 - [Branding](#branding)
@@ -92,14 +94,46 @@ If you need to use the syntax `${NAME}` in your config without it being interpre
 something: \${NOT_AN_ENV_VAR}
 ```
 
+#### Other ways of providing tokens/passwords/secrets
+
+You can use [Docker secrets](https://docs.docker.com/compose/how-tos/use-secrets/) with the following syntax:
+
+```yaml
+# This will be replaced with the contents of the file /run/secrets/github_token
+# so long as the secret `github_token` is provided to the container
+token: ${secret:github_token}
+```
+
+Alternatively, you can load the contents of a file who's path is provided by an environment variable:
+
+`docker-compose.yml`
+```yaml
+services:
+  glance:
+    image: glanceapp/glance
+    environment:
+      - TOKEN_FILE=/home/user/token
+    volumes:
+      - /home/user/token:/home/user/token
+```
+
+`glance.yml`
+```yaml
+token: ${readFileFromEnv:TOKEN_FILE}
+```
+
+> [!NOTE]
+>
+> The contents of the file will be stripped of any leading/trailing whitespace before being used.
+
 ### Including other config files
-Including config files from within your main config file is supported. This is done via the `!include` directive along with a relative or absolute path to the file you want to include. If the path is relative, it will be relative to the main config file. Additionally, environment variables can be used within included files, and changes to the included files will trigger an automatic reload. Example:
+Including config files from within your main config file is supported. This is done via the `$include` directive along with a relative or absolute path to the file you want to include. If the path is relative, it will be relative to the main config file. Additionally, environment variables can be used within included files, and changes to the included files will trigger an automatic reload. Example:
 
 ```yaml
 pages:
-  !include: home.yml
-  !include: videos.yml
-  !include: homelab.yml
+  - $include: home.yml
+  - $include: videos.yml
+  - $include: homelab.yml
 ```
 
 The file you are including should not have any additional indentation, its values should be at the top level and the appropriate amount of indentation will be added automatically depending on where the file is included. Example:
@@ -112,14 +146,14 @@ pages:
     columns:
       - size: full
         widgets:
-          !include: rss.yml
+          $include: rss.yml
   - name: News
     columns:
       - size: full
         widgets:
           - type: group
             widgets:
-              !include: rss.yml
+              $include: rss.yml
               - type: reddit
                 subreddit: news
 ```
@@ -133,9 +167,9 @@ pages:
     - url: ${RSS_URL}
 ```
 
-The `!include` directive can be used anywhere in the config file, not just in the `pages` property, however it must be on its own line and have the appropriate indentation.
+The `$include` directive can be used anywhere in the config file, not just in the `pages` property, however it must be on its own line and have the appropriate indentation.
 
-If you encounter YAML parsing errors when using the `!include` directive, the reported line numbers will likely be incorrect. This is because the inclusion of files is done before the YAML is parsed, as YAML itself does not support file inclusion. To help with debugging in cases like this, you can use the `config:print` command and pipe it into `less -N` to see the full config file with includes resolved and line numbers added:
+If you encounter YAML parsing errors when using the `$include` directive, the reported line numbers will likely be incorrect. This is because the inclusion of files is done before the YAML is parsed, as YAML itself does not support file inclusion. To help with debugging in cases like this, you can use the `config:print` command and pipe it into `less -N` to see the full config file with includes resolved and line numbers added:
 
 ```sh
 glance --config /path/to/glance.yml config:print | less -N
@@ -148,6 +182,10 @@ docker run --rm -v ./glance.yml:/app/config/glance.yml glanceapp/glance config:p
 ```
 
 This assumes that the config you want to print is in your current working directory and is named `glance.yml`.
+
+## Config schema
+
+For property descriptions, validation and autocompletion of the config within your IDE, @not-first has kindly created a [schema](https://github.com/not-first/glance-schema). Massive thanks to them for this, go check it out and give them a star!
 
 ## Server
 Server configuration is done through a top level `server` property. Example:
@@ -235,6 +273,9 @@ branding:
     <p>Powered by <a href="https://github.com/glanceapp/glance">Glance</a></p>
   logo-url: /assets/logo.png
   favicon-url: /assets/logo.png
+  app-name: "My Dashboard"
+  app-icon-url: "/assets/app-icon.png"
+  app-background-color: "#151519"
 ```
 
 ### Properties
@@ -246,6 +287,9 @@ branding:
 | logo-text | string | no | G |
 | logo-url | string | no | |
 | favicon-url | string | no | |
+| app-name | string | no | Glance |
+| app-icon-url | string | no | Glance's default icon |
+| app-background-color | string | no | Glance's default background color |
 
 #### `hide-footer`
 Hides the footer when set to `true`.
@@ -261,6 +305,15 @@ Specify a URL to a custom image to use instead of the "G" found in the navigatio
 
 #### `favicon-url`
 Specify a URL to a custom image to use for the favicon.
+
+#### `app-name`
+Specify the name of the web app shown in browser tab and PWA.
+
+#### `app-icon-url`
+Specify URL for PWA and browser tab icon (512x512 PNG).
+
+#### `app-background-color`
+Specify background color for PWA. Must be a valid CSS color.
 
 ## Theme
 Theming is done through a top level `theme` property. Values for the colors are in [HSL](https://giggster.com/guide/basics/hue-saturation-lightness/) (hue, saturation, lightness) format. You can use a color picker [like this one](https://hslpicker.com/) to convert colors from other formats to HSL. The values are separated by a space and `%` is not required for any of the numbers.
@@ -359,6 +412,7 @@ pages:
 | name | string | yes | |
 | slug | string | no | |
 | width | string | no | |
+| desktop-navigation-width | string | no | |
 | center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
 | expand-mobile-page-navigation | boolean | no | false |
@@ -372,9 +426,14 @@ The name of the page which gets shown in the navigation bar.
 The URL friendly version of the title which is used to access the page. For example if the title of the page is "RSS Feeds" you can make the page accessible via `localhost:8080/feeds` by setting the slug to `feeds`. If not defined, it will automatically be generated from the title.
 
 #### `width`
-The maximum width of the page on desktop. Possible values are `slim` and `wide`.
+The maximum width of the page on desktop. Possible values are `default`, `slim` and `wide`.
 
-* default: `1600px` (when no value is specified)
+#### `desktop-navigation-width`
+The maximum width of the desktop navigation. Useful if you have a few pages that use a different width than the rest and don't want the navigation to jump abruptly when going to and away from those pages. Possible values are `default`, `slim` and `wide`.
+
+Here are the pixel equivalents for each value:
+
+* default: `1600px`
 * slim: `1100px`
 * wide: `1920px`
 
@@ -789,7 +848,10 @@ Display a list of posts from a specific subreddit.
 
 > [!WARNING]
 >
-> Reddit does not allow unauthorized API access from VPS IPs, if you're hosting Glance on a VPS you will get a 403 response. As a workaround you can route the traffic from Glance through a VPN or your own HTTP proxy using the `request-url-template` property.
+> Reddit does not allow unauthorized API access from VPS IPs, if you're hosting Glance on a VPS you will get a 403
+> response. As a workaround you can either [register an app on Reddit](https://ssl.reddit.com/prefs/apps/) and use the
+> generated ID and secret in the widget configuration to authenticate your requests (see `app-auth` property), use a proxy
+> (see `proxy` property) or route the traffic from Glance through a VPN.
 
 Example:
 
@@ -814,6 +876,7 @@ Example:
 | top-period | string | no | day |
 | search | string | no | |
 | extra-sort-by | string | no | |
+| app-auth | object | no | |
 
 ##### `subreddit`
 The subreddit for which to fetch the posts from.
@@ -921,6 +984,17 @@ Can be used to specify an additional sort which will be applied on top of the al
 
 The `engagement` sort tries to place the posts with the most points and comments on top, also prioritizing recent over old posts.
 
+##### `app-auth`
+```yaml
+widgets:
+  - type: reddit
+    subreddit: technology
+    app-auth:
+      name: ${REDDIT_APP_NAME}
+      id: ${REDDIT_APP_CLIENT_ID}
+      secret: ${REDDIT_APP_SECRET}
+```
+
 ### Search Widget
 Display a search bar that can be used to search for specific terms on various search engines.
 
@@ -969,6 +1043,10 @@ Either a value from the table below or a URL to a custom search engine. Use `{QU
 | ---- | --- |
 | duckduckgo | `https://duckduckgo.com/?q={QUERY}` |
 | google | `https://www.google.com/search?q={QUERY}` |
+| bing | `https://www.bing.com/search?q={QUERY}` |
+| perplexity | `https://www.perplexity.ai/search?q={QUERY}` |
+| kagi | `https://kagi.com/search?q={QUERY}` |
+| startpage | `https://www.startpage.com/search?q={QUERY}` |
 
 ##### `new-tab`
 When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
@@ -1535,7 +1613,6 @@ Example:
     - title: Vaultwarden
       url: https://vault.yourdomain.com
       icon: /assets/vaultwarden-logo.png
-
 ```
 
 Preview:
@@ -1573,9 +1650,11 @@ Properties for each site:
 | check-url | string | no | |
 | error-url | string | no | |
 | icon | string | no | |
+| timeout | string | no | 3s |
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
 | alt-status-codes | array | no | |
+| basic-auth | object | no | |
 
 `title`
 
@@ -1583,7 +1662,7 @@ The title used to indicate the site.
 
 `url`
 
-The public facing URL of a monitored service, the user will be redirected here. If `check-url` is not specified, this is used as the status check.
+The URL of the monitored service, which must be reachable by Glance, and will be used as the link to go to when clicking on the title. If `check-url` is not specified, this is used as the status check.
 
 `check-url`
 
@@ -1607,6 +1686,10 @@ icon: si:adguard
 >
 > Simple Icons are loaded externally and are hosted on `cdn.jsdelivr.net`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
 
+`timeout`
+
+How long to wait for a response from the server before considering it unreachable. The value is a string and must be a number followed by one of s, m, h, d. Example: `5s` for 5 seconds, `1m` for 1 minute, etc.
+
 `allow-insecure`
 
 Whether to ignore invalid/self-signed certificates.
@@ -1622,6 +1705,16 @@ Status codes other than 200 that you want to return "OK".
 ```yaml
 alt-status-codes:
   - 403
+```
+
+`basic-auth`
+
+HTTP Basic Authentication credentials for protected sites.
+
+```yaml
+basic-auth:
+  usename: your-username
+  password: your-password
 ```
 
 ### Releases
@@ -1765,6 +1858,19 @@ Configuration of the containers is done via labels applied to each container:
       glance.description: Movies & shows
 ```
 
+Alternatively, you can also define the values within your `glance.yml` via the `containers` property, where the key is the container name and each value is the same as the labels but without the "glance." prefix:
+
+```yaml
+- type: docker-containers
+  containers:
+    container_name_1:
+      title: Container Name
+      description: Description of the container
+      url: https://container.domain.com
+      icon: si:container-icon
+      hide: false
+```
+
 For services with multiple containers you can specify a `glance.id` on the "main" container and `glance.parent` on each "child" container:
 
 <details>
@@ -1816,13 +1922,71 @@ If any of the child containers are down, their status will propagate up to the p
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | hide-by-default | boolean | no | false |
+| format-container-names | boolean | no | false |
 | sock-path | string | no | /var/run/docker.sock |
+| category | string | no | |
+| running-only | boolean | no | false |
 
 ##### `hide-by-default`
 Whether to hide the containers by default. If set to `true` you'll have to manually add a `glance.hide: false` label to each container you want to display. By default all containers will be shown and if you want to hide a specific container you can add a `glance.hide: true` label.
 
+##### `format-container-names`
+When set to `true`, automatically converts container names such as `container_name_1` into `Container Name 1`.
+
 ##### `sock-path`
-The path to the Docker socket.
+The path to the Docker socket. This can also be a [remote socket](https://docs.docker.com/engine/daemon/remote-access/) or proxied socket using something like [docker-socket-proxy](https://github.com/Tecnativa/docker-socket-proxy).
+
+###### `category`
+Filter to only the containers which have this category specified via the `glance.category` label. Useful if you want to have multiple containers widgets, each showing a different set of containers.
+
+<details>
+<summary>View example</summary>
+<br>
+
+
+```yaml
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    labels:
+      glance.name: Jellyfin
+      glance.icon: si:jellyfin
+      glance.url: https://jellyfin.domain.com
+      glance.category: media
+
+  gitea:
+    image: gitea/gitea:latest
+    labels:
+      glance.name: Gitea
+      glance.icon: si:gitea
+      glance.url: https://gitea.domain.com
+      glance.category: dev-tools
+
+  vaultwarden:
+    image: vaultwarden/server:latest
+    labels:
+      glance.name: Vaultwarden
+      glance.icon: si:vaultwarden
+      glance.url: https://vaultwarden.domain.com
+      glance.category: dev-tools
+```
+
+Then you can use the `category` property to filter the containers:
+
+```yaml
+- type: docker-containers
+  title: Dev tool containers
+  category: dev-tools
+
+- type: docker-containers
+  title: Media containers
+  category: media
+```
+
+</details>
+
+##### `running-only`
+Whether to only show running containers. If set to `true` only containers that are currently running will be displayed. If set to `false` all containers will be displayed regardless of their state.
 
 #### Labels
 | Name | Description |
@@ -1835,9 +1999,10 @@ The path to the Docker socket.
 | glance.hide | Whether to hide the container. If set to `true` the container will not be displayed. Defaults to `false`. |
 | glance.id | The custom ID of the container. Used to group containers under a single parent. |
 | glance.parent | The ID of the parent container. Used to group containers under a single parent. |
+| glance.category | The category of the container. Used to filter containers by category. |
 
 ### DNS Stats
-Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home or Pi-hole.
+Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home, Pi-hole, or Technitium.
 
 Example:
 
@@ -1855,7 +2020,7 @@ Preview:
 
 > [!NOTE]
 >
-> When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole it will be the total number of blocked domains from all adlists.
+> When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole or Technitium it will be the total number of blocked domains from all adlists.
 
 #### Properties
 
@@ -1872,7 +2037,7 @@ Preview:
 | hour-format | string | no | 12h |
 
 ##### `service`
-Either `adguard`, or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
+Either `adguard`, `technitium`, or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
 
 ##### `allow-insecure`
 Whether to allow invalid/self-signed certificates when making the request to the service.
@@ -1886,10 +2051,12 @@ Only required when using AdGuard Home. The username used to log into the admin d
 ##### `password`
 Required when using AdGuard Home, where the password is the one used to log into the admin dashboard.
 
-Also requried when using Pi-hole major version 6 and above, where the password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
+Also required when using Pi-hole major version 6 and above, where the password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
 
 ##### `token`
-Only required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`.
+Required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`.
+
+Also required when using Technitium, an API token can be generated at `Administration -> Sessions -> Create Token`.
 
 ##### `hide-graph`
 Whether to hide the graph showing the number of queries over time.
@@ -2132,6 +2299,7 @@ An array of groups which can optionally have a title and a custom color.
 | ---- | ---- | -------- | ------- |
 | title | string | yes | |
 | url | string | yes | |
+| description | string | no | |
 | icon | string | no | |
 | same-tab | boolean | no | false |
 | hide-arrow | boolean | no | false |

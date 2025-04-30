@@ -203,13 +203,18 @@ func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customA
 	body := strings.TrimSpace(string(bodyBytes))
 
 	if !req.SkipJSONValidation && body != "" && !gjson.Valid(body) {
-		truncatedBody, isTruncated := limitStringLength(body, 100)
-		if isTruncated {
-			truncatedBody += "... <truncated>"
+		if 200 <= resp.StatusCode && resp.StatusCode < 300 {
+			truncatedBody, isTruncated := limitStringLength(body, 100)
+			if isTruncated {
+				truncatedBody += "... <truncated>"
+			}
+
+			slog.Error("Invalid response JSON in custom API widget", "url", req.httpRequest.URL.String(), "body", truncatedBody)
+			return nil, errors.New("invalid response JSON")
 		}
 
-		slog.Error("Invalid response JSON in custom API widget", "url", req.httpRequest.URL.String(), "body", truncatedBody)
-		return nil, errors.New("invalid response JSON")
+		return nil, errors.New(fmt.Sprintf("%d %s", resp.StatusCode, http.StatusText(resp.StatusCode)))
+
 	}
 
 	data := &customAPIResponseData{
@@ -311,7 +316,7 @@ func gJsonResultArrayToDecoratedResultArray(results []gjson.Result) []decoratedG
 }
 
 func (r *decoratedGJSONResult) Exists(key string) bool {
-	return r.Get(key).Exists()
+	return r.Result.Get(key).Exists()
 }
 
 func (r *decoratedGJSONResult) Array(key string) []decoratedGJSONResult {
@@ -319,7 +324,7 @@ func (r *decoratedGJSONResult) Array(key string) []decoratedGJSONResult {
 		return gJsonResultArrayToDecoratedResultArray(r.Result.Array())
 	}
 
-	return gJsonResultArrayToDecoratedResultArray(r.Get(key).Array())
+	return gJsonResultArrayToDecoratedResultArray(r.Result.Get(key).Array())
 }
 
 func (r *decoratedGJSONResult) String(key string) string {
@@ -327,7 +332,7 @@ func (r *decoratedGJSONResult) String(key string) string {
 		return r.Result.String()
 	}
 
-	return r.Get(key).String()
+	return r.Result.Get(key).String()
 }
 
 func (r *decoratedGJSONResult) Int(key string) int {
@@ -335,7 +340,7 @@ func (r *decoratedGJSONResult) Int(key string) int {
 		return int(r.Result.Int())
 	}
 
-	return int(r.Get(key).Int())
+	return int(r.Result.Get(key).Int())
 }
 
 func (r *decoratedGJSONResult) Float(key string) float64 {
@@ -343,7 +348,7 @@ func (r *decoratedGJSONResult) Float(key string) float64 {
 		return r.Result.Float()
 	}
 
-	return r.Get(key).Float()
+	return r.Result.Get(key).Float()
 }
 
 func (r *decoratedGJSONResult) Bool(key string) bool {
@@ -351,7 +356,11 @@ func (r *decoratedGJSONResult) Bool(key string) bool {
 		return r.Result.Bool()
 	}
 
-	return r.Get(key).Bool()
+	return r.Result.Get(key).Bool()
+}
+
+func (r *decoratedGJSONResult) Get(key string) *decoratedGJSONResult {
+	return &decoratedGJSONResult{r.Result.Get(key)}
 }
 
 func customAPIDoMathOp[T int | float64](a, b T, op string) T {

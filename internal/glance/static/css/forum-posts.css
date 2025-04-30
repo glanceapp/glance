@@ -1,0 +1,19 @@
+.forum-post-list-thumbnail {
+    flex-shrink: 0;
+    width: 6rem;
+    height: 4.1rem;
+    border-radius: var(--border-radius);
+    object-fit: cover;
+    border: 1px solid var(--color-separator);
+    margin-top: 0.1rem;
+}
+
+.forum-post-tags-container {
+    transform: translateY(-0.15rem);
+}
+
+@container widget (max-width: 550px) {
+    .forum-post-autohide {
+        display: none;
+    }
+}
