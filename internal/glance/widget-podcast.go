@@ -37,15 +37,11 @@ type podcastEpisode struct {
 
 type podcastWidget struct {
 	// style params
-	widgetBase          `yaml:",inline"`
-	Style               string  `yaml:"style"`
-	ThumbnailHeight     float64 `yaml:"thumbnail-height"`
-	CardHeight          float64 `yaml:"card-height"`
-	Limit               int     `yaml:"limit"`
-	CollapseAfter       int     `yaml:"collapse-after"`
-	SingleLineTitles    bool    `yaml:"single-line-titles"`
-	CoverWithoutProcess bool    `yaml:"cover-without-process"`
-	NoItemsMessage      string  `yaml:"-"`
+	widgetBase       `yaml:",inline"`
+	Style            string `yaml:"style"`
+	Limit            int    `yaml:"limit"`
+	CollapseAfter    int    `yaml:"collapse-after"`
+	SingleLineTitles bool   `yaml:"single-line-titles"`
 
 	// podcast fetch param
 	DefaultRegion   string            `yaml:"Region"`
@@ -53,6 +49,7 @@ type podcastWidget struct {
 
 	// output to html response
 	PodcastEpisodes []*podcastEpisode `yaml:"-"`
+	NoItemsMessage  string            `yaml:"-"`
 }
 
 func (widget *podcastWidget) initialize() error {
