@@ -25,7 +25,7 @@
         {{- end }}
     </div>
     {{- end }}
-    <div class="widget-content{{ if .ContentAvailable }} {{ block "widget-content-classes" . }}{{ end }}{{ end }}">
+    <div class="widget-content{{ if .ContentAvailable }} {{ block "widget-content-classes" . }}{{ end }}{{ end }} {{ if .RTL }} rtl{{ end }}">
         {{- if .ContentAvailable }}
         {{ block "widget-content" . }}{{ end }}
         {{- else }}
