@@ -8,6 +8,14 @@ pages:
           - type: calendar
             first-day-of-week: monday
 
+          - type: podcast
+            limit: 25
+            cache: 1h
+            collapse-after: 3
+            region: cn
+            channels:
+              - podcast_id: 1482731836
+
           - type: rss
             limit: 10
             collapse-after: 3
@@ -46,6 +54,15 @@ pages:
               - UCsBjURrPoezykLs9EqgamOA # Fireship
               - UCBJycsmduvYEL83R_U4JriQ # Marques Brownlee
               - UCHnyfMqiRRG1u-2MsSQLbXA # Veritasium
+
+          - type: podcast
+            limit: 25
+            cache: 1h
+            collapse-after: 5
+            region: cn
+            channels:
+              - podcast_id: 1482731836
+            style: horizontal-cards
 
           - type: group
             widgets:
