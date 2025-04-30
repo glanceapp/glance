@@ -2,7 +2,6 @@ package glance
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/samber/lo"
 	"html/template"
@@ -54,8 +53,8 @@ type podcastWidget struct {
 
 func (widget *podcastWidget) initialize() error {
 	widget.withTitle("Podcast").withCacheDuration(1 * time.Hour)
-	testInfo, _ := json.Marshal(widget.PodcastChannels)
-	slog.Info("podcast config", "channels", string(testInfo))
+	//testInfo, _ := json.Marshal(widget.PodcastChannels)
+	//slog.Info("podcast config", "channels", string(testInfo))
 	widget.DefaultRegion = lo.If(len(widget.DefaultRegion) != 0, widget.DefaultRegion).Else("cn")
 	widget.PodcastChannels = lo.Map(widget.PodcastChannels, func(podcastChannel *podcastChannel, index int) *podcastChannel {
 		if len(podcastChannel.Region) == 0 {
