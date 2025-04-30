@@ -201,11 +201,12 @@ func Collect(req *SystemInfoRequest) (*SystemInfo, []error) {
 	// currently disabled on Windows because it requires elevated privilidges, otherwise
 	// keeps returning a single sensor with key "ACPI\\ThermalZone\\TZ00_0" which
 	// doesn't seem to be the CPU sensor or correspond to anything useful when
-	// compared against the temperatures Libre Hardware Monitor reports
-	// also disabled on openbsd because it's not implemented by go-psutil
-	if runtime.GOOS != "windows" && runtime.GOOS != "openbsd" {
+	// compared against the temperatures Libre Hardware Monitor reports.
+	// Also disabled on the bsd's because it's not implemented by go-psutil for them
+	if runtime.GOOS != "windows" && runtime.GOOS != "openbsd" && runtime.GOOS != "netbsd" && runtime.GOOS != "freebsd" {
 		sensorReadings, err := sensors.SensorsTemperatures()
-		if err == nil {
+		_, errIsWarning := err.(*sensors.Warnings)
+		if err == nil || errIsWarning {
 			if req.CPUTempSensor != "" {
 				for i := range sensorReadings {
 					if sensorReadings[i].SensorKey == req.CPUTempSensor {

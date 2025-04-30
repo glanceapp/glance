@@ -20,6 +20,7 @@ type searchWidget struct {
 	SearchEngine string        `yaml:"search-engine"`
 	Bangs        []SearchBang  `yaml:"bangs"`
 	NewTab       bool          `yaml:"new-tab"`
+	Target       string        `yaml:"target"`
 	Autofocus    bool          `yaml:"autofocus"`
 	Placeholder  string        `yaml:"placeholder"`
 }

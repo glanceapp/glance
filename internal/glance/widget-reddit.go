@@ -194,7 +194,7 @@ func fetchSubredditPosts(
 	var client requestDoer = defaultHTTPClient
 
 	if requestUrlTemplate != "" {
-		requestUrl = strings.ReplaceAll(requestUrlTemplate, "{REQUEST-URL}", requestUrl)
+		requestUrl = strings.ReplaceAll(requestUrlTemplate, "{REQUEST-URL}", url.QueryEscape(requestUrl))
 	} else if proxyClient != nil {
 		client = proxyClient
 	}

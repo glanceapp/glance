@@ -450,11 +450,16 @@ var customAPITemplateFuncs = func() template.FuncMap {
 
 			return d
 		},
-		"parseTime":      customAPIFuncParseTime,
+		"parseTime": func(layout, value string) time.Time {
+			return customAPIFuncParseTimeInLocation(layout, value, time.UTC)
+		},
+		"parseLocalTime": func(layout, value string) time.Time {
+			return customAPIFuncParseTimeInLocation(layout, value, time.Local)
+		},
 		"toRelativeTime": dynamicRelativeTimeAttrs,
 		"parseRelativeTime": func(layout, value string) template.HTMLAttr {
 			// Shorthand to do both of the above with a single function call
-			return dynamicRelativeTimeAttrs(customAPIFuncParseTime(layout, value))
+			return dynamicRelativeTimeAttrs(customAPIFuncParseTimeInLocation(layout, value, time.UTC))
 		},
 		// The reason we flip the parameter order is so that you can chain multiple calls together like this:
 		// {{ .JSON.String "foo" | trimPrefix "bar" | doSomethingElse }}
@@ -528,8 +533,8 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		},
 		"sortByTime": func(key, layout, order string, results []decoratedGJSONResult) []decoratedGJSONResult {
 			sort.Slice(results, func(a, b int) bool {
-				timeA := customAPIFuncParseTime(layout, results[a].String(key))
-				timeB := customAPIFuncParseTime(layout, results[b].String(key))
+				timeA := customAPIFuncParseTimeInLocation(layout, results[a].String(key), time.UTC)
+				timeB := customAPIFuncParseTimeInLocation(layout, results[b].String(key), time.UTC)
 
 				if order == "asc" {
 					return timeA.Before(timeB)
@@ -566,7 +571,7 @@ var customAPITemplateFuncs = func() template.FuncMap {
 	return funcs
 }()
 
-func customAPIFuncParseTime(layout, value string) time.Time {
+func customAPIFuncParseTimeInLocation(layout, value string, loc *time.Location) time.Time {
 	switch strings.ToLower(layout) {
 	case "unix":
 		asInt, err := strconv.ParseInt(value, 10, 64)
@@ -585,7 +590,7 @@ func customAPIFuncParseTime(layout, value string) time.Time {
 		layout = time.DateOnly
 	}
 
-	parsed, err := time.Parse(layout, value)
+	parsed, err := time.ParseInLocation(layout, value, loc)
 	if err != nil {
 		return time.Unix(0, 0)
 	}
