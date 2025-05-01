@@ -1,0 +1,33 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-header" }}
+<h2 class="uppercase"> {{ .RenderedTitle }}</h2>
+{{ end }}
+
+{{ define "widget-content" }}
+{{ if .Href }}
+<a href="{{ .Href }}" target="_blank" rel="noreferrer" text-decoration: none; color: inherit;>
+{{ end }}
+<div class="count-timer=body">
+    <meta id="dataset" target="{{ .TargetDate }}" event="{{ .EventTitle }}" title="{{.Title}}" />
+    <table style="width: 100%;">
+        <tbody>
+            <tr>
+                <td class="title size-h1 count-days" style="text-align: center"> {{ .Days }} </td>
+                <td class="title size-h1 count-hours" style="text-align: center"> {{ .Hours }} </td>
+                <td class="title size-h1 count-minutes" style="text-align: center"> {{ .Minutes }} </td>
+                <td class="title size-h1 count-seconds" style="text-align: center"> {{ .Seconds }} </td>
+            </tr>
+            <tr>
+                <td class="color-secondary" style="text-align: center">DAYS</td>
+                <td class="color-secondary" style="text-align: center">HRS</td>
+                <td class="color-secondary" style="text-align: center">MIN</td>
+                <td class="color-secondary" style="text-align: center">SEC</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{{ if .Href }}
+</a>
+{{ end }}
+{{ end }}
