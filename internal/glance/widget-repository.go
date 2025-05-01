@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
 var repositoryWidgetTemplate = mustParseTemplate("repository.html", "widget-base.html")
@@ -112,9 +114,9 @@ type gitHubCommitResponseJson struct {
 }
 
 func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, maxIssues int, maxCommits int) (repository, error) {
-	repositoryRequest, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s", repo), nil)
-	if err != nil {
-		return repository{}, fmt.Errorf("%w: could not create request with repository: %v", errNoContent, err)
+	repositoryRequest, repoErr := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s", repo), nil)
+	if repoErr != nil {
+		return repository{}, fmt.Errorf("%w: could not create request with repository: %v", errNoContent, repoErr)
 	}
 
 	PRsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=is:pr+is:open+repo:%s&per_page=%d", repo, maxPRs), nil)
@@ -130,46 +132,53 @@ func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, max
 	}
 
 	var repositoryResponse githubRepositoryResponseJson
-	var detailsErr error
 	var PRsResponse githubTicketResponseJson
-	var PRsErr error
 	var issuesResponse githubTicketResponseJson
-	var issuesErr error
 	var commitsResponse []gitHubCommitResponseJson
-	var CommitsErr error
-	var wg sync.WaitGroup
+	var wg errgroup.Group
 
-	wg.Add(1)
+	var detailsErr error
+	var prsErr error
+	var issuesErr error
+	var commitsErr error
+
 	go (func() {
-		defer wg.Done()
 		repositoryResponse, detailsErr = decodeJsonFromRequest[githubRepositoryResponseJson](defaultHTTPClient, repositoryRequest)
 	})()
 
 	if maxPRs > 0 {
-		wg.Add(1)
-		go (func() {
-			defer wg.Done()
-			PRsResponse, PRsErr = decodeJsonFromRequest[githubTicketResponseJson](defaultHTTPClient, PRsRequest)
-		})()
+		wg.Go(func() error {
+			PRsResponse, prsErr = decodeJsonFromRequest[githubTicketResponseJson](defaultHTTPClient, PRsRequest)
+			if prsErr != nil {
+				return prsErr
+			}
+			return nil
+		})
 	}
 
 	if maxIssues > 0 {
-		wg.Add(1)
-		go (func() {
-			defer wg.Done()
+		wg.Go(func() error {
 			issuesResponse, issuesErr = decodeJsonFromRequest[githubTicketResponseJson](defaultHTTPClient, issuesRequest)
-		})()
+			if issuesErr != nil {
+				return issuesErr
+			}
+			return nil
+		})
 	}
 
 	if maxCommits > 0 {
-		wg.Add(1)
-		go (func() {
-			defer wg.Done()
-			commitsResponse, CommitsErr = decodeJsonFromRequest[[]gitHubCommitResponseJson](defaultHTTPClient, CommitsRequest)
-		})()
+		wg.Go(func() error {
+			commitsResponse, commitsErr = decodeJsonFromRequest[[]gitHubCommitResponseJson](defaultHTTPClient, CommitsRequest)
+			if commitsErr != nil {
+				return commitsErr
+			}
+			return nil
+		})
 	}
 
-	wg.Wait()
+	if err := wg.Wait(); err != nil {
+		slog.Error(err.Error())
+	}
 
 	if detailsErr != nil {
 		return repository{}, fmt.Errorf("%w: could not get repository details: %s", errNoContent, detailsErr)
@@ -184,11 +193,9 @@ func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, max
 		Commits:      make([]githubCommitDetails, 0, len(commitsResponse)),
 	}
 
-	err = nil
-
 	if maxPRs > 0 {
-		if PRsErr != nil {
-			err = fmt.Errorf("%w: could not get PRs: %s", errPartialContent, PRsErr)
+		if prsErr != nil {
+			return repository{}, fmt.Errorf("%w: could not get PRs: %s", errPartialContent, prsErr)
 		} else {
 			details.OpenPullRequests = PRsResponse.Count
 
@@ -204,8 +211,7 @@ func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, max
 
 	if maxIssues > 0 {
 		if issuesErr != nil {
-			// TODO: fix, overwriting the previous error
-			err = fmt.Errorf("%w: could not get issues: %s", errPartialContent, issuesErr)
+			return repository{}, fmt.Errorf("%w: could not get issues: %s", errPartialContent, issuesErr)
 		} else {
 			details.OpenIssues = issuesResponse.Count
 
@@ -220,8 +226,8 @@ func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, max
 	}
 
 	if maxCommits > 0 {
-		if CommitsErr != nil {
-			err = fmt.Errorf("%w: could not get commits: %s", errPartialContent, CommitsErr)
+		if commitsErr != nil {
+			return repository{}, fmt.Errorf("%w: could not get commits: %s", errPartialContent, commitsErr)
 		} else {
 			for i := range commitsResponse {
 				details.Commits = append(details.Commits, githubCommitDetails{
@@ -234,5 +240,5 @@ func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, max
 		}
 	}
 
-	return details, err
+	return details, detailsErr
 }
