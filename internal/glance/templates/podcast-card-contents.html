@@ -1,0 +1,17 @@
+{{ define "podcast-card-contents" }}
+<img class="podcast-thumbnail  thumbnail " loading="lazy"
+     src="{{ .PodcastEpisodeIconURL }}" alt="">
+<div class="margin-top-10 margin-bottom-widget flex flex-column grow padding-inline-widget">
+    <a class="text-truncate-3-lines margin-bottom-auto color-primary-if-not-visited" href="{{ .PodcastEpisodeURL }}"
+       target="_blank" rel="noreferrer">{{ .PodcastEpisodeName }}</a>
+    <ul class="list-horizontal-text flex-nowrap margin-top-7">
+        <li class="shrink-0" {{ dynamicRelativeTimeAttrs .PodcastEpisodeDate }}></li>
+        <li class="min-width-0">
+            <a class="block text-truncate" href="{{ .PodcastChannelURL }}" target="_blank" rel="noreferrer">{{
+                .PodcastName }}</a>
+        </li>
+
+
+    </ul>
+</div>
+{{ end }}

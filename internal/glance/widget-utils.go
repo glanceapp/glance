@@ -8,12 +8,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"math/rand/v2"
 	"net/http"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/antchfx/htmlquery"
+	"golang.org/x/net/html"
 )
 
 var (
@@ -134,6 +138,36 @@ func decodeXmlFromRequestTask[T any](client requestDoer) func(*http.Request) (T,
 	return func(request *http.Request) (T, error) {
 		return decodeXmlFromRequest[T](client, request)
 	}
+}
+
+// TODO: tidy up, these are a copy of the above but with a line changed
+func getHtmlQueryFileFromRequest(client requestDoer, request *http.Request) (*html.Node, error) {
+
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf(
+			"unexpected status code %d for %s",
+			response.StatusCode,
+			request.URL,
+		)
+	}
+	doc, err := htmlquery.Parse(response.Body)
+	if err != nil {
+		log.Fatal("Error parsing XML:", err)
+		return nil, err
+	}
+	// fmt.Printf("body:%+v", string(response.Body))
+	return doc, nil
+}
+
+func Unmarshal[T any, E string | []byte](encoding E) (T, error) {
+	var t T
+	err := json.Unmarshal([]byte(encoding), &t)
+	return t, err
 }
 
 type workerPoolTask[I any, O any] struct {

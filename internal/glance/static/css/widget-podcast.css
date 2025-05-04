@@ -1,0 +1,7 @@
+
+.podcast-thumbnail {
+    width: 100%;
+    aspect-ratio: 1 / 1.0;
+    object-fit: cover;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
