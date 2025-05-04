@@ -33,6 +33,8 @@ type CustomAPIRequest struct {
 	BodyType           string               `yaml:"body-type"`
 	Body               any                  `yaml:"body"`
 	SkipJSONValidation bool                 `yaml:"skip-json-validation"`
+	WaitLastRequest    bool                 `yaml:"wait-last-request"`
+	SkipTimeoutError   bool                 `yaml:"skip-timeout-error"`
 	bodyReader         io.ReadSeeker        `yaml:"-"`
 	httpRequest        *http.Request        `yaml:"-"`
 }
@@ -191,7 +193,15 @@ func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customA
 	client := ternary(req.AllowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
 	resp, err := client.Do(req.httpRequest.WithContext(ctx))
 	if err != nil {
-		return nil, err
+		if req.SkipTimeoutError && errors.Is(err, context.DeadlineExceeded) {
+			resp = &http.Response{
+				Status: err.Error(),
+				StatusCode: 504,
+				Body:       http.NoBody,
+			}
+		} else {
+			return nil, err
+		}
 	}
 	defer resp.Body.Close()
 
@@ -245,28 +255,35 @@ func fetchAndParseCustomAPI(
 		defer cancel()
 
 		var wg sync.WaitGroup
-		var mu sync.Mutex // protects subData and err
+		var mu sync.Mutex      // protects subData and err
+		var pwg sync.WaitGroup // phase wait group
 
 		wg.Add(1)
+		pwg.Add(1)
 		go func() {
 			defer wg.Done()
-			var localErr error
-			primaryData, localErr = fetchCustomAPIRequest(ctx, primaryReq)
+			defer pwg.Done()
+			data, localErr := fetchCustomAPIRequest(ctx, primaryReq)
 			mu.Lock()
 			if localErr != nil && err == nil {
 				err = localErr
 				cancel()
+			} else {
+				primaryData = data
 			}
 			mu.Unlock()
 		}()
 
 		for key, req := range subReqs {
+			if req.WaitLastRequest {
+				pwg.Wait()
+			}
 			wg.Add(1)
-			go func() {
+			pwg.Add(1)
+			go func(key string, req *CustomAPIRequest) {
 				defer wg.Done()
-				var localErr error
-				var data *customAPIResponseData
-				data, localErr = fetchCustomAPIRequest(ctx, req)
+				defer pwg.Done()
+				data, localErr := fetchCustomAPIRequest(ctx, req)
 				mu.Lock()
 				if localErr == nil {
 					subData[key] = data
@@ -275,7 +292,7 @@ func fetchAndParseCustomAPI(
 					cancel()
 				}
 				mu.Unlock()
-			}()
+			}(key, req)
 		}
 
 		wg.Wait()
