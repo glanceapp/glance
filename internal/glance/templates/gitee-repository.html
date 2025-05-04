@@ -1,0 +1,61 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<a class="size-h4 color-highlight" href="https://gitee.com/{{ $.RepoInfo.Name }}" target="_blank" rel="noreferrer">{{ .RepoInfo.Name }}</a>
+<ul class="list-horizontal-text">
+    <li>{{ .RepoInfo.Stars | formatNumber }} stars</li>
+    <li>{{ .RepoInfo.Forks | formatNumber }} forks</li>
+</ul>
+
+{{ if gt (len .RepoInfo.Commits) 0 }}
+<hr class="margin-block-8">
+<a class="text-compact" href="https://gitee.com/{{ $.RepoInfo.Name }}/commits" target="_blank" rel="noreferrer">Last {{ .CommitsLimit }} commits</a>
+<div class="flex gap-7 size-h5 margin-top-3">
+    <ul class="list list-gap-2">
+        {{ range .RepoInfo.Commits }}
+        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
+        {{ end }}
+    </ul>
+    <ul class="list list-gap-2 min-width-0">
+        {{ range .RepoInfo.Commits }}
+        <li><a class="color-primary-if-not-visited text-truncate block" title="{{ .Author }}" target="_blank" rel="noreferrer" href="https://gitee.com/{{ $.RepoInfo.Name }}/commit/{{ .Sha }}">{{ .Message }}</a></li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+
+{{ if gt (len .RepoInfo.PullRequests) 0 }}
+<hr class="margin-block-8">
+<a class="text-compact" href="https://gitee.com/{{ $.RepoInfo.Name }}/pulls" target="_blank" rel="noreferrer">Open pull requests ({{ .RepoInfo.OpenPullRequests | formatNumber }} total)</a>
+<div class="flex gap-7 size-h5 margin-top-3">
+    <ul class="list list-gap-2">
+        {{ range .RepoInfo.PullRequests }}
+        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
+        {{ end }}
+    </ul>
+    <ul class="list list-gap-2 min-width-0">
+        {{ range .RepoInfo.PullRequests }}
+        <li><a class="color-primary-if-not-visited text-truncate block" target="_blank" rel="noreferrer" href="https://gitee.com/{{ $.RepoInfo.Name }}/pulls/{{ .Number }}">{{ .Title }}</a></li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+
+{{ if gt (len .RepoInfo.Issues) 0 }}
+<hr class="margin-block-10">
+<a class="text-compact" href="https://gitee.com/{{ $.RepoInfo.Name }}/issues" target="_blank" rel="noreferrer">Open issues ({{ .RepoInfo.OpenIssues | formatNumber }} total)</a>
+<div class="flex gap-7 size-h5 margin-top-3">
+    <ul class="list list-gap-2">
+        {{ range .RepoInfo.Issues }}
+        <li {{ dynamicRelativeTimeAttrs .CreatedAt }}></li>
+        {{ end }}
+    </ul>
+    <ul class="list list-gap-2 min-width-0">
+        {{ range .RepoInfo.Issues }}
+        <li><a class="color-primary-if-not-visited text-truncate block" target="_blank" rel="noreferrer" href="https://gitee.com/{{ $.RepoInfo.Name }}/issues/{{ .Number }}">{{ .Title }}</a></li>
+        {{ end }}
+    </ul>
+</div>
+{{ end }}
+
+{{ end }}

@@ -23,6 +23,7 @@ type releasesWidget struct {
 	Repositories   []*releaseRequest `yaml:"repositories"`
 	Token          string            `yaml:"token"`
 	GitLabToken    string            `yaml:"gitlab-token"`
+	GiteeToken     string            `yaml:"gitee-token"`
 	Limit          int               `yaml:"limit"`
 	CollapseAfter  int               `yaml:"collapse-after"`
 	ShowSourceIcon bool              `yaml:"show-source-icon"`
@@ -46,6 +47,8 @@ func (widget *releasesWidget) initialize() error {
 			r.token = &widget.Token
 		} else if r.source == releaseSourceGitlab && widget.GitLabToken != "" {
 			r.token = &widget.GitLabToken
+		} else if r.source == releaseSourceGitee && widget.GiteeToken != "" {
+			r.token = &widget.GiteeToken
 		}
 	}
 
@@ -81,6 +84,7 @@ const (
 	releaseSourceGithub    releaseSource = "github"
 	releaseSourceGitlab    releaseSource = "gitlab"
 	releaseSourceDockerHub releaseSource = "dockerhub"
+	releaseSourceGitee     releaseSource = "gitee"
 )
 
 type appRelease struct {
@@ -145,6 +149,8 @@ func (r *releaseRequest) UnmarshalYAML(node *yaml.Node) error {
 			r.source = releaseSourceDockerHub
 		case string(releaseSourceCodeberg):
 			r.source = releaseSourceCodeberg
+		case string(releaseSourceGitee):
+			r.source = releaseSourceGitee
 		default:
 			return errors.New("invalid source")
 		}
@@ -197,6 +203,8 @@ func fetchLatestReleaseTask(request *releaseRequest) (*appRelease, error) {
 		return fetchLatestGitLabRelease(request)
 	case releaseSourceDockerHub:
 		return fetchLatestDockerHubRelease(request)
+	case releaseSourceGitee:
+		return fetchLatestGiteeRelease(request)
 	}
 
 	return nil, errors.New("unsupported source")
@@ -413,6 +421,60 @@ func fetchLatestCodebergRelease(request *releaseRequest) (*appRelease, error) {
 
 	return &appRelease{
 		Source:       releaseSourceCodeberg,
+		Name:         request.Repository,
+		Version:      normalizeVersionFormat(response.TagName),
+		NotesUrl:     response.HtmlUrl,
+		TimeReleased: parseRFC3339Time(response.PublishedAt),
+	}, nil
+}
+
+type giteeReleaseResponseJson struct {
+	TagName     string `json:"tag_name"`
+	PublishedAt string `json:"created_at"`
+	HtmlUrl     string `json:"html_url"`
+}
+
+func fetchLatestGiteeRelease(request *releaseRequest) (*appRelease, error) {
+	var requestURL string
+	if !request.IncludePreleases {
+		requestURL = fmt.Sprintf("https://gitee.com/api/v5/repos/%s/releases/latest", request.Repository)
+	} else {
+		requestURL = fmt.Sprintf("https://gitee.com/api/v5/repos/%s/releases", request.Repository)
+	}
+
+	httpRequest, err := http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if request.token != nil {
+		q := httpRequest.URL.Query()
+		q.Add("access_token", *request.token)
+		httpRequest.URL.RawQuery = q.Encode()
+	}
+
+	var response giteeReleaseResponseJson
+
+	if !request.IncludePreleases {
+		response, err = decodeJsonFromRequest[giteeReleaseResponseJson](defaultHTTPClient, httpRequest)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		responses, err := decodeJsonFromRequest[[]giteeReleaseResponseJson](defaultHTTPClient, httpRequest)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(responses) == 0 {
+			return nil, fmt.Errorf("no releases found for repository %s", request.Repository)
+		}
+
+		response = responses[0]
+	}
+
+	return &appRelease{
+		Source:       releaseSourceGitee,
 		Name:         request.Repository,
 		Version:      normalizeVersionFormat(response.TagName),
 		NotesUrl:     response.HtmlUrl,
