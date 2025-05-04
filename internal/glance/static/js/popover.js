@@ -38,6 +38,8 @@ function handleMouseEnter(event) {
         if (activeTarget !== target) {
             hidePopover();
             requestAnimationFrame(() => requestAnimationFrame(showPopover));
+        } else if (activeTarget.dataset.popoverTrigger === "click") {
+            hidePopover();
         }
 
         return;
