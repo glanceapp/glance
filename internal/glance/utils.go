@@ -15,6 +15,7 @@ import (
 )
 
 var sequentialWhitespacePattern = regexp.MustCompile(`\s+`)
+var whitespaceAtBeginningOfLinePattern = regexp.MustCompile(`(?m)^\s+`)
 
 func percentChange(current, previous float64) float64 {
 	return (current/previous - 1) * 100
@@ -149,15 +150,14 @@ func fileServerWithCache(fs http.FileSystem, cacheDuration time.Duration) http.H
 	})
 }
 
-func executeTemplateToHTML(t *template.Template, data interface{}) (template.HTML, error) {
+func executeTemplateToString(t *template.Template, data any) (string, error) {
 	var b bytes.Buffer
-
 	err := t.Execute(&b, data)
 	if err != nil {
 		return "", fmt.Errorf("executing template: %w", err)
 	}
 
-	return template.HTML(b.String()), nil
+	return b.String(), nil
 }
 
 func stringToBool(s string) bool {

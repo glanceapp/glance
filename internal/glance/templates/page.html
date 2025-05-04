@@ -2,20 +2,7 @@
 
 {{ define "document-title" }}{{ .Page.Title }}{{ end }}
 
-{{ define "document-head-before" }}
-<script>
-    const pageData = {
-        slug: "{{ .Page.Slug }}",
-        baseURL: "{{ .App.Config.Server.BaseURL }}",
-    };
-</script>
-{{ end }}
-
-{{ define "document-root-attrs" }}class="{{ if .App.Config.Theme.Light }}light-scheme {{ end }}{{ if .Page.CenterVertically }}page-center-vertically{{ end }}"{{ end }}
-
 {{ define "document-head-after" }}
-{{ .App.ParsedThemeStyle }}
-
 {{ if ne "" .App.Config.Theme.CustomCSSFile }}
 <link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.CreatedAt.Unix }}">
 {{ end }}
@@ -36,9 +23,22 @@
         <div class="header flex padding-inline-widget widget-content-frame">
             <!-- TODO: Replace G with actual logo, first need an actual logo -->
             <div class="logo" aria-hidden="true">{{ if ne "" .App.Config.Branding.LogoURL }}<img src="{{ .App.Config.Branding.LogoURL }}" alt="">{{ else if ne "" .App.Config.Branding.LogoText }}{{ .App.Config.Branding.LogoText }}{{ else }}G{{ end }}</div>
-            <nav class="nav flex grow">
+            <nav class="nav flex grow hide-scrollbars">
                 {{ template "navigation-links" . }}
             </nav>
+            <div class="theme-picker self-center" data-popover-type="html" data-popover-position="below" data-popover-show-delay="0" data-popover-offset="0.7">
+                <div class="current-theme-preview">
+                    {{ .Request.Theme.PreviewHTML }}
+                </div>
+                <div data-popover-html>
+                    <div class="theme-choices">
+                        {{ .App.Config.Theme.PreviewHTML }}
+                        {{ range $_, $preset := .App.Config.Theme.Presets.Items }}
+                        {{ $preset.PreviewHTML }}
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     {{ end }}
@@ -49,15 +49,35 @@
             {{ range $i, $column := .Page.Columns }}
             <label class="mobile-navigation-label"><input type="radio" class="mobile-navigation-input" name="column" value="{{ $i }}" autocomplete="off"{{ if eq $i $.Page.PrimaryColumnIndex }} checked{{ end }}><div class="mobile-navigation-pill"></div></label>
             {{ end }}
-            <label class="mobile-navigation-label"><input type="checkbox" class="mobile-navigation-page-links-input" autocomplete="on"{{ if .Page.ExpandMobilePageNavigation }} checked{{ end }}><div class="hamburger-icon"></div></label>
+            <label class="mobile-navigation-label"><input type="checkbox" class="mobile-navigation-page-links-input" autocomplete="on"><div class="hamburger-icon"></div></label>
         </div>
-        <div class="mobile-navigation-page-links">
+
+        <div class="mobile-navigation-page-links hide-scrollbars">
             {{ template "navigation-links" . }}
+        </div>
+
+        <div class="mobile-navigation-actions flex flex-column margin-block-10">
+            <div class="theme-picker flex justify-between items-center" data-popover-type="html" data-popover-position="above" data-popover-show-delay="0" data-popover-hide-delay="100" data-popover-anchor=".current-theme-preview" data-popover-trigger="click">
+                <div data-popover-html>
+                    <div class="theme-choices"></div>
+                </div>
+
+                <div class="size-h3 pointer-events-none">Change theme</div>
+
+                <div class="flex gap-15 items-center pointer-events-none">
+                    <div class="current-theme-preview">
+                        {{ .Request.Theme.PreviewHTML }}
+                    </div>
+                    <svg class="ui-icon" stroke="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.098 19.902a3.75 3.75 0 0 0 5.304 0l6.401-6.402M6.75 21A3.75 3.75 0 0 1 3 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 0 0 3.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008Z" />
+                    </svg>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="content-bounds grow{{ if ne "" .Page.Width }} content-bounds-{{ .Page.Width }} {{ end }}">
-        <main class="page" id="page" aria-live="polite" aria-busy="true">
+        <main class="page{{ if .Page.CenterVertically }} page-center-vertically{{ end }}" id="page" aria-live="polite" aria-busy="true">
             <h1 class="visually-hidden">{{ .Page.Title }}</h1>
             <div class="page-content" id="page-content"></div>
             <div class="page-loading-container">

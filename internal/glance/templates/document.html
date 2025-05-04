@@ -1,9 +1,16 @@
 <!DOCTYPE html>
-<html {{ block "document-root-attrs" . }}{{ end }} lang="en" id="top">
+<html {{ block "document-root-attrs" . }}{{ end }} lang="en" id="top" data-scheme="{{ if .Request.Theme.Light }}light{{ else }}dark{{ end }}">
 <head>
     {{ block "document-head-before" . }}{{ end }}
+    <script>
+    if (navigator.platform === 'iPhone') document.documentElement.classList.add('ios');
+    const pageData = {
+        slug: "{{ .Page.Slug }}",
+        baseURL: "{{ .App.Config.Server.BaseURL }}",
+        theme: "{{ .Request.Theme.Key }}",
+    };
+    </script>
     <title>{{ block "document-title" . }}{{ end }}</title>
-    <script>if (navigator.platform === 'iPhone') document.documentElement.classList.add('ios');</script>
     <meta charset="UTF-8">
     <meta name="color-scheme" content="dark">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -11,12 +18,15 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="{{ .App.Config.Branding.AppName }}">
-    <meta name="theme-color" content="{{ .App.Config.Theme.BackgroundColorAsHex }}">
+    <meta name="theme-color" content="{{ .Request.Theme.BackgroundColorAsHex }}">
     <link rel="apple-touch-icon" sizes="512x512" href='{{ .App.Config.Branding.AppIconURL }}'>
     <link rel="manifest" href='{{ .App.VersionedAssetPath "manifest.json" }}'>
     <link rel="icon" type="image/png" href="{{ .App.Config.Branding.FaviconURL }}" />
     <link rel="stylesheet" href='{{ .App.StaticAssetPath "css/bundle.css" }}'>
     <script type="module" src='{{ .App.StaticAssetPath "js/main.js" }}'></script>
+    <style id="theme-style">
+    {{ .Request.Theme.CSS }}
+    </style>
     {{ block "document-head-after" . }}{{ end }}
 </head>
 <body>

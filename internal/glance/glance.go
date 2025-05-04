@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -15,19 +14,17 @@ import (
 )
 
 var (
-	pageTemplate           = mustParseTemplate("page.html", "document.html")
-	pageContentTemplate    = mustParseTemplate("page-content.html")
-	pageThemeStyleTemplate = mustParseTemplate("theme-style.gotmpl")
-	manifestTemplate       = mustParseTemplate("manifest.json")
+	pageTemplate        = mustParseTemplate("page.html", "document.html")
+	pageContentTemplate = mustParseTemplate("page-content.html")
+	manifestTemplate    = mustParseTemplate("manifest.json")
 )
 
 const STATIC_ASSETS_CACHE_DURATION = 24 * time.Hour
 
 type application struct {
-	Version          string
-	CreatedAt        time.Time
-	Config           config
-	ParsedThemeStyle template.HTML
+	Version   string
+	CreatedAt time.Time
+	Config    config
 
 	parsedManifest []byte
 
@@ -35,14 +32,15 @@ type application struct {
 	widgetByID map[uint64]widget
 }
 
-func newApplication(config *config) (*application, error) {
+func newApplication(c *config) (*application, error) {
 	app := &application{
 		Version:    buildVersion,
 		CreatedAt:  time.Now(),
-		Config:     *config,
+		Config:     *c,
 		slugToPage: make(map[string]*page),
 		widgetByID: make(map[uint64]widget),
 	}
+	config := &app.Config
 
 	app.slugToPage[""] = &config.Pages[0]
 
@@ -50,10 +48,43 @@ func newApplication(config *config) (*application, error) {
 		assetResolver: app.StaticAssetPath,
 	}
 
-	var err error
-	app.ParsedThemeStyle, err = executeTemplateToHTML(pageThemeStyleTemplate, &app.Config.Theme)
+	//
+	// Init themes
+	//
+
+	themeKeys := make([]string, 0, 2)
+	themeProps := make([]*themeProperties, 0, 2)
+
+	defaultDarkTheme, ok := config.Theme.Presets.Get("default-dark")
+	if ok && !config.Theme.SameAs(defaultDarkTheme) || !config.Theme.SameAs(&themeProperties{}) {
+		themeKeys = append(themeKeys, "default-dark")
+		themeProps = append(themeProps, &themeProperties{})
+	}
+
+	themeKeys = append(themeKeys, "default-light")
+	themeProps = append(themeProps, &themeProperties{
+		Light:           true,
+		BackgroundColor: &hslColorField{240, 13, 86},
+		PrimaryColor:    &hslColorField{45, 100, 26},
+		NegativeColor:   &hslColorField{0, 50, 50},
+	})
+
+	themePresets, err := newOrderedYAMLMap(themeKeys, themeProps)
 	if err != nil {
-		return nil, fmt.Errorf("parsing theme style: %v", err)
+		return nil, fmt.Errorf("creating theme presets: %v", err)
+	}
+	config.Theme.Presets = *themePresets.Merge(&config.Theme.Presets)
+
+	for key, properties := range config.Theme.Presets.Items() {
+		properties.Key = key
+		if err := properties.init(); err != nil {
+			return nil, fmt.Errorf("initializing preset theme %s: %v", key, err)
+		}
+	}
+
+	config.Theme.Key = "default"
+	if err := config.Theme.init(); err != nil {
+		return nil, fmt.Errorf("initializing default theme: %v", err)
 	}
 
 	for p := range config.Pages {
@@ -90,17 +121,9 @@ func newApplication(config *config) (*application, error) {
 		}
 	}
 
-	config = &app.Config
-
 	config.Server.BaseURL = strings.TrimRight(config.Server.BaseURL, "/")
 	config.Theme.CustomCSSFile = app.resolveUserDefinedAssetPath(config.Theme.CustomCSSFile)
 	config.Branding.LogoURL = app.resolveUserDefinedAssetPath(config.Branding.LogoURL)
-
-	if config.Theme.BackgroundColor != nil {
-		config.Theme.BackgroundColorAsHex = config.Theme.BackgroundColor.ToHex()
-	} else {
-		config.Theme.BackgroundColorAsHex = "#151519"
-	}
 
 	if config.Branding.FaviconURL == "" {
 		config.Branding.FaviconURL = app.StaticAssetPath("favicon.png")
@@ -120,11 +143,11 @@ func newApplication(config *config) (*application, error) {
 		config.Branding.AppBackgroundColor = config.Theme.BackgroundColorAsHex
 	}
 
-	var manifestWriter bytes.Buffer
-	if err := manifestTemplate.Execute(&manifestWriter, pageTemplateData{App: app}); err != nil {
+	manifest, err := executeTemplateToString(manifestTemplate, pageTemplateData{App: app})
+	if err != nil {
 		return nil, fmt.Errorf("parsing manifest.json: %v", err)
 	}
-	app.parsedManifest = manifestWriter.Bytes()
+	app.parsedManifest = []byte(manifest)
 
 	return app, nil
 }
@@ -162,9 +185,28 @@ func (a *application) resolveUserDefinedAssetPath(path string) string {
 	return path
 }
 
+type pageTemplateRequestData struct {
+	Theme *themeProperties
+}
+
 type pageTemplateData struct {
-	App  *application
-	Page *page
+	App     *application
+	Page    *page
+	Request pageTemplateRequestData
+}
+
+func (a *application) populateTemplateRequestData(data *pageTemplateRequestData, r *http.Request) {
+	theme := &a.Config.Theme.themeProperties
+
+	selectedTheme, err := r.Cookie("theme")
+	if err == nil {
+		preset, exists := a.Config.Theme.Presets.Get(selectedTheme.Value)
+		if exists {
+			theme = preset
+		}
+	}
+
+	data.Theme = theme
 }
 
 func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) {
@@ -175,13 +217,14 @@ func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	pageData := pageTemplateData{
+	data := pageTemplateData{
 		Page: page,
 		App:  a,
 	}
+	a.populateTemplateRequestData(&data.Request, r)
 
 	var responseBytes bytes.Buffer
-	err := pageTemplate.Execute(&responseBytes, pageData)
+	err := pageTemplate.Execute(&responseBytes, data)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
@@ -266,6 +309,7 @@ func (a *application) server() (func() error, func() error) {
 	mux.HandleFunc("GET /{page}", a.handlePageRequest)
 
 	mux.HandleFunc("GET /api/pages/{page}/content/{$}", a.handlePageContentRequest)
+	mux.HandleFunc("POST /api/set-theme/{key}", a.handleThemeChangeRequest)
 	mux.HandleFunc("/api/widgets/{widget}/{path...}", a.handleWidgetRequest)
 	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)

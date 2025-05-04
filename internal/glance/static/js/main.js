@@ -1,6 +1,7 @@
 import { setupPopovers } from './popover.js';
 import { setupMasonries } from './masonry.js';
 import { throttledDebounce, isElementVisible, openURLInNewTab } from './utils.js';
+import { elem, find, findAll } from './templating.js';
 
 async function fetchPageContent(pageData) {
     // TODO: handle non 200 status codes/time outs
@@ -654,7 +655,77 @@ function setupTruncatedElementTitles() {
     }
 }
 
+async function changeTheme(key, onChanged) {
+    const themeStyleElem = find("#theme-style");
+
+    const response = await fetch(`${pageData.baseURL}/api/set-theme/${key}`, {
+        method: "POST",
+    });
+
+    if (response.status != 200) {
+        alert("Failed to set theme: " + response.statusText);
+        return;
+    }
+    const newThemeStyle = await response.text();
+
+    const tempStyle = elem("style")
+        .html("* { transition: none !important; }")
+        .appendTo(document.head);
+
+    themeStyleElem.html(newThemeStyle);
+    document.documentElement.setAttribute("data-scheme", response.headers.get("X-Scheme"));
+    typeof onChanged == "function" && onChanged();
+    setTimeout(() => { tempStyle.remove(); }, 10);
+}
+
+function initThemeSwitcher() {
+    find(".mobile-navigation .theme-choices").replaceWith(
+        find(".header-container .theme-choices").cloneNode(true)
+    );
+
+    const presetElems = findAll(".theme-choices .theme-preset");
+    let themePreviewElems = document.getElementsByClassName("current-theme-preview");
+    let isLoading = false;
+
+    presetElems.forEach((presetElement) => {
+        const themeKey = presetElement.dataset.key;
+
+        if (themeKey === undefined) {
+            return;
+        }
+
+        if (themeKey == pageData.theme) {
+            presetElement.classList.add("current");
+        }
+
+        presetElement.addEventListener("click", () => {
+            if (themeKey == pageData.theme) return;
+            if (isLoading) return;
+
+            isLoading = true;
+            changeTheme(themeKey, function() {
+                isLoading = false;
+                pageData.theme = themeKey;
+                presetElems.forEach((e) => { e.classList.remove("current"); });
+
+                Array.from(themePreviewElems).forEach((preview) => {
+                    preview.querySelector(".theme-preset").replaceWith(
+                        presetElement.cloneNode(true)
+                    );
+                })
+
+                presetElems.forEach((e) => {
+                    if (e.dataset.key != themeKey) return;
+                    e.classList.add("current");
+                });
+            });
+        });
+    })
+}
+
 async function setupPage() {
+    initThemeSwitcher();
+
     const pageElement = document.getElementById("page");
     const pageContentElement = document.getElementById("page-content");
     const pageContent = await fetchPageContent(pageData);

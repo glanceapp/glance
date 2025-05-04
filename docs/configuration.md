@@ -325,6 +325,19 @@ theme:
   background-color: 100 20 10
   primary-color: 40 90 40
   contrast-multiplier: 1.1
+
+  presets:
+    gruvbox-dark:
+      background-color: 0 0 16
+      primary-color: 43 59 81
+      positive-color: 61 66 44
+      negative-color: 6 96 59
+
+    zebra:
+      light: true
+      background-color: 0 0 95
+      primary-color: 0 0 10
+      negative-color: 0 90 50
 ```
 
 ### Available themes
@@ -341,6 +354,7 @@ If you don't want to spend time configuring your own theme, there are [several a
 | contrast-multiplier | number | no | 1 |
 | text-saturation-multiplier | number | no | 1 |
 | custom-css-file | string | no | |
+| presets | object | no | |
 
 #### `light`
 Whether the scheme is light or dark. This does not change the background color, it inverts the text colors so that they look appropriately on a light background.
@@ -385,6 +399,30 @@ theme:
 >
 > In addition, you can also use the `css-class` property which is available on every widget to set custom class names for individual widgets.
 
+#### `presets`
+Define additional theme presets that can be selected from the theme switcher on the page. For each preset, you can specify the same properties as for the default theme, such as `background-color`, `primary-color`, `positive-color`, `negative-color`, `contrast-multiplier`, etc., except for the `custom-css-file` property.
+
+Example:
+
+```yaml
+theme:
+  presets:
+    my-custom-dark-theme:
+      background-color: 229 19 23
+      contrast-multiplier: 1.2
+      primary-color: 222 74 74
+      positive-color: 96 44 68
+      negative-color: 359 68 71
+    my-custom-light-theme:
+      light: true
+      background-color: 220 23 95
+      contrast-multiplier: 1.1
+      primary-color: 220 91 54
+      positive-color: 109 58 40
+      negative-color: 347 87 44
+```
+
+To override the default dark and light themes, use the key names `default-dark` and `default-light`.
 
 ## Pages & Columns
 ![illustration of pages and columns](images/pages-and-columns-illustration.png)
@@ -415,7 +453,6 @@ pages:
 | desktop-navigation-width | string | no | |
 | center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
-| expand-mobile-page-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
 
@@ -446,9 +483,6 @@ When set to `true`, vertically centers the content on the page. Has no effect if
 
 #### `hide-desktop-navigation`
 Whether to show the navigation links at the top of the page on desktop.
-
-#### `expand-mobile-page-navigation`
-Whether the mobile page navigation should be expanded by default.
 
 #### `show-mobile-header`
 Whether to show a header displaying the name of the page on mobile. The header purposefully has a lot of vertical whitespace in order to push the content down and make it easier to reach on tall devices.

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"iter"
 	"log"
 	"maps"
 	"os"
@@ -38,15 +39,9 @@ type config struct {
 	} `yaml:"document"`
 
 	Theme struct {
-		BackgroundColor          *hslColorField `yaml:"background-color"`
-		BackgroundColorAsHex     string         `yaml:"-"`
-		PrimaryColor             *hslColorField `yaml:"primary-color"`
-		PositiveColor            *hslColorField `yaml:"positive-color"`
-		NegativeColor            *hslColorField `yaml:"negative-color"`
-		Light                    bool           `yaml:"light"`
-		ContrastMultiplier       float32        `yaml:"contrast-multiplier"`
-		TextSaturationMultiplier float32        `yaml:"text-saturation-multiplier"`
-		CustomCSSFile            string         `yaml:"custom-css-file"`
+		themeProperties `yaml:",inline"`
+		CustomCSSFile   string                                   `yaml:"custom-css-file"`
+		Presets         orderedYAMLMap[string, *themeProperties] `yaml:"presets"`
 	} `yaml:"theme"`
 
 	Branding struct {
@@ -64,15 +59,14 @@ type config struct {
 }
 
 type page struct {
-	Title                      string `yaml:"name"`
-	Slug                       string `yaml:"slug"`
-	Width                      string `yaml:"width"`
-	DesktopNavigationWidth     string `yaml:"desktop-navigation-width"`
-	ShowMobileHeader           bool   `yaml:"show-mobile-header"`
-	ExpandMobilePageNavigation bool   `yaml:"expand-mobile-page-navigation"`
-	HideDesktopNavigation      bool   `yaml:"hide-desktop-navigation"`
-	CenterVertically           bool   `yaml:"center-vertically"`
-	Columns                    []struct {
+	Title                  string `yaml:"name"`
+	Slug                   string `yaml:"slug"`
+	Width                  string `yaml:"width"`
+	DesktopNavigationWidth string `yaml:"desktop-navigation-width"`
+	ShowMobileHeader       bool   `yaml:"show-mobile-header"`
+	HideDesktopNavigation  bool   `yaml:"hide-desktop-navigation"`
+	CenterVertically       bool   `yaml:"center-vertically"`
+	Columns                []struct {
 		Size    string  `yaml:"size"`
 		Widgets widgets `yaml:"widgets"`
 	} `yaml:"columns"`
@@ -486,6 +480,106 @@ func isConfigStateValid(config *config) error {
 		if full > 2 || full == 0 {
 			return fmt.Errorf("page %d must have either 1 or 2 full width columns", i+1)
 		}
+	}
+
+	return nil
+}
+
+// Read-only way to store ordered maps from a YAML structure
+type orderedYAMLMap[K comparable, V any] struct {
+	keys []K
+	data map[K]V
+}
+
+func newOrderedYAMLMap[K comparable, V any](keys []K, values []V) (*orderedYAMLMap[K, V], error) {
+	if len(keys) != len(values) {
+		return nil, fmt.Errorf("keys and values must have the same length")
+	}
+
+	om := &orderedYAMLMap[K, V]{
+		keys: make([]K, len(keys)),
+		data: make(map[K]V, len(keys)),
+	}
+
+	copy(om.keys, keys)
+
+	for i := range keys {
+		om.data[keys[i]] = values[i]
+	}
+
+	return om, nil
+}
+
+func (om *orderedYAMLMap[K, V]) Items() iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		for _, key := range om.keys {
+			value, ok := om.data[key]
+			if !ok {
+				continue
+			}
+			if !yield(key, value) {
+				return
+			}
+		}
+	}
+}
+
+func (om *orderedYAMLMap[K, V]) Get(key K) (V, bool) {
+	value, ok := om.data[key]
+	return value, ok
+}
+
+func (self *orderedYAMLMap[K, V]) Merge(other *orderedYAMLMap[K, V]) *orderedYAMLMap[K, V] {
+	merged := &orderedYAMLMap[K, V]{
+		keys: make([]K, 0, len(self.keys)+len(other.keys)),
+		data: make(map[K]V, len(self.data)+len(other.data)),
+	}
+
+	merged.keys = append(merged.keys, self.keys...)
+	maps.Copy(merged.data, self.data)
+
+	for _, key := range other.keys {
+		if _, exists := self.data[key]; !exists {
+			merged.keys = append(merged.keys, key)
+		}
+	}
+	maps.Copy(merged.data, other.data)
+
+	return merged
+}
+
+func (om *orderedYAMLMap[K, V]) UnmarshalYAML(node *yaml.Node) error {
+	if node.Kind != yaml.MappingNode {
+		return fmt.Errorf("orderedMap: expected mapping node, got %d", node.Kind)
+	}
+
+	if len(node.Content)%2 != 0 {
+		return fmt.Errorf("orderedMap: expected even number of content items, got %d", len(node.Content))
+	}
+
+	om.keys = make([]K, len(node.Content)/2)
+	om.data = make(map[K]V, len(node.Content)/2)
+
+	for i := 0; i < len(node.Content); i += 2 {
+		keyNode := node.Content[i]
+		valueNode := node.Content[i+1]
+
+		var key K
+		if err := keyNode.Decode(&key); err != nil {
+			return fmt.Errorf("orderedMap: decoding key: %v", err)
+		}
+
+		if _, ok := om.data[key]; ok {
+			return fmt.Errorf("orderedMap: duplicate key %v", key)
+		}
+
+		var value V
+		if err := valueNode.Decode(&value); err != nil {
+			return fmt.Errorf("orderedMap: decoding value: %v", err)
+		}
+
+		(*om).keys[i/2] = key
+		(*om).data[key] = value
 	}
 
 	return nil
