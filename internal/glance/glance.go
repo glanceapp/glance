@@ -63,11 +63,12 @@ func newApplication(c *config) (*application, error) {
 
 	themeKeys = append(themeKeys, "default-light")
 	themeProps = append(themeProps, &themeProperties{
-		Light:              true,
-		BackgroundColor:    &hslColorField{240, 13, 86},
-		PrimaryColor:       &hslColorField{45, 100, 26},
-		NegativeColor:      &hslColorField{0, 50, 50},
-		ContrastMultiplier: 1.3,
+		Light:                    true,
+		BackgroundColor:          &hslColorField{240, 13, 86},
+		PrimaryColor:             &hslColorField{45, 100, 26},
+		NegativeColor:            &hslColorField{0, 50, 50},
+		ContrastMultiplier:       1.3,
+		TextSaturationMultiplier: 0.6,
 	})
 
 	themePresets, err := newOrderedYAMLMap(themeKeys, themeProps)
