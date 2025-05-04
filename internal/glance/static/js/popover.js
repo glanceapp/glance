@@ -102,6 +102,7 @@ function showPopover() {
     contentElement.style.maxWidth = contentMaxWidth;
     activeTarget.classList.add("popover-active");
     document.addEventListener("keydown", handleHidePopoverOnEscape);
+    window.addEventListener("scroll", queueRepositionContainer);
     window.addEventListener("resize", queueRepositionContainer);
     observer.observe(containerElement);
 }
@@ -163,6 +164,7 @@ function hidePopover() {
     containerElement.style.removeProperty("left");
     containerElement.style.removeProperty("right");
     document.removeEventListener("keydown", handleHidePopoverOnEscape);
+    window.removeEventListener("scroll", queueRepositionContainer);
     window.removeEventListener("resize", queueRepositionContainer);
     observer.unobserve(containerElement);
 
