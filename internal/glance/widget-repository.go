@@ -19,6 +19,7 @@ type repositoryWidget struct {
 	PullRequestsLimit   int        `yaml:"pull-requests-limit"`
 	IssuesLimit         int        `yaml:"issues-limit"`
 	CommitsLimit        int        `yaml:"commits-limit"`
+	FixedHeight         bool       `yaml:"fixed-height"`
 	Repository          repository `yaml:"-"`
 }
 
@@ -47,6 +48,7 @@ func (widget *repositoryWidget) update(ctx context.Context) {
 		widget.PullRequestsLimit,
 		widget.IssuesLimit,
 		widget.CommitsLimit,
+		widget.FixedHeight,
 	)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
@@ -70,6 +72,13 @@ type repository struct {
 	Issues           []githubTicket
 	LastCommits      int
 	Commits          []githubCommitDetails
+	PullRequestsDiff int
+	IssuesDiff       int
+	CommitsDiff      int
+	ShowPullRequests bool
+	ShowIssues       bool
+	ShowCommits      bool
+	FixedHeight      bool
 }
 
 type githubTicket struct {
@@ -111,7 +120,7 @@ type gitHubCommitResponseJson struct {
 	} `json:"commit"`
 }
 
-func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, maxIssues int, maxCommits int) (repository, error) {
+func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, maxIssues int, maxCommits int, fixedHeight bool) (repository, error) {
 	repositoryRequest, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s", repo), nil)
 	if err != nil {
 		return repository{}, fmt.Errorf("%w: could not create request with repository: %v", errNoContent, err)
@@ -176,12 +185,19 @@ func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, max
 	}
 
 	details := repository{
-		Name:         repositoryResponse.Name,
-		Stars:        repositoryResponse.Stars,
-		Forks:        repositoryResponse.Forks,
-		PullRequests: make([]githubTicket, 0, len(PRsResponse.Tickets)),
-		Issues:       make([]githubTicket, 0, len(issuesResponse.Tickets)),
-		Commits:      make([]githubCommitDetails, 0, len(commitsResponse)),
+		Name:             repositoryResponse.Name,
+		Stars:            repositoryResponse.Stars,
+		Forks:            repositoryResponse.Forks,
+		PullRequests:     make([]githubTicket, 0, len(PRsResponse.Tickets)),
+		Issues:           make([]githubTicket, 0, len(issuesResponse.Tickets)),
+		Commits:          make([]githubCommitDetails, 0, len(commitsResponse)),
+		PullRequestsDiff: maxPRs - len(PRsResponse.Tickets),
+		IssuesDiff:       maxIssues - len(issuesResponse.Tickets),
+		CommitsDiff:      maxCommits - len(commitsResponse),
+		ShowPullRequests: fixedHeight || len(PRsResponse.Tickets) > 0,
+		ShowIssues:       fixedHeight || len(issuesResponse.Tickets) > 0,
+		ShowCommits:      fixedHeight || len(commitsResponse) > 0,
+		FixedHeight:      fixedHeight,
 	}
 
 	err = nil
