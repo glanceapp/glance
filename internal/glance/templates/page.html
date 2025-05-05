@@ -21,8 +21,19 @@
     {{ if not .Page.HideDesktopNavigation }}
     <div class="header-container content-bounds{{ if ne "" .Page.DesktopNavigationWidth }} content-bounds-{{ .Page.DesktopNavigationWidth }} {{ end }}">
         <div class="header flex padding-inline-widget widget-content-frame">
-            <!-- TODO: Replace G with actual logo, first need an actual logo -->
-            <div class="logo" aria-hidden="true">{{ if ne "" .App.Config.Branding.LogoURL }}<img src="{{ .App.Config.Branding.LogoURL }}" alt="">{{ else if ne "" .App.Config.Branding.LogoText }}{{ .App.Config.Branding.LogoText }}{{ else }}G{{ end }}</div>
+            <div class="logo" aria-hidden="true">
+                {{- if .App.Config.Branding.LogoURL }}
+                <img src="{{ .App.Config.Branding.LogoURL }}" alt="">
+                {{- else if ne "" .App.Config.Branding.LogoText }}
+                {{- .App.Config.Branding.LogoText }}
+                {{- else }}
+                <svg style="max-height: 2rem;" width="100%" viewBox="0 0 108 108" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect fill="var(--color-text-subdue)" width="50" height="108" rx="6.875" />
+                    <path fill="var(--color-primary)" fill-rule="evenodd" clip-rule="evenodd" d="M64.875 0C61.078 0 58 3.07804 58 6.875V43.125C58 46.922 61.078 50 64.875 50H101.125C104.922 50 108 46.922 108 43.125V6.875C108 3.07804 104.922 0 101.125 0H64.875ZM75.7545 11L71.3078 15.6814H85.2233C85.9209 15.6814 86.5835 15.6633 87.2113 15.627C87.839 15.5544 88.3273 15.4093 88.6761 15.1915L70 34.5706L73.4004 38L91.8149 18.7843C91.6056 19.1835 91.4487 19.7097 91.3441 20.3629C91.2743 20.9798 91.2394 21.5968 91.2394 22.2137V37.1835L96 32.2843V11H75.7545Z"/>
+                    <rect fill="var(--color-text-base)" x="58" y="58" width="50" height="50" rx="6.875" />
+                </svg>
+                {{- end }}
+            </div>
             <nav class="nav flex grow hide-scrollbars">
                 {{ template "navigation-links" . }}
             </nav>
@@ -81,7 +92,6 @@
             <h1 class="visually-hidden">{{ .Page.Title }}</h1>
             <div class="page-content" id="page-content"></div>
             <div class="page-loading-container">
-                <!-- TODO: add a bigger/better loading indicator -->
                  <div class="visually-hidden">Loading</div>
                 <div class="loading-icon" aria-hidden="true"></div>
             </div>

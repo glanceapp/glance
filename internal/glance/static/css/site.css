@@ -239,6 +239,7 @@ kbd:active {
 
 .logo {
     height: 100%;
+    flex-shrink: 0;
     line-height: var(--header-height);
     font-size: 2rem;
     color: var(--color-text-highlight);
@@ -246,7 +247,7 @@ kbd:active {
     padding-right: var(--widget-content-horizontal-padding);
 }
 
-.logo:has(img) {
+.logo:has(img, svg) {
     display: flex;
     align-items: center;
 }
