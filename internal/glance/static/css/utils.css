@@ -580,3 +580,7 @@ details[open] .summary::after {
 .list-gap-20 { --list-half-gap: 1rem; }
 .list-gap-24 { --list-half-gap: 1.2rem; }
 .list-gap-34 { --list-half-gap: 1.7rem; }
+
+@media (max-width: 1190px) {
+    .size-base-on-mobile { font-size: var(--font-size-base); }
+}
