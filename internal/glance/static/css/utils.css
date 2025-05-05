@@ -568,6 +568,7 @@ details[open] .summary::after {
 .padding-block-widget { padding-block: var(--widget-content-vertical-padding); }
 .padding-inline-widget { padding-inline: var(--widget-content-horizontal-padding); }
 .pointer-events-none { pointer-events: none; }
+.select-none { user-select: none; }
 .padding-block-5 { padding-block: 0.5rem; }
 .scale-half { transform: scale(0.5); }
 .list { --list-half-gap: 0rem; }
