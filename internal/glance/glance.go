@@ -127,11 +127,17 @@ func newApplication(c *config) (*application, error) {
 	config.Theme.CustomCSSFile = app.resolveUserDefinedAssetPath(config.Theme.CustomCSSFile)
 	config.Branding.LogoURL = app.resolveUserDefinedAssetPath(config.Branding.LogoURL)
 
-	if config.Branding.FaviconURL == "" {
-		config.Branding.FaviconURL = app.StaticAssetPath("favicon.png")
-	} else {
-		config.Branding.FaviconURL = app.resolveUserDefinedAssetPath(config.Branding.FaviconURL)
-	}
+	config.Branding.FaviconURL = ternary(
+		config.Branding.FaviconURL == "",
+		app.StaticAssetPath("favicon.svg"),
+		app.resolveUserDefinedAssetPath(config.Branding.FaviconURL),
+	)
+
+	config.Branding.FaviconType = ternary(
+		strings.HasSuffix(config.Branding.FaviconURL, ".svg"),
+		"image/svg+xml",
+		"image/png",
+	)
 
 	if config.Branding.AppName == "" {
 		config.Branding.AppName = "Glance"
