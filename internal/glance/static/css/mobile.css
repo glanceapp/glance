@@ -52,10 +52,10 @@
         padding-block: .9rem;
         padding-inline: var(--content-bounds-padding);
         cursor: pointer;
-        transition: background-color .3s;
+        transition: background-color .2s;
     }
 
-    .mobile-navigation-actions > *:hover, .mobile-navigation-actions > *:active {
+    .mobile-navigation-actions > *:active {
         background-color: var(--color-widget-background-highlight);
     }
 
