@@ -25,9 +25,10 @@ func (a *application) handleThemeChangeRequest(w http.ResponseWriter, r *http.Re
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:  "theme",
-		Value: themeKey,
-		Path:  a.Config.Server.BaseURL + "/",
+		Name:     "theme",
+		Value:    themeKey,
+		Path:     a.Config.Server.BaseURL + "/",
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	w.Header().Set("Content-Type", "text/css")
