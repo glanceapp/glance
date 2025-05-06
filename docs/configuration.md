@@ -635,6 +635,7 @@ pages:
 | type | string | yes |
 | title | string | no |
 | title-url | string | no |
+| hide-header | boolean | no | false |
 | cache | string | no |
 | css-class | string | no |
 
@@ -646,6 +647,13 @@ The title of the widget. If left blank it will be defined by the widget.
 
 #### `title-url`
 The URL to go to when clicking on the widget's title. If left blank it will be defined by the widget (if available).
+
+#### `hide-header`
+When set to `true`, the header (title) of the widget will be hidden. You cannot hide the header of the group widget.
+
+> [!NOTE]
+>
+> If a widget fails to update, a red dot or circle is shown next to the title of that widget indicating that the it is not working. You will not be able to see this if you hide the header.
 
 #### `cache`
 How long to keep the fetched data in memory. The value is a string and must be a number followed by one of s, m, h, d. Examples:
