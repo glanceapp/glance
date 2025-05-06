@@ -520,6 +520,7 @@ pages:
 | center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
+| head-widgets | array | no | |
 | columns | array | yes | |
 
 #### `name`
@@ -556,6 +557,43 @@ Whether to show a header displaying the name of the page on mobile. The header p
 Preview:
 
 ![](images/mobile-header-preview.png)
+
+#### `head-widgets`
+
+Head widgets will be shown at the top of the page, above the columns, and take up the combined width of all columns. You can specify any widget, though some will look better than others, such as the markets, RSS feed with `horizontal-cards` style, and videos widgets. Example:
+
+![](images/head-widgets-preview.png)
+
+```yaml
+pages:
+  - name: Home
+    head-widgets:
+      - type: markets
+        hide-header: true
+        markets:
+          - symbol: SPY
+            name: S&P 500
+          - symbol: BTC-USD
+            name: Bitcoin
+          - symbol: NVDA
+            name: NVIDIA
+          - symbol: AAPL
+            name: Apple
+          - symbol: MSFT
+            name: Microsoft
+
+    columns:
+      - size: small
+        widgets:
+          - type: calendar
+      - size: full
+        widgets:
+          - type: hacker-news
+      - size: small
+        widgets:
+          - type: weather
+            location: London, United Kingdom
+```
 
 ### Columns
 Columns are defined for each page using a `columns` property. There are two types of columns - `full` and `small`, which refers to their width. A small column takes up a fixed amount of width (300px) and a full column takes up the all of the remaining width. You can have up to 3 columns per page and you must have either 1 or 2 full columns. Example:

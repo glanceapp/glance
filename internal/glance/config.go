@@ -73,13 +73,14 @@ type user struct {
 }
 
 type page struct {
-	Title                  string `yaml:"name"`
-	Slug                   string `yaml:"slug"`
-	Width                  string `yaml:"width"`
-	DesktopNavigationWidth string `yaml:"desktop-navigation-width"`
-	ShowMobileHeader       bool   `yaml:"show-mobile-header"`
-	HideDesktopNavigation  bool   `yaml:"hide-desktop-navigation"`
-	CenterVertically       bool   `yaml:"center-vertically"`
+	Title                  string  `yaml:"name"`
+	Slug                   string  `yaml:"slug"`
+	Width                  string  `yaml:"width"`
+	DesktopNavigationWidth string  `yaml:"desktop-navigation-width"`
+	ShowMobileHeader       bool    `yaml:"show-mobile-header"`
+	HideDesktopNavigation  bool    `yaml:"hide-desktop-navigation"`
+	CenterVertically       bool    `yaml:"center-vertically"`
+	HeadWidgets            widgets `yaml:"head-widgets"`
 	Columns                []struct {
 		Size    string  `yaml:"size"`
 		Widgets widgets `yaml:"widgets"`
@@ -107,6 +108,12 @@ func newConfigFromYAML(contents []byte) (*config, error) {
 	}
 
 	for p := range config.Pages {
+		for w := range config.Pages[p].HeadWidgets {
+			if err := config.Pages[p].HeadWidgets[w].initialize(); err != nil {
+				return nil, formatWidgetInitError(err, config.Pages[p].HeadWidgets[w])
+			}
+		}
+
 		for c := range config.Pages[p].Columns {
 			for w := range config.Pages[p].Columns[c].Widgets {
 				if err := config.Pages[p].Columns[c].Widgets[w].initialize(); err != nil {

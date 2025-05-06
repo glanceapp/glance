@@ -44,6 +44,10 @@
     opacity: 0.6;
 }
 
+.head-widgets {
+    margin-bottom: var(--widget-gap);
+}
+
 .widget-content {
     container-type: inline-size;
     container-name: widget;

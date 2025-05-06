@@ -13,6 +13,7 @@
 
 .page.content-ready > .page-content {
     display: block;
+    animation: pageContentEntrance .3s cubic-bezier(0.25, 1, 0.5, 1) backwards;
 }
 
 .page-column-small .size-title-dynamic {
@@ -127,10 +128,9 @@ body {
 .page-columns {
     display: flex;
     gap: var(--widget-gap);
-    animation: pageColumnsEntrance .3s cubic-bezier(0.25, 1, 0.5, 1) backwards;
 }
 
-@keyframes pageColumnsEntrance {
+@keyframes pageContentEntrance {
     from {
         opacity: 0;
         transform: translateY(10px);
