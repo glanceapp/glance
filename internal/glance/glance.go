@@ -3,23 +3,29 @@ package glance
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
-	pageTemplate        = mustParseTemplate("page.html", "document.html")
+	pageTemplate        = mustParseTemplate("page.html", "document.html", "footer.html")
 	pageContentTemplate = mustParseTemplate("page-content.html")
 	manifestTemplate    = mustParseTemplate("manifest.json")
 )
 
 const STATIC_ASSETS_CACHE_DURATION = 24 * time.Hour
+
+var reservedPageSlugs = []string{"login", "logout"}
 
 type application struct {
 	Version   string
@@ -30,6 +36,12 @@ type application struct {
 
 	slugToPage map[string]*page
 	widgetByID map[uint64]widget
+
+	RequiresAuth           bool
+	authSecretKey          []byte
+	usernameHashToUsername map[string]string
+	authAttemptsMu         sync.Mutex
+	failedAuthAttempts     map[string]*failedAuthAttempt
 }
 
 func newApplication(c *config) (*application, error) {
@@ -42,10 +54,47 @@ func newApplication(c *config) (*application, error) {
 	}
 	config := &app.Config
 
-	app.slugToPage[""] = &config.Pages[0]
+	//
+	// Init auth
+	//
 
-	providers := &widgetProviders{
-		assetResolver: app.StaticAssetPath,
+	if len(config.Auth.Users) > 0 {
+		secretBytes, err := base64.StdEncoding.DecodeString(config.Auth.SecretKey)
+		if err != nil {
+			return nil, fmt.Errorf("decoding secret-key: %v", err)
+		}
+
+		if len(secretBytes) != AUTH_SECRET_KEY_LENGTH {
+			return nil, fmt.Errorf("secret-key must be exactly %d bytes", AUTH_SECRET_KEY_LENGTH)
+		}
+
+		app.usernameHashToUsername = make(map[string]string)
+		app.failedAuthAttempts = make(map[string]*failedAuthAttempt)
+		app.RequiresAuth = true
+
+		for username := range config.Auth.Users {
+			user := config.Auth.Users[username]
+			usernameHash, err := computeUsernameHash(username, secretBytes)
+			if err != nil {
+				return nil, fmt.Errorf("computing username hash for user %s: %v", username, err)
+			}
+			app.usernameHashToUsername[string(usernameHash)] = username
+
+			if user.PasswordHashString != "" {
+				user.PasswordHash = []byte(user.PasswordHashString)
+				user.PasswordHashString = ""
+			} else {
+				hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+				if err != nil {
+					return nil, fmt.Errorf("hashing password for user %s: %v", username, err)
+				}
+
+				user.Password = ""
+				user.PasswordHash = hashedPassword
+			}
+		}
+
+		app.authSecretKey = secretBytes
 	}
 
 	//
@@ -89,12 +138,26 @@ func newApplication(c *config) (*application, error) {
 		return nil, fmt.Errorf("initializing default theme: %v", err)
 	}
 
+	//
+	// Init pages
+	//
+
+	app.slugToPage[""] = &config.Pages[0]
+
+	providers := &widgetProviders{
+		assetResolver: app.StaticAssetPath,
+	}
+
 	for p := range config.Pages {
 		page := &config.Pages[p]
 		page.PrimaryColumnIndex = -1
 
 		if page.Slug == "" {
 			page.Slug = titleToSlug(page.Title)
+		}
+
+		if slices.Contains(reservedPageSlugs, page.Slug) {
+			return nil, fmt.Errorf("page slug \"%s\" is reserved", page.Slug)
 		}
 
 		app.slugToPage[page.Slug] = page
@@ -151,7 +214,7 @@ func newApplication(c *config) (*application, error) {
 		config.Branding.AppBackgroundColor = config.Theme.BackgroundColorAsHex
 	}
 
-	manifest, err := executeTemplateToString(manifestTemplate, pageTemplateData{App: app})
+	manifest, err := executeTemplateToString(manifestTemplate, templateData{App: app})
 	if err != nil {
 		return nil, fmt.Errorf("parsing manifest.json: %v", err)
 	}
@@ -193,17 +256,17 @@ func (a *application) resolveUserDefinedAssetPath(path string) string {
 	return path
 }
 
-type pageTemplateRequestData struct {
+type templateRequestData struct {
 	Theme *themeProperties
 }
 
-type pageTemplateData struct {
+type templateData struct {
 	App     *application
 	Page    *page
-	Request pageTemplateRequestData
+	Request templateRequestData
 }
 
-func (a *application) populateTemplateRequestData(data *pageTemplateRequestData, r *http.Request) {
+func (a *application) populateTemplateRequestData(data *templateRequestData, r *http.Request) {
 	theme := &a.Config.Theme.themeProperties
 
 	selectedTheme, err := r.Cookie("theme")
@@ -219,13 +282,16 @@ func (a *application) populateTemplateRequestData(data *pageTemplateRequestData,
 
 func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) {
 	page, exists := a.slugToPage[r.PathValue("page")]
-
 	if !exists {
 		a.handleNotFound(w, r)
 		return
 	}
 
-	data := pageTemplateData{
+	if a.handleUnauthorizedResponse(w, r, redirectToLogin) {
+		return
+	}
+
+	data := templateData{
 		Page: page,
 		App:  a,
 	}
@@ -244,13 +310,16 @@ func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) 
 
 func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Request) {
 	page, exists := a.slugToPage[r.PathValue("page")]
-
 	if !exists {
 		a.handleNotFound(w, r)
 		return
 	}
 
-	pageData := pageTemplateData{
+	if a.handleUnauthorizedResponse(w, r, showUnauthorizedJSON) {
+		return
+	}
+
+	pageData := templateData{
 		Page: page,
 	}
 
@@ -274,6 +343,35 @@ func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Re
 	w.Write(responseBytes.Bytes())
 }
 
+func (a *application) addressOfRequest(r *http.Request) string {
+	remoteAddrWithoutPort := func() string {
+		for i := len(r.RemoteAddr) - 1; i >= 0; i-- {
+			if r.RemoteAddr[i] == ':' {
+				return r.RemoteAddr[:i]
+			}
+		}
+
+		return r.RemoteAddr
+	}
+
+	if !a.Config.Server.Proxied {
+		return remoteAddrWithoutPort()
+	}
+
+	// This should probably be configurable or look for multiple headers, not just this one
+	forwardedFor := r.Header.Get("X-Forwarded-For")
+	if forwardedFor == "" {
+		return remoteAddrWithoutPort()
+	}
+
+	ips := strings.Split(forwardedFor, ",")
+	if len(ips) == 0 {
+		return remoteAddrWithoutPort()
+	}
+
+	return ips[0]
+}
+
 func (a *application) handleNotFound(w http.ResponseWriter, _ *http.Request) {
 	// TODO: add proper not found page
 	w.WriteHeader(http.StatusNotFound)
@@ -281,22 +379,26 @@ func (a *application) handleNotFound(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (a *application) handleWidgetRequest(w http.ResponseWriter, r *http.Request) {
-	widgetValue := r.PathValue("widget")
+	// TODO: this requires a rework of the widget update logic so that rather
+	// than locking the entire page we lock individual widgets
+	w.WriteHeader(http.StatusNotImplemented)
 
-	widgetID, err := strconv.ParseUint(widgetValue, 10, 64)
-	if err != nil {
-		a.handleNotFound(w, r)
-		return
-	}
+	// widgetValue := r.PathValue("widget")
 
-	widget, exists := a.widgetByID[widgetID]
+	// widgetID, err := strconv.ParseUint(widgetValue, 10, 64)
+	// if err != nil {
+	// 	a.handleNotFound(w, r)
+	// 	return
+	// }
 
-	if !exists {
-		a.handleNotFound(w, r)
-		return
-	}
+	// widget, exists := a.widgetByID[widgetID]
 
-	widget.handleRequest(w, r)
+	// if !exists {
+	// 	a.handleNotFound(w, r)
+	// 	return
+	// }
+
+	// widget.handleRequest(w, r)
 }
 
 func (a *application) StaticAssetPath(asset string) string {
@@ -309,8 +411,6 @@ func (a *application) VersionedAssetPath(asset string) string {
 }
 
 func (a *application) server() (func() error, func() error) {
-	// TODO: add gzip support, static files must have their gzipped contents cached
-	// TODO: add HTTPS support
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /{$}", a.handlePageRequest)
@@ -322,6 +422,12 @@ func (a *application) server() (func() error, func() error) {
 	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+
+	if a.RequiresAuth {
+		mux.HandleFunc("GET /login", a.handleLoginPageRequest)
+		mux.HandleFunc("GET /logout", a.handleLogoutRequest)
+		mux.HandleFunc("POST /api/authenticate", a.handleAuthenticationAttempt)
+	}
 
 	mux.Handle(
 		fmt.Sprintf("GET /static/%s/{path...}", staticFSHash),

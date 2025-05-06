@@ -49,9 +49,10 @@
     }
 
     .mobile-navigation-actions > * {
-        padding-block: .9rem;
+        padding-block: 1.1rem;
         padding-inline: var(--content-bounds-padding);
         cursor: pointer;
+        transition: background-color 50ms;
     }
 
     .mobile-navigation-actions > *:active {

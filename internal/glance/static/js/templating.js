@@ -147,6 +147,22 @@ ep.styles = function(s) {
     return this;
 }
 
+ep.clearStyles = function(...props) {
+    for (let i = 0; i < props.length; i++)
+        this.style.removeProperty(props[i]);
+    return this;
+}
+
+ep.disable = function() {
+    this.disabled = true;
+    return this;
+}
+
+ep.enable = function() {
+    this.disabled = false;
+    return this;
+}
+
 const epAnimate = ep.animate;
 ep.animate = function(anim, callback) {
     const a = epAnimate.call(this, anim.keyframes, anim.options);

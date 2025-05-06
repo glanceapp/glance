@@ -153,7 +153,9 @@ body {
 
 @keyframes loadingContainerEntrance {
     from {
-        opacity: 0;
+        /* Using 0.001 instead of 0 fixes a random 1s freeze on Chrome on page load when all */
+        /* elements have opacity 0 and are animated in. I don't want to be a web dev anymore. */
+        opacity: 0.001;
     }
 }
 
@@ -295,6 +297,17 @@ kbd:active {
 .nav-item.nav-item-current {
     border-bottom-color: var(--color-primary);
     color: var(--color-text-highlight);
+}
+
+.logout-button {
+    width: 2rem;
+    height: 2rem;
+    stroke: var(--color-text-subdue);
+    transition: stroke .2s;
+}
+
+.logout-button:hover, .logout-button:focus {
+    stroke: var(--color-text-highlight);
 }
 
 .theme-choices {

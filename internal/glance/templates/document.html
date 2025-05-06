@@ -5,7 +5,7 @@
     <script>
     if (navigator.platform === 'iPhone') document.documentElement.classList.add('ios');
     const pageData = {
-        slug: "{{ .Page.Slug }}",
+        /*{{ if .Page }}*/slug: "{{ .Page.Slug }}",/*{{ end }}*/
         baseURL: "{{ .App.Config.Server.BaseURL }}",
         theme: "{{ .Request.Theme.Key }}",
     };
@@ -24,11 +24,10 @@
     <link rel="icon" type="image/png" href='{{ .App.StaticAssetPath "favicon.png" }}' />
     <link rel="icon" type="{{ .App.Config.Branding.FaviconType }}" href="{{ .App.Config.Branding.FaviconURL }}" />
     <link rel="stylesheet" href='{{ .App.StaticAssetPath "css/bundle.css" }}'>
-    <script type="module" src='{{ .App.StaticAssetPath "js/main.js" }}'></script>
-    <style id="theme-style">
-    {{ .Request.Theme.CSS }}
-    </style>
+    <style id="theme-style">{{ .Request.Theme.CSS }}</style>
+    {{ if .App.Config.Theme.CustomCSSFile }}<link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.CreatedAt.Unix }}">{{ end }}
     {{ block "document-head-after" . }}{{ end }}
+    {{ if .App.Config.Document.Head }}{{ .App.Config.Document.Head }}{{ end }}
 </head>
 <body>
 {{ template "document-body" . }}
