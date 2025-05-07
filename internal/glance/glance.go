@@ -113,7 +113,7 @@ func newApplication(c *config) (*application, error) {
 	themeKeys = append(themeKeys, "default-light")
 	themeProps = append(themeProps, &themeProperties{
 		Light:                    true,
-		BackgroundColor:          &hslColorField{240, 13, 93},
+		BackgroundColor:          &hslColorField{240, 13, 95},
 		PrimaryColor:             &hslColorField{230, 100, 30},
 		NegativeColor:            &hslColorField{0, 70, 50},
 		ContrastMultiplier:       1.3,
