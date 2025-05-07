@@ -108,6 +108,8 @@ function showPopover() {
 }
 
 function repositionContainer() {
+    if (activeTarget === null) return;
+
     containerElement.style.display = "block";
 
     const targetBounds = activeTarget.dataset.popoverAnchor !== undefined
