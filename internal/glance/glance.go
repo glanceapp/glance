@@ -380,7 +380,7 @@ func (a *application) addressOfRequest(r *http.Request) string {
 	}
 
 	ips := strings.Split(forwardedFor, ",")
-	if len(ips) == 0 {
+	if len(ips) == 0 || ips[0] == "" {
 		return remoteAddrWithoutPort()
 	}
 

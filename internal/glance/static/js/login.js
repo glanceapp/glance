@@ -94,6 +94,8 @@ async function handleLoginAttempt() {
 
     state.isLoading = false;
     if (response.status === 200) {
+        setTimeout(() => { window.location.href = pageData.baseURL + "/"; }, 300);
+
         container.animate({
             keyframes: [{ offset: 1, transform: "scale(0.95)", opacity: 0 }],
             options: { duration: 300, easing: "ease", fill: "forwards" }}
@@ -103,8 +105,6 @@ async function handleLoginAttempt() {
             keyframes: [{ offset: 1, opacity: 0 }],
             options: { duration: 300, easing: "ease", fill: "forwards", delay: 50 }
         });
-
-        setTimeout(() => { window.location.href = pageData.baseURL + "/"; }, 300);
     } else if (response.status === 401) {
         errorMessage.text(lang.incorrectCredentials);
         passwordInput.focus();
