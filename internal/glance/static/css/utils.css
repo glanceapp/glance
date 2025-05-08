@@ -496,6 +496,57 @@ details[open] .summary::after {
     color: var(--color-primary);
 }
 
+.drag-and-drop-container {
+    position: relative;
+}
+
+.drag-and-drop-decoy {
+    outline: 1px dashed var(--color-primary);
+    opacity: 0.25;
+    border-radius: var(--border-radius);
+}
+
+.drag-and-drop-draggable {
+    position: absolute;
+    cursor: grabbing !important;
+}
+
+.drag-and-drop-draggable:empty {
+    display: none;
+}
+
+.drag-and-drop-draggable * {
+    cursor: grabbing !important;
+}
+
+.auto-scaling-textarea-container {
+    position: relative;
+}
+
+.auto-scaling-textarea {
+    position: absolute;
+    inset: 0;
+    background: none;
+    border: none;
+    font: inherit;
+    resize: none;
+    color: inherit;
+    overflow: hidden;
+}
+
+.auto-scaling-textarea:focus {
+    outline: none;
+}
+
+.auto-scaling-textarea-mimic {
+    white-space: pre-wrap;
+    min-height: 1lh;
+    user-select: none;
+    word-wrap: break-word;
+    font: inherit;
+    visibility: hidden;
+}
+
 .cursor-help { cursor: help; }
 .rounded { border-radius: var(--border-radius); }
 .break-all { word-break: break-all; }

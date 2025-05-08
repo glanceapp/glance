@@ -26,6 +26,7 @@
   - [Custom API](#custom-api)
   - [Extension](#extension)
   - [Weather](#weather)
+  - [Todo](#todo)
   - [Monitor](#monitor)
   - [Releases](#releases)
   - [Docker Containers](#docker-containers)
@@ -1733,6 +1734,44 @@ Otherwise, if set to `false` (which is the default) it'll be displayed as:
 ```
 Greenville, United States
 ```
+
+### Todo
+
+A simple todo list that allows you to add, edit and delete tasks. The tasks are stored in the browser's local storage.
+
+Example:
+
+```yaml
+- type: todo
+```
+
+Preview:
+
+![](images/todo-widget-preview.png)
+
+To reorder tasks, drag and drop them by grabbing the top side of the task:
+
+![](images/reorder-todo-tasks-prevew.gif)
+
+To delete a task, hover over it and click on the trash icon.
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| id | string | no | |
+
+##### `id`
+
+The ID of the todo list. If you want to have multiple todo lists, you must specify a different ID for each one. The ID is used to store the tasks in the browser's local storage. This means that if you have multiple todo lists with the same ID, they will share the same tasks.
+
+#### Keyboard shortcuts
+| Keys | Action | Condition |
+| ---- | ------ | --------- |
+| <kbd>Enter</kbd> | Add a task to the bottom of the list | When the "Add a task" field is focused |
+| <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Add a task to the top of the list | When the "Add a task" field is focused |
+| <kbd>Down Arrow</kbd> | Focus the last task that was added | When the "Add a task" field is focused |
+| <kbd>Escape</kbd> | Focus the "Add a task" field | When a task is focused |
 
 ### Monitor
 Display a list of sites and whether they are reachable (online) or not. This is determined by sending a GET request to the specified URL, if the response is 200 then the site is OK. The time it took to receive a response is also shown in milliseconds.

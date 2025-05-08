@@ -642,6 +642,16 @@ async function setupCalendars() {
         calendar.default(elems[i]);
 }
 
+async function setupTodos() {
+    const elems = document.getElementsByClassName("todo");
+    if (elems.length == 0) return;
+
+    const todo = await import ('./todo.js');
+
+    for (let i = 0; i < elems.length; i++)
+        todo.default(elems[i]);
+}
+
 function setupTruncatedElementTitles() {
     const elements = document.querySelectorAll(".text-truncate, .single-line-titles .title, .text-truncate-2-lines, .text-truncate-3-lines");
 
@@ -736,6 +746,7 @@ async function setupPage() {
         setupPopovers();
         setupClocks()
         await setupCalendars();
+        await setupTodos();
         setupCarousels();
         setupSearchBoxes();
         setupCollapsibleLists();

@@ -28,6 +28,23 @@ pre {
     font: inherit;
 }
 
+
+input[type="text"] {
+    width: 100%;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+}
+
+button {
+    font: inherit;
+    border: 0;
+    cursor: pointer;
+    background: none;
+    color: inherit;
+}
+
 ::selection {
     background-color: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 20%)));
     color: var(--color-text-highlight);
