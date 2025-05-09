@@ -14,19 +14,19 @@
                     {{ if eq .Availability 5}}
                     <li class="color-positive">Available</li>
                     {{ else if eq .Availability 4}}
-                    <li class="color-yellow">Partial</li>
+                    <li>Partial</li>
                     {{ else if eq .Availability 3}}
-                    <li class="color-blue">Processing</li>
+                    <li>Processing</li>
                     {{ else if eq .Availability 2}}
-                    <li class="color-purple">Pending Approval</li>
+                    <li>Pending Approval</li>
                     {{ else}}
-                    <li class="color-negative">Unknown</li>
+                    <li>Unknown</li>
                     {{ end }}
                 </ul>
                 <ul class="list-horizontal-text flex-nowrap">
                     <li>{{ .AirDate }}</li>
                     <li class="min-width-0">
-                        <a href="{{.RequestedBy.Link}}" target="_blank" rel="noreferrer">{{.RequestedBy.DisplayName}}</a>
+                        <a class="color-primary" href="{{.RequestedBy.Link}}" target="_blank" rel="noreferrer">{{.RequestedBy.DisplayName}}</a>
                     </li>
                 </ul>
             </div>
