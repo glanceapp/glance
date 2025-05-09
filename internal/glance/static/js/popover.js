@@ -98,7 +98,6 @@ function showPopover() {
     }
 
     contentElement.style.maxWidth = contentMaxWidth;
-    containerElement.style.display = "block";
     activeTarget.classList.add("popover-active");
     document.addEventListener("keydown", handleHidePopoverOnEscape);
     window.addEventListener("resize", queueRepositionContainer);
@@ -106,6 +105,8 @@ function showPopover() {
 }
 
 function repositionContainer() {
+    containerElement.style.display = "block";
+
     const targetBounds = activeTarget.dataset.popoverAnchor !== undefined
         ? activeTarget.querySelector(activeTarget.dataset.popoverAnchor).getBoundingClientRect()
         : activeTarget.getBoundingClientRect();

@@ -2,9 +2,9 @@
     {{- if not .HideHeader}}
     <div class="widget-header">
         {{- if ne "" .TitleURL }}
-        <a href="{{ .TitleURL | safeURL }}" target="_blank" rel="noreferrer" class="uppercase">{{ .Title }}</a>
+        <h2><a href="{{ .TitleURL | safeURL }}" target="_blank" rel="noreferrer" class="uppercase">{{ .Title }}</a></h2>
         {{- else }}
-        <div class="uppercase">{{ .Title }}</div>
+        <h2 class="uppercase">{{ .Title }}</h2>
         {{- end }}
         {{- if .IsWIP }}
         <div data-popover-type="html" data-popover-position="above">

@@ -8,8 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
+	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -35,8 +38,15 @@ type requestDoer interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
+var userAgentPersistentVersion atomic.Int32
+
 func setBrowserUserAgentHeader(request *http.Request) {
-	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0")
+	if rand.IntN(2000) == 0 {
+		userAgentPersistentVersion.Store(rand.Int32N(5))
+	}
+
+	version := strconv.Itoa(130 + int(userAgentPersistentVersion.Load()))
+	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:"+version+".0) Gecko/20100101 Firefox/"+version+".0")
 }
 
 func decodeJsonFromRequest[T any](client requestDoer, request *http.Request) (T, error) {
@@ -168,6 +178,11 @@ func workerPoolDo[I any, O any](job *workerPoolJob[I, O]) ([]O, []error, error) 
 	errs := make([]error, len(job.data))
 
 	if len(job.data) == 0 {
+		return results, errs, nil
+	}
+
+	if len(job.data) == 1 {
+		results[0], errs[0] = job.task(job.data[0])
 		return results, errs, nil
 	}
 

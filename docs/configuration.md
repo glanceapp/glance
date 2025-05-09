@@ -5,11 +5,12 @@
   - [Auto reload](#auto-reload)
   - [Environment variables](#environment-variables)
   - [Including other config files](#including-other-config-files)
+  - [Config schema](#config-schema)
 - [Server](#server)
 - [Document](#document)
 - [Branding](#branding)
 - [Theme](#theme)
-  - [Themes](#themes)
+  - [Available themes](#available-themes)
 - [Pages & Columns](#pages--columns)
 - [Widgets](#widgets)
   - [RSS](#rss)
@@ -149,6 +150,10 @@ docker run --rm -v ./glance.yml:/app/config/glance.yml glanceapp/glance config:p
 
 This assumes that the config you want to print is in your current working directory and is named `glance.yml`.
 
+## Config schema
+
+For property descriptions, validation and autocompletion of the config within your IDE, @not-first has kindly created a [schema](https://github.com/not-first/glance-schema). Massive thanks to them for this, go check it out and give them a star!
+
 ## Server
 Server configuration is done through a top level `server` property. Example:
 
@@ -274,7 +279,7 @@ theme:
   contrast-multiplier: 1.1
 ```
 
-### Themes
+### Available themes
 If you don't want to spend time configuring your own theme, there are [several available themes](themes.md) which you can simply copy the values for.
 
 ### Properties
@@ -356,7 +361,7 @@ pages:
 ### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| title | string | yes | |
+| name | string | yes | |
 | slug | string | no | |
 | width | string | no | |
 | center-vertically | boolean | no | false |
@@ -365,7 +370,7 @@ pages:
 | show-mobile-header | boolean | no | false |
 | columns | array | yes | |
 
-#### `title`
+#### `name`
 The name of the page which gets shown in the navigation bar.
 
 #### `slug`
@@ -374,7 +379,7 @@ The URL friendly version of the title which is used to access the page. For exam
 #### `width`
 The maximum width of the page on desktop. Possible values are `slim` and `wide`.
 
-* default: `1600px`
+* default: `1600px` (when no value is specified)
 * slim: `1100px`
 * wide: `1920px`
 
@@ -958,6 +963,7 @@ Preview:
 | search-engine | string | no | duckduckgo |
 | new-tab | boolean | no | false |
 | autofocus | boolean | no | false |
+| target | string | no | _blank |
 | placeholder | string | no | Type here to search… |
 | bangs | array | no | |
 
@@ -974,6 +980,9 @@ When set to `true`, swaps the shortcuts for showing results in the same or new t
 
 ##### `autofocus`
 When set to `true`, automatically focuses the search input on page load.
+
+##### `target`
+The target to use when opening the search results in a new tab. Possible values are `_blank`, `_self`, `_parent` and `_top`.
 
 ##### `placeholder`
 When set, modifies the text displayed in the input field before typing.
@@ -1292,8 +1301,15 @@ Examples:
 | ---- | ---- | -------- | ------- |
 | url | string | yes | |
 | headers | key (string) & value (string) | no | |
+| method | string | no | GET |
+| body-type | string | no | json |
+| body | any | no | |
 | frameless | boolean | no | false |
+| allow-insecure | boolean | no | false |
+| skip-json-validation | boolean | no | false |
 | template | string | yes | |
+| parameters | key (string) & value (string|array) | no | |
+| subrequests | map of requests | no | |
 
 ##### `url`
 The URL to fetch the data from. It must be accessible from the server that Glance is running on.
@@ -1307,11 +1323,91 @@ headers:
   Accept: application/json
 ```
 
+##### `method`
+The HTTP method to use when making the request. Possible values are `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` and `HEAD`.
+
+##### `body-type`
+The type of the body that will be sent with the request. Possible values are `json`, and `string`.
+
+##### `body`
+The body that will be sent with the request. It can be a string or a map. Example:
+
+```yaml
+body-type: json
+body:
+  key1: value1
+  key2: value2
+  multiple-items:
+    - item1
+    - item2
+```
+
+```yaml
+body-type: string
+body: |
+  key1=value1&key2=value2
+```
+
 ##### `frameless`
 When set to `true`, removes the border and padding around the widget.
 
+##### `allow-insecure`
+Whether to ignore invalid/self-signed certificates.
+
+##### `skip-json-validation`
+When set to `true`, skips the JSON validation step. This is useful when the API returns JSON Lines/newline-delimited JSON, which is a format that consists of several JSON objects separated by newlines.
+
 ##### `template`
-The template that will be used to display the data. It relies on Go's `html/template` package so it's recommended to go through [its documentation](https://pkg.go.dev/text/template) to understand how to do basic things such as conditionals, loops, etc. In addition, it also uses [tidwall's gjson](https://pkg.go.dev/github.com/tidwall/gjson) package to parse the JSON data so it's worth going through its documentation if you want to use more advanced JSON selectors. You can view additional examples with explanations and function definitions [here](custom-api.md).
+The template that will be used to display the data. It relies on Go's `html/template` package so it's recommended to go through [its documentation](https://pkg.go.dev/text/template) to understand how to do basic things such as conditionals, loops, etc. In addition, it also uses [tidwall's gjson](https://github.com/tidwall/gjson) package to parse the JSON data so it's worth going through its documentation if you want to use more advanced JSON selectors. You can view additional examples with explanations and function definitions [here](custom-api.md).
+
+##### `parameters`
+A list of keys and values that will be sent to the custom-api as query paramters.
+
+##### `subrequests`
+A map of additional requests that will be executed concurrently and then made available in the template via the `.Subrequest` property. Example:
+
+```yaml
+- type: custom-api
+  cache: 2h
+  subrequests:
+    another-one:
+      url: https://uselessfacts.jsph.pl/api/v2/facts/random
+  title: Random Fact
+  url: https://uselessfacts.jsph.pl/api/v2/facts/random
+  template: |
+    <p class="size-h4 color-paragraph">{{ .JSON.String "text" }}</p>
+    <p class="size-h4 color-paragraph margin-top-15">{{ (.Subrequest "another-one").JSON.String "text" }}</p>
+```
+
+The subrequests support all the same properties as the main request, except for `subrequests` itself, so you can use `headers`, `parameters`, etc.
+
+`(.Subrequest "key")` can be a little cumbersome to write, so you can define a variable to make it easier:
+
+```yaml
+  template: |
+    {{ $anotherOne := .Subrequest "another-one" }}
+    <p>{{ $anotherOne.JSON.String "text" }}</p>
+```
+
+You can also access the `.Response` property of a subrequest as you would with the main request:
+
+```yaml
+  template: |
+    {{ $anotherOne := .Subrequest "another-one" }}
+    <p>{{ $anotherOne.Response.StatusCode }}</p>
+```
+
+> [!NOTE]
+>
+> Setting this property will override any query parameters that are already in the URL.
+
+```yaml
+parameters:
+  param1: value1
+  param2:
+    - item1
+    - item2
+```
 
 ### Extension
 Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
@@ -1330,6 +1426,7 @@ Display a widget provided by an external source (3rd party). If you want to lear
 | url | string | yes | |
 | fallback-content-type | string | no | |
 | allow-potentially-dangerous-html | boolean | no | false |
+| headers | key & value | no | |
 | parameters | key & value | no | |
 
 ##### `url`
@@ -1337,6 +1434,14 @@ The URL of the extension. **Note that the query gets stripped from this URL and 
 
 ##### `fallback-content-type`
 Optionally specify the fallback content type of the extension if the URL does not return a valid `Widget-Content-Type` header. Currently the only supported value for this property is `html`.
+
+##### `headers`
+Optionally specify the headers that will be sent with the request. Example:
+
+```yaml
+headers:
+  x-api-key: ${SECRET_KEY}
+```
 
 ##### `allow-potentially-dangerous-html`
 Whether to allow the extension to display HTML.
@@ -1483,7 +1588,7 @@ The title used to indicate the site.
 
 `url`
 
-The public facing URL of a monitored service, the user will be redirected here. If `check-url` is not specified, this is used as the status check.
+The URL of the monitored service, which must be reachable by Glance, and will be used as the link to go to when clicking on the title. If `check-url` is not specified, this is used as the status check.
 
 `check-url`
 
@@ -1608,7 +1713,7 @@ services:
   glance:
     image: glanceapp/glance
     environment:
-      - GITHUB_TOKEN: <your token>
+      - GITHUB_TOKEN=<your token>
 ```
 
 and then use it in your `glance.yml` like this:
@@ -1765,29 +1870,31 @@ Preview:
 | allow-insecure | bool | no | false |
 | url | string | yes |  |
 | username | string | when service is `adguard` |  |
-| password | string | when service is `adguard` |  |
+| password | string | when service is `adguard` or `pihole-v6` |  |
 | token | string | when service is `pihole` |  |
 | hide-graph | bool | no | false |
 | hide-top-domains | bool | no | false |
 | hour-format | string | no | 12h |
 
 ##### `service`
-Either `adguard` or `pihole`.
+Either `adguard`, or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
 
 ##### `allow-insecure`
 Whether to allow invalid/self-signed certificates when making the request to the service.
 
 ##### `url`
-The base URL of the service. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+The base URL of the service.
 
 ##### `username`
-Only required when using AdGuard Home. The username used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Only required when using AdGuard Home. The username used to log into the admin dashboard.
 
 ##### `password`
-Only required when using AdGuard Home. The password used to log into the admin dashboard. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Required when using AdGuard Home, where the password is the one used to log into the admin dashboard.
+
+Also requried when using Pi-hole major version 6 and above, where the password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
 
 ##### `token`
-Only required when using Pi-hole. The API token which can be found in `Settings -> API -> Show API token`. Can be specified from an environment variable using the syntax `${VARIABLE_NAME}`.
+Only required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`.
 
 ##### `hide-graph`
 Whether to hide the graph showing the number of queries over time.
@@ -1852,10 +1959,28 @@ Whether to hide the swap usage.
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | cpu-temp-sensor | string | no |  |
+| hide-mountpoints-by-default | boolean | no | false |
 | mountpoints | map\[string\]object | no |  |
 
 ###### `cpu-temp-sensor`
 The name of the sensor to use for the CPU temperature. When not provided the widget will attempt to find the correct one, if it fails to do so the temperature will not be displayed. To view the available sensors you can use `sensors` command.
+
+###### `hide-mountpoints-by-default`
+If set to `true` you'll have to manually make each mountpoint visible by adding a `hide: false` property to it like so:
+
+```yaml
+- type: server-stats
+  servers:
+    - type: local
+      hide-mountpoints-by-default: true
+      mountpoints:
+        "/":
+          hide: false
+        "/mnt/data":
+          hide: false
+```
+
+This is useful if you're running Glance inside of a container which usually mounts a lot of irrelevant filesystems.
 
 ###### `mountpoints`
 A map of mountpoints to display disk usage for. The key is the path to the mountpoint and the value is an object with optional properties. Example:
