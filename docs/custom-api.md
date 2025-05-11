@@ -358,6 +358,51 @@ Output:
 <p>John</p>
 ```
 
+<hr>
+
+In some instances, you may need to make two consecutive API calls, where you use the result of the first call in the second call. To achieve this, you can make additional HTTP requests from within the template itself using the following syntax:
+
+```yaml
+- type: custom-api
+  url: https://api.example.com/get-id-of-something
+  template: |
+    {{
+      $theID := .JSON.String "id"
+      $something := newRequest (concat "https://api.example.com/something/" $theID)
+        | withParameter "key" "value"
+        | withHeader "Authorization" "Bearer token"
+        | getResponse
+    }}
+
+    {{ $something.String "title" }}
+```
+
+Here, `$theID` gets retrieved from the result of the first API call and used in the second API call. The `newRequest` function creates a new request, and the `getResponse` function executes it. You can also use `withParameter` and `withHeader` to optionally add parameters and headers to the request.
+
+If you need to make a request to a URL that requires dynamic parameters, you can omit the `url` property in the YAML and run the request entirely from within the template itself:
+
+```yaml
+- type: custom-api
+  title: Events from the last 24h
+  template: |
+    {{
+      $events := newRequest "https://api.example.com/events"
+        | withParameter "after" (offsetNow "-24h" | formatTime "rfc3339")
+        | getResponse
+    }}
+
+    {{ if eq $events.Response.StatusCode 200 }}
+      {{ range $events.JSON.Array "events" }}
+        <div>{{ .String "title" }}</div>
+        <div {{ .String "date" | parseTime "rfc3339" | toRelativeTime }}></div>
+      {{ end }}
+    {{ else }}
+      <p>Failed to fetch data: {{ $events.Response.Status }}</p>
+    {{ end }}
+```
+
+*Note that you need to manually check for the correct status code.*
+
 ## Functions
 
 The following functions are available on the `JSON` object:
@@ -378,6 +423,7 @@ The following helper functions provided by Glance are available:
 - `offsetNow(offset string) time.Time`: Returns the current time with an offset. The offset can be positive or negative and must be in the format "3h" "-1h" or "2h30m10s".
 - `duration(str string) time.Duration`: Parses a string such as `1h`, `24h`, `5h30m`, etc into a `time.Duration`.
 - `parseTime(layout string, s string) time.Time`: Parses a string into time.Time. The layout must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants). You can alternatively use these values instead of the literal format: "unix", "RFC3339", "RFC3339Nano", "DateTime", "DateOnly".
+- `formatTime(layout string, s string) time.Time`: Formats a `time.Time` into a string. The layout uses the same format as `parseTime`.
 - `parseLocalTime(layout string, s string) time.Time`: Same as the above, except in the absence of a timezone, it will use the local timezone instead of UTC.
 - `parseRelativeTime(layout string, s string) time.Time`: A shorthand for `{{ .String "date" | parseTime "rfc3339" | toRelativeTime }}`.
 - `add(a, b float) float`: Adds two numbers.

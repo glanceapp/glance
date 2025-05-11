@@ -1519,7 +1519,7 @@ Examples:
 #### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| url | string | yes | |
+| url | string | no | |
 | headers | key (string) & value (string) | no | |
 | method | string | no | GET |
 | body-type | string | no | json |
@@ -1528,6 +1528,7 @@ Examples:
 | allow-insecure | boolean | no | false |
 | skip-json-validation | boolean | no | false |
 | template | string | yes | |
+| options | map | no | |
 | parameters | key (string) & value (string|array) | no | |
 | subrequests | map of requests | no | |
 
@@ -1579,6 +1580,95 @@ When set to `true`, skips the JSON validation step. This is useful when the API 
 
 ##### `template`
 The template that will be used to display the data. It relies on Go's `html/template` package so it's recommended to go through [its documentation](https://pkg.go.dev/text/template) to understand how to do basic things such as conditionals, loops, etc. In addition, it also uses [tidwall's gjson](https://github.com/tidwall/gjson) package to parse the JSON data so it's worth going through its documentation if you want to use more advanced JSON selectors. You can view additional examples with explanations and function definitions [here](custom-api.md).
+
+##### `options`
+A map of options that will be passed to the template and can be used to modify the behavior of the widget.
+
+<details>
+<summary>View examples</summary>
+
+<br>
+
+Instead of defining options within the template and having to modify the template itself like such:
+
+```yaml
+- type: custom-api
+  template: |
+    {{ /* User configurable options */ }}
+    {{ $collapseAfter := 5 }}
+    {{ $showThumbnails := true }}
+    {{ $showFlairs := false }}
+
+     <ul class="list list-gap-10 collapsible-container" data-collapse-after="{{ $collapseAfter }}">
+      {{ if $showThumbnails }}
+        <li>
+          <img src="{{ .JSON.String "thumbnail" }}" alt="thumbnail" />
+        </li>
+      {{ end }}
+      {{ if $showFlairs }}
+        <li>
+          <span class="flair">{{ .JSON.String "flair" }}</span>
+        </li>
+      {{ end }}
+     </ul>
+```
+
+You can use the `options` property to retrieve and define default values for these variables:
+
+```yaml
+- type: custom-api
+  template: |
+    <ul class="list list-gap-10 collapsible-container" data-collapse-after="{{ .Options.IntOr "collapse-after" 5 }}">
+      {{ if (.Options.BoolOr "show-thumbnails" true) }}
+        <li>
+          <img src="{{ .JSON.String "thumbnail" }}" alt="thumbnail" />
+        </li>
+      {{ end }}
+      {{ if (.Options.BoolOr "show-flairs" false) }}
+        <li>
+          <span class="flair">{{ .JSON.String "flair" }}</span>
+        </li>
+      {{ end }}
+    </ul>
+```
+
+This way, you can optionally specify the `collapse-after`, `show-thumbnails` and `show-flairs` properties in the widget configuration:
+
+```yaml
+- type: custom-api
+  options:
+    collapse-after: 5
+    show-thumbnails: true
+    show-flairs: false
+```
+
+Which means you can reuse the same template for multiple widgets with different options:
+
+```yaml
+# Note that `custom-widgets` isn't a special property, it's just used to define the reusable "anchor", see https://support.atlassian.com/bitbucket-cloud/docs/yaml-anchors/
+custom-widgets:
+  - &example-widget
+    type: custom-api
+    template: |
+      {{ .Options.StringOr "custom-option" "not defined" }}
+
+pages:
+  - name: Home
+    columns:
+      - size: full
+        widgets:
+          - <<: *example-widget
+            options:
+              custom-option: "Value 1"
+
+          - <<: *example-widget
+            options:
+              custom-option: "Value 2"
+```
+
+Currently, the available methods on the `.Options` object are: `StringOr`, `IntOr`, `BoolOr` and `FloatOr`.
+
+</details>
 
 ##### `parameters`
 A list of keys and values that will be sent to the custom-api as query paramters.
