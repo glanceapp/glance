@@ -18,6 +18,13 @@ var sequentialWhitespacePattern = regexp.MustCompile(`\s+`)
 var whitespaceAtBeginningOfLinePattern = regexp.MustCompile(`(?m)^\s+`)
 
 func percentChange(current, previous float64) float64 {
+	if previous == 0 {
+		if current == 0 {
+			return 0 // 0% change if both are 0
+		}
+		return 100 // 100% increase if going from 0 to something
+	}
+
 	return (current/previous - 1) * 100
 }
 

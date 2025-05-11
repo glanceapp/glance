@@ -546,6 +546,7 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			regex := getCachedRegexp(pattern)
 			return itemAtIndexOrDefault(regex.FindStringSubmatch(s), 1, "")
 		},
+		"percentChange": percentChange,
 		"sortByString": func(key, order string, results []decoratedGJSONResult) []decoratedGJSONResult {
 			sort.Slice(results, func(a, b int) bool {
 				if order == "asc" {
