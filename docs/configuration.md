@@ -1142,6 +1142,8 @@ widgets:
       secret: ${REDDIT_APP_SECRET}
 ```
 
+To register an app on Reddit, go to [this page](https://ssl.reddit.com/prefs/apps/).
+
 ### Search Widget
 Display a search bar that can be used to search for specific terms on various search engines.
 
