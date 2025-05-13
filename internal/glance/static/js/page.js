@@ -689,9 +689,13 @@ async function changeTheme(key, onChanged) {
 }
 
 function initThemeSwitcher() {
-    find(".mobile-navigation .theme-choices").replaceWith(
-        find(".header-container .theme-choices").cloneNode(true)
-    );
+    const themeChoicesInHeader = find(".header-container .theme-choices");
+
+    if (themeChoicesInHeader) {
+        themeChoicesInHeader.replaceWith(
+            find(".mobile-navigation .theme-choices").cloneNode(true)
+        );
+    }
 
     const presetElems = findAll(".theme-choices .theme-preset");
     let themePreviewElems = document.getElementsByClassName("current-theme-preview");

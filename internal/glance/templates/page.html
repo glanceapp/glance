@@ -38,12 +38,7 @@
                     {{ .Request.Theme.PreviewHTML }}
                 </div>
                 <div data-popover-html>
-                    <div class="theme-choices">
-                        {{ .App.Config.Theme.PreviewHTML }}
-                        {{ range $_, $preset := .App.Config.Theme.Presets.Items }}
-                        {{ $preset.PreviewHTML }}
-                        {{ end }}
-                    </div>
+                    <div class="theme-choices"></div>
                 </div>
             </div>
             {{- if .App.RequiresAuth }}
@@ -73,7 +68,12 @@
         <div class="mobile-navigation-actions flex flex-column margin-block-10">
             <div class="theme-picker flex justify-between items-center" data-popover-type="html" data-popover-position="above" data-popover-show-delay="0" data-popover-hide-delay="100" data-popover-anchor=".current-theme-preview" data-popover-trigger="click">
                 <div data-popover-html>
-                    <div class="theme-choices"></div>
+                    <div class="theme-choices">
+                        {{ .App.Config.Theme.PreviewHTML }}
+                        {{ range $_, $preset := .App.Config.Theme.Presets.Items }}
+                        {{ $preset.PreviewHTML }}
+                        {{ end }}
+                    </div>
                 </div>
 
                 <div class="size-h3 pointer-events-none select-none">Change theme</div>
