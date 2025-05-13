@@ -21,7 +21,6 @@
     <meta name="theme-color" content="{{ .Request.Theme.BackgroundColorAsHex }}">
     <link rel="apple-touch-icon" sizes="512x512" href='{{ .App.Config.Branding.AppIconURL }}'>
     <link rel="manifest" href='{{ .App.VersionedAssetPath "manifest.json" }}'>
-    <link rel="icon" type="image/png" href='{{ .App.StaticAssetPath "favicon.png" }}' />
     <link rel="icon" type="{{ .App.Config.Branding.FaviconType }}" href="{{ .App.Config.Branding.FaviconURL }}" />
     <link rel="stylesheet" href='{{ .App.StaticAssetPath "css/bundle.css" }}'>
     <style id="theme-style">{{ .Request.Theme.CSS }}</style>
