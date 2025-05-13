@@ -1827,12 +1827,12 @@ Greenville, United States
 
 ### Todo
 
-A simple todo list that allows you to add, edit and delete tasks. The tasks are stored in the browser's local storage.
+A simple to-do list that allows you to add, edit and delete tasks. The tasks are stored in the browser's local storage.
 
 Example:
 
 ```yaml
-- type: todo
+- type: to-do
 ```
 
 Preview:
