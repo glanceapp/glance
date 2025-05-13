@@ -315,8 +315,6 @@ func fetchControldStats(instanceURL string, allowInsecure bool, token string, no
 		return nil, err
 	}
 
-	fmt.Println(timeSeriesResponseJson)
-
 	domainsRequestURL := strings.TrimRight(instanceURL, "/") +
 		fmt.Sprintf("/reports/dns-queries/blocked-by-domain/pie-chart?startTs=%d", startTs)
 
@@ -330,8 +328,6 @@ func fetchControldStats(instanceURL string, allowInsecure bool, token string, no
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(domainsResponseJson)
 
 	totalQueries := 0
 	blockedQueries := 0
@@ -347,6 +343,7 @@ func fetchControldStats(instanceURL string, allowInsecure bool, token string, no
 	stats := &dnsStats{
 		TotalQueries:      totalQueries,
 		BlockedQueries:    blockedQueries,
+		DomainsBlocked:    len(domainsResponseJson.Body.Queries),
 		BlockedPercent:    int(float64(blockedQueries) / float64(totalQueries) * 100),
 		TopBlockedDomains: make([]dnsStatsBlockedDomain, 0, topBlockedDomainsCount),
 	}
