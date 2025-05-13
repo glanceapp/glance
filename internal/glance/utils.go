@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -14,8 +15,16 @@ import (
 )
 
 var sequentialWhitespacePattern = regexp.MustCompile(`\s+`)
+var whitespaceAtBeginningOfLinePattern = regexp.MustCompile(`(?m)^\s+`)
 
 func percentChange(current, previous float64) float64 {
+	if previous == 0 {
+		if current == 0 {
+			return 0 // 0% change if both are 0
+		}
+		return 100 // 100% increase if going from 0 to something
+	}
+
 	return (current/previous - 1) * 100
 }
 
@@ -148,15 +157,14 @@ func fileServerWithCache(fs http.FileSystem, cacheDuration time.Duration) http.H
 	})
 }
 
-func executeTemplateToHTML(t *template.Template, data interface{}) (template.HTML, error) {
+func executeTemplateToString(t *template.Template, data any) (string, error) {
 	var b bytes.Buffer
-
 	err := t.Execute(&b, data)
 	if err != nil {
 		return "", fmt.Errorf("executing template: %w", err)
 	}
 
-	return template.HTML(b.String()), nil
+	return b.String(), nil
 }
 
 func stringToBool(s string) bool {
@@ -182,3 +190,58 @@ func ternary[T any](condition bool, a, b T) T {
 // Having compile time errors about unused variables is cool and all, but I don't want to
 // have to constantly comment out my code while I'm working on it and testing things out
 func ItsUsedTrustMeBro(...any) {}
+
+func hslToHex(h, s, l float64) string {
+	s /= 100.0
+	l /= 100.0
+
+	var r, g, b float64
+
+	if s == 0 {
+		r, g, b = l, l, l
+	} else {
+		hueToRgb := func(p, q, t float64) float64 {
+			if t < 0 {
+				t += 1
+			}
+			if t > 1 {
+				t -= 1
+			}
+			if t < 1.0/6.0 {
+				return p + (q-p)*6.0*t
+			}
+			if t < 1.0/2.0 {
+				return q
+			}
+			if t < 2.0/3.0 {
+				return p + (q-p)*(2.0/3.0-t)*6.0
+			}
+			return p
+		}
+
+		q := 0.0
+		if l < 0.5 {
+			q = l * (1 + s)
+		} else {
+			q = l + s - l*s
+		}
+
+		p := 2*l - q
+
+		h /= 360.0
+
+		r = hueToRgb(p, q, h+1.0/3.0)
+		g = hueToRgb(p, q, h)
+		b = hueToRgb(p, q, h-1.0/3.0)
+	}
+
+	ir := int(math.Round(r * 255.0))
+	ig := int(math.Round(g * 255.0))
+	ib := int(math.Round(b * 255.0))
+
+	ir = int(math.Max(0, math.Min(255, float64(ir))))
+	ig = int(math.Max(0, math.Min(255, float64(ig))))
+	ib = int(math.Max(0, math.Min(255, float64(ib))))
+
+	return fmt.Sprintf("#%02x%02x%02x", ir, ig, ib)
+}
