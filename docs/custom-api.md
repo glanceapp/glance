@@ -366,15 +366,16 @@ In some instances, you may need to make two consecutive API calls, where you use
 - type: custom-api
   url: https://api.example.com/get-id-of-something
   template: |
+    {{ $theID := .JSON.String "id" }}
+
     {{
-      $theID := .JSON.String "id"
       $something := newRequest (concat "https://api.example.com/something/" $theID)
         | withParameter "key" "value"
         | withHeader "Authorization" "Bearer token"
         | getResponse
     }}
 
-    {{ $something.String "title" }}
+    {{ $something.JSON.String "title" }}
 ```
 
 Here, `$theID` gets retrieved from the result of the first API call and used in the second API call. The `newRequest` function creates a new request, and the `getResponse` function executes it. You can also use `withParameter` and `withHeader` to optionally add parameters and headers to the request.
