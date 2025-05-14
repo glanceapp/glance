@@ -447,6 +447,8 @@ The following helper functions provided by Glance are available:
 - `concat(strings ...string) string`: Concatenates multiple strings together.
 - `unique(key string, arr []JSON) []JSON`: Returns a unique array of JSON objects based on the given key.
 - `percentChange(current float, previous float) float`: Calculates the percentage change between two numbers.
+- `startOfDay(t time.Time) time.Time`: Returns the start of the day for a given time.
+- `endOfDay(t time.Time) time.Time`: Returns the end of the day for a given time.
 
 The following helper functions provided by Go's `text/template` are available:
 

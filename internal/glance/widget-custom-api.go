@@ -509,6 +509,12 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			// Shorthand to do both of the above with a single function call
 			return dynamicRelativeTimeAttrs(customAPIFuncParseTimeInLocation(layout, value, time.UTC))
 		},
+		"startOfDay": func(t time.Time) time.Time {
+			return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+		},
+		"endOfDay": func(t time.Time) time.Time {
+			return time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 0, t.Location())
+		},
 		// The reason we flip the parameter order is so that you can chain multiple calls together like this:
 		// {{ .JSON.String "foo" | trimPrefix "bar" | doSomethingElse }}
 		// instead of doing this:
