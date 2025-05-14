@@ -170,6 +170,12 @@ func newApplication(c *config) (*application, error) {
 			page.DesktopNavigationWidth = page.Width
 		}
 
+		for i := range page.HeadWidgets {
+			widget := page.HeadWidgets[i]
+			app.widgetByID[widget.GetID()] = widget
+			widget.setProviders(providers)
+		}
+
 		for c := range page.Columns {
 			column := &page.Columns[c]
 
@@ -180,7 +186,6 @@ func newApplication(c *config) (*application, error) {
 			for w := range column.Widgets {
 				widget := column.Widgets[w]
 				app.widgetByID[widget.GetID()] = widget
-
 				widget.setProviders(providers)
 			}
 		}
