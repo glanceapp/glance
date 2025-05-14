@@ -2141,7 +2141,7 @@ Alternatively, you can also define the values within your `glance.yml` via the `
 - type: docker-containers
   containers:
     container_name_1:
-      title: Container Name
+      name: Container Name
       description: Description of the container
       url: https://container.domain.com
       icon: si:container-icon
