@@ -238,7 +238,7 @@ Output:
 <div>90</div>
 ```
 
-Other operations include `add`, `mul`, and `div`.
+Other operations include `add`, `mul`, `div` and `mod`.
 
 <hr>
 
@@ -431,6 +431,7 @@ The following helper functions provided by Glance are available:
 - `sub(a, b float) float`: Subtracts two numbers.
 - `mul(a, b float) float`: Multiplies two numbers.
 - `div(a, b float) float`: Divides two numbers.
+- `mod(a, b int) int`: Remainder after dividing a by b (a % b).
 - `formatApproxNumber(n int) string`: Formats a number to be more human-readable, e.g. 1000 -> 1k.
 - `formatNumber(n float|int) string`: Formats a number with commas, e.g. 1000 -> 1,000.
 - `trimPrefix(prefix string, str string) string`: Trims the prefix from a string.
