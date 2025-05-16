@@ -414,14 +414,6 @@ func customAPIDoMathOp[T int | float64](a, b T, op string) T {
 			return 0
 		}
 		return a / b
-	case "mod":
-		ai, bi := any(a), any(b)
-		aint, aok := ai.(int)
-		bint, bok := bi.(int)
-		if aok && bok && bint != 0 {
-			return T(aint % bint)
-		}
-		return 0
 	}
 	return 0
 }
@@ -487,8 +479,11 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		"div": func(a, b any) any {
 			return doMathOpWithAny(a, b, "div")
 		},
-		"mod": func(a, b int) any {
-			return doMathOpWithAny(a, b, "mod")
+		"mod": func(a, b int) int {
+			if b == 0 {
+				return 0
+			}
+			return a % b
 		},
 		"now": func() time.Time {
 			return time.Now()
