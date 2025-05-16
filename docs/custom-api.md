@@ -415,6 +415,14 @@ The following functions are available on the `JSON` object:
 - `Array(key string) []JSON`: Returns the value of the key as an array of `JSON` objects.
 - `Exists(key string) bool`: Returns true if the key exists in the JSON object.
 
+The following functions are available on the `Options` object:
+
+- `StringOr(key string, default string) string`: Returns the value of the key as a string, or the default value if the key does not exist.
+- `IntOr(key string, default int) int`: Returns the value of the key as an integer, or the default value if the key does not exist.
+- `FloatOr(key string, default float) float`: Returns the value of the key as a float, or the default value if the key does not exist.
+- `BoolOr(key string, default bool) bool`: Returns the value of the key as a boolean, or the default value if the key does not exist.
+- `JSON(key string) JSON`: Returns the value of the key as a stringified `JSON` object, or throws an error if the key does not exist.
+
 The following helper functions provided by Glance are available:
 
 - `toFloat(i int) float`: Converts an integer to a float.

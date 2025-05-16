@@ -108,6 +108,20 @@ func (o *customAPIOptions) BoolOr(key string, defaultValue bool) bool {
 	return customAPIGetOptionOrDefault(*o, key, defaultValue)
 }
 
+func (o *customAPIOptions) JSON(key string) string {
+	value, exists := (*o)[key]
+	if !exists {
+		panic(fmt.Sprintf("key %q does not exist in options", key))
+	}
+
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		panic(fmt.Sprintf("marshaling %s: %v", key, err))
+	}
+
+	return string(encoded)
+}
+
 func customAPIGetOptionOrDefault[T any](o customAPIOptions, key string, defaultValue T) T {
 	if value, exists := o[key]; exists {
 		if typedValue, ok := value.(T); ok {
