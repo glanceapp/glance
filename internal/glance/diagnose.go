@@ -165,7 +165,7 @@ func testHttpRequestWithHeaders(method, url string, headers map[string]string, e
 		request.Header.Add(key, value)
 	}
 
-	response, err := http.DefaultClient.Do(request)
+	response, err := defaultHTTPClient.Do(request)
 	if err != nil {
 		return "", err
 	}
