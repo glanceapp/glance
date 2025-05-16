@@ -17,7 +17,7 @@
 * Docker containers status
 * Server stats
 * Custom widgets
-- [and many more...](docs/configuration.md#configuring-glance)
+* [and many more...](docs/configuration.md#configuring-glance)
 
 ### Fast and lightweight
 * Low memory usage
@@ -46,7 +46,6 @@ Easily create your own theme by tweaking a few numbers or choose from one of the
 <br>
 
 ## Configuration
-
 Configuration is done through YAML files, to learn more about how the layout works, how to add more pages and how to configure widgets, visit the [configuration documentation](docs/configuration.md#configuring-glance).
 <details>
 <summary><strong>Preview example configuration file</strong></summary>
