@@ -389,10 +389,12 @@ Example:
 
 ```yaml
 theme:
+  # This will be the default theme
   background-color: 100 20 10
   primary-color: 40 90 40
   contrast-multiplier: 1.1
 
+  disable-picker: false
   presets:
     gruvbox-dark:
       background-color: 0 0 16
@@ -421,6 +423,7 @@ If you don't want to spend time configuring your own theme, there are [several a
 | contrast-multiplier | number | no | 1 |
 | text-saturation-multiplier | number | no | 1 |
 | custom-css-file | string | no | |
+| disable-picker | bool | false | |
 | presets | object | no | |
 
 #### `light`
@@ -466,8 +469,11 @@ theme:
 >
 > In addition, you can also use the `css-class` property which is available on every widget to set custom class names for individual widgets.
 
+#### `disable-picker`
+When set to `true` hides the theme picker and disables the abiltity to switch between themes. All users who previously picked a non-default theme will be switched over to the default theme.
+
 #### `presets`
-Define additional theme presets that can be selected from the theme switcher on the page. For each preset, you can specify the same properties as for the default theme, such as `background-color`, `primary-color`, `positive-color`, `negative-color`, `contrast-multiplier`, etc., except for the `custom-css-file` property.
+Define additional theme presets that can be selected from the theme picker on the page. For each preset, you can specify the same properties as for the default theme, such as `background-color`, `primary-color`, `positive-color`, `negative-color`, `contrast-multiplier`, etc., except for the `custom-css-file` property.
 
 Example:
 

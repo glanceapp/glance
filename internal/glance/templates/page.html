@@ -33,6 +33,7 @@
             <nav class="nav flex grow hide-scrollbars">
                 {{ template "navigation-links" . }}
             </nav>
+            {{ if not .App.Config.Theme.DisablePicker }}
             <div class="theme-picker self-center" data-popover-type="html" data-popover-position="below" data-popover-show-delay="0">
                 <div class="current-theme-preview">
                     {{ .Request.Theme.PreviewHTML }}
@@ -41,6 +42,7 @@
                     <div class="theme-choices"></div>
                 </div>
             </div>
+            {{ end }}
             {{- if .App.RequiresAuth }}
             <a class="block self-center" href="{{ .App.Config.Server.BaseURL }}/logout" title="Logout">
                 <svg class="logout-button" stroke="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
@@ -66,6 +68,7 @@
         </div>
 
         <div class="mobile-navigation-actions flex flex-column margin-block-10">
+            {{ if not .App.Config.Theme.DisablePicker }}
             <div class="theme-picker flex justify-between items-center" data-popover-type="html" data-popover-position="above" data-popover-show-delay="0" data-popover-hide-delay="100" data-popover-anchor=".current-theme-preview" data-popover-trigger="click">
                 <div data-popover-html>
                     <div class="theme-choices">
@@ -87,6 +90,7 @@
                     </svg>
                 </div>
             </div>
+            {{ end }}
 
             {{ if .App.RequiresAuth }}
             <a href="{{ .App.Config.Server.BaseURL }}/logout" class="flex justify-between items-center">

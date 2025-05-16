@@ -101,35 +101,37 @@ func newApplication(c *config) (*application, error) {
 	// Init themes
 	//
 
-	themeKeys := make([]string, 0, 2)
-	themeProps := make([]*themeProperties, 0, 2)
+	if !config.Theme.DisablePicker {
+		themeKeys := make([]string, 0, 2)
+		themeProps := make([]*themeProperties, 0, 2)
 
-	defaultDarkTheme, ok := config.Theme.Presets.Get("default-dark")
-	if ok && !config.Theme.SameAs(defaultDarkTheme) || !config.Theme.SameAs(&themeProperties{}) {
-		themeKeys = append(themeKeys, "default-dark")
-		themeProps = append(themeProps, &themeProperties{})
-	}
+		defaultDarkTheme, ok := config.Theme.Presets.Get("default-dark")
+		if ok && !config.Theme.SameAs(defaultDarkTheme) || !config.Theme.SameAs(&themeProperties{}) {
+			themeKeys = append(themeKeys, "default-dark")
+			themeProps = append(themeProps, &themeProperties{})
+		}
 
-	themeKeys = append(themeKeys, "default-light")
-	themeProps = append(themeProps, &themeProperties{
-		Light:                    true,
-		BackgroundColor:          &hslColorField{240, 13, 95},
-		PrimaryColor:             &hslColorField{230, 100, 30},
-		NegativeColor:            &hslColorField{0, 70, 50},
-		ContrastMultiplier:       1.3,
-		TextSaturationMultiplier: 0.5,
-	})
+		themeKeys = append(themeKeys, "default-light")
+		themeProps = append(themeProps, &themeProperties{
+			Light:                    true,
+			BackgroundColor:          &hslColorField{240, 13, 95},
+			PrimaryColor:             &hslColorField{230, 100, 30},
+			NegativeColor:            &hslColorField{0, 70, 50},
+			ContrastMultiplier:       1.3,
+			TextSaturationMultiplier: 0.5,
+		})
 
-	themePresets, err := newOrderedYAMLMap(themeKeys, themeProps)
-	if err != nil {
-		return nil, fmt.Errorf("creating theme presets: %v", err)
-	}
-	config.Theme.Presets = *themePresets.Merge(&config.Theme.Presets)
+		themePresets, err := newOrderedYAMLMap(themeKeys, themeProps)
+		if err != nil {
+			return nil, fmt.Errorf("creating theme presets: %v", err)
+		}
+		config.Theme.Presets = *themePresets.Merge(&config.Theme.Presets)
 
-	for key, properties := range config.Theme.Presets.Items() {
-		properties.Key = key
-		if err := properties.init(); err != nil {
-			return nil, fmt.Errorf("initializing preset theme %s: %v", key, err)
+		for key, properties := range config.Theme.Presets.Items() {
+			properties.Key = key
+			if err := properties.init(); err != nil {
+				return nil, fmt.Errorf("initializing preset theme %s: %v", key, err)
+			}
 		}
 	}
 
@@ -288,11 +290,13 @@ type templateData struct {
 func (a *application) populateTemplateRequestData(data *templateRequestData, r *http.Request) {
 	theme := &a.Config.Theme.themeProperties
 
-	selectedTheme, err := r.Cookie("theme")
-	if err == nil {
-		preset, exists := a.Config.Theme.Presets.Get(selectedTheme.Value)
-		if exists {
-			theme = preset
+	if !a.Config.Theme.DisablePicker {
+		selectedTheme, err := r.Cookie("theme")
+		if err == nil {
+			preset, exists := a.Config.Theme.Presets.Get(selectedTheme.Value)
+			if exists {
+				theme = preset
+			}
 		}
 	}
 
@@ -436,7 +440,11 @@ func (a *application) server() (func() error, func() error) {
 	mux.HandleFunc("GET /{page}", a.handlePageRequest)
 
 	mux.HandleFunc("GET /api/pages/{page}/content/{$}", a.handlePageContentRequest)
-	mux.HandleFunc("POST /api/set-theme/{key}", a.handleThemeChangeRequest)
+
+	if !a.Config.Theme.DisablePicker {
+		mux.HandleFunc("POST /api/set-theme/{key}", a.handleThemeChangeRequest)
+	}
+
 	mux.HandleFunc("/api/widgets/{widget}/{path...}", a.handleWidgetRequest)
 	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)

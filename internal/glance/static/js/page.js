@@ -689,12 +689,15 @@ async function changeTheme(key, onChanged) {
     setTimeout(() => { tempStyle.remove(); }, 10);
 }
 
-function initThemeSwitcher() {
+function initThemePicker() {
+    const themeChoicesInMobileNav = find(".mobile-navigation .theme-choices");
+    if (!themeChoicesInMobileNav) return;
+
     const themeChoicesInHeader = find(".header-container .theme-choices");
 
     if (themeChoicesInHeader) {
         themeChoicesInHeader.replaceWith(
-            find(".mobile-navigation .theme-choices").cloneNode(true)
+            themeChoicesInMobileNav.cloneNode(true)
         );
     }
 
@@ -739,7 +742,7 @@ function initThemeSwitcher() {
 }
 
 async function setupPage() {
-    initThemeSwitcher();
+    initThemePicker();
 
     const pageElement = document.getElementById("page");
     const pageContentElement = document.getElementById("page-content");
