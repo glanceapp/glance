@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const httpTestRequestTimeout = 10 * time.Second
+const httpTestRequestTimeout = 15 * time.Second
 
 var diagnosticSteps = []diagnosticStep{
 	{
