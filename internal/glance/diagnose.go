@@ -75,7 +75,9 @@ var diagnosticSteps = []diagnosticStep{
 	{
 		name: "fetch data from Reddit API",
 		fn: func() (string, error) {
-			return testHttpRequest("GET", "https://www.reddit.com/search.json", 200)
+			return testHttpRequestWithHeaders("GET", "https://www.reddit.com/search.json", map[string]string{
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
+			}, 200)
 		},
 	},
 	{
