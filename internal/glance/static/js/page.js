@@ -683,6 +683,7 @@ async function changeTheme(key, onChanged) {
         .appendTo(document.head);
 
     themeStyleElem.html(newThemeStyle);
+    document.documentElement.setAttribute("data-theme", key);
     document.documentElement.setAttribute("data-scheme", response.headers.get("X-Scheme"));
     typeof onChanged == "function" && onChanged();
     setTimeout(() => { tempStyle.remove(); }, 10);
