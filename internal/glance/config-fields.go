@@ -194,6 +194,57 @@ func (i *customIconField) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
+type httpOptionsField struct {
+	ProxyURL      string        `yaml:"proxy-url"`
+	AllowInsecure bool          `yaml:"allow-insecure"`
+	Timeout       durationField `yaml:"timeout"`
+	client        *http.Client  `yaml:"-"`
+}
+
+func (p *httpOptionsField) UnmarshalYAML(node *yaml.Node) error {
+	type httpOptionsFieldAlias httpOptionsField
+	alias := (*httpOptionsFieldAlias)(p)
+	var proxyURL string
+
+	if err := node.Decode(&proxyURL); err != nil {
+		if err := node.Decode(alias); err != nil {
+			return err
+		}
+	}
+
+	p.client = &http.Client{}
+
+	// Handle transport level settings
+	if p.ProxyURL != "" || p.AllowInsecure {
+		transport := &http.Transport{}
+
+		if p.ProxyURL != "" {
+			parsedUrl, err := url.Parse(proxyURL)
+			if err != nil {
+				return fmt.Errorf("parsing proxy URL: %v", err)
+			}
+
+			transport.Proxy = http.ProxyURL(parsedUrl)
+		}
+
+		if p.AllowInsecure {
+			transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: p.AllowInsecure}
+		}
+
+		p.client.Transport = transport
+	}
+
+	// Handle timeout
+	var timeout = defaultClientTimeout
+	if p.Timeout > 0 {
+		timeout = time.Duration(p.Timeout)
+
+		p.client.Timeout = timeout
+	}
+
+	return nil
+}
+
 type proxyOptionsField struct {
 	URL           string        `yaml:"url"`
 	AllowInsecure bool          `yaml:"allow-insecure"`
