@@ -15,6 +15,9 @@
         </div>
         <div class="grow min-width-0">
             <a class="size-h3 color-primary-if-not-visited" href="{{ .Link }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
+            {{ if .MatchScore }}
+            <span class="{{ matchScoreBadgeClass .MatchScore }}" title="This indicates how well this item matches your query.">{{ .MatchScore }}0%</span>
+            {{ end }}
             <ul class="list-horizontal-text flex-nowrap">
                 <li {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
                 <li class="min-width-0">
@@ -23,6 +26,9 @@
             </ul>
             {{ if ne "" .Description }}
             <p class="rss-detailed-description text-truncate-2-lines margin-top-10">{{ .Description }}</p>
+            {{ end }}
+            {{ if ne "" .Summary }}
+            <p class="rss-detailed-description text-truncate-2-lines margin-top-10">{{ .Summary }}</p>
             {{ end }}
             {{ if gt (len .Categories) 0 }}
             <ul class="attachments margin-top-10">

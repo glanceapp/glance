@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -228,43 +229,40 @@ func newApplication(c *config) (*application, error) {
 	return app, nil
 }
 
-func (p *page) updateOutdatedWidgets() {
+func (p *page) updateOutdatedWidgets() error {
 	now := time.Now()
 
-	var wg sync.WaitGroup
-	context := context.Background()
-
+	var allWidgets []widget
 	for w := range p.HeadWidgets {
-		widget := p.HeadWidgets[w]
+		allWidgets = append(allWidgets, p.HeadWidgets[w])
+	}
+	for c := range p.Columns {
+		for w := range p.Columns[c].Widgets {
+			allWidgets = append(allWidgets, p.Columns[c].Widgets[w])
+		}
+	}
 
+	var eg errgroup.Group
+	ctx := context.Background()
+
+	for _, widget := range allWidgets {
 		if !widget.requiresUpdate(&now) {
 			continue
 		}
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			widget.update(context)
-		}()
+		eg.Go(func() error {
+			widget.update(ctx)
+			// TODO: Handle errors
+			return nil
+		})
 	}
 
-	for c := range p.Columns {
-		for w := range p.Columns[c].Widgets {
-			widget := p.Columns[c].Widgets[w]
-
-			if !widget.requiresUpdate(&now) {
-				continue
-			}
-
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				widget.update(context)
-			}()
-		}
+	err := eg.Wait()
+	if err != nil {
+		return fmt.Errorf("widget update: %w", err)
 	}
 
-	wg.Wait()
+	return nil
 }
 
 func (a *application) resolveUserDefinedAssetPath(path string) string {
@@ -276,7 +274,8 @@ func (a *application) resolveUserDefinedAssetPath(path string) string {
 }
 
 type templateRequestData struct {
-	Theme *themeProperties
+	Theme  *themeProperties
+	Filter string
 }
 
 type templateData struct {
@@ -297,6 +296,7 @@ func (a *application) populateTemplateRequestData(data *templateRequestData, r *
 	}
 
 	data.Theme = theme
+	data.Filter = r.URL.Query().Get("filter")
 }
 
 func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) {
@@ -328,6 +328,7 @@ func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) 
 }
 
 func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Request) {
+	filterQuery := r.URL.Query().Get("filter")
 	page, exists := a.slugToPage[r.PathValue("page")]
 	if !exists {
 		a.handleNotFound(w, r)
@@ -338,9 +339,17 @@ func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	for _, col := range page.Columns {
+		for _, widget := range col.Widgets {
+			widget.setFilterQuery(filterQuery)
+		}
+	}
+
 	pageData := templateData{
 		Page: page,
 	}
+
+	a.populateTemplateRequestData(&pageData.Request, r)
 
 	var err error
 	var responseBytes bytes.Buffer
@@ -349,7 +358,10 @@ func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Re
 		page.mu.Lock()
 		defer page.mu.Unlock()
 
-		page.updateOutdatedWidgets()
+		err = page.updateOutdatedWidgets()
+		if err != nil {
+			return
+		}
 		err = pageContentTemplate.Execute(&responseBytes, pageData)
 	}()
 

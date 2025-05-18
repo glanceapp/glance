@@ -12,7 +12,13 @@ const twitchGqlClientId = "kimne78kx3ncx6brgo4mv6wki5h1ko"
 var forumPostsTemplate = mustParseTemplate("forum-posts.html", "widget-base.html")
 
 type forumPost struct {
-	Title           string
+	ID          string
+	Title       string
+	Description string
+	// MatchSummary is the LLM generated rationale for why this is a good match for the filter query
+	MatchSummary string
+	// MatchScore is the LLM generated score indicating how well this post matches the query
+	MatchScore      int
 	DiscussionUrl   string
 	TargetUrl       string
 	TargetUrlDomain string

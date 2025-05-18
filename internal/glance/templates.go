@@ -56,6 +56,20 @@ var globalTemplateFunctions = template.FuncMap{
 
 		return template.HTML(value + ` <span class="color-base size-h5">` + label + `</span>`)
 	},
+	"matchScoreBadgeClass": func(score int) string {
+		switch {
+		case score <= 2:
+			return "ai-match-badge score-" + strconv.Itoa(score)
+		case score <= 4:
+			return "ai-match-badge score-" + strconv.Itoa(score)
+		case score <= 6:
+			return "ai-match-badge score-" + strconv.Itoa(score)
+		case score <= 8:
+			return "ai-match-badge score-" + strconv.Itoa(score)
+		default:
+			return "ai-match-badge score-" + strconv.Itoa(score)
+		}
+	},
 }
 
 func mustParseTemplate(primary string, dependencies ...string) *template.Template {

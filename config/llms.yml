@@ -1,0 +1,63 @@
+- name: Large Language Models
+  # Optionally, if you only have a single page you can hide the desktop navigation for a cleaner look
+  # hide-desktop-navigation: true
+  columns:
+    - size: full
+      widgets:
+        - type: rss
+          limit: 10
+          collapse-after: 3
+          cache: 12h
+          feeds:
+            - url: https://magazine.sebastianraschka.com/feed
+            - url: https://sub.thursdai.news/feed
+            - url: https://www.emergentmind.com/feeds/rss
+            - url: https://huggingface.co/blog/feed.xml
+            - url: https://openai.com/news/rss.xml
+            # AlphaSignal feed: https://kill-the-newsletter.com/feeds/md66niepzpco8rn4lo4k
+            - url: https://kill-the-newsletter.com/feeds/md66niepzpco8rn4lo4k.xml
+
+        - type: group
+          widgets:
+            - type: hacker-news
+            - type: lobsters
+
+    - size: full
+      widgets:
+
+        - type: releases
+          cache: 1d
+          # Without authentication the Github API allows for up to 60 requests per hour. You can create a
+          # read-only token from your Github account settings and use it here to increase the limit.
+          # token: ...
+          repositories:
+            - modelcontextprotocol/specification
+            - modelcontextprotocol/servers
+            - browserbase/stagehand
+            - google/A2A
+            - letta-ai/letta
+            - FoundationAgents/OpenManus
+            - FoundationAgents/MetaGPT
+            - langchain-ai/agent-protocol
+            - agent-network-protocol/AgentNetworkProtocol
+
+        - type: group
+          widgets:
+            - type: reddit
+              subreddit: LLM
+              show-thumbnails: true
+            - type: reddit
+              subreddit: LLMDevs
+              show-thumbnails: true
+            - type: reddit
+              subreddit: OpenAI
+              show-thumbnails: true
+            - type: reddit
+              subreddit: mcp
+              show-thumbnails: true
+            - type: reddit
+              subreddit: Anthropic
+              show-thumbnails: true
+            - type: reddit
+              subreddit: LocalLLaMA
+              show-thumbnails: true

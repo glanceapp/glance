@@ -14,6 +14,12 @@ type groupWidget struct {
 	containerWidgetBase `yaml:",inline"`
 }
 
+func (widget *groupWidget) setFilterQuery(query string) {
+	for i := range widget.Widgets {
+		widget.Widgets[i].setFilterQuery(query)
+	}
+}
+
 func (widget *groupWidget) initialize() error {
 	widget.withError(nil)
 	widget.HideHeader = true

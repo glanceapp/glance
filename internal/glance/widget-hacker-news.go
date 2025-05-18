@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-shiori/go-readability"
 )
 
 type hackerNewsWidget struct {
@@ -60,6 +62,10 @@ func (widget *hackerNewsWidget) update(ctx context.Context) {
 	}
 
 	widget.Posts = posts
+
+	if widget.filterQuery != "" {
+		widget.filter(widget.filterQuery)
+	}
 }
 
 func (widget *hackerNewsWidget) Render() template.HTML {
@@ -102,7 +108,7 @@ func fetchHackerNewsPostsFromIds(postIds []int, commentsUrlTemplate string) (for
 
 	posts := make(forumPostList, 0, len(postIds))
 
-	for i := range results {
+	for i, res := range results {
 		if errs[i] != nil {
 			slog.Error("Failed to fetch or parse hacker news post", "error", errs[i], "url", requests[i].URL)
 			continue
@@ -111,20 +117,31 @@ func fetchHackerNewsPostsFromIds(postIds []int, commentsUrlTemplate string) (for
 		var commentsUrl string
 
 		if commentsUrlTemplate == "" {
-			commentsUrl = "https://news.ycombinator.com/item?id=" + strconv.Itoa(results[i].Id)
+			commentsUrl = "https://news.ycombinator.com/item?id=" + strconv.Itoa(res.Id)
 		} else {
-			commentsUrl = strings.ReplaceAll(commentsUrlTemplate, "{POST-ID}", strconv.Itoa(results[i].Id))
+			commentsUrl = strings.ReplaceAll(commentsUrlTemplate, "{POST-ID}", strconv.Itoa(res.Id))
 		}
 
-		posts = append(posts, forumPost{
-			Title:           results[i].Title,
+		forumPost := forumPost{
+			ID:              strconv.Itoa(res.Id),
+			Title:           res.Title,
+			Description:     res.Title,
 			DiscussionUrl:   commentsUrl,
-			TargetUrl:       results[i].TargetUrl,
-			TargetUrlDomain: extractDomainFromUrl(results[i].TargetUrl),
-			CommentCount:    results[i].CommentCount,
-			Score:           results[i].Score,
-			TimePosted:      time.Unix(results[i].TimePosted, 0),
-		})
+			TargetUrl:       res.TargetUrl,
+			TargetUrlDomain: extractDomainFromUrl(res.TargetUrl),
+			CommentCount:    res.CommentCount,
+			Score:           res.Score,
+			TimePosted:      time.Unix(res.TimePosted, 0),
+		}
+
+		article, err := readability.FromURL(forumPost.TargetUrl, 5*time.Second)
+		if err == nil {
+			forumPost.Description = article.TextContent
+		} else {
+			slog.Error("Failed to fetch hacker news article", "error", err, "url", forumPost.TargetUrl)
+		}
+
+		posts = append(posts, forumPost)
 	}
 
 	if len(posts) == 0 {
@@ -149,4 +166,46 @@ func fetchHackerNewsPosts(sort string, limit int, commentsUrlTemplate string) (f
 	}
 
 	return fetchHackerNewsPostsFromIds(postIds, commentsUrlTemplate)
+}
+
+func (widget *hackerNewsWidget) filter(query string) {
+	llm, err := NewLLM()
+	if err != nil {
+		slog.Error("Failed to initialize LLM", "error", err)
+		return
+	}
+
+	feed := make([]feedEntry, 0, len(widget.Posts))
+	for _, e := range widget.Posts {
+		feed = append(feed, feedEntry{
+			ID:          e.ID,
+			Title:       e.Title,
+			Description: e.Description,
+			URL:         e.TargetUrl,
+			ImageURL:    "",
+			PublishedAt: e.TimePosted,
+		})
+	}
+
+	matches, err := llm.filterFeed(context.Background(), feed, query)
+	if err != nil {
+		slog.Error("Failed to filter hacker news posts", "error", err)
+		return
+	}
+
+	matchesMap := make(map[string]feedMatch)
+	for _, match := range matches {
+		matchesMap[match.ID] = match
+	}
+
+	filtered := make(forumPostList, 0, len(matches))
+	for _, e := range widget.Posts {
+		if match, ok := matchesMap[e.ID]; ok {
+			e.MatchSummary = match.Highlight
+			e.MatchScore = match.Score
+			filtered = append(filtered, e)
+		}
+	}
+
+	widget.Posts = filtered
 }

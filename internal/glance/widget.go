@@ -134,8 +134,18 @@ type widget interface {
 	setProviders(*widgetProviders)
 	update(context.Context)
 	setID(uint64)
+	setFilterQuery(string)
 	handleRequest(w http.ResponseWriter, r *http.Request)
 	setHideHeader(bool)
+}
+
+type feedEntry struct {
+	ID          string
+	Title       string
+	Description string
+	URL         string
+	ImageURL    string
+	PublishedAt time.Time
 }
 
 type cacheType int
@@ -164,6 +174,8 @@ type widgetBase struct {
 	cacheType           cacheType        `yaml:"-"`
 	nextUpdate          time.Time        `yaml:"-"`
 	updateRetriedTimes  int              `yaml:"-"`
+	// filterQuery TODO: pass this state to the Render method in a different way
+	filterQuery string `yaml:"-"`
 }
 
 type widgetProviders struct {
@@ -188,6 +200,10 @@ func (w *widgetBase) IsWIP() bool {
 
 func (w *widgetBase) update(ctx context.Context) {
 
+}
+
+func (w *widgetBase) setFilterQuery(query string) {
+	w.filterQuery = query
 }
 
 func (w *widgetBase) GetID() uint64 {

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -68,6 +69,53 @@ func (widget *releasesWidget) update(ctx context.Context) {
 	}
 
 	widget.Releases = releases
+
+	if widget.filterQuery != "" {
+		widget.filter(widget.filterQuery)
+	}
+}
+
+func (widget *releasesWidget) filter(query string) {
+	llm, err := NewLLM()
+	if err != nil {
+		slog.Error("Failed to initialize LLM", "error", err)
+		return
+	}
+
+	feed := make([]feedEntry, 0, len(widget.Releases))
+
+	for _, e := range widget.Releases {
+		feed = append(feed, feedEntry{
+			ID:          e.ID,
+			Title:       e.Name,
+			Description: e.Description,
+			URL:         e.NotesUrl,
+			ImageURL:    e.SourceIconURL,
+			PublishedAt: e.TimeReleased,
+		})
+	}
+
+	matches, err := llm.filterFeed(context.Background(), feed, query)
+	if err != nil {
+		slog.Error("Failed to filter releases", "error", err)
+		return
+	}
+
+	matchesMap := make(map[string]feedMatch)
+	for _, match := range matches {
+		matchesMap[match.ID] = match
+	}
+
+	filtered := make([]appRelease, 0, len(matches))
+	for _, e := range widget.Releases {
+		if match, ok := matchesMap[e.ID]; ok {
+			e.Summary = match.Highlight
+			e.MatchScore = match.Score
+			filtered = append(filtered, e)
+		}
+	}
+
+	widget.Releases = filtered
 }
 
 func (widget *releasesWidget) Render() template.HTML {
@@ -84,6 +132,9 @@ const (
 )
 
 type appRelease struct {
+	ID            string
+	Summary       string
+	Description   string
 	Source        releaseSource
 	SourceIconURL string
 	Name          string
@@ -91,6 +142,8 @@ type appRelease struct {
 	NotesUrl      string
 	TimeReleased  time.Time
 	Downvotes     int
+	MatchSummary  string
+	MatchScore    int
 }
 
 type appReleaseList []appRelease
@@ -203,9 +256,11 @@ func fetchLatestReleaseTask(request *releaseRequest) (*appRelease, error) {
 }
 
 type githubReleaseResponseJson struct {
+	ID          int    `json:"id"`
 	TagName     string `json:"tag_name"`
 	PublishedAt string `json:"published_at"`
 	HtmlUrl     string `json:"html_url"`
+	Body        string `json:"body"`
 	Reactions   struct {
 		Downvotes int `json:"-1"`
 	} `json:"reactions"`
@@ -249,6 +304,8 @@ func fetchLatestGithubRelease(request *releaseRequest) (*appRelease, error) {
 	}
 
 	return &appRelease{
+		ID:           strconv.Itoa(response.ID),
+		Description:  response.Body,
 		Source:       releaseSourceGithub,
 		Name:         request.Repository,
 		Version:      normalizeVersionFormat(response.TagName),

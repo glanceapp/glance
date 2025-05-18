@@ -93,6 +93,54 @@ func (widget *rssWidget) update(ctx context.Context) {
 	}
 
 	widget.Items = items
+
+	if widget.filterQuery != "" {
+		widget.filter(widget.filterQuery)
+	}
+}
+
+func (widget *rssWidget) filter(query string) {
+	llm, err := NewLLM()
+	if err != nil {
+		slog.Error("Failed to initialize LLM", "error", err)
+		return
+	}
+
+	feed := make([]feedEntry, 0, len(widget.Items))
+
+	for _, e := range widget.Items {
+
+		feed = append(feed, feedEntry{
+			ID:          e.ID,
+			Title:       e.Title,
+			Description: e.Description,
+			URL:         e.Link,
+			ImageURL:    e.ImageURL,
+			PublishedAt: e.PublishedAt,
+		})
+	}
+
+	matches, err := llm.filterFeed(context.Background(), feed, query)
+	if err != nil {
+		slog.Error("Failed to filter RSS feed", "error", err)
+		return
+	}
+
+	matchesMap := make(map[string]feedMatch)
+	for _, match := range matches {
+		matchesMap[match.ID] = match
+	}
+
+	filtered := make(rssFeedItemList, 0, len(matches))
+	for _, e := range widget.Items {
+		if match, ok := matchesMap[e.ID]; ok {
+			e.Summary = match.Highlight
+			e.MatchScore = match.Score
+			filtered = append(filtered, e)
+		}
+	}
+
+	widget.Items = filtered
 }
 
 func (widget *rssWidget) Render() template.HTML {
@@ -118,6 +166,9 @@ type cachedRSSFeed struct {
 }
 
 type rssFeedItem struct {
+	ID          string
+	Summary     string
+	MatchScore  int
 	ChannelName string
 	ChannelURL  string
 	Title       string
@@ -247,6 +298,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 		item := feed.Items[i]
 
 		rssItem := rssFeedItem{
+			ID:         item.GUID,
 			ChannelURL: feed.Link,
 		}
 

@@ -396,3 +396,57 @@ kbd:active {
 .theme-picker.popover-active .current-theme-preview, .theme-picker:hover {
     opacity: 1;
 }
+
+.page-filter-bar {
+    background: var(--color-widget-background);
+    border: 1px solid var(--color-widget-content-border);
+    border-radius: var(--border-radius);
+    padding: 1.2rem 1.5rem 1.2rem 1.5rem;
+    margin-bottom: var(--widget-gap);
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 6px 0 rgba(0,0,0,0.02);
+}
+
+.filter-form {
+    gap: 0.5rem; 
+    width: 100%;
+}
+
+.filter-form button {
+    background: var(--color-primary);
+    color: #fff;
+    border-radius: var(--border-radius);
+    padding: 0.7em 1.5em;
+    font-size: 1em;
+    font-weight: 600;
+    border: none;
+    transition: background .2s;
+}
+
+.filter-form button:hover, .filter-form button:focus {
+    background: var(--color-primary-hover, #1d4ed8);
+}
+
+.filter-form textarea {
+    background: var(--color-widget-background-highlight);
+    border: 1px solid var(--color-widget-content-border);
+    border-radius: var(--border-radius);
+    padding: 0.7em 1.1em;
+    font-size: 1em;
+    color: var(--color-text-base);
+    transition: border-color .2s;
+    width: 100%;
+    max-width: 500px;
+    min-height: 2.5em;
+    max-height: 8em;
+    resize: vertical;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.filter-form textarea:focus {
+    border-color: var(--color-primary);
+    outline: none;
+}

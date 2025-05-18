@@ -3,9 +3,12 @@ package glance
 import (
 	"context"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/go-shiori/go-readability"
 )
 
 type lobstersWidget struct {
@@ -56,6 +59,53 @@ func (widget *lobstersWidget) update(ctx context.Context) {
 	}
 
 	widget.Posts = posts
+
+	if widget.filterQuery != "" {
+		widget.filter(widget.filterQuery)
+	}
+}
+
+func (widget *lobstersWidget) filter(query string) {
+	llm, err := NewLLM()
+	if err != nil {
+		slog.Error("Failed to initialize LLM", "error", err)
+		return
+	}
+
+	feed := make([]feedEntry, 0, len(widget.Posts))
+
+	for _, e := range widget.Posts {
+		feed = append(feed, feedEntry{
+			ID:          e.ID,
+			Title:       e.Title,
+			Description: e.Description,
+			URL:         e.TargetUrl,
+			ImageURL:    "",
+			PublishedAt: e.TimePosted,
+		})
+	}
+
+	matches, err := llm.filterFeed(context.Background(), feed, query)
+	if err != nil {
+		slog.Error("Failed to filter lobsters posts", "error", err)
+		return
+	}
+
+	matchesMap := make(map[string]feedMatch)
+	for _, match := range matches {
+		matchesMap[match.ID] = match
+	}
+
+	filtered := make(forumPostList, 0, len(matches))
+	for _, e := range widget.Posts {
+		if match, ok := matchesMap[e.ID]; ok {
+			e.MatchSummary = match.Highlight
+			e.MatchScore = match.Score
+			filtered = append(filtered, e)
+		}
+	}
+
+	widget.Posts = filtered
 }
 
 func (widget *lobstersWidget) Render() template.HTML {
@@ -63,6 +113,7 @@ func (widget *lobstersWidget) Render() template.HTML {
 }
 
 type lobstersPostResponseJson struct {
+	ID           string   `json:"short_id"`
 	CreatedAt    string   `json:"created_at"`
 	Title        string   `json:"title"`
 	URL          string   `json:"url"`
@@ -87,19 +138,30 @@ func fetchLobstersPostsFromFeed(feedUrl string) (forumPostList, error) {
 
 	posts := make(forumPostList, 0, len(feed))
 
-	for i := range feed {
-		createdAt, _ := time.Parse(time.RFC3339, feed[i].CreatedAt)
+	for _, post := range feed {
+		createdAt, _ := time.Parse(time.RFC3339, post.CreatedAt)
 
-		posts = append(posts, forumPost{
-			Title:           feed[i].Title,
-			DiscussionUrl:   feed[i].CommentsURL,
-			TargetUrl:       feed[i].URL,
-			TargetUrlDomain: extractDomainFromUrl(feed[i].URL),
-			CommentCount:    feed[i].CommentCount,
-			Score:           feed[i].Score,
+		forumPost := forumPost{
+			ID:              post.ID,
+			Title:           post.Title,
+			Description:     post.Title,
+			DiscussionUrl:   post.CommentsURL,
+			TargetUrl:       post.URL,
+			TargetUrlDomain: extractDomainFromUrl(post.URL),
+			CommentCount:    post.CommentCount,
+			Score:           post.Score,
 			TimePosted:      createdAt,
-			Tags:            feed[i].Tags,
-		})
+			Tags:            post.Tags,
+		}
+
+		article, err := readability.FromURL(post.URL, 5*time.Second)
+		if err == nil {
+			forumPost.Description = article.TextContent
+		} else {
+			slog.Error("Failed to fetch lobster article", "error", err, "url", forumPost.TargetUrl)
+		}
+
+		posts = append(posts, forumPost)
 	}
 
 	if len(posts) == 0 {

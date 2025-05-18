@@ -24,6 +24,9 @@
             {{- end }}
             <div class="grow min-width-0">
                 <a href="{{ .DiscussionUrl | safeURL }}" class="size-title-dynamic color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
+                {{- if .MatchScore }}
+                <span class="{{ matchScoreBadgeClass .MatchScore }}" title="This indicates how well this post matches your query.">{{ .MatchScore }}0%</span>
+                {{- end }}
                 {{- if .Tags }}
                 <div class="inline-block forum-post-tags-container">
                     <ul class="attachments">
@@ -32,6 +35,9 @@
                     {{- end }}
                     </ul>
                 </div>
+                {{- end }}
+                {{- if .MatchSummary }}
+                <div class="forum-post-match-summary">{{ .MatchSummary }}</div>
                 {{- end }}
                 <ul class="list-horizontal-text flex-nowrap text-compact">
                     <li {{ dynamicRelativeTimeAttrs .TimePosted }}></li>
