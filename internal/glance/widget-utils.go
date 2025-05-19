@@ -26,6 +26,7 @@ const defaultClientTimeout = 5 * time.Second
 var defaultHTTPClient = &http.Client{
 	Transport: &http.Transport{
 		MaxIdleConnsPerHost: 10,
+		Proxy:               http.ProxyFromEnvironment,
 	},
 	Timeout: defaultClientTimeout,
 }
@@ -34,6 +35,7 @@ var defaultInsecureHTTPClient = &http.Client{
 	Timeout: defaultClientTimeout,
 	Transport: &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		Proxy:           http.ProxyFromEnvironment,
 	},
 }
 
