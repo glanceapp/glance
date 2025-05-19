@@ -10,6 +10,9 @@
             <span class="issue-number">#{{ .IssueNumber }}</span>
             {{ end }}
             <a class="size-h4 block text-truncate color-primary-if-not-visited" href="{{ .URL }}" target="_blank" rel="noopener noreferrer">{{ .Title }}</a>
+            {{ if .MatchScore }}
+            <span class="{{ matchScoreBadgeClass .MatchScore }}" title="This indicates how well this issue matches your query.">{{ .MatchScore }}0%</span>
+            {{ end }}
         </div>
         <ul class="list-horizontal-text">
             <li>
@@ -17,6 +20,7 @@
                     {{ .TimeUpdated.Format "Jan 02, 2006 15:04" }}
                 </time>
             </li>
+            <li>{{ .IssueType }}</li>
             <li>{{ .ActivityType }}</li>
         </ul>
         {{ if .Summary }}

@@ -72,11 +72,11 @@ func (widget *releasesWidget) update(ctx context.Context) {
 	widget.Releases = releases
 
 	if widget.filterQuery != "" {
-		widget.filter(widget.filterQuery)
+		widget.rankForRelevancy(widget.filterQuery)
 	}
 }
 
-func (widget *releasesWidget) filter(query string) {
+func (widget *releasesWidget) rankForRelevancy(query string) {
 	llm, err := NewLLM()
 	if err != nil {
 		slog.Error("Failed to initialize LLM", "error", err)

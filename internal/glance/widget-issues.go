@@ -39,6 +39,7 @@ type issueActivity struct {
 	Title         string
 	State         string
 	ActivityType  string
+	IssueType     string
 	URL           string
 	TimeUpdated   time.Time
 	MatchScore    int
@@ -122,11 +123,11 @@ func (widget *issuesWidget) update(ctx context.Context) {
 	widget.Issues = activities
 
 	if widget.filterQuery != "" {
-		widget.filter(widget.filterQuery)
+		widget.rankForRelevancy(widget.filterQuery)
 	}
 }
 
-func (widget *issuesWidget) filter(query string) {
+func (widget *issuesWidget) rankForRelevancy(query string) {
 	llm, err := NewLLM()
 	if err != nil {
 		slog.Error("Failed to initialize LLM", "error", err)
@@ -174,12 +175,13 @@ func (widget *issuesWidget) Render() template.HTML {
 }
 
 type githubIssueResponse struct {
-	Number    int    `json:"number"`
-	Title     string `json:"title"`
-	State     string `json:"state"`
-	HTMLURL   string `json:"html_url"`
-	UpdatedAt string `json:"updated_at"`
-	Body      string `json:"body"`
+	Number      int       `json:"number"`
+	Title       string    `json:"title"`
+	State       string    `json:"state"`
+	HTMLURL     string    `json:"html_url"`
+	UpdatedAt   string    `json:"updated_at"`
+	Body        string    `json:"body"`
+	PullRequest *struct{} `json:"pull_request,omitempty"`
 }
 
 type githubIssueCommentResponse struct {
@@ -237,6 +239,10 @@ func fetchIssueActivityTask(request *issueRequest) ([]issueActivity, error) {
 	}
 
 	for _, issue := range issues {
+		issueType := "issue"
+		if issue.PullRequest != nil {
+			issueType = "pull request"
+		}
 		activities = append(activities, issueActivity{
 			ID:           fmt.Sprintf("issue-%d", issue.Number),
 			Description:  issue.Body,
@@ -246,6 +252,7 @@ func fetchIssueActivityTask(request *issueRequest) ([]issueActivity, error) {
 			Title:        issue.Title,
 			State:        issue.State,
 			ActivityType: issue.State,
+			IssueType:    issueType,
 			URL:          issue.HTMLURL,
 			TimeUpdated:  parseRFC3339Time(issue.UpdatedAt),
 		})
@@ -274,6 +281,7 @@ func fetchIssueActivityTask(request *issueRequest) ([]issueActivity, error) {
 			Repository:   request.Repository,
 			ActivityType: "commented",
 			Title:        title,
+			IssueType:    "issue",
 			URL:          comment.HTMLURL,
 			TimeUpdated:  parseRFC3339Time(comment.UpdatedAt),
 		})

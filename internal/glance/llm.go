@@ -27,7 +27,7 @@ func NewLLM() (*LLM, error) {
 type feedMatch struct {
 	ID        string `json:"id"`
 	Score     int    `json:"score" description:"How closely this item matches the query, from 0 to 10."`
-	Highlight string `json:"highlight" description:"A short explanation for why this item is a good match for the query. Short and concise, without any unecessary filler text (e.g. 'This includes...')."`
+	Highlight string `json:"highlight" description:"A short and concise summary for why this item is a good match for the query. No any unecessary filler text (e.g. 'This includes...'). Must be two or three short sentences max."`
 }
 
 type completionResponse struct {
@@ -39,7 +39,7 @@ func (llm *LLM) filterFeed(ctx context.Context, feed []feedEntry, query string) 
 	prompt := strings.Builder{}
 
 	prompt.WriteString(`
-## Overview
+## Role
 You are an activity feed personalization assistant, 
 that helps the user find and focus on the most relevant content.
 
