@@ -22,25 +22,6 @@
             - type: hacker-news
             - type: lobsters
 
-    - size: full
-      widgets:
-
-        - type: releases
-          cache: 1d
-          # Without authentication the Github API allows for up to 60 requests per hour. You can create a
-          # read-only token from your Github account settings and use it here to increase the limit.
-          # token: ...
-          repositories:
-            - modelcontextprotocol/specification
-            - modelcontextprotocol/servers
-            - browserbase/stagehand
-            - google/A2A
-            - letta-ai/letta
-            - FoundationAgents/OpenManus
-            - FoundationAgents/MetaGPT
-            - langchain-ai/agent-protocol
-            - agent-network-protocol/AgentNetworkProtocol
-
         - type: group
           widgets:
             - type: reddit
@@ -61,3 +42,45 @@
             - type: reddit
               subreddit: LocalLLaMA
               show-thumbnails: true
+              
+    - size: full
+      widgets:
+
+        - type: releases
+          cache: 1d
+          # Without authentication the Github API allows for up to 60 requests per hour. You can create a
+          # read-only token from your Github account settings and use it here to increase the limit.
+          # token: ...
+          repositories:
+            - modelcontextprotocol/specification
+            - modelcontextprotocol/servers
+            - browserbase/stagehand
+            - google/A2A
+            - letta-ai/letta
+            - FoundationAgents/OpenManus
+            - FoundationAgents/MetaGPT
+            - langchain-ai/agent-protocol
+            - agent-network-protocol/AgentNetworkProtocol
+
+        - type: issues
+          cache: 30m
+          # Without authentication the Github API allows for up to 60 requests per hour. You can create a
+          # read-only token from your Github account settings and use it here to increase the limit.
+          # token: ...
+          repositories:
+            - modelcontextprotocol/specification
+            - modelcontextprotocol/servers
+            - browserbase/stagehand
+            - google/A2A
+            - letta-ai/letta
+            - FoundationAgents/OpenManus
+            - FoundationAgents/MetaGPT
+            - langchain-ai/agent-protocol
+            - agent-network-protocol/AgentNetworkProtocol
+          activity-types:
+            - opened
+            - closed
+            - commented
+          limit: 10
+          collapse-after: 5
+          show-source-icon: true

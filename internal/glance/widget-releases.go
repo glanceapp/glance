@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -279,8 +280,13 @@ func fetchLatestGithubRelease(request *releaseRequest) (*appRelease, error) {
 		return nil, err
 	}
 
+	// TODO(pulse): Change secrets config approach
 	if request.token != nil {
 		httpRequest.Header.Add("Authorization", "Bearer "+(*request.token))
+	}
+	envToken := os.Getenv("GITHUB_TOKEN")
+	if envToken != "" {
+		httpRequest.Header.Add("Authorization", "Bearer "+envToken)
 	}
 
 	var response githubReleaseResponseJson
