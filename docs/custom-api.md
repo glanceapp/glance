@@ -458,8 +458,8 @@ The following helper functions provided by Go's `text/template` are available:
 - `lte(a, b any) bool`: Compares two values for less than or equal to.
 - `gt(a, b any) bool`: Compares two values for greater than.
 - `gte(a, b any) bool`: Compares two values for greater than or equal to.
-- `and(a, b bool) bool`: Returns true if both values are true.
-- `or(a, b bool) bool`: Returns true if either value is true.
+- `and(args ...bool) bool`: Returns true if **all** arguments are true; accepts two or more boolean values.
+- `or(args ...bool) bool`: Returns true if **any** argument is true; accepts two or more boolean values.
 - `not(a bool) bool`: Returns the opposite of the value.
 - `index(a any, b int) any`: Returns the value at the specified index of an array.
 - `len(a any) int`: Returns the length of an array.
