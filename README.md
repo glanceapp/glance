@@ -4,7 +4,9 @@ Fork of https://github.com/glanceapp/glance.
 
 ## Usage
 
-Create an OpenAI API key and add it to env under `OPENAI_API_KEY`.
+Required env variables:
+- `OPENAI_API_KEY`
+- `GITHUB_TOKEN`
 
 To start the application with a default config, run:
 ```bash
