@@ -21,6 +21,18 @@
           widgets:
             - type: hacker-news
             - type: lobsters
+            - type: mastodon
+              instance-url: https://mastodon.social
+              accounts:
+                - huggingface
+                - openai
+                - anthropic
+              hashtags:
+                - ai
+                - llm
+                - machinelearning
+              limit: 15
+              collapse-after: 5
 
         - type: group
           widgets:

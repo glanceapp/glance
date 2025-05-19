@@ -95,11 +95,11 @@ func (widget *rssWidget) update(ctx context.Context) {
 	widget.Items = items
 
 	if widget.filterQuery != "" {
-		widget.filter(widget.filterQuery)
+		widget.rankByRelevancy(widget.filterQuery)
 	}
 }
 
-func (widget *rssWidget) filter(query string) {
+func (widget *rssWidget) rankByRelevancy(query string) {
 	llm, err := NewLLM()
 	if err != nil {
 		slog.Error("Failed to initialize LLM", "error", err)

@@ -64,7 +64,7 @@ func (widget *hackerNewsWidget) update(ctx context.Context) {
 	widget.Posts = posts
 
 	if widget.filterQuery != "" {
-		widget.filter(widget.filterQuery)
+		widget.rankByRelevancy(widget.filterQuery)
 	}
 }
 
@@ -168,7 +168,7 @@ func fetchHackerNewsPosts(sort string, limit int, commentsUrlTemplate string) (f
 	return fetchHackerNewsPostsFromIds(postIds, commentsUrlTemplate)
 }
 
-func (widget *hackerNewsWidget) filter(query string) {
+func (widget *hackerNewsWidget) rankByRelevancy(query string) {
 	llm, err := NewLLM()
 	if err != nil {
 		slog.Error("Failed to initialize LLM", "error", err)

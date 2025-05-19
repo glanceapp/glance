@@ -61,11 +61,11 @@ func (widget *lobstersWidget) update(ctx context.Context) {
 	widget.Posts = posts
 
 	if widget.filterQuery != "" {
-		widget.filter(widget.filterQuery)
+		widget.rankByRelevancy(widget.filterQuery)
 	}
 }
 
-func (widget *lobstersWidget) filter(query string) {
+func (widget *lobstersWidget) rankByRelevancy(query string) {
 	llm, err := NewLLM()
 	if err != nil {
 		slog.Error("Failed to initialize LLM", "error", err)
