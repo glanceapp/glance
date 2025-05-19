@@ -27,7 +27,7 @@ func NewLLM() (*LLM, error) {
 type feedMatch struct {
 	ID        string `json:"id"`
 	Score     int    `json:"score" description:"How closely this item matches the query, from 0 to 10."`
-	Highlight string `json:"highlight" description:"A short explanation for why this item is a good match for the query. Short and concise, without any unecessary filler text (e.g. 'This includes...')."`
+	Highlight string `json:"highlight" description:"A short and concise summary for why this item is a good match for the query. No any unecessary filler text (e.g. 'This includes...'). Must be two or three short sentences max."`
 }
 
 type completionResponse struct {
@@ -39,11 +39,23 @@ func (llm *LLM) filterFeed(ctx context.Context, feed []feedEntry, query string) 
 	prompt := strings.Builder{}
 
 	prompt.WriteString(`
+## Role
 You are an activity feed personalization assistant, 
 that helps the user find and focus on the most relevant content.
 
 You are given a list of feed entries with id, title, and description fields - given the natural language query,
 you should rank these entries based on how well they match the query on a scale of 0 to 10.
+
+## Relevance scoring
+For each entry, use the associated highlight text as a reflective summary to help assess how well the entry matches the user’s query. Follow these rules:
+	•	If the highlight does not clearly explain how the entry is relevant to the user’s query, assign a low relevance score (≤ 3/10), even if the entry is interesting on its own.
+	•	If the highlight is vague or generic (e.g., asks a broad question or restates the title), treat it as insufficient evidence of relevance unless the original content clearly supports the query.
+	•	Strong highlights should:
+	•	Explicitly mention key topics, entities, or themes from the user query.
+	•	Clearly describe how the entry contributes useful, novel, or actionable insight toward the user’s intent.
+	•	Use the highlight as a justification tool: If it doesn’t support the match, downgrade the score. If it adds clarity and alignment, consider upgrading the score.
+
+Always base the relevance score on how well the highlight connects the entry to the user’s information needs, not just on the entry’s popularity or standalone quality.
 `)
 	prompt.WriteString(fmt.Sprintf("filter query: %s\n", query))
 

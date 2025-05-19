@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -71,11 +72,11 @@ func (widget *releasesWidget) update(ctx context.Context) {
 	widget.Releases = releases
 
 	if widget.filterQuery != "" {
-		widget.filter(widget.filterQuery)
+		widget.rankForRelevancy(widget.filterQuery)
 	}
 }
 
-func (widget *releasesWidget) filter(query string) {
+func (widget *releasesWidget) rankForRelevancy(query string) {
 	llm, err := NewLLM()
 	if err != nil {
 		slog.Error("Failed to initialize LLM", "error", err)
@@ -279,8 +280,13 @@ func fetchLatestGithubRelease(request *releaseRequest) (*appRelease, error) {
 		return nil, err
 	}
 
+	// TODO(pulse): Change secrets config approach
 	if request.token != nil {
 		httpRequest.Header.Add("Authorization", "Bearer "+(*request.token))
+	}
+	envToken := os.Getenv("GITHUB_TOKEN")
+	if envToken != "" {
+		httpRequest.Header.Add("Authorization", "Bearer "+envToken)
 	}
 
 	var response githubReleaseResponseJson
