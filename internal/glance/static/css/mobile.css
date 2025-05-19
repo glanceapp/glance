@@ -48,6 +48,17 @@
         transition: transform .3s;
     }
 
+    .mobile-navigation-actions > * {
+        padding-block: 1.1rem;
+        padding-inline: var(--content-bounds-padding);
+        cursor: pointer;
+        transition: background-color 50ms;
+    }
+
+    .mobile-navigation-actions > *:active {
+        background-color: var(--color-widget-background-highlight);
+    }
+
     .mobile-navigation:has(.mobile-navigation-page-links-input:checked) .hamburger-icon {
         --spacing: 7px;
         color: var(--color-primary);
@@ -60,7 +71,8 @@
 
     .mobile-navigation-page-links {
         border-top: 1px solid var(--color-widget-content-border);
-        padding: 15px var(--content-bounds-padding);
+        border-bottom: 1px solid var(--color-widget-content-border);
+        padding: 20px var(--content-bounds-padding);
         display: flex;
         align-items: center;
         overflow-x: auto;

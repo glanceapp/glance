@@ -2,8 +2,10 @@ package glance
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
+	"iter"
 	"log"
 	"maps"
 	"os"
@@ -27,49 +29,59 @@ const (
 
 type config struct {
 	Server struct {
-		Host       string    `yaml:"host"`
-		Port       uint16    `yaml:"port"`
-		AssetsPath string    `yaml:"assets-path"`
-		BaseURL    string    `yaml:"base-url"`
-		StartedAt  time.Time `yaml:"-"` // used in custom css file
+		Host       string `yaml:"host"`
+		Port       uint16 `yaml:"port"`
+		Proxied    bool   `yaml:"proxied"`
+		AssetsPath string `yaml:"assets-path"`
+		BaseURL    string `yaml:"base-url"`
 	} `yaml:"server"`
+
+	Auth struct {
+		SecretKey string           `yaml:"secret-key"`
+		Users     map[string]*user `yaml:"users"`
+	} `yaml:"auth"`
 
 	Document struct {
 		Head template.HTML `yaml:"head"`
 	} `yaml:"document"`
 
 	Theme struct {
-		BackgroundColor          *hslColorField `yaml:"background-color"`
-		PrimaryColor             *hslColorField `yaml:"primary-color"`
-		PositiveColor            *hslColorField `yaml:"positive-color"`
-		NegativeColor            *hslColorField `yaml:"negative-color"`
-		Light                    bool           `yaml:"light"`
-		ContrastMultiplier       float32        `yaml:"contrast-multiplier"`
-		TextSaturationMultiplier float32        `yaml:"text-saturation-multiplier"`
-		CustomCSSFile            string         `yaml:"custom-css-file"`
+		themeProperties `yaml:",inline"`
+		CustomCSSFile   string                                   `yaml:"custom-css-file"`
+		Presets         orderedYAMLMap[string, *themeProperties] `yaml:"presets"`
 	} `yaml:"theme"`
 
 	Branding struct {
-		HideFooter   bool          `yaml:"hide-footer"`
-		CustomFooter template.HTML `yaml:"custom-footer"`
-		LogoText     string        `yaml:"logo-text"`
-		LogoURL      string        `yaml:"logo-url"`
-		FaviconURL   string        `yaml:"favicon-url"`
+		HideFooter         bool          `yaml:"hide-footer"`
+		CustomFooter       template.HTML `yaml:"custom-footer"`
+		LogoText           string        `yaml:"logo-text"`
+		LogoURL            string        `yaml:"logo-url"`
+		FaviconURL         string        `yaml:"favicon-url"`
+		FaviconType        string        `yaml:"-"`
+		AppName            string        `yaml:"app-name"`
+		AppIconURL         string        `yaml:"app-icon-url"`
+		AppBackgroundColor string        `yaml:"app-background-color"`
 	} `yaml:"branding"`
 
 	Pages []page `yaml:"pages"`
 }
 
+type user struct {
+	Password           string `yaml:"password"`
+	PasswordHashString string `yaml:"password-hash"`
+	PasswordHash       []byte `yaml:"-"`
+}
+
 type page struct {
-	Title                      string `yaml:"name"`
-	Slug                       string `yaml:"slug"`
-	Width                      string `yaml:"width"`
-	DesktopNavigationWidth     string `yaml:"desktop-navigation-width"`
-	ShowMobileHeader           bool   `yaml:"show-mobile-header"`
-	ExpandMobilePageNavigation bool   `yaml:"expand-mobile-page-navigation"`
-	HideDesktopNavigation      bool   `yaml:"hide-desktop-navigation"`
-	CenterVertically           bool   `yaml:"center-vertically"`
-	Columns                    []struct {
+	Title                  string  `yaml:"name"`
+	Slug                   string  `yaml:"slug"`
+	Width                  string  `yaml:"width"`
+	DesktopNavigationWidth string  `yaml:"desktop-navigation-width"`
+	ShowMobileHeader       bool    `yaml:"show-mobile-header"`
+	HideDesktopNavigation  bool    `yaml:"hide-desktop-navigation"`
+	CenterVertically       bool    `yaml:"center-vertically"`
+	HeadWidgets            widgets `yaml:"head-widgets"`
+	Columns                []struct {
 		Size    string  `yaml:"size"`
 		Widgets widgets `yaml:"widgets"`
 	} `yaml:"columns"`
@@ -96,6 +108,12 @@ func newConfigFromYAML(contents []byte) (*config, error) {
 	}
 
 	for p := range config.Pages {
+		for w := range config.Pages[p].HeadWidgets {
+			if err := config.Pages[p].HeadWidgets[w].initialize(); err != nil {
+				return nil, formatWidgetInitError(err, config.Pages[p].HeadWidgets[w])
+			}
+		}
+
 		for c := range config.Pages[p].Columns {
 			for w := range config.Pages[p].Columns[c].Widgets {
 				if err := config.Pages[p].Columns[c].Widgets[w].initialize(); err != nil {
@@ -424,9 +442,37 @@ func configFilesWatcher(
 	}, nil
 }
 
+// TODO: Refactor, we currently validate in two different places, this being
+// one of them, which doesn't modify the data and only checks for logical errors
+// and then again when creating the application which does modify the data and do
+// further validation. Would be better if validation was done in a single place.
 func isConfigStateValid(config *config) error {
 	if len(config.Pages) == 0 {
 		return fmt.Errorf("no pages configured")
+	}
+
+	if len(config.Auth.Users) > 0 && config.Auth.SecretKey == "" {
+		return fmt.Errorf("secret-key must be set when users are configured")
+	}
+
+	for username := range config.Auth.Users {
+		if username == "" {
+			return fmt.Errorf("user has no name")
+		}
+
+		if len(username) < 3 {
+			return errors.New("usernames must be at least 3 characters")
+		}
+
+		user := config.Auth.Users[username]
+
+		if user.Password == "" {
+			if user.PasswordHashString == "" {
+				return fmt.Errorf("user %s must have a password or a password-hash set", username)
+			}
+		} else if len(user.Password) < 6 {
+			return fmt.Errorf("the password for %s must be at least 6 characters", username)
+		}
 	}
 
 	if config.Server.AssetsPath != "" {
@@ -483,6 +529,106 @@ func isConfigStateValid(config *config) error {
 		if full > 2 || full == 0 {
 			return fmt.Errorf("page %d must have either 1 or 2 full width columns", i+1)
 		}
+	}
+
+	return nil
+}
+
+// Read-only way to store ordered maps from a YAML structure
+type orderedYAMLMap[K comparable, V any] struct {
+	keys []K
+	data map[K]V
+}
+
+func newOrderedYAMLMap[K comparable, V any](keys []K, values []V) (*orderedYAMLMap[K, V], error) {
+	if len(keys) != len(values) {
+		return nil, fmt.Errorf("keys and values must have the same length")
+	}
+
+	om := &orderedYAMLMap[K, V]{
+		keys: make([]K, len(keys)),
+		data: make(map[K]V, len(keys)),
+	}
+
+	copy(om.keys, keys)
+
+	for i := range keys {
+		om.data[keys[i]] = values[i]
+	}
+
+	return om, nil
+}
+
+func (om *orderedYAMLMap[K, V]) Items() iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		for _, key := range om.keys {
+			value, ok := om.data[key]
+			if !ok {
+				continue
+			}
+			if !yield(key, value) {
+				return
+			}
+		}
+	}
+}
+
+func (om *orderedYAMLMap[K, V]) Get(key K) (V, bool) {
+	value, ok := om.data[key]
+	return value, ok
+}
+
+func (self *orderedYAMLMap[K, V]) Merge(other *orderedYAMLMap[K, V]) *orderedYAMLMap[K, V] {
+	merged := &orderedYAMLMap[K, V]{
+		keys: make([]K, 0, len(self.keys)+len(other.keys)),
+		data: make(map[K]V, len(self.data)+len(other.data)),
+	}
+
+	merged.keys = append(merged.keys, self.keys...)
+	maps.Copy(merged.data, self.data)
+
+	for _, key := range other.keys {
+		if _, exists := self.data[key]; !exists {
+			merged.keys = append(merged.keys, key)
+		}
+	}
+	maps.Copy(merged.data, other.data)
+
+	return merged
+}
+
+func (om *orderedYAMLMap[K, V]) UnmarshalYAML(node *yaml.Node) error {
+	if node.Kind != yaml.MappingNode {
+		return fmt.Errorf("orderedMap: expected mapping node, got %d", node.Kind)
+	}
+
+	if len(node.Content)%2 != 0 {
+		return fmt.Errorf("orderedMap: expected even number of content items, got %d", len(node.Content))
+	}
+
+	om.keys = make([]K, len(node.Content)/2)
+	om.data = make(map[K]V, len(node.Content)/2)
+
+	for i := 0; i < len(node.Content); i += 2 {
+		keyNode := node.Content[i]
+		valueNode := node.Content[i+1]
+
+		var key K
+		if err := keyNode.Decode(&key); err != nil {
+			return fmt.Errorf("orderedMap: decoding key: %v", err)
+		}
+
+		if _, ok := om.data[key]; ok {
+			return fmt.Errorf("orderedMap: duplicate key %v", key)
+		}
+
+		var value V
+		if err := valueNode.Decode(&value); err != nil {
+			return fmt.Errorf("orderedMap: decoding value: %v", err)
+		}
+
+		(*om).keys[i/2] = key
+		(*om).data[key] = value
 	}
 
 	return nil

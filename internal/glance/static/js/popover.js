@@ -38,6 +38,8 @@ function handleMouseEnter(event) {
         if (activeTarget !== target) {
             hidePopover();
             requestAnimationFrame(() => requestAnimationFrame(showPopover));
+        } else if (activeTarget.dataset.popoverTrigger === "click") {
+            hidePopover();
         }
 
         return;
@@ -100,11 +102,14 @@ function showPopover() {
     contentElement.style.maxWidth = contentMaxWidth;
     activeTarget.classList.add("popover-active");
     document.addEventListener("keydown", handleHidePopoverOnEscape);
+    window.addEventListener("scroll", queueRepositionContainer);
     window.addEventListener("resize", queueRepositionContainer);
     observer.observe(containerElement);
 }
 
 function repositionContainer() {
+    if (activeTarget === null) return;
+
     containerElement.style.display = "block";
 
     const targetBounds = activeTarget.dataset.popoverAnchor !== undefined
@@ -157,7 +162,11 @@ function hidePopover() {
 
     activeTarget.classList.remove("popover-active");
     containerElement.style.display = "none";
+    containerElement.style.removeProperty("top");
+    containerElement.style.removeProperty("left");
+    containerElement.style.removeProperty("right");
     document.removeEventListener("keydown", handleHidePopoverOnEscape);
+    window.removeEventListener("scroll", queueRepositionContainer);
     window.removeEventListener("resize", queueRepositionContainer);
     observer.unobserve(containerElement);
 
@@ -181,7 +190,12 @@ export function setupPopovers() {
     for (let i = 0; i < targets.length; i++) {
         const target = targets[i];
 
-        target.addEventListener("mouseenter", handleMouseEnter);
+        if (target.dataset.popoverTrigger === "click") {
+            target.addEventListener("click", handleMouseEnter);
+        } else {
+            target.addEventListener("mouseenter", handleMouseEnter);
+        }
+
         target.addEventListener("mouseleave", handleMouseLeave);
     }
 }

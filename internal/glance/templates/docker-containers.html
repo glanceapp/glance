@@ -14,7 +14,7 @@
                     {{- range .Children }}
                     <li class="flex gap-7 items-center">
                         <div class="margin-bottom-3">{{ template "state-icon" .StateIcon }}</div>
-                        <div class="color-highlight">{{ .Title }} <span class="size-h5 color-base">{{ .StateText }}</span></div>
+                        <div class="color-highlight">{{ .Name }} <span class="size-h5 color-base">{{ .StateText }}</span></div>
                     </li>
                     {{- end }}
                 </ul>
@@ -22,11 +22,11 @@
             </div>
         </div>
 
-        <div class="min-width-0">
+        <div class="min-width-0 grow">
             {{- if .URL }}
-            <a href="{{ .URL | safeURL }}" class="color-highlight size-title-dynamic block text-truncate" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
+            <a href="{{ .URL | safeURL }}" class="color-highlight size-title-dynamic block text-truncate" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Name }}</a>
             {{- else }}
-            <div class="color-highlight text-truncate size-title-dynamic">{{ .Title }}</div>
+            <div class="color-highlight text-truncate size-title-dynamic">{{ .Name }}</div>
             {{- end }}
             {{- if .Description }}
             <div class="text-truncate">{{ .Description }}</div>

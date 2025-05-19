@@ -41,6 +41,7 @@ type customAPIWidget struct {
 	widgetBase        `yaml:",inline"`
 	*CustomAPIRequest `yaml:",inline"`             // the primary request
 	Subrequests       map[string]*CustomAPIRequest `yaml:"subrequests"`
+	Options           customAPIOptions             `yaml:"options"`
 	Template          string                       `yaml:"template"`
 	Frameless         bool                         `yaml:"frameless"`
 	compiledTemplate  *template.Template           `yaml:"-"`
@@ -75,7 +76,9 @@ func (widget *customAPIWidget) initialize() error {
 }
 
 func (widget *customAPIWidget) update(ctx context.Context) {
-	compiledHTML, err := fetchAndParseCustomAPI(widget.CustomAPIRequest, widget.Subrequests, widget.compiledTemplate)
+	compiledHTML, err := fetchAndRenderCustomAPIRequest(
+		widget.CustomAPIRequest, widget.Subrequests, widget.Options, widget.compiledTemplate,
+	)
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
@@ -87,9 +90,36 @@ func (widget *customAPIWidget) Render() template.HTML {
 	return widget.renderTemplate(widget, customAPIWidgetTemplate)
 }
 
+type customAPIOptions map[string]any
+
+func (o *customAPIOptions) StringOr(key, defaultValue string) string {
+	return customAPIGetOptionOrDefault(*o, key, defaultValue)
+}
+
+func (o *customAPIOptions) IntOr(key string, defaultValue int) int {
+	return customAPIGetOptionOrDefault(*o, key, defaultValue)
+}
+
+func (o *customAPIOptions) FloatOr(key string, defaultValue float64) float64 {
+	return customAPIGetOptionOrDefault(*o, key, defaultValue)
+}
+
+func (o *customAPIOptions) BoolOr(key string, defaultValue bool) bool {
+	return customAPIGetOptionOrDefault(*o, key, defaultValue)
+}
+
+func customAPIGetOptionOrDefault[T any](o customAPIOptions, key string, defaultValue T) T {
+	if value, exists := o[key]; exists {
+		if typedValue, ok := value.(T); ok {
+			return typedValue
+		}
+	}
+	return defaultValue
+}
+
 func (req *CustomAPIRequest) initialize() error {
-	if req.URL == "" {
-		return errors.New("URL is required")
+	if req == nil || req.URL == "" {
+		return nil
 	}
 
 	if req.Body != nil {
@@ -156,6 +186,7 @@ type customAPIResponseData struct {
 type customAPITemplateData struct {
 	*customAPIResponseData
 	subrequests map[string]*customAPIResponseData
+	Options     customAPIOptions
 }
 
 func (data *customAPITemplateData) JSONLines() []decoratedGJSONResult {
@@ -183,7 +214,14 @@ func (data *customAPITemplateData) Subrequest(key string) *customAPIResponseData
 	return req
 }
 
-func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customAPIResponseData, error) {
+func fetchCustomAPIResponse(ctx context.Context, req *CustomAPIRequest) (*customAPIResponseData, error) {
+	if req == nil || req.URL == "" {
+		return &customAPIResponseData{
+			JSON:     decoratedGJSONResult{gjson.Result{}},
+			Response: &http.Response{},
+		}, nil
+	}
+
 	if req.bodyReader != nil {
 		req.bodyReader.Seek(0, io.SeekStart)
 	}
@@ -203,26 +241,30 @@ func fetchCustomAPIRequest(ctx context.Context, req *CustomAPIRequest) (*customA
 	body := strings.TrimSpace(string(bodyBytes))
 
 	if !req.SkipJSONValidation && body != "" && !gjson.Valid(body) {
-		truncatedBody, isTruncated := limitStringLength(body, 100)
-		if isTruncated {
-			truncatedBody += "... <truncated>"
+		if 200 <= resp.StatusCode && resp.StatusCode < 300 {
+			truncatedBody, isTruncated := limitStringLength(body, 100)
+			if isTruncated {
+				truncatedBody += "... <truncated>"
+			}
+
+			slog.Error("Invalid response JSON in custom API widget", "url", req.httpRequest.URL.String(), "body", truncatedBody)
+			return nil, errors.New("invalid response JSON")
 		}
 
-		slog.Error("Invalid response JSON in custom API widget", "url", req.httpRequest.URL.String(), "body", truncatedBody)
-		return nil, errors.New("invalid response JSON")
+		return nil, fmt.Errorf("%d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
+
 	}
 
-	data := &customAPIResponseData{
+	return &customAPIResponseData{
 		JSON:     decoratedGJSONResult{gjson.Parse(body)},
 		Response: resp,
-	}
-
-	return data, nil
+	}, nil
 }
 
-func fetchAndParseCustomAPI(
+func fetchAndRenderCustomAPIRequest(
 	primaryReq *CustomAPIRequest,
 	subReqs map[string]*CustomAPIRequest,
+	options customAPIOptions,
 	tmpl *template.Template,
 ) (template.HTML, error) {
 	var primaryData *customAPIResponseData
@@ -231,7 +273,7 @@ func fetchAndParseCustomAPI(
 
 	if len(subReqs) == 0 {
 		// If there are no subrequests, we can fetch the primary request in a much simpler way
-		primaryData, err = fetchCustomAPIRequest(context.Background(), primaryReq)
+		primaryData, err = fetchCustomAPIResponse(context.Background(), primaryReq)
 	} else {
 		// If there are subrequests, we need to fetch them concurrently
 		// and cancel all requests if any of them fail. There's probably
@@ -246,7 +288,7 @@ func fetchAndParseCustomAPI(
 		go func() {
 			defer wg.Done()
 			var localErr error
-			primaryData, localErr = fetchCustomAPIRequest(ctx, primaryReq)
+			primaryData, localErr = fetchCustomAPIResponse(ctx, primaryReq)
 			mu.Lock()
 			if localErr != nil && err == nil {
 				err = localErr
@@ -261,7 +303,7 @@ func fetchAndParseCustomAPI(
 				defer wg.Done()
 				var localErr error
 				var data *customAPIResponseData
-				data, localErr = fetchCustomAPIRequest(ctx, req)
+				data, localErr = fetchCustomAPIResponse(ctx, req)
 				mu.Lock()
 				if localErr == nil {
 					subData[key] = data
@@ -285,6 +327,7 @@ func fetchAndParseCustomAPI(
 	data := customAPITemplateData{
 		customAPIResponseData: primaryData,
 		subrequests:           subData,
+		Options:               options,
 	}
 
 	var templateBuffer bytes.Buffer
@@ -311,7 +354,7 @@ func gJsonResultArrayToDecoratedResultArray(results []gjson.Result) []decoratedG
 }
 
 func (r *decoratedGJSONResult) Exists(key string) bool {
-	return r.Get(key).Exists()
+	return r.Result.Get(key).Exists()
 }
 
 func (r *decoratedGJSONResult) Array(key string) []decoratedGJSONResult {
@@ -319,7 +362,7 @@ func (r *decoratedGJSONResult) Array(key string) []decoratedGJSONResult {
 		return gJsonResultArrayToDecoratedResultArray(r.Result.Array())
 	}
 
-	return gJsonResultArrayToDecoratedResultArray(r.Get(key).Array())
+	return gJsonResultArrayToDecoratedResultArray(r.Result.Get(key).Array())
 }
 
 func (r *decoratedGJSONResult) String(key string) string {
@@ -327,7 +370,7 @@ func (r *decoratedGJSONResult) String(key string) string {
 		return r.Result.String()
 	}
 
-	return r.Get(key).String()
+	return r.Result.Get(key).String()
 }
 
 func (r *decoratedGJSONResult) Int(key string) int {
@@ -335,7 +378,7 @@ func (r *decoratedGJSONResult) Int(key string) int {
 		return int(r.Result.Int())
 	}
 
-	return int(r.Get(key).Int())
+	return int(r.Result.Get(key).Int())
 }
 
 func (r *decoratedGJSONResult) Float(key string) float64 {
@@ -343,7 +386,7 @@ func (r *decoratedGJSONResult) Float(key string) float64 {
 		return r.Result.Float()
 	}
 
-	return r.Get(key).Float()
+	return r.Result.Get(key).Float()
 }
 
 func (r *decoratedGJSONResult) Bool(key string) bool {
@@ -351,7 +394,11 @@ func (r *decoratedGJSONResult) Bool(key string) bool {
 		return r.Result.Bool()
 	}
 
-	return r.Get(key).Bool()
+	return r.Result.Get(key).Bool()
+}
+
+func (r *decoratedGJSONResult) Get(key string) *decoratedGJSONResult {
+	return &decoratedGJSONResult{r.Result.Get(key)}
 }
 
 func customAPIDoMathOp[T int | float64](a, b T, op string) T {
@@ -367,6 +414,14 @@ func customAPIDoMathOp[T int | float64](a, b T, op string) T {
 			return 0
 		}
 		return a / b
+	case "mod":
+		ai, bi := any(a), any(b)
+		aint, aok := ai.(int)
+		bint, bok := bi.(int)
+		if aok && bok && bint != 0 {
+			return T(aint % bint)
+		}
+		return 0
 	}
 	return 0
 }
@@ -432,6 +487,9 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		"div": func(a, b any) any {
 			return doMathOpWithAny(a, b, "div")
 		},
+		"mod": func(a, b int) any {
+			return doMathOpWithAny(a, b, "mod")
+		},
 		"now": func() time.Time {
 			return time.Now()
 		},
@@ -450,11 +508,23 @@ var customAPITemplateFuncs = func() template.FuncMap {
 
 			return d
 		},
-		"parseTime":      customAPIFuncParseTime,
+		"parseTime": func(layout, value string) time.Time {
+			return customAPIFuncParseTimeInLocation(layout, value, time.UTC)
+		},
+		"formatTime": customAPIFuncFormatTime,
+		"parseLocalTime": func(layout, value string) time.Time {
+			return customAPIFuncParseTimeInLocation(layout, value, time.Local)
+		},
 		"toRelativeTime": dynamicRelativeTimeAttrs,
 		"parseRelativeTime": func(layout, value string) template.HTMLAttr {
 			// Shorthand to do both of the above with a single function call
-			return dynamicRelativeTimeAttrs(customAPIFuncParseTime(layout, value))
+			return dynamicRelativeTimeAttrs(customAPIFuncParseTimeInLocation(layout, value, time.UTC))
+		},
+		"startOfDay": func(t time.Time) time.Time {
+			return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+		},
+		"endOfDay": func(t time.Time) time.Time {
+			return time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 0, t.Location())
 		},
 		// The reason we flip the parameter order is so that you can chain multiple calls together like this:
 		// {{ .JSON.String "foo" | trimPrefix "bar" | doSomethingElse }}
@@ -471,6 +541,13 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		"replaceAll": func(old, new, s string) string {
 			return strings.ReplaceAll(s, old, new)
 		},
+		"replaceMatches": func(pattern, replacement, s string) string {
+			if s == "" {
+				return ""
+			}
+
+			return getCachedRegexp(pattern).ReplaceAllString(s, replacement)
+		},
 		"findMatch": func(pattern, s string) string {
 			if s == "" {
 				return ""
@@ -486,6 +563,7 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			regex := getCachedRegexp(pattern)
 			return itemAtIndexOrDefault(regex.FindStringSubmatch(s), 1, "")
 		},
+		"percentChange": percentChange,
 		"sortByString": func(key, order string, results []decoratedGJSONResult) []decoratedGJSONResult {
 			sort.Slice(results, func(a, b int) bool {
 				if order == "asc" {
@@ -521,8 +599,8 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		},
 		"sortByTime": func(key, layout, order string, results []decoratedGJSONResult) []decoratedGJSONResult {
 			sort.Slice(results, func(a, b int) bool {
-				timeA := customAPIFuncParseTime(layout, results[a].String(key))
-				timeB := customAPIFuncParseTime(layout, results[b].String(key))
+				timeA := customAPIFuncParseTimeInLocation(layout, results[a].String(key), time.UTC)
+				timeB := customAPIFuncParseTimeInLocation(layout, results[b].String(key), time.UTC)
 
 				if order == "asc" {
 					return timeA.Before(timeB)
@@ -536,6 +614,61 @@ var customAPITemplateFuncs = func() template.FuncMap {
 		"concat": func(items ...string) string {
 			return strings.Join(items, "")
 		},
+		"unique": func(key string, results []decoratedGJSONResult) []decoratedGJSONResult {
+			seen := make(map[string]struct{})
+			out := make([]decoratedGJSONResult, 0, len(results))
+			for _, result := range results {
+				val := result.String(key)
+				if _, ok := seen[val]; !ok {
+					seen[val] = struct{}{}
+					out = append(out, result)
+				}
+			}
+			return out
+		},
+		"newRequest": func(url string) *CustomAPIRequest {
+			return &CustomAPIRequest{
+				URL: url,
+			}
+		},
+		"withHeader": func(key, value string, req *CustomAPIRequest) *CustomAPIRequest {
+			if req.Headers == nil {
+				req.Headers = make(map[string]string)
+			}
+			req.Headers[key] = value
+			return req
+		},
+		"withParameter": func(key, value string, req *CustomAPIRequest) *CustomAPIRequest {
+			if req.Parameters == nil {
+				req.Parameters = make(queryParametersField)
+			}
+			req.Parameters[key] = append(req.Parameters[key], value)
+			return req
+		},
+		"withStringBody": func(body string, req *CustomAPIRequest) *CustomAPIRequest {
+			req.Body = body
+			req.BodyType = "string"
+			return req
+		},
+		"getResponse": func(req *CustomAPIRequest) *customAPIResponseData {
+			err := req.initialize()
+			if err != nil {
+				panic(fmt.Sprintf("initializing request: %v", err))
+			}
+
+			data, err := fetchCustomAPIResponse(context.Background(), req)
+			if err != nil {
+				slog.Error("Could not fetch response within custom API template", "error", err)
+				return &customAPIResponseData{
+					JSON: decoratedGJSONResult{gjson.Result{}},
+					Response: &http.Response{
+						Status: err.Error(),
+					},
+				}
+			}
+
+			return data
+		},
 	}
 
 	for key, value := range globalTemplateFunctions {
@@ -547,7 +680,24 @@ var customAPITemplateFuncs = func() template.FuncMap {
 	return funcs
 }()
 
-func customAPIFuncParseTime(layout, value string) time.Time {
+func customAPIFuncFormatTime(layout string, t time.Time) string {
+	switch strings.ToLower(layout) {
+	case "unix":
+		return strconv.FormatInt(t.Unix(), 10)
+	case "rfc3339":
+		layout = time.RFC3339
+	case "rfc3339nano":
+		layout = time.RFC3339Nano
+	case "datetime":
+		layout = time.DateTime
+	case "dateonly":
+		layout = time.DateOnly
+	}
+
+	return t.Format(layout)
+}
+
+func customAPIFuncParseTimeInLocation(layout, value string, loc *time.Location) time.Time {
 	switch strings.ToLower(layout) {
 	case "unix":
 		asInt, err := strconv.ParseInt(value, 10, 64)
@@ -566,7 +716,7 @@ func customAPIFuncParseTime(layout, value string) time.Time {
 		layout = time.DateOnly
 	}
 
-	parsed, err := time.Parse(layout, value)
+	parsed, err := time.ParseInLocation(layout, value, loc)
 	if err != nil {
 		return time.Unix(0, 0)
 	}
