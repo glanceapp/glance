@@ -10,5 +10,5 @@ Required env variables:
 
 To start the application with a default config, run:
 ```bash
-o run main.go --config config/root.yml
+go run main.go --config config/root.yml
 ```
