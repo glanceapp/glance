@@ -661,7 +661,7 @@ function setupTruncatedElementTitles() {
 
     for (let i = 0; i < elements.length; i++) {
         const element = elements[i];
-        if (element.getAttribute("title") === null) element.title = element.textContent.trim();
+        if (element.getAttribute("title") === null) element.title = element.innerText;
     }
 }
 
