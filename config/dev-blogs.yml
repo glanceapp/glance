@@ -1,0 +1,17 @@
+- name: Dev Blogs
+  columns:
+    - size: full
+      widgets:
+        - type: rss
+          limit: 10
+          collapse-after: 3
+          cache: 12h
+          feeds:
+            - url: https://ghuntley.com/rss
+            - url: https://www.latent.space/feed
+            - url: https://danluu.com/atom.xml
+            - url: https://thesephist.com/index.xml
+            - url: https://simonwillison.net/atom/everything
+            - url: https://lilianweng.github.io/index.xml
+            - url: https://karpathy.bearblog.dev/feed
+            - url: https://eugeneyan.com/rss

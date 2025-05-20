@@ -73,7 +73,7 @@
             - FoundationAgents/MetaGPT
             - langchain-ai/agent-protocol
             - agent-network-protocol/AgentNetworkProtocol
-
+            - mem0ai/mem0
         - type: issues
           cache: 30m
           # Without authentication the Github API allows for up to 60 requests per hour. You can create a
@@ -89,6 +89,7 @@
             - FoundationAgents/MetaGPT
             - langchain-ai/agent-protocol
             - agent-network-protocol/AgentNetworkProtocol
+            - mem0ai/mem0
           activity-types:
             - opened
             - closed
