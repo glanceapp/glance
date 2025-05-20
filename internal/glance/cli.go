@@ -17,7 +17,6 @@ const (
 	cliIntentServe
 	cliIntentConfigValidate
 	cliIntentConfigPrint
-	cliIntentDiagnose
 	cliIntentSensorsPrint
 	cliIntentMountpointInfo
 	cliIntentSecretMake
@@ -76,8 +75,6 @@ func parseCliOptions() (*cliOptions, error) {
 			intent = cliIntentConfigPrint
 		} else if args[0] == "sensors:print" {
 			intent = cliIntentSensorsPrint
-		} else if args[0] == "diagnose" {
-			intent = cliIntentDiagnose
 		} else if args[0] == "secret:make" {
 			intent = cliIntentSecretMake
 		} else {

@@ -55,8 +55,6 @@ func Main() int {
 		return cliSensorsPrint()
 	case cliIntentMountpointInfo:
 		return cliMountpointInfo(options.args[1])
-	case cliIntentDiagnose:
-		runDiagnostic()
 	case cliIntentSecretMake:
 		key, err := makeAuthSecretKey(AUTH_SECRET_KEY_LENGTH)
 		if err != nil {

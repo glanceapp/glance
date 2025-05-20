@@ -6,9 +6,6 @@ import (
 	"time"
 )
 
-const twitchGqlEndpoint = "https://gql.twitch.tv/gql"
-const twitchGqlClientId = "kimne78kx3ncx6brgo4mv6wki5h1ko"
-
 var forumPostsTemplate = mustParseTemplate("forum-posts.html", "widget-base.html")
 
 type forumPost struct {

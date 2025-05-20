@@ -25,40 +25,16 @@ func newWidget(widgetType string) (widget, error) {
 	var w widget
 
 	switch widgetType {
-	case "calendar":
-		w = &calendarWidget{}
-	case "calendar-legacy":
-		w = &oldCalendarWidget{}
-	case "clock":
-		w = &clockWidget{}
-	case "weather":
-		w = &weatherWidget{}
-	case "bookmarks":
-		w = &bookmarksWidget{}
-	case "iframe":
-		w = &iframeWidget{}
-	case "html":
-		w = &htmlWidget{}
 	case "mastodon":
 		w = &mastodonWidget{}
 	case "hacker-news":
 		w = &hackerNewsWidget{}
 	case "releases":
 		w = &releasesWidget{}
-	case "videos":
-		w = &videosWidget{}
-	case "markets", "stocks":
-		w = &marketsWidget{}
 	case "reddit":
 		w = &redditWidget{}
 	case "rss":
 		w = &rssWidget{}
-	case "monitor":
-		w = &monitorWidget{}
-	case "twitch-top-games":
-		w = &twitchGamesWidget{}
-	case "twitch-channels":
-		w = &twitchChannelsWidget{}
 	case "lobsters":
 		w = &lobstersWidget{}
 	case "issues":
@@ -67,24 +43,12 @@ func newWidget(widgetType string) (widget, error) {
 		w = &changeDetectionWidget{}
 	case "repository":
 		w = &repositoryWidget{}
-	case "search":
-		w = &searchWidget{}
-	case "extension":
-		w = &extensionWidget{}
 	case "group":
 		w = &groupWidget{}
-	case "dns-stats":
-		w = &dnsStatsWidget{}
 	case "split-column":
 		w = &splitColumnWidget{}
 	case "custom-api":
 		w = &customAPIWidget{}
-	case "docker-containers":
-		w = &dockerContainersWidget{}
-	case "server-stats":
-		w = &serverStatsWidget{}
-	case "to-do":
-		w = &todoWidget{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}
