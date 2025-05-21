@@ -1,9 +1,8 @@
-package widgets
+package sources
 
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"sort"
@@ -11,10 +10,8 @@ import (
 	"time"
 )
 
-var changeDetectionWidgetTemplate = mustParseTemplate("change-detection.html", "widget-base.html")
-
 type changeDetectionWidget struct {
-	widgetBase       `yaml:",inline"`
+	sourceBase       `yaml:",inline"`
 	ChangeDetections changeDetectionWatchList `yaml:"-"`
 	WatchUUIDs       []string                 `yaml:"watches"`
 	InstanceURL      string                   `yaml:"instance-url"`
@@ -23,50 +20,50 @@ type changeDetectionWidget struct {
 	CollapseAfter    int                      `yaml:"collapse-after"`
 }
 
-func (widget *changeDetectionWidget) initialize() error {
-	widget.withTitle("Change Detection").withCacheDuration(1 * time.Hour)
+func (s *changeDetectionWidget) initialize() error {
+	s.withTitle("Change Detection").withCacheDuration(1 * time.Hour)
 
-	if widget.Limit <= 0 {
-		widget.Limit = 10
+	if s.Limit <= 0 {
+		s.Limit = 10
 	}
 
-	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-		widget.CollapseAfter = 5
+	if s.CollapseAfter == 0 || s.CollapseAfter < -1 {
+		s.CollapseAfter = 5
 	}
 
-	if widget.InstanceURL == "" {
-		widget.InstanceURL = "https://www.changedetection.io"
+	if s.InstanceURL == "" {
+		s.InstanceURL = "https://www.changedetection.io"
 	}
 
 	return nil
 }
 
-func (widget *changeDetectionWidget) update(ctx context.Context) {
-	if len(widget.WatchUUIDs) == 0 {
-		uuids, err := fetchWatchUUIDsFromChangeDetection(widget.InstanceURL, string(widget.Token))
+func (s *changeDetectionWidget) update(ctx context.Context) {
+	if len(s.WatchUUIDs) == 0 {
+		uuids, err := fetchWatchUUIDsFromChangeDetection(s.InstanceURL, string(s.Token))
 
-		if !widget.canContinueUpdateAfterHandlingErr(err) {
+		if !s.canContinueUpdateAfterHandlingErr(err) {
 			return
 		}
 
-		widget.WatchUUIDs = uuids
+		s.WatchUUIDs = uuids
 	}
 
-	watches, err := fetchWatchesFromChangeDetection(widget.InstanceURL, widget.WatchUUIDs, string(widget.Token))
+	watches, err := fetchWatchesFromChangeDetection(s.InstanceURL, s.WatchUUIDs, string(s.Token))
 
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
+	if !s.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
 
-	if len(watches) > widget.Limit {
-		watches = watches[:widget.Limit]
+	if len(watches) > s.Limit {
+		watches = watches[:s.Limit]
 	}
 
-	widget.ChangeDetections = watches
+	s.ChangeDetections = watches
 }
 
-func (widget *changeDetectionWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, changeDetectionWidgetTemplate)
+func (s *changeDetectionWidget) Feed() changeDetectionWatchList {
+	return s.ChangeDetections
 }
 
 type changeDetectionWatch struct {

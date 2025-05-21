@@ -2,7 +2,7 @@
 
 {{- define "widget-content" }}
 <ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
-    {{- range .Posts }}
+    {{- range .Feed }}
     <li>
         <div class="flex gap-10 row-reverse-on-mobile thumbnail-parent">
             {{- if $.ShowThumbnails }}

@@ -1,10 +1,9 @@
-package widgets
+package sources
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -17,10 +16,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var releasesWidgetTemplate = mustParseTemplate("releases.html", "widget-base.html")
-
-type releasesWidget struct {
-	widgetBase     `yaml:",inline"`
+type githubReleasesSource struct {
+	sourceBase     `yaml:",inline"`
 	Releases       appReleaseList    `yaml:"-"`
 	Repositories   []*releaseRequest `yaml:"repositories"`
 	Token          string            `yaml:"token"`
@@ -30,97 +27,46 @@ type releasesWidget struct {
 	ShowSourceIcon bool              `yaml:"show-source-icon"`
 }
 
-func (widget *releasesWidget) initialize() error {
-	widget.withTitle("Releases").withCacheDuration(2 * time.Hour)
+func (s *githubReleasesSource) initialize() error {
+	s.withTitle("Releases").withCacheDuration(2 * time.Hour)
 
-	if widget.Limit <= 0 {
-		widget.Limit = 10
+	if s.Limit <= 0 {
+		s.Limit = 10
 	}
 
-	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-		widget.CollapseAfter = 5
+	if s.CollapseAfter == 0 || s.CollapseAfter < -1 {
+		s.CollapseAfter = 5
 	}
 
-	for i := range widget.Repositories {
-		r := widget.Repositories[i]
+	for i := range s.Repositories {
+		r := s.Repositories[i]
 
-		if r.source == releaseSourceGithub && widget.Token != "" {
-			r.token = &widget.Token
-		} else if r.source == releaseSourceGitlab && widget.GitLabToken != "" {
-			r.token = &widget.GitLabToken
+		if r.source == releaseSourceGithub && s.Token != "" {
+			r.token = &s.Token
+		} else if r.source == releaseSourceGitlab && s.GitLabToken != "" {
+			r.token = &s.GitLabToken
 		}
 	}
 
 	return nil
 }
 
-func (widget *releasesWidget) update(ctx context.Context) {
-	releases, err := fetchLatestReleases(widget.Repositories)
+func (s *githubReleasesSource) update(ctx context.Context) {
+	releases, err := fetchLatestReleases(s.Repositories)
 
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
+	if !s.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
 
-	if len(releases) > widget.Limit {
-		releases = releases[:widget.Limit]
+	if len(releases) > s.Limit {
+		releases = releases[:s.Limit]
 	}
 
 	for i := range releases {
-		releases[i].SourceIconURL = widget.Providers.assetResolver("icons/" + string(releases[i].Source) + ".svg")
+		releases[i].SourceIconURL = s.Providers.assetResolver("icons/" + string(releases[i].Source) + ".svg")
 	}
 
-	widget.Releases = releases
-
-	if widget.filterQuery != "" {
-		widget.rankForRelevancy(widget.filterQuery)
-	}
-}
-
-func (widget *releasesWidget) rankForRelevancy(query string) {
-	llm, err := NewLLM()
-	if err != nil {
-		slog.Error("Failed to initialize LLM", "error", err)
-		return
-	}
-
-	feed := make([]feedEntry, 0, len(widget.Releases))
-
-	for _, e := range widget.Releases {
-		feed = append(feed, feedEntry{
-			ID:          e.ID,
-			Title:       e.Name,
-			Description: e.Description,
-			URL:         e.NotesUrl,
-			ImageURL:    e.SourceIconURL,
-			PublishedAt: e.TimeReleased,
-		})
-	}
-
-	matches, err := llm.filterFeed(context.Background(), feed, query)
-	if err != nil {
-		slog.Error("Failed to filter releases", "error", err)
-		return
-	}
-
-	matchesMap := make(map[string]feedMatch)
-	for _, match := range matches {
-		matchesMap[match.ID] = match
-	}
-
-	filtered := make([]appRelease, 0, len(matches))
-	for _, e := range widget.Releases {
-		if match, ok := matchesMap[e.ID]; ok {
-			e.Summary = match.Highlight
-			e.MatchScore = match.Score
-			filtered = append(filtered, e)
-		}
-	}
-
-	widget.Releases = filtered
-}
-
-func (widget *releasesWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, releasesWidgetTemplate)
+	s.Releases = releases
 }
 
 type releaseSource string

@@ -1,10 +1,9 @@
-package widgets
+package sources
 
 import (
 	"context"
 	"fmt"
 	"html"
-	"html/template"
 	"io"
 	"log/slog"
 	"net/http"
@@ -19,17 +18,10 @@ import (
 	gofeedext "github.com/mmcdole/gofeed/extensions"
 )
 
-var (
-	rssWidgetTemplate                 = mustParseTemplate("rss-list.html", "widget-base.html")
-	rssWidgetDetailedListTemplate     = mustParseTemplate("rss-detailed-list.html", "widget-base.html")
-	rssWidgetHorizontalCardsTemplate  = mustParseTemplate("rss-horizontal-cards.html", "widget-base.html")
-	rssWidgetHorizontalCards2Template = mustParseTemplate("rss-horizontal-cards-2.html", "widget-base.html")
-)
-
 var feedParser = gofeed.NewParser()
 
-type rssWidget struct {
-	widgetBase       `yaml:",inline"`
+type rssSource struct {
+	sourceBase       `yaml:",inline"`
 	FeedRequests     []rssFeedRequest `yaml:"feeds"`
 	Style            string           `yaml:"style"`
 	ThumbnailHeight  float64          `yaml:"thumbnail-height"`
@@ -46,117 +38,57 @@ type rssWidget struct {
 	cachedFeeds      map[string]*cachedRSSFeed `yaml:"-"`
 }
 
-func (widget *rssWidget) initialize() error {
-	widget.withTitle("RSS Feed").withCacheDuration(2 * time.Hour)
+func (s *rssSource) initialize() error {
+	s.withTitle("RSS Feed").withCacheDuration(2 * time.Hour)
 
-	if widget.Limit <= 0 {
-		widget.Limit = 25
+	if s.Limit <= 0 {
+		s.Limit = 25
 	}
 
-	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-		widget.CollapseAfter = 5
+	if s.CollapseAfter == 0 || s.CollapseAfter < -1 {
+		s.CollapseAfter = 5
 	}
 
-	if widget.ThumbnailHeight < 0 {
-		widget.ThumbnailHeight = 0
+	if s.ThumbnailHeight < 0 {
+		s.ThumbnailHeight = 0
 	}
 
-	if widget.CardHeight < 0 {
-		widget.CardHeight = 0
+	if s.CardHeight < 0 {
+		s.CardHeight = 0
 	}
 
-	if widget.Style == "detailed-list" {
-		for i := range widget.FeedRequests {
-			widget.FeedRequests[i].IsDetailed = true
+	if s.Style == "detailed-list" {
+		for i := range s.FeedRequests {
+			s.FeedRequests[i].IsDetailed = true
 		}
 	}
 
-	widget.NoItemsMessage = "No items were returned from the feeds."
-	widget.cachedFeeds = make(map[string]*cachedRSSFeed)
+	s.NoItemsMessage = "No items were returned from the feeds."
+	s.cachedFeeds = make(map[string]*cachedRSSFeed)
 
 	return nil
 }
 
-func (widget *rssWidget) update(ctx context.Context) {
-	items, err := widget.fetchItemsFromFeeds()
+func (s *rssSource) update(ctx context.Context) {
+	items, err := s.fetchItemsFromFeeds()
 
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
+	if !s.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
 
-	if !widget.PreserveOrder {
+	if !s.PreserveOrder {
 		items.sortByNewest()
 	}
 
-	if len(items) > widget.Limit {
-		items = items[:widget.Limit]
+	if len(items) > s.Limit {
+		items = items[:s.Limit]
 	}
 
-	widget.Items = items
-
-	if widget.filterQuery != "" {
-		widget.rankByRelevancy(widget.filterQuery)
-	}
+	s.Items = items
 }
 
-func (widget *rssWidget) rankByRelevancy(query string) {
-	llm, err := NewLLM()
-	if err != nil {
-		slog.Error("Failed to initialize LLM", "error", err)
-		return
-	}
-
-	feed := make([]feedEntry, 0, len(widget.Items))
-
-	for _, e := range widget.Items {
-
-		feed = append(feed, feedEntry{
-			ID:          e.ID,
-			Title:       e.Title,
-			Description: e.Description,
-			URL:         e.Link,
-			ImageURL:    e.ImageURL,
-			PublishedAt: e.PublishedAt,
-		})
-	}
-
-	matches, err := llm.filterFeed(context.Background(), feed, query)
-	if err != nil {
-		slog.Error("Failed to filter RSS feed", "error", err)
-		return
-	}
-
-	matchesMap := make(map[string]feedMatch)
-	for _, match := range matches {
-		matchesMap[match.ID] = match
-	}
-
-	filtered := make(rssFeedItemList, 0, len(matches))
-	for _, e := range widget.Items {
-		if match, ok := matchesMap[e.ID]; ok {
-			e.Summary = match.Highlight
-			e.MatchScore = match.Score
-			filtered = append(filtered, e)
-		}
-	}
-
-	widget.Items = filtered
-}
-
-func (widget *rssWidget) Render() template.HTML {
-	if widget.Style == "horizontal-cards" {
-		return widget.renderTemplate(widget, rssWidgetHorizontalCardsTemplate)
-	}
-
-	if widget.Style == "horizontal-cards-2" {
-		return widget.renderTemplate(widget, rssWidgetHorizontalCards2Template)
-	}
-
-	if widget.Style == "detailed-list" {
-		return widget.renderTemplate(widget, rssWidgetDetailedListTemplate)
-	}
-
-	return widget.renderTemplate(widget, rssWidgetTemplate)
+func (s *rssSource) Feed() rssFeedItemList {
+	return s.Items
 }
 
 type cachedRSSFeed struct {
@@ -200,10 +132,10 @@ func (f rssFeedItemList) sortByNewest() rssFeedItemList {
 	return f
 }
 
-func (widget *rssWidget) fetchItemsFromFeeds() (rssFeedItemList, error) {
-	requests := widget.FeedRequests
+func (s *rssSource) fetchItemsFromFeeds() (rssFeedItemList, error) {
+	requests := s.FeedRequests
 
-	job := newJob(widget.fetchItemsFromFeedTask, requests).withWorkers(30)
+	job := newJob(s.fetchItemsFromFeedTask, requests).withWorkers(30)
 	feeds, errs, err := workerPoolDo(job)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errNoContent, err)
@@ -240,16 +172,16 @@ func (widget *rssWidget) fetchItemsFromFeeds() (rssFeedItemList, error) {
 	return entries, nil
 }
 
-func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
+func (s *rssSource) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
 	req, err := http.NewRequest("GET", request.URL, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Add("User-Agent", glanceUserAgentString)
+	req.Header.Add("User-Agent", pulseUserAgentString)
 
-	widget.cachedFeedsMutex.Lock()
-	cache, isCached := widget.cachedFeeds[request.URL]
+	s.cachedFeedsMutex.Lock()
+	cache, isCached := s.cachedFeeds[request.URL]
 	if isCached {
 		if cache.etag != "" {
 			req.Header.Add("If-None-Match", cache.etag)
@@ -258,7 +190,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 			req.Header.Add("If-Modified-Since", cache.lastModified)
 		}
 	}
-	widget.cachedFeedsMutex.Unlock()
+	s.cachedFeedsMutex.Unlock()
 
 	for key, value := range request.Headers {
 		req.Header.Set(key, value)
@@ -383,13 +315,13 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 	}
 
 	if resp.Header.Get("ETag") != "" || resp.Header.Get("Last-Modified") != "" {
-		widget.cachedFeedsMutex.Lock()
-		widget.cachedFeeds[request.URL] = &cachedRSSFeed{
+		s.cachedFeedsMutex.Lock()
+		s.cachedFeeds[request.URL] = &cachedRSSFeed{
 			etag:         resp.Header.Get("ETag"),
 			lastModified: resp.Header.Get("Last-Modified"),
 			items:        items,
 		}
-		widget.cachedFeedsMutex.Unlock()
+		s.cachedFeedsMutex.Unlock()
 	}
 
 	return items, nil
@@ -426,6 +358,7 @@ func recursiveFindThumbnailInExtensions(extensions map[string][]gofeedext.Extens
 }
 
 var htmlTagsWithAttributesPattern = regexp.MustCompile(`<\/?[a-zA-Z0-9-]+ *(?:[a-zA-Z-]+=(?:"|').*?(?:"|') ?)* *\/?>`)
+var sequentialWhitespacePattern = regexp.MustCompile(`\s+`)
 
 func sanitizeFeedDescription(description string) string {
 	if description == "" {

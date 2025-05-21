@@ -1,10 +1,9 @@
-package widgets
+package sources
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
@@ -16,10 +15,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var issuesWidgetTemplate = mustParseTemplate("issues.html", "widget-base.html")
-
-type issuesWidget struct {
-	widgetBase    `yaml:",inline"`
+type githubIssuesSource struct {
+	sourceBase    `yaml:",inline"`
 	Issues        issueActivityList `yaml:"-"`
 	Repositories  []*issueRequest   `yaml:"repositories"`
 	Token         string            `yaml:"token"`
@@ -80,98 +77,47 @@ func (i *issueRequest) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
-func (widget *issuesWidget) initialize() error {
-	widget.withTitle("Issue Activity").withCacheDuration(30 * time.Minute)
+func (s *githubIssuesSource) initialize() error {
+	s.withTitle("Issue Activity").withCacheDuration(30 * time.Minute)
 
-	if widget.Limit <= 0 {
-		widget.Limit = 10
+	if s.Limit <= 0 {
+		s.Limit = 10
 	}
 
-	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-		widget.CollapseAfter = 5
+	if s.CollapseAfter == 0 || s.CollapseAfter < -1 {
+		s.CollapseAfter = 5
 	}
 
-	if len(widget.ActivityTypes) == 0 {
-		widget.ActivityTypes = []string{"opened", "closed", "commented"}
+	if len(s.ActivityTypes) == 0 {
+		s.ActivityTypes = []string{"opened", "closed", "commented"}
 	}
 
-	for i := range widget.Repositories {
-		r := widget.Repositories[i]
-		if widget.Token != "" {
-			r.token = &widget.Token
+	for i := range s.Repositories {
+		r := s.Repositories[i]
+		if s.Token != "" {
+			r.token = &s.Token
 		}
 	}
 
 	return nil
 }
 
-func (widget *issuesWidget) update(ctx context.Context) {
-	activities, err := fetchIssueActivities(widget.Repositories, widget.ActivityTypes)
+func (s *githubIssuesSource) update(ctx context.Context) {
+	activities, err := fetchIssueActivities(s.Repositories, s.ActivityTypes)
 
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
+	if !s.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
 
-	if len(activities) > widget.Limit {
-		activities = activities[:widget.Limit]
+	if len(activities) > s.Limit {
+		activities = activities[:s.Limit]
 	}
 
 	for i := range activities {
-		activities[i].SourceIconURL = widget.Providers.assetResolver("icons/github.svg")
+		activities[i].SourceIconURL = s.Providers.assetResolver("icons/github.svg")
 	}
 
-	widget.Issues = activities
-
-	if widget.filterQuery != "" {
-		widget.rankForRelevancy(widget.filterQuery)
-	}
-}
-
-func (widget *issuesWidget) rankForRelevancy(query string) {
-	llm, err := NewLLM()
-	if err != nil {
-		slog.Error("Failed to initialize LLM", "error", err)
-		return
-	}
-
-	feed := make([]feedEntry, 0, len(widget.Issues))
-
-	for _, e := range widget.Issues {
-		feed = append(feed, feedEntry{
-			ID:          e.ID,
-			Title:       e.Title,
-			Description: e.Description,
-			URL:         e.URL,
-			ImageURL:    e.SourceIconURL,
-			PublishedAt: e.TimeUpdated,
-		})
-	}
-
-	matches, err := llm.filterFeed(context.Background(), feed, query)
-	if err != nil {
-		slog.Error("Failed to filter issues", "error", err)
-		return
-	}
-
-	matchesMap := make(map[string]feedMatch)
-	for _, match := range matches {
-		matchesMap[match.ID] = match
-	}
-
-	filtered := make([]issueActivity, 0, len(matches))
-	for _, e := range widget.Issues {
-		if match, ok := matchesMap[e.ID]; ok {
-			e.Summary = match.Highlight
-			e.MatchScore = match.Score
-			filtered = append(filtered, e)
-		}
-	}
-
-	widget.Issues = filtered
-}
-
-func (widget *issuesWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, issuesWidgetTemplate)
+	s.Issues = activities
 }
 
 type githubIssueResponse struct {

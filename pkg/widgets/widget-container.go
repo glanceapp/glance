@@ -27,7 +27,7 @@ func (widget *containerWidgetBase) _update(ctx context.Context) {
 	for w := range widget.Widgets {
 		widget := widget.Widgets[w]
 
-		if !widget.requiresUpdate(&now) {
+		if !widget.source().RequiresUpdate(&now) {
 			continue
 		}
 
@@ -49,7 +49,7 @@ func (widget *containerWidgetBase) _setProviders(providers *widgetProviders) {
 
 func (widget *containerWidgetBase) _requiresUpdate(now *time.Time) bool {
 	for i := range widget.Widgets {
-		if widget.Widgets[i].requiresUpdate(now) {
+		if widget.Widgets[i].source().RequiresUpdate(now) {
 			return true
 		}
 	}

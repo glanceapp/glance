@@ -1,12 +1,10 @@
-package widgets
+package sources
 
 import (
 	"math"
 	"sort"
 	"time"
 )
-
-var forumPostsTemplate = mustParseTemplate("forum-posts.html", "widget-base.html")
 
 type forumPost struct {
 	ID          string

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/glanceapp/glance/pkg/sources"
 	"github.com/glanceapp/glance/web"
 	"log"
 	"net/http"
@@ -48,7 +49,7 @@ type application struct {
 
 func newApplication(c *config) (*application, error) {
 	app := &application{
-		Version:    buildVersion,
+		Version:    sources.BuildVersion,
 		CreatedAt:  time.Now(),
 		Config:     *c,
 		slugToPage: make(map[string]*page),
@@ -247,7 +248,7 @@ func (p *page) updateOutdatedWidgets() error {
 	ctx := context.Background()
 
 	for _, widget := range allWidgets {
-		if !widget.requiresUpdate(&now) {
+		if !widget.source().RequiresUpdate(&now) {
 			continue
 		}
 
@@ -329,7 +330,6 @@ func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) 
 }
 
 func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Request) {
-	filterQuery := r.URL.Query().Get("filter")
 	page, exists := a.slugToPage[r.PathValue("page")]
 	if !exists {
 		a.handleNotFound(w, r)
@@ -338,12 +338,6 @@ func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Re
 
 	if a.handleUnauthorizedResponse(w, r, showUnauthorizedJSON) {
 		return
-	}
-
-	for _, col := range page.Columns {
-		for _, widget := range col.Widgets {
-			widget.setFilterQuery(filterQuery)
-		}
 	}
 
 	pageData := templateData{

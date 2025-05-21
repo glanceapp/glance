@@ -1,9 +1,8 @@
-package widgets
+package sources
 
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -13,8 +12,8 @@ import (
 	"github.com/go-shiori/go-readability"
 )
 
-type hackerNewsWidget struct {
-	widgetBase          `yaml:",inline"`
+type hackerNewsSource struct {
+	sourceBase          `yaml:",inline"`
 	Posts               forumPostList `yaml:"-"`
 	Limit               int           `yaml:"limit"`
 	SortBy              string        `yaml:"sort-by"`
@@ -24,52 +23,44 @@ type hackerNewsWidget struct {
 	ShowThumbnails      bool          `yaml:"-"`
 }
 
-func (widget *hackerNewsWidget) initialize() error {
-	widget.
+func (s *hackerNewsSource) initialize() error {
+	s.
 		withTitle("Hacker News").
 		withTitleURL("https://news.ycombinator.com/").
 		withCacheDuration(30 * time.Minute)
 
-	if widget.Limit <= 0 {
-		widget.Limit = 15
+	if s.Limit <= 0 {
+		s.Limit = 15
 	}
 
-	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-		widget.CollapseAfter = 5
+	if s.CollapseAfter == 0 || s.CollapseAfter < -1 {
+		s.CollapseAfter = 5
 	}
 
-	if widget.SortBy != "top" && widget.SortBy != "new" && widget.SortBy != "best" {
-		widget.SortBy = "top"
+	if s.SortBy != "top" && s.SortBy != "new" && s.SortBy != "best" {
+		s.SortBy = "top"
 	}
 
 	return nil
 }
 
-func (widget *hackerNewsWidget) update(ctx context.Context) {
-	posts, err := fetchHackerNewsPosts(widget.SortBy, 40, widget.CommentsUrlTemplate)
+func (s *hackerNewsSource) update(ctx context.Context) {
+	posts, err := fetchHackerNewsPosts(s.SortBy, 40, s.CommentsUrlTemplate)
 
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
+	if !s.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
 
-	if widget.ExtraSortBy == "engagement" {
+	if s.ExtraSortBy == "engagement" {
 		posts.calculateEngagement()
 		posts.sortByEngagement()
 	}
 
-	if widget.Limit < len(posts) {
-		posts = posts[:widget.Limit]
+	if s.Limit < len(posts) {
+		posts = posts[:s.Limit]
 	}
 
-	widget.Posts = posts
-
-	if widget.filterQuery != "" {
-		widget.rankByRelevancy(widget.filterQuery)
-	}
-}
-
-func (widget *hackerNewsWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, forumPostsTemplate)
+	s.Posts = posts
 }
 
 type hackerNewsPostResponseJson struct {
@@ -166,46 +157,4 @@ func fetchHackerNewsPosts(sort string, limit int, commentsUrlTemplate string) (f
 	}
 
 	return fetchHackerNewsPostsFromIds(postIds, commentsUrlTemplate)
-}
-
-func (widget *hackerNewsWidget) rankByRelevancy(query string) {
-	llm, err := NewLLM()
-	if err != nil {
-		slog.Error("Failed to initialize LLM", "error", err)
-		return
-	}
-
-	feed := make([]feedEntry, 0, len(widget.Posts))
-	for _, e := range widget.Posts {
-		feed = append(feed, feedEntry{
-			ID:          e.ID,
-			Title:       e.Title,
-			Description: e.Description,
-			URL:         e.TargetUrl,
-			ImageURL:    "",
-			PublishedAt: e.TimePosted,
-		})
-	}
-
-	matches, err := llm.filterFeed(context.Background(), feed, query)
-	if err != nil {
-		slog.Error("Failed to filter hacker news posts", "error", err)
-		return
-	}
-
-	matchesMap := make(map[string]feedMatch)
-	for _, match := range matches {
-		matchesMap[match.ID] = match
-	}
-
-	filtered := make(forumPostList, 0, len(matches))
-	for _, e := range widget.Posts {
-		if match, ok := matchesMap[e.ID]; ok {
-			e.MatchSummary = match.Highlight
-			e.MatchScore = match.Score
-			filtered = append(filtered, e)
-		}
-	}
-
-	widget.Posts = filtered
 }

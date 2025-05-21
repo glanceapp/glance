@@ -1,4 +1,4 @@
-package widgets
+package sources
 
 import (
 	"context"
@@ -10,7 +10,10 @@ import (
 	"io"
 	"math/rand/v2"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -41,7 +44,9 @@ type requestDoer interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
-var glanceUserAgentString = "Glance/" + buildVersion + " +https://github.com/glanceapp/glance"
+var BuildVersion = "dev"
+
+var pulseUserAgentString = "Pulse/" + BuildVersion + " +https://github.com/bartolomej/pulse"
 var userAgentPersistentVersion atomic.Int32
 
 func getBrowserUserAgentHeader() string {
@@ -237,4 +242,52 @@ func workerPoolDo[I any, O any](job *workerPoolJob[I, O]) ([]O, []error, error) 
 	}
 
 	return results, errs, err
+}
+
+func limitStringLength(s string, max int) (string, bool) {
+	asRunes := []rune(s)
+
+	if len(asRunes) > max {
+		return string(asRunes[:max]), true
+	}
+
+	return s, false
+}
+
+func parseRFC3339Time(t string) time.Time {
+	parsed, err := time.Parse(time.RFC3339, t)
+	if err != nil {
+		return time.Now()
+	}
+
+	return parsed
+}
+
+func normalizeVersionFormat(version string) string {
+	version = strings.ToLower(strings.TrimSpace(version))
+
+	if len(version) > 0 && version[0] != 'v' {
+		return "v" + version
+	}
+
+	return version
+}
+
+var urlSchemePattern = regexp.MustCompile(`^[a-z]+:\/\/`)
+
+func stripURLScheme(url string) string {
+	return urlSchemePattern.ReplaceAllString(url, "")
+}
+
+func extractDomainFromUrl(u string) string {
+	if u == "" {
+		return ""
+	}
+
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return ""
+	}
+
+	return strings.TrimPrefix(strings.ToLower(parsed.Host), "www.")
 }

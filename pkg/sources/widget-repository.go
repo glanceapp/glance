@@ -1,19 +1,16 @@
-package widgets
+package sources
 
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 )
 
-var repositoryWidgetTemplate = mustParseTemplate("repository.html", "widget-base.html")
-
-type repositoryWidget struct {
-	widgetBase          `yaml:",inline"`
+type githubRepositorySource struct {
+	sourceBase          `yaml:",inline"`
 	RequestedRepository string     `yaml:"repository"`
 	Token               string     `yaml:"token"`
 	PullRequestsLimit   int        `yaml:"pull-requests-limit"`
@@ -22,42 +19,38 @@ type repositoryWidget struct {
 	Repository          repository `yaml:"-"`
 }
 
-func (widget *repositoryWidget) initialize() error {
-	widget.withTitle("Repository").withCacheDuration(1 * time.Hour)
+func (s *githubRepositorySource) initialize() error {
+	s.withTitle("Repository").withCacheDuration(1 * time.Hour)
 
-	if widget.PullRequestsLimit == 0 || widget.PullRequestsLimit < -1 {
-		widget.PullRequestsLimit = 3
+	if s.PullRequestsLimit == 0 || s.PullRequestsLimit < -1 {
+		s.PullRequestsLimit = 3
 	}
 
-	if widget.IssuesLimit == 0 || widget.IssuesLimit < -1 {
-		widget.IssuesLimit = 3
+	if s.IssuesLimit == 0 || s.IssuesLimit < -1 {
+		s.IssuesLimit = 3
 	}
 
-	if widget.CommitsLimit == 0 || widget.CommitsLimit < -1 {
-		widget.CommitsLimit = -1
+	if s.CommitsLimit == 0 || s.CommitsLimit < -1 {
+		s.CommitsLimit = -1
 	}
 
 	return nil
 }
 
-func (widget *repositoryWidget) update(ctx context.Context) {
+func (s *githubRepositorySource) update(ctx context.Context) {
 	details, err := fetchRepositoryDetailsFromGithub(
-		widget.RequestedRepository,
-		string(widget.Token),
-		widget.PullRequestsLimit,
-		widget.IssuesLimit,
-		widget.CommitsLimit,
+		s.RequestedRepository,
+		string(s.Token),
+		s.PullRequestsLimit,
+		s.IssuesLimit,
+		s.CommitsLimit,
 	)
 
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
+	if !s.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
 
-	widget.Repository = details
-}
-
-func (widget *repositoryWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, repositoryWidgetTemplate)
+	s.Repository = details
 }
 
 type repository struct {

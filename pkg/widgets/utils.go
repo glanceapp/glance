@@ -27,25 +27,6 @@ func percentChange(current, previous float64) float64 {
 	return (current/previous - 1) * 100
 }
 
-func extractDomainFromUrl(u string) string {
-	if u == "" {
-		return ""
-	}
-
-	parsed, err := url.Parse(u)
-	if err != nil {
-		return ""
-	}
-
-	return strings.TrimPrefix(strings.ToLower(parsed.Host), "www.")
-}
-
-var urlSchemePattern = regexp.MustCompile(`^[a-z]+:\/\/`)
-
-func stripURLScheme(url string) string {
-	return urlSchemePattern.ReplaceAllString(url, "")
-}
-
 func isRunningInsideDockerContainer() bool {
 	_, err := os.Stat("/.dockerenv")
 	return err == nil
@@ -59,35 +40,6 @@ func prefixStringLines(prefix string, s string) string {
 	}
 
 	return strings.Join(lines, "\n")
-}
-
-func limitStringLength(s string, max int) (string, bool) {
-	asRunes := []rune(s)
-
-	if len(asRunes) > max {
-		return string(asRunes[:max]), true
-	}
-
-	return s, false
-}
-
-func parseRFC3339Time(t string) time.Time {
-	parsed, err := time.Parse(time.RFC3339, t)
-	if err != nil {
-		return time.Now()
-	}
-
-	return parsed
-}
-
-func normalizeVersionFormat(version string) string {
-	version = strings.ToLower(strings.TrimSpace(version))
-
-	if len(version) > 0 && version[0] != 'v' {
-		return "v" + version
-	}
-
-	return version
 }
 
 func titleToSlug(s string) string {

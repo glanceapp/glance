@@ -1,9 +1,8 @@
-package widgets
+package sources
 
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"regexp"
@@ -14,8 +13,8 @@ import (
 	"golang.org/x/net/html"
 )
 
-type mastodonWidget struct {
-	widgetBase     `yaml:",inline"`
+type mastodonSource struct {
+	sourceBase     `yaml:",inline"`
 	Posts          forumPostList `yaml:"-"`
 	InstanceURL    string        `yaml:"instance-url"`
 	Accounts       []string      `yaml:"accounts"`
@@ -25,47 +24,39 @@ type mastodonWidget struct {
 	ShowThumbnails bool          `yaml:"-"`
 }
 
-func (widget *mastodonWidget) initialize() error {
-	if widget.InstanceURL == "" {
+func (s *mastodonSource) initialize() error {
+	if s.InstanceURL == "" {
 		return fmt.Errorf("instance-url is required")
 	}
 
-	widget.
+	s.
 		withTitle("Mastodon").
-		withTitleURL(widget.InstanceURL).
+		withTitleURL(s.InstanceURL).
 		withCacheDuration(30 * time.Minute)
 
-	if widget.Limit <= 0 {
-		widget.Limit = 15
+	if s.Limit <= 0 {
+		s.Limit = 15
 	}
 
-	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-		widget.CollapseAfter = 5
+	if s.CollapseAfter == 0 || s.CollapseAfter < -1 {
+		s.CollapseAfter = 5
 	}
 
 	return nil
 }
 
-func (widget *mastodonWidget) update(ctx context.Context) {
-	posts, err := fetchMastodonPosts(widget.InstanceURL, widget.Accounts, widget.Hashtags)
+func (s *mastodonSource) update(ctx context.Context) {
+	posts, err := fetchMastodonPosts(s.InstanceURL, s.Accounts, s.Hashtags)
 
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
+	if !s.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
 
-	if widget.Limit < len(posts) {
-		posts = posts[:widget.Limit]
+	if s.Limit < len(posts) {
+		posts = posts[:s.Limit]
 	}
 
-	widget.Posts = posts
-
-	if widget.filterQuery != "" {
-		widget.rankByRelevancy(widget.filterQuery)
-	}
-}
-
-func (widget *mastodonWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, forumPostsTemplate)
+	s.Posts = posts
 }
 
 type mastodonPostResponseJson struct {
@@ -196,46 +187,4 @@ func oneLineTitle(text string, maxLen int) string {
 		return string(runes[:maxLen-1]) + "…"
 	}
 	return t
-}
-
-func (widget *mastodonWidget) rankByRelevancy(query string) {
-	llm, err := NewLLM()
-	if err != nil {
-		slog.Error("Failed to initialize LLM", "error", err)
-		return
-	}
-
-	feed := make([]feedEntry, 0, len(widget.Posts))
-	for _, e := range widget.Posts {
-		feed = append(feed, feedEntry{
-			ID:          e.ID,
-			Title:       e.Title,
-			Description: e.Description,
-			URL:         e.TargetUrl,
-			ImageURL:    e.ThumbnailUrl,
-			PublishedAt: e.TimePosted,
-		})
-	}
-
-	matches, err := llm.filterFeed(context.Background(), feed, query)
-	if err != nil {
-		slog.Error("Failed to filter Mastodon posts", "error", err)
-		return
-	}
-
-	matchesMap := make(map[string]feedMatch)
-	for _, match := range matches {
-		matchesMap[match.ID] = match
-	}
-
-	filtered := make(forumPostList, 0, len(matches))
-	for _, e := range widget.Posts {
-		if match, ok := matchesMap[e.ID]; ok {
-			e.MatchSummary = match.Highlight
-			e.MatchScore = match.Score
-			filtered = append(filtered, e)
-		}
-	}
-
-	widget.Posts = filtered
 }

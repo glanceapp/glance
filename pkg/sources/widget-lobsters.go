@@ -1,8 +1,7 @@
-package widgets
+package sources
 
 import (
 	"context"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -11,8 +10,8 @@ import (
 	"github.com/go-shiori/go-readability"
 )
 
-type lobstersWidget struct {
-	widgetBase     `yaml:",inline"`
+type lobstersSource struct {
+	sourceBase     `yaml:",inline"`
 	Posts          forumPostList `yaml:"-"`
 	InstanceURL    string        `yaml:"instance-url"`
 	CustomURL      string        `yaml:"custom-url"`
@@ -23,93 +22,42 @@ type lobstersWidget struct {
 	ShowThumbnails bool          `yaml:"-"`
 }
 
-func (widget *lobstersWidget) initialize() error {
-	widget.withTitle("Lobsters").withCacheDuration(time.Hour)
+func (s *lobstersSource) initialize() error {
+	s.withTitle("Lobsters").withCacheDuration(time.Hour)
 
-	if widget.InstanceURL == "" {
-		widget.withTitleURL("https://lobste.rs")
+	if s.InstanceURL == "" {
+		s.withTitleURL("https://lobste.rs")
 	} else {
-		widget.withTitleURL(widget.InstanceURL)
+		s.withTitleURL(s.InstanceURL)
 	}
 
-	if widget.SortBy == "" || (widget.SortBy != "hot" && widget.SortBy != "new") {
-		widget.SortBy = "hot"
+	if s.SortBy == "" || (s.SortBy != "hot" && s.SortBy != "new") {
+		s.SortBy = "hot"
 	}
 
-	if widget.Limit <= 0 {
-		widget.Limit = 15
+	if s.Limit <= 0 {
+		s.Limit = 15
 	}
 
-	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-		widget.CollapseAfter = 5
+	if s.CollapseAfter == 0 || s.CollapseAfter < -1 {
+		s.CollapseAfter = 5
 	}
 
 	return nil
 }
 
-func (widget *lobstersWidget) update(ctx context.Context) {
-	posts, err := fetchLobstersPosts(widget.CustomURL, widget.InstanceURL, widget.SortBy, widget.Tags)
+func (s *lobstersSource) update(ctx context.Context) {
+	posts, err := fetchLobstersPosts(s.CustomURL, s.InstanceURL, s.SortBy, s.Tags)
 
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
+	if !s.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
 
-	if widget.Limit < len(posts) {
-		posts = posts[:widget.Limit]
+	if s.Limit < len(posts) {
+		posts = posts[:s.Limit]
 	}
 
-	widget.Posts = posts
-
-	if widget.filterQuery != "" {
-		widget.rankByRelevancy(widget.filterQuery)
-	}
-}
-
-func (widget *lobstersWidget) rankByRelevancy(query string) {
-	llm, err := NewLLM()
-	if err != nil {
-		slog.Error("Failed to initialize LLM", "error", err)
-		return
-	}
-
-	feed := make([]feedEntry, 0, len(widget.Posts))
-
-	for _, e := range widget.Posts {
-		feed = append(feed, feedEntry{
-			ID:          e.ID,
-			Title:       e.Title,
-			Description: e.Description,
-			URL:         e.TargetUrl,
-			ImageURL:    "",
-			PublishedAt: e.TimePosted,
-		})
-	}
-
-	matches, err := llm.filterFeed(context.Background(), feed, query)
-	if err != nil {
-		slog.Error("Failed to filter lobsters posts", "error", err)
-		return
-	}
-
-	matchesMap := make(map[string]feedMatch)
-	for _, match := range matches {
-		matchesMap[match.ID] = match
-	}
-
-	filtered := make(forumPostList, 0, len(matches))
-	for _, e := range widget.Posts {
-		if match, ok := matchesMap[e.ID]; ok {
-			e.MatchSummary = match.Highlight
-			e.MatchScore = match.Score
-			filtered = append(filtered, e)
-		}
-	}
-
-	widget.Posts = filtered
-}
-
-func (widget *lobstersWidget) Render() template.HTML {
-	return widget.renderTemplate(widget, forumPostsTemplate)
+	s.Posts = posts
 }
 
 type lobstersPostResponseJson struct {

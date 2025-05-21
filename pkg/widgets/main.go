@@ -2,16 +2,10 @@ package widgets
 
 import (
 	"fmt"
-	"github.com/glanceapp/glance/web"
-	"io"
-	"log"
-	"net/http"
-	"os"
-
+	"github.com/glanceapp/glance/pkg/sources"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 )
-
-var buildVersion = "dev"
 
 func Main() int {
 	options, err := parseCliOptions()
@@ -22,13 +16,8 @@ func Main() int {
 
 	switch options.intent {
 	case cliIntentVersionPrint:
-		fmt.Println(buildVersion)
+		fmt.Println(sources.BuildVersion)
 	case cliIntentServe:
-		// remove in v0.10.0
-		if serveUpdateNoticeIfConfigLocationNotMigrated(options.configPath) {
-			return 1
-		}
-
 		if err := serveApp(options.configPath); err != nil {
 			fmt.Println(err)
 			return 1
@@ -177,42 +166,4 @@ func serveApp(configPath string) error {
 
 	<-exitChannel
 	return nil
-}
-
-func serveUpdateNoticeIfConfigLocationNotMigrated(configPath string) bool {
-	if !isRunningInsideDockerContainer() {
-		return false
-	}
-
-	if _, err := os.Stat(configPath); err == nil {
-		return false
-	}
-
-	// glance.yml wasn't mounted to begin with or was incorrectly mounted as a directory
-	if stat, err := os.Stat("glance.yml"); err != nil || stat.IsDir() {
-		return false
-	}
-
-	templateFile, _ := web.TemplateFS.Open("v0.7-update-notice-page.html")
-	bodyContents, _ := io.ReadAll(templateFile)
-
-	fmt.Println("!!! WARNING !!!")
-	fmt.Println("The default location of glance.yml in the Docker image has changed starting from v0.7.0.")
-	fmt.Println("Please see https://github.com/glanceapp/glance/blob/main/docs/v0.7.0-upgrade.md for more information.")
-
-	mux := http.NewServeMux()
-	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(web.StaticFS))))
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(bodyContents))
-	})
-
-	server := http.Server{
-		Addr:    ":8080",
-		Handler: mux,
-	}
-	server.ListenAndServe()
-
-	return true
 }

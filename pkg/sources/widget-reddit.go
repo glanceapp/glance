@@ -1,11 +1,10 @@
-package widgets
+package sources
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"html"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -16,13 +15,8 @@ import (
 	"github.com/go-shiori/go-readability"
 )
 
-var (
-	redditWidgetHorizontalCardsTemplate = mustParseTemplate("reddit-horizontal-cards.html", "widget-base.html")
-	redditWidgetVerticalCardsTemplate   = mustParseTemplate("reddit-vertical-cards.html", "widget-base.html")
-)
-
-type redditWidget struct {
-	widgetBase          `yaml:",inline"`
+type redditSource struct {
+	sourceBase          `yaml:",inline"`
 	Posts               forumPostList     `yaml:"-"`
 	Subreddit           string            `yaml:"subreddit"`
 	Proxy               proxyOptionsField `yaml:"proxy"`
@@ -49,36 +43,36 @@ type redditWidget struct {
 	} `yaml:"app-auth"`
 }
 
-func (widget *redditWidget) initialize() error {
-	if widget.Subreddit == "" {
+func (s *redditSource) initialize() error {
+	if s.Subreddit == "" {
 		return errors.New("subreddit is required")
 	}
 
-	if widget.Limit <= 0 {
-		widget.Limit = 15
+	if s.Limit <= 0 {
+		s.Limit = 15
 	}
 
-	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-		widget.CollapseAfter = 5
+	if s.CollapseAfter == 0 || s.CollapseAfter < -1 {
+		s.CollapseAfter = 5
 	}
 
-	s := widget.SortBy
-	if s != "hot" && s != "new" && s != "top" && s != "rising" {
-		widget.SortBy = "hot"
+	sort := s.SortBy
+	if sort != "hot" && sort != "new" && sort != "top" && sort != "rising" {
+		s.SortBy = "hot"
 	}
 
-	p := widget.TopPeriod
+	p := s.TopPeriod
 	if p != "hour" && p != "day" && p != "week" && p != "month" && p != "year" && p != "all" {
-		widget.TopPeriod = "day"
+		s.TopPeriod = "day"
 	}
 
-	if widget.RequestURLTemplate != "" {
-		if !strings.Contains(widget.RequestURLTemplate, "{REQUEST-URL}") {
+	if s.RequestURLTemplate != "" {
+		if !strings.Contains(s.RequestURLTemplate, "{REQUEST-URL}") {
 			return errors.New("no `{REQUEST-URL}` placeholder specified")
 		}
 	}
 
-	a := &widget.AppAuth
+	a := &s.AppAuth
 	if a.Name != "" || a.ID != "" || a.Secret != "" {
 		if a.Name == "" || a.ID == "" || a.Secret == "" {
 			return errors.New("application name, client ID and client secret are required")
@@ -86,47 +80,30 @@ func (widget *redditWidget) initialize() error {
 		a.enabled = true
 	}
 
-	widget.
-		withTitle("r/" + widget.Subreddit).
-		withTitleURL("https://www.reddit.com/r/" + widget.Subreddit + "/").
+	s.
+		withTitle("r/" + s.Subreddit).
+		withTitleURL("https://www.reddit.com/r/" + s.Subreddit + "/").
 		withCacheDuration(30 * time.Minute)
 
 	return nil
 }
 
-func (widget *redditWidget) update(ctx context.Context) {
-	posts, err := widget.fetchSubredditPosts()
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
+func (s *redditSource) update(ctx context.Context) {
+	posts, err := s.fetchSubredditPosts()
+	if !s.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
 
-	if len(posts) > widget.Limit {
-		posts = posts[:widget.Limit]
+	if len(posts) > s.Limit {
+		posts = posts[:s.Limit]
 	}
 
-	if widget.ExtraSortBy == "engagement" {
+	if s.ExtraSortBy == "engagement" {
 		posts.calculateEngagement()
 		posts.sortByEngagement()
 	}
 
-	widget.Posts = posts
-
-	if widget.filterQuery != "" {
-		widget.filter(widget.filterQuery)
-	}
-}
-
-func (widget *redditWidget) Render() template.HTML {
-	if widget.Style == "horizontal-cards" {
-		return widget.renderTemplate(widget, redditWidgetHorizontalCardsTemplate)
-	}
-
-	if widget.Style == "vertical-cards" {
-		return widget.renderTemplate(widget, redditWidgetVerticalCardsTemplate)
-	}
-
-	return widget.renderTemplate(widget, forumPostsTemplate)
-
+	s.Posts = posts
 }
 
 type subredditResponseJson struct {
@@ -157,21 +134,21 @@ type subredditResponseJson struct {
 	} `json:"data"`
 }
 
-func (widget *redditWidget) parseCustomCommentsURL(subreddit, postId, postPath string) string {
-	template := strings.ReplaceAll(widget.CommentsURLTemplate, "{SUBREDDIT}", subreddit)
+func (s *redditSource) parseCustomCommentsURL(subreddit, postId, postPath string) string {
+	template := strings.ReplaceAll(s.CommentsURLTemplate, "{SUBREDDIT}", subreddit)
 	template = strings.ReplaceAll(template, "{POST-ID}", postId)
 	template = strings.ReplaceAll(template, "{POST-PATH}", strings.TrimLeft(postPath, "/"))
 
 	return template
 }
 
-func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
+func (s *redditSource) fetchSubredditPosts() (forumPostList, error) {
 	var client requestDoer = defaultHTTPClient
 	var baseURL string
 	var requestURL string
 	var headers http.Header
 	query := url.Values{}
-	app := &widget.AppAuth
+	app := &s.AppAuth
 
 	if !app.enabled {
 		baseURL = "https://www.reddit.com"
@@ -182,7 +159,7 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 		baseURL = "https://oauth.reddit.com"
 
 		if app.accessToken == "" || time.Now().Add(time.Minute).After(app.tokenExpiresAt) {
-			if err := widget.fetchNewAppAccessToken(); err != nil {
+			if err := s.fetchNewAppAccessToken(); err != nil {
 				return nil, fmt.Errorf("fetching new app access token: %v", err)
 			}
 		}
@@ -193,25 +170,25 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 		}
 	}
 
-	if widget.Limit > 25 {
-		query.Set("limit", strconv.Itoa(widget.Limit))
+	if s.Limit > 25 {
+		query.Set("limit", strconv.Itoa(s.Limit))
 	}
 
-	if widget.Search != "" {
-		query.Set("q", widget.Search+" subreddit:"+widget.Subreddit)
-		query.Set("sort", widget.SortBy)
+	if s.Search != "" {
+		query.Set("q", s.Search+" subreddit:"+s.Subreddit)
+		query.Set("sort", s.SortBy)
 		requestURL = fmt.Sprintf("%s/search.json?%s", baseURL, query.Encode())
 	} else {
-		if widget.SortBy == "top" {
-			query.Set("t", widget.TopPeriod)
+		if s.SortBy == "top" {
+			query.Set("t", s.TopPeriod)
 		}
-		requestURL = fmt.Sprintf("%s/r/%s/%s.json?%s", baseURL, widget.Subreddit, widget.SortBy, query.Encode())
+		requestURL = fmt.Sprintf("%s/r/%s/%s.json?%s", baseURL, s.Subreddit, s.SortBy, query.Encode())
 	}
 
-	if widget.RequestURLTemplate != "" {
-		requestURL = strings.ReplaceAll(widget.RequestURLTemplate, "{REQUEST-URL}", requestURL)
-	} else if widget.Proxy.client != nil {
-		client = widget.Proxy.client
+	if s.RequestURLTemplate != "" {
+		requestURL = strings.ReplaceAll(s.RequestURLTemplate, "{REQUEST-URL}", requestURL)
+	} else if s.Proxy.client != nil {
+		client = s.Proxy.client
 	}
 
 	request, err := http.NewRequest("GET", requestURL, nil)
@@ -240,10 +217,10 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 
 		var commentsUrl string
 
-		if widget.CommentsURLTemplate == "" {
+		if s.CommentsURLTemplate == "" {
 			commentsUrl = "https://www.reddit.com" + post.Permalink
 		} else {
-			commentsUrl = widget.parseCustomCommentsURL(widget.Subreddit, post.Id, post.Permalink)
+			commentsUrl = s.parseCustomCommentsURL(s.Subreddit, post.Id, post.Permalink)
 		}
 
 		forumPost := forumPost{
@@ -265,7 +242,7 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 			forumPost.TargetUrl = post.Url
 		}
 
-		if widget.ShowFlairs && post.Flair != "" {
+		if s.ShowFlairs && post.Flair != "" {
 			forumPost.Tags = append(forumPost.Tags, post.Flair)
 		}
 
@@ -273,10 +250,10 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 			forumPost.IsCrosspost = true
 			forumPost.TargetUrlDomain = "r/" + post.ParentList[0].Subreddit
 
-			if widget.CommentsURLTemplate == "" {
+			if s.CommentsURLTemplate == "" {
 				forumPost.TargetUrl = "https://www.reddit.com" + post.ParentList[0].Permalink
 			} else {
-				forumPost.TargetUrl = widget.parseCustomCommentsURL(
+				forumPost.TargetUrl = s.parseCustomCommentsURL(
 					post.ParentList[0].Subreddit,
 					post.ParentList[0].Id,
 					post.ParentList[0].Permalink,
@@ -299,14 +276,14 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 	return posts, nil
 }
 
-func (widget *redditWidget) fetchNewAppAccessToken() error {
+func (s *redditSource) fetchNewAppAccessToken() error {
 	body := strings.NewReader("grant_type=client_credentials")
 	req, err := http.NewRequest("POST", "https://www.reddit.com/api/v1/access_token", body)
 	if err != nil {
 		return fmt.Errorf("creating request for app access token: %v", err)
 	}
 
-	app := &widget.AppAuth
+	app := &s.AppAuth
 	req.SetBasicAuth(app.ID, app.Secret)
 	req.Header.Add("User-Agent", app.Name+"/1.0")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -316,7 +293,10 @@ func (widget *redditWidget) fetchNewAppAccessToken() error {
 		ExpiresIn   int    `json:"expires_in"`
 	}
 
-	client := ternary(widget.Proxy.client != nil, widget.Proxy.client, defaultHTTPClient)
+	client := defaultHTTPClient
+	if s.Proxy.client != nil {
+		client = s.Proxy.client
+	}
 	response, err := decodeJsonFromRequest[tokenResponse](client, req)
 	if err != nil {
 		return err
@@ -326,47 +306,4 @@ func (widget *redditWidget) fetchNewAppAccessToken() error {
 	app.tokenExpiresAt = time.Now().Add(time.Duration(response.ExpiresIn) * time.Second)
 
 	return nil
-}
-
-func (widget *redditWidget) filter(query string) {
-	llm, err := NewLLM()
-	if err != nil {
-		slog.Error("Failed to initialize LLM", "error", err)
-		return
-	}
-
-	feed := make([]feedEntry, 0, len(widget.Posts))
-	for _, e := range widget.Posts {
-		feed = append(feed, feedEntry{
-			ID:          e.ID,
-			Title:       e.Title,
-			Description: e.Description,
-			URL:         e.TargetUrl,
-			ImageURL:    e.ThumbnailUrl,
-			PublishedAt: e.TimePosted,
-		})
-	}
-
-	matches, err := llm.filterFeed(context.Background(), feed, query)
-
-	if err != nil {
-		slog.Error("Failed to filter reddit posts", "error", err)
-		return
-	}
-
-	matchesMap := make(map[string]feedMatch)
-	for _, match := range matches {
-		matchesMap[match.ID] = match
-	}
-
-	filtered := make(forumPostList, 0, len(matches))
-	for _, e := range widget.Posts {
-		if match, ok := matchesMap[e.ID]; ok {
-			e.MatchSummary = match.Highlight
-			e.MatchScore = match.Score
-			filtered = append(filtered, e)
-		}
-	}
-
-	widget.Posts = filtered
 }

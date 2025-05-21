@@ -5,9 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/glanceapp/glance/pkg/sources"
 	"html/template"
 	"log/slog"
-	"math"
 	"net/http"
 	"sync/atomic"
 	"time"
@@ -25,32 +25,14 @@ func newWidget(widgetType string) (widget, error) {
 	var w widget
 
 	switch widgetType {
-	case "mastodon":
-		w = &mastodonWidget{}
-	case "hacker-news":
-		w = &hackerNewsWidget{}
-	case "releases":
-		w = &releasesWidget{}
-	case "reddit":
-		w = &redditWidget{}
-	case "rss":
-		w = &rssWidget{}
-	case "lobsters":
-		w = &lobstersWidget{}
-	case "issues":
-		w = &issuesWidget{}
-	case "change-detection":
-		w = &changeDetectionWidget{}
-	case "repository":
-		w = &repositoryWidget{}
 	case "group":
 		w = &groupWidget{}
 	case "split-column":
 		w = &splitColumnWidget{}
-	case "custom-api":
-		w = &customAPIWidget{}
 	default:
-		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
+		// widget type is treated as a data source type in this case,
+		// which depends on the base widget that renders the generic widget display card
+		w = &widgetBase{}
 	}
 
 	w.setID(widgetIDCounter.Add(1))
@@ -81,6 +63,13 @@ func (w *widgets) UnmarshalYAML(node *yaml.Node) error {
 			return fmt.Errorf("line %d: %w", node.Line, err)
 		}
 
+		source, err := sources.NewSource(meta.Type)
+		if err != nil {
+			return fmt.Errorf("line %d: %w", node.Line, err)
+		}
+
+		widget.setSource(source)
+
 		if err = node.Decode(widget); err != nil {
 			return err
 		}
@@ -98,13 +87,13 @@ type widget interface {
 	GetID() uint64
 
 	initialize() error
-	requiresUpdate(*time.Time) bool
 	setProviders(*widgetProviders)
 	update(context.Context)
 	setID(uint64)
-	setFilterQuery(string)
 	handleRequest(w http.ResponseWriter, r *http.Request)
 	setHideHeader(bool)
+	source() sources.Source
+	setSource(sources.Source)
 }
 
 type feedEntry struct {
@@ -125,41 +114,22 @@ const (
 )
 
 type widgetBase struct {
-	ID                  uint64           `yaml:"-"`
-	Providers           *widgetProviders `yaml:"-"`
-	Type                string           `yaml:"type"`
-	Title               string           `yaml:"title"`
-	TitleURL            string           `yaml:"title-url"`
-	HideHeader          bool             `yaml:"hide-header"`
-	CSSClass            string           `yaml:"css-class"`
-	CustomCacheDuration durationField    `yaml:"cache"`
-	ContentAvailable    bool             `yaml:"-"`
-	WIP                 bool             `yaml:"-"`
-	Error               error            `yaml:"-"`
-	Notice              error            `yaml:"-"`
-	templateBuffer      bytes.Buffer     `yaml:"-"`
-	cacheDuration       time.Duration    `yaml:"-"`
-	cacheType           cacheType        `yaml:"-"`
-	nextUpdate          time.Time        `yaml:"-"`
-	updateRetriedTimes  int              `yaml:"-"`
-	// filterQuery TODO: pass this state to the Render method in a different way
-	filterQuery string `yaml:"-"`
+	ID               uint64           `yaml:"-"`
+	Providers        *widgetProviders `yaml:"-"`
+	Type             string           `yaml:"type"`
+	HideHeader       bool             `yaml:"hide-header"`
+	CSSClass         string           `yaml:"css-class"`
+	ContentAvailable bool             `yaml:"-"`
+	WIP              bool             `yaml:"-"`
+	Error            error            `yaml:"-"`
+	Notice           error            `yaml:"-"`
+	// Source TODO(pulse): Temporary store source on a widget. Later it should be stored in a source registry and only passed to the widget for rendering.
+	Source         sources.Source `yaml:"-"`
+	templateBuffer bytes.Buffer   `yaml:"-"`
 }
 
 type widgetProviders struct {
 	assetResolver func(string) string
-}
-
-func (w *widgetBase) requiresUpdate(now *time.Time) bool {
-	if w.cacheType == cacheTypeInfinite {
-		return false
-	}
-
-	if w.nextUpdate.IsZero() {
-		return true
-	}
-
-	return now.After(w.nextUpdate)
 }
 
 func (w *widgetBase) IsWIP() bool {
@@ -168,10 +138,6 @@ func (w *widgetBase) IsWIP() bool {
 
 func (w *widgetBase) update(ctx context.Context) {
 
-}
-
-func (w *widgetBase) setFilterQuery(query string) {
-	w.filterQuery = query
 }
 
 func (w *widgetBase) GetID() uint64 {
@@ -198,6 +164,24 @@ func (w *widgetBase) setProviders(providers *widgetProviders) {
 	w.Providers = providers
 }
 
+func (w *widgetBase) source() sources.Source {
+	return w.Source
+}
+
+func (w *widgetBase) setSource(s sources.Source) {
+	w.Source = s
+}
+
+func (w *widgetBase) Render() template.HTML {
+	//TODO(pulse) render the generic widget card
+	panic("implement me")
+}
+
+func (w *widgetBase) initialize() error {
+	//TODO(pulse) implement me
+	panic("implement me")
+}
+
 func (w *widgetBase) renderTemplate(data any, t *template.Template) template.HTML {
 	w.templateBuffer.Reset()
 	err := t.Execute(&w.templateBuffer, data)
@@ -222,130 +206,4 @@ func (w *widgetBase) renderTemplate(data any, t *template.Template) template.HTM
 	}
 
 	return template.HTML(w.templateBuffer.String())
-}
-
-func (w *widgetBase) withTitle(title string) *widgetBase {
-	if w.Title == "" {
-		w.Title = title
-	}
-
-	return w
-}
-
-func (w *widgetBase) withTitleURL(titleURL string) *widgetBase {
-	if w.TitleURL == "" {
-		w.TitleURL = titleURL
-	}
-
-	return w
-}
-
-func (w *widgetBase) withCacheDuration(duration time.Duration) *widgetBase {
-	w.cacheType = cacheTypeDuration
-
-	if duration == -1 || w.CustomCacheDuration == 0 {
-		w.cacheDuration = duration
-	} else {
-		w.cacheDuration = time.Duration(w.CustomCacheDuration)
-	}
-
-	return w
-}
-
-func (w *widgetBase) withCacheOnTheHour() *widgetBase {
-	w.cacheType = cacheTypeOnTheHour
-
-	return w
-}
-
-func (w *widgetBase) withNotice(err error) *widgetBase {
-	w.Notice = err
-
-	return w
-}
-
-func (w *widgetBase) withError(err error) *widgetBase {
-	if err == nil && !w.ContentAvailable {
-		w.ContentAvailable = true
-	}
-
-	w.Error = err
-
-	return w
-}
-
-func (w *widgetBase) canContinueUpdateAfterHandlingErr(err error) bool {
-	// TODO: needs covering more edge cases.
-	// if there's partial content and we update early there's a chance
-	// the early update returns even less content than the initial update.
-	// need some kind of mechanism that tells us whether we should update early
-	// or not depending on the number of things that failed during the initial
-	// and subsequent update and how they failed - ie whether it was server
-	// error (like gateway timeout, do retry early) or client error (like
-	// hitting a rate limit, don't retry early). will require reworking a
-	// good amount of code in the feed package and probably having a custom
-	// error type that holds more information because screw wrapping errors.
-	// alternatively have a resource cache and only refetch the failed resources,
-	// then rebuild the widget.
-
-	if err != nil {
-		w.scheduleEarlyUpdate()
-
-		if !errors.Is(err, errPartialContent) {
-			w.withError(err)
-			w.withNotice(nil)
-			return false
-		}
-
-		w.withError(nil)
-		w.withNotice(err)
-		return true
-	}
-
-	w.withNotice(nil)
-	w.withError(nil)
-	w.scheduleNextUpdate()
-	return true
-}
-
-func (w *widgetBase) getNextUpdateTime() time.Time {
-	now := time.Now()
-
-	if w.cacheType == cacheTypeDuration {
-		return now.Add(w.cacheDuration)
-	}
-
-	if w.cacheType == cacheTypeOnTheHour {
-		return now.Add(time.Duration(
-			((60-now.Minute())*60)-now.Second(),
-		) * time.Second)
-	}
-
-	return time.Time{}
-}
-
-func (w *widgetBase) scheduleNextUpdate() *widgetBase {
-	w.nextUpdate = w.getNextUpdateTime()
-	w.updateRetriedTimes = 0
-
-	return w
-}
-
-func (w *widgetBase) scheduleEarlyUpdate() *widgetBase {
-	w.updateRetriedTimes++
-
-	if w.updateRetriedTimes > 5 {
-		w.updateRetriedTimes = 5
-	}
-
-	nextEarlyUpdate := time.Now().Add(time.Duration(math.Pow(float64(w.updateRetriedTimes), 2)) * time.Minute)
-	nextUsualUpdate := w.getNextUpdateTime()
-
-	if nextEarlyUpdate.After(nextUsualUpdate) {
-		w.nextUpdate = nextUsualUpdate
-	} else {
-		w.nextUpdate = nextEarlyUpdate
-	}
-
-	return w
 }
