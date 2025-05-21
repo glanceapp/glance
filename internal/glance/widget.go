@@ -155,6 +155,7 @@ type widgetBase struct {
 	HideHeader          bool             `yaml:"hide-header"`
 	CSSClass            string           `yaml:"css-class"`
 	CustomCacheDuration durationField    `yaml:"cache"`
+	RTL                 bool             `yaml:"rtl"`
 	ContentAvailable    bool             `yaml:"-"`
 	WIP                 bool             `yaml:"-"`
 	Error               error            `yaml:"-"`
