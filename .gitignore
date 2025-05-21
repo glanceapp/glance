@@ -1,5 +1,9 @@
+.
 /assets
 /build
 /playground
 /.idea
 /glance*.yml
+/config
+.env
+docker-compose.yaml
