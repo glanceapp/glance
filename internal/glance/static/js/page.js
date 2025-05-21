@@ -741,6 +741,45 @@ function initThemePicker() {
     })
 }
 
+function setupTouch() {
+    let touchstartX, touchstartY;
+    let touchendX, touchendY;
+    let touchstartT, touchendT;
+
+    document.addEventListener('touchstart', function (event) {
+        touchstartX = event.changedTouches[0].screenX;
+        touchstartY = event.changedTouches[0].screenY;
+        touchstartT = new Date();
+    }, false);
+
+    document.addEventListener('touchend', function (event) {
+        touchendX = event.changedTouches[0].screenX;
+        touchendY = event.changedTouches[0].screenY;
+        touchendT = new Date();
+        let touchTime = touchendT - touchstartT;
+
+        const swipeThresholdX = 50; //Min horizontal
+        const swipeThresholdY = 150; //Max vertical 
+        const swipeThresholdT = 800; //Max time
+
+        let touchX = Math.abs(touchendX - touchstartX);
+        let touchY = Math.abs(touchendY - touchstartY);
+
+        if (touchX > touchY*2 && touchX > swipeThresholdX && touchY < swipeThresholdY && touchTime < swipeThresholdT) {
+            let pos = document.querySelector('input[name="column"]:checked').value;
+            let maxCol = document.getElementsByName('column').length-1;
+            if (touchendX < touchstartX) {
+                pos++
+                pos = pos > maxCol ? 0 : pos;
+            } else {
+                pos--
+                pos = pos < 0 ? maxCol : pos;	  
+            }
+            document.querySelector('input[name="column"][value="' + pos + '"]').click();
+        }
+    }, false);
+}
+
 async function setupPage() {
     initThemePicker();
 
@@ -763,6 +802,7 @@ async function setupPage() {
         setupMasonries();
         setupDynamicRelativeTime();
         setupLazyImages();
+        setupTouch();
     } finally {
         pageElement.classList.add("content-ready");
         pageElement.setAttribute("aria-busy", "false");
