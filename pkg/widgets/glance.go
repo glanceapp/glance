@@ -1,10 +1,11 @@
-package glance
+package widgets
 
 import (
 	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/glanceapp/glance/web"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -433,7 +434,7 @@ func (a *application) handleWidgetRequest(w http.ResponseWriter, r *http.Request
 }
 
 func (a *application) StaticAssetPath(asset string) string {
-	return a.Config.Server.BaseURL + "/static/" + staticFSHash + "/" + asset
+	return a.Config.Server.BaseURL + "/static/" + web.StaticFSHash + "/" + asset
 }
 
 func (a *application) VersionedAssetPath(asset string) string {
@@ -461,10 +462,10 @@ func (a *application) server() (func() error, func() error) {
 	}
 
 	mux.Handle(
-		fmt.Sprintf("GET /static/%s/{path...}", staticFSHash),
+		fmt.Sprintf("GET /static/%s/{path...}", web.StaticFSHash),
 		http.StripPrefix(
-			"/static/"+staticFSHash,
-			fileServerWithCache(http.FS(staticFS), STATIC_ASSETS_CACHE_DURATION),
+			"/static/"+web.StaticFSHash,
+			fileServerWithCache(http.FS(web.StaticFS), STATIC_ASSETS_CACHE_DURATION),
 		),
 	)
 
@@ -473,10 +474,10 @@ func (a *application) server() (func() error, func() error) {
 		int(STATIC_ASSETS_CACHE_DURATION.Seconds()),
 	)
 
-	mux.HandleFunc(fmt.Sprintf("GET /static/%s/css/bundle.css", staticFSHash), func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(fmt.Sprintf("GET /static/%s/css/bundle.css", web.StaticFSHash), func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Cache-Control", assetCacheControlValue)
 		w.Header().Add("Content-Type", "text/css; charset=utf-8")
-		w.Write(bundledCSSContents)
+		w.Write(web.BundledCSSContents)
 	})
 
 	mux.HandleFunc("GET /manifest.json", func(w http.ResponseWriter, r *http.Request) {

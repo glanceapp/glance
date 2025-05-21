@@ -1,4 +1,4 @@
-package glance
+package widgets
 
 import (
 	"bytes"
@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"os"
 	"regexp"
-	"slices"
 	"strings"
 	"time"
 )
@@ -39,53 +38,6 @@ func extractDomainFromUrl(u string) string {
 	}
 
 	return strings.TrimPrefix(strings.ToLower(parsed.Host), "www.")
-}
-
-func svgPolylineCoordsFromYValues(width float64, height float64, values []float64) string {
-	if len(values) < 2 {
-		return ""
-	}
-
-	verticalPadding := height * 0.02
-	height -= verticalPadding * 2
-	coordinates := make([]string, len(values))
-	distanceBetweenPoints := width / float64(len(values)-1)
-	min := slices.Min(values)
-	max := slices.Max(values)
-
-	for i := range values {
-		coordinates[i] = fmt.Sprintf(
-			"%.2f,%.2f",
-			float64(i)*distanceBetweenPoints,
-			((max-values[i])/(max-min))*height+verticalPadding,
-		)
-	}
-
-	return strings.Join(coordinates, " ")
-}
-
-func maybeCopySliceWithoutZeroValues[T int | float64](values []T) []T {
-	if len(values) == 0 {
-		return values
-	}
-
-	for i := range values {
-		if values[i] != 0 {
-			continue
-		}
-
-		c := make([]T, 0, len(values)-1)
-
-		for i := range values {
-			if values[i] != 0 {
-				c = append(c, values[i])
-			}
-		}
-
-		return c
-	}
-
-	return values
 }
 
 var urlSchemePattern = regexp.MustCompile(`^[a-z]+:\/\/`)
@@ -165,10 +117,6 @@ func executeTemplateToString(t *template.Template, data any) (string, error) {
 	}
 
 	return b.String(), nil
-}
-
-func stringToBool(s string) bool {
-	return s == "true" || s == "yes"
 }
 
 func itemAtIndexOrDefault[T any](items []T, index int, def T) T {

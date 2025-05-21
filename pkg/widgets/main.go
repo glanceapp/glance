@@ -1,7 +1,8 @@
-package glance
+package widgets
 
 import (
 	"fmt"
+	"github.com/glanceapp/glance/web"
 	"io"
 	"log"
 	"net/http"
@@ -192,7 +193,7 @@ func serveUpdateNoticeIfConfigLocationNotMigrated(configPath string) bool {
 		return false
 	}
 
-	templateFile, _ := templateFS.Open("v0.7-update-notice-page.html")
+	templateFile, _ := web.TemplateFS.Open("v0.7-update-notice-page.html")
 	bodyContents, _ := io.ReadAll(templateFile)
 
 	fmt.Println("!!! WARNING !!!")
@@ -200,7 +201,7 @@ func serveUpdateNoticeIfConfigLocationNotMigrated(configPath string) bool {
 	fmt.Println("Please see https://github.com/glanceapp/glance/blob/main/docs/v0.7.0-upgrade.md for more information.")
 
 	mux := http.NewServeMux()
-	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(web.StaticFS))))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		w.Header().Set("Content-Type", "text/html")

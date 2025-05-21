@@ -1,4 +1,4 @@
-package glance
+package widgets
 
 import (
 	"bytes"

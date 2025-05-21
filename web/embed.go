@@ -1,4 +1,4 @@
-package glance
+package web
 
 import (
 	"bytes"
@@ -23,15 +23,17 @@ var _staticFS embed.FS
 //go:embed templates
 var _templateFS embed.FS
 
-var staticFS, _ = fs.Sub(_staticFS, "static")
-var templateFS, _ = fs.Sub(_templateFS, "templates")
+var StaticFS, _ = fs.Sub(_staticFS, "static")
+var TemplateFS, _ = fs.Sub(_templateFS, "templates")
+
+var whitespaceAtBeginningOfLinePattern = regexp.MustCompile(`(?m)^\s+`)
 
 func readAllFromStaticFS(path string) ([]byte, error) {
 	// For some reason fs.FS only works with forward slashes, so in case we're
 	// running on Windows or pass paths with backslashes we need to replace them.
 	path = strings.ReplaceAll(path, "\\", "/")
 
-	file, err := staticFS.Open(path)
+	file, err := StaticFS.Open(path)
 	if err != nil {
 		return nil, err
 	}
@@ -39,8 +41,8 @@ func readAllFromStaticFS(path string) ([]byte, error) {
 	return io.ReadAll(file)
 }
 
-var staticFSHash = func() string {
-	hash, err := computeFSHash(staticFS)
+var StaticFSHash = func() string {
+	hash, err := computeFSHash(StaticFS)
 	if err != nil {
 		log.Printf("Could not compute static assets cache key: %v", err)
 		return strconv.FormatInt(time.Now().Unix(), 10)
@@ -83,8 +85,8 @@ func computeFSHash(files fs.FS) (string, error) {
 var cssImportPattern = regexp.MustCompile(`(?m)^@import "(.*?)";$`)
 var cssSingleLineCommentPattern = regexp.MustCompile(`(?m)^\s*\/\*.*?\*\/$`)
 
-// Yes, we bundle at runtime, give comptime pls
-var bundledCSSContents = func() []byte {
+// BundledCSSContents Yes, we bundle at runtime, give comptime pls
+var BundledCSSContents = func() []byte {
 	const mainFilePath = "css/main.css"
 
 	var recursiveParseImports func(path string, depth int) ([]byte, error)

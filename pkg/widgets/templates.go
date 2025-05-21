@@ -1,7 +1,8 @@
-package glance
+package widgets
 
 import (
 	"fmt"
+	"github.com/glanceapp/glance/web"
 	"html/template"
 	"math"
 	"strconv"
@@ -75,7 +76,7 @@ var globalTemplateFunctions = template.FuncMap{
 func mustParseTemplate(primary string, dependencies ...string) *template.Template {
 	t, err := template.New(primary).
 		Funcs(globalTemplateFunctions).
-		ParseFS(templateFS, append([]string{primary}, dependencies...)...)
+		ParseFS(web.TemplateFS, append([]string{primary}, dependencies...)...)
 
 	if err != nil {
 		panic(err)
