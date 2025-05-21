@@ -24,6 +24,14 @@ type mastodonSource struct {
 	ShowThumbnails bool          `yaml:"-"`
 }
 
+func (s *mastodonSource) Feed() []Activity {
+	activities := make([]Activity, len(s.Posts))
+	for i, post := range s.Posts {
+		activities[i] = post
+	}
+	return activities
+}
+
 func (s *mastodonSource) initialize() error {
 	if s.InstanceURL == "" {
 		return fmt.Errorf("instance-url is required")
@@ -60,7 +68,7 @@ func (s *mastodonSource) update(ctx context.Context) {
 }
 
 type mastodonPostResponseJson struct {
-	ID        string    `json:"id"`
+	ID        string    `json:"ID"`
 	Content   string    `json:"content"`
 	URL       string    `json:"url"`
 	CreatedAt time.Time `json:"created_at"`
@@ -141,7 +149,7 @@ func convertMastodonPostToForumPost(post mastodonPostResponseJson) forumPost {
 
 	forumPost := forumPost{
 		ID:            post.ID,
-		Title:         title,
+		title:         title,
 		Description:   plainText,
 		DiscussionUrl: post.URL,
 		CommentCount:  post.Replies,

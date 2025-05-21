@@ -22,6 +22,14 @@ type lobstersSource struct {
 	ShowThumbnails bool          `yaml:"-"`
 }
 
+func (s *lobstersSource) Feed() []Activity {
+	activities := make([]Activity, len(s.Posts))
+	for i, post := range s.Posts {
+		activities[i] = post
+	}
+	return activities
+}
+
 func (s *lobstersSource) initialize() error {
 	s.withTitle("Lobsters").withCacheDuration(time.Hour)
 
@@ -91,7 +99,7 @@ func fetchLobstersPostsFromFeed(feedUrl string) (forumPostList, error) {
 
 		forumPost := forumPost{
 			ID:              post.ID,
-			Title:           post.Title,
+			title:           post.Title,
 			Description:     post.Title,
 			DiscussionUrl:   post.CommentsURL,
 			TargetUrl:       post.URL,

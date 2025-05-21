@@ -15,7 +15,8 @@ type groupWidget struct {
 }
 
 func (widget *groupWidget) initialize() error {
-	widget.withError(nil)
+	// TODO(pulse): Refactor error handling
+	//widget.withError(nil)
 	widget.HideHeader = true
 
 	for i := range widget.Widgets {

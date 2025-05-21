@@ -20,6 +20,14 @@ type changeDetectionWidget struct {
 	CollapseAfter    int                      `yaml:"collapse-after"`
 }
 
+func (s *changeDetectionWidget) Feed() []Activity {
+	activities := make([]Activity, len(s.ChangeDetections))
+	for i, c := range s.ChangeDetections {
+		activities[i] = c
+	}
+	return activities
+}
+
 func (s *changeDetectionWidget) initialize() error {
 	s.withTitle("Change Detection").withCacheDuration(1 * time.Hour)
 
@@ -62,16 +70,37 @@ func (s *changeDetectionWidget) update(ctx context.Context) {
 	s.ChangeDetections = watches
 }
 
-func (s *changeDetectionWidget) Feed() changeDetectionWatchList {
-	return s.ChangeDetections
-}
-
 type changeDetectionWatch struct {
-	Title        string
-	URL          string
+	title        string
+	url          string
 	LastChanged  time.Time
 	DiffURL      string
 	PreviousHash string
+}
+
+func (c changeDetectionWatch) UID() string {
+	return fmt.Sprintf("%s-%d", c.url, c.LastChanged.Unix())
+}
+
+func (c changeDetectionWatch) Title() string {
+	return c.title
+}
+
+func (c changeDetectionWatch) Body() string {
+	return ""
+}
+
+func (c changeDetectionWatch) URL() string {
+	return c.url
+}
+
+func (c changeDetectionWatch) ImageURL() string {
+	// TODO(pulse): Use website favicon
+	return ""
+}
+
+func (c changeDetectionWatch) CreatedAt() time.Time {
+	return c.LastChanged
 }
 
 type changeDetectionWatchList []changeDetectionWatch
@@ -151,7 +180,7 @@ func fetchWatchesFromChangeDetection(instanceURL string, requestedWatchIDs []str
 		watchJson := responses[i]
 
 		watch := changeDetectionWatch{
-			URL:     watchJson.URL,
+			url:     watchJson.URL,
 			DiffURL: fmt.Sprintf("%s/diff/%s?from_version=%d", instanceURL, requestedWatchIDs[i], watchJson.LastChanged-1),
 		}
 
@@ -162,9 +191,9 @@ func fetchWatchesFromChangeDetection(instanceURL string, requestedWatchIDs []str
 		}
 
 		if watchJson.Title != "" {
-			watch.Title = watchJson.Title
+			watch.title = watchJson.Title
 		} else {
-			watch.Title = strings.TrimPrefix(strings.Trim(stripURLScheme(watchJson.URL), "/"), "www.")
+			watch.title = strings.TrimPrefix(strings.Trim(stripURLScheme(watchJson.URL), "/"), "www.")
 		}
 
 		if watchJson.PreviousHash != "" {

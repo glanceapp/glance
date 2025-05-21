@@ -38,6 +38,14 @@ type rssSource struct {
 	cachedFeeds      map[string]*cachedRSSFeed `yaml:"-"`
 }
 
+func (s *rssSource) Feed() []Activity {
+	activities := make([]Activity, len(s.Items))
+	for i, item := range s.Items {
+		activities[i] = item
+	}
+	return activities
+}
+
 func (s *rssSource) initialize() error {
 	s.withTitle("RSS Feed").withCacheDuration(2 * time.Hour)
 
@@ -87,10 +95,6 @@ func (s *rssSource) update(ctx context.Context) {
 	s.Items = items
 }
 
-func (s *rssSource) Feed() rssFeedItemList {
-	return s.Items
-}
-
 type cachedRSSFeed struct {
 	etag         string
 	lastModified string
@@ -99,16 +103,38 @@ type cachedRSSFeed struct {
 
 type rssFeedItem struct {
 	ID          string
-	Summary     string
-	MatchScore  int
 	ChannelName string
 	ChannelURL  string
-	Title       string
+	title       string
 	Link        string
-	ImageURL    string
+	imageURL    string
 	Categories  []string
 	Description string
 	PublishedAt time.Time
+}
+
+func (r rssFeedItem) UID() string {
+	return r.ID
+}
+
+func (r rssFeedItem) Title() string {
+	return r.title
+}
+
+func (r rssFeedItem) Body() string {
+	return r.Description
+}
+
+func (r rssFeedItem) URL() string {
+	return r.Link
+}
+
+func (r rssFeedItem) ImageURL() string {
+	return r.imageURL
+}
+
+func (r rssFeedItem) CreatedAt() time.Time {
+	return r.PublishedAt
 }
 
 type rssFeedRequest struct {
@@ -258,9 +284,9 @@ func (s *rssSource) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFeedIte
 		}
 
 		if item.Title != "" {
-			rssItem.Title = html.UnescapeString(item.Title)
+			rssItem.title = html.UnescapeString(item.Title)
 		} else {
-			rssItem.Title = shortenFeedDescriptionLen(item.Description, 100)
+			rssItem.title = shortenFeedDescriptionLen(item.Description, 100)
 		}
 
 		if request.IsDetailed {
@@ -294,14 +320,14 @@ func (s *rssSource) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFeedIte
 		}
 
 		if item.Image != nil {
-			rssItem.ImageURL = item.Image.URL
+			rssItem.imageURL = item.Image.URL
 		} else if url := findThumbnailInItemExtensions(item); url != "" {
-			rssItem.ImageURL = url
+			rssItem.imageURL = url
 		} else if feed.Image != nil {
 			if len(feed.Image.URL) > 0 && feed.Image.URL[0] == '/' {
-				rssItem.ImageURL = strings.TrimRight(feed.Link, "/") + feed.Image.URL
+				rssItem.imageURL = strings.TrimRight(feed.Link, "/") + feed.Image.URL
 			} else {
-				rssItem.ImageURL = feed.Image.URL
+				rssItem.imageURL = feed.Image.URL
 			}
 		}
 

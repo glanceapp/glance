@@ -8,7 +8,7 @@ import (
 
 type forumPost struct {
 	ID          string
-	Title       string
+	title       string
 	Description string
 	// MatchSummary is the LLM generated rationale for why this is a good match for the filter query
 	MatchSummary string
@@ -24,6 +24,30 @@ type forumPost struct {
 	TimePosted      time.Time
 	Tags            []string
 	IsCrosspost     bool
+}
+
+func (f forumPost) UID() string {
+	return f.ID
+}
+
+func (f forumPost) Title() string {
+	return f.title
+}
+
+func (f forumPost) Body() string {
+	return f.Description
+}
+
+func (f forumPost) URL() string {
+	return f.TargetUrl
+}
+
+func (f forumPost) ImageURL() string {
+	return f.ThumbnailUrl
+}
+
+func (f forumPost) CreatedAt() time.Time {
+	return f.TimePosted
 }
 
 type forumPostList []forumPost

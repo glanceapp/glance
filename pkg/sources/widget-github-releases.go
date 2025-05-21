@@ -27,6 +27,14 @@ type githubReleasesSource struct {
 	ShowSourceIcon bool              `yaml:"show-source-icon"`
 }
 
+func (s *githubReleasesSource) Feed() []Activity {
+	activities := make([]Activity, len(s.Releases))
+	for i, r := range s.Releases {
+		activities[i] = r
+	}
+	return activities
+}
+
 func (s *githubReleasesSource) initialize() error {
 	s.withTitle("Releases").withCacheDuration(2 * time.Hour)
 
@@ -80,7 +88,6 @@ const (
 
 type appRelease struct {
 	ID            string
-	Summary       string
 	Description   string
 	Source        releaseSource
 	SourceIconURL string
@@ -91,6 +98,30 @@ type appRelease struct {
 	Downvotes     int
 	MatchSummary  string
 	MatchScore    int
+}
+
+func (a appRelease) UID() string {
+	return a.ID
+}
+
+func (a appRelease) Title() string {
+	return a.Name
+}
+
+func (a appRelease) Body() string {
+	return a.Description
+}
+
+func (a appRelease) URL() string {
+	return a.NotesUrl
+}
+
+func (a appRelease) ImageURL() string {
+	return a.SourceIconURL
+}
+
+func (a appRelease) CreatedAt() time.Time {
+	return a.TimeReleased
 }
 
 type appReleaseList []appRelease
@@ -203,7 +234,7 @@ func fetchLatestReleaseTask(request *releaseRequest) (*appRelease, error) {
 }
 
 type githubReleaseResponseJson struct {
-	ID          int    `json:"id"`
+	ID          int    `json:"ID"`
 	TagName     string `json:"tag_name"`
 	PublishedAt string `json:"published_at"`
 	HtmlUrl     string `json:"html_url"`

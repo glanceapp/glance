@@ -15,7 +15,8 @@ type splitColumnWidget struct {
 }
 
 func (widget *splitColumnWidget) initialize() error {
-	widget.withError(nil).withTitle("Split Column").setHideHeader(true)
+	// TODO(pulse): Refactor error handling
+	//widget.withError(nil).withTitle("Split Column").setHideHeader(true)
 
 	if err := widget.containerWidgetBase._initializeWidgets(); err != nil {
 		return err

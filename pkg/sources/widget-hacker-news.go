@@ -23,6 +23,14 @@ type hackerNewsSource struct {
 	ShowThumbnails      bool          `yaml:"-"`
 }
 
+func (s *hackerNewsSource) Feed() []Activity {
+	activities := make([]Activity, len(s.Posts))
+	for i, post := range s.Posts {
+		activities[i] = post
+	}
+	return activities
+}
+
 func (s *hackerNewsSource) initialize() error {
 	s.
 		withTitle("Hacker News").
@@ -64,7 +72,7 @@ func (s *hackerNewsSource) update(ctx context.Context) {
 }
 
 type hackerNewsPostResponseJson struct {
-	Id           int    `json:"id"`
+	Id           int    `json:"ID"`
 	Score        int    `json:"score"`
 	Title        string `json:"title"`
 	TargetUrl    string `json:"url,omitempty"`
@@ -115,7 +123,7 @@ func fetchHackerNewsPostsFromIds(postIds []int, commentsUrlTemplate string) (for
 
 		forumPost := forumPost{
 			ID:              strconv.Itoa(res.Id),
-			Title:           res.Title,
+			title:           res.Title,
 			Description:     res.Title,
 			DiscussionUrl:   commentsUrl,
 			TargetUrl:       res.TargetUrl,

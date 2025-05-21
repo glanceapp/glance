@@ -34,13 +34,21 @@ type redditSource struct {
 
 	AppAuth struct {
 		Name   string `yaml:"name"`
-		ID     string `yaml:"id"`
+		ID     string `yaml:"ID"`
 		Secret string `yaml:"secret"`
 
 		enabled        bool
 		accessToken    string
 		tokenExpiresAt time.Time
 	} `yaml:"app-auth"`
+}
+
+func (s *redditSource) Feed() []Activity {
+	activities := make([]Activity, len(s.Posts))
+	for i, post := range s.Posts {
+		activities[i] = post
+	}
+	return activities
 }
 
 func (s *redditSource) initialize() error {
@@ -110,7 +118,7 @@ type subredditResponseJson struct {
 	Data struct {
 		Children []struct {
 			Data struct {
-				Id            string  `json:"id"`
+				Id            string  `json:"ID"`
 				Title         string  `json:"title"`
 				SelfText      string  `json:"selftext"`
 				Upvotes       int     `json:"ups"`
@@ -125,7 +133,7 @@ type subredditResponseJson struct {
 				Thumbnail     string  `json:"thumbnail"`
 				Flair         string  `json:"link_flair_text"`
 				ParentList    []struct {
-					Id        string `json:"id"`
+					Id        string `json:"ID"`
 					Subreddit string `json:"subreddit"`
 					Permalink string `json:"permalink"`
 				} `json:"crosspost_parent_list"`
@@ -225,7 +233,7 @@ func (s *redditSource) fetchSubredditPosts() (forumPostList, error) {
 
 		forumPost := forumPost{
 			ID:              post.Id,
-			Title:           html.UnescapeString(post.Title),
+			title:           html.UnescapeString(post.Title),
 			Description:     post.SelfText,
 			DiscussionUrl:   commentsUrl,
 			TargetUrlDomain: post.Domain,

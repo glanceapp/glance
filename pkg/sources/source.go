@@ -19,20 +19,18 @@ func NewSource(widgetType string) (Source, error) {
 		s = &mastodonSource{}
 	case "hacker-news":
 		s = &hackerNewsSource{}
-	case "releases":
-		s = &githubReleasesSource{}
 	case "reddit":
 		s = &redditSource{}
-	case "rss":
-		s = &rssSource{}
 	case "lobsters":
 		s = &lobstersSource{}
+	case "rss":
+		s = &rssSource{}
+	case "releases":
+		s = &githubReleasesSource{}
 	case "issues":
 		s = &githubIssuesSource{}
 	case "change-detection":
 		s = &changeDetectionWidget{}
-	case "repository":
-		s = &githubRepositorySource{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}
@@ -40,18 +38,20 @@ func NewSource(widgetType string) (Source, error) {
 	return s, nil
 }
 
+// Source TODO(pulse): Feed() returns cached activities, but refactor it to fetch fresh activities given filters and cache them in a global activity registry.
 type Source interface {
-	// Feed TODO(pulse): Currently returns cached activities, but refactor it to fetch fresh activities given filters and cache them in a global activity registry.
+	// Feed return cached feed entries in a standard Activity format.
 	Feed() []Activity
 	RequiresUpdate(now *time.Time) bool
 }
 
 type Activity interface {
+	UID() string
 	Title() string
 	Body() string
 	URL() string
 	ImageURL() string
-	PublishedAt() string
+	CreatedAt() time.Time
 	// TODO: Add Metadata() that returns custom fields?
 }
 

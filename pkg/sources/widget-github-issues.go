@@ -25,6 +25,14 @@ type githubIssuesSource struct {
 	ActivityTypes []string          `yaml:"activity-types"`
 }
 
+func (s *githubIssuesSource) Feed() []Activity {
+	activities := make([]Activity, len(s.Issues))
+	for i, issue := range s.Issues {
+		activities[i] = issue
+	}
+	return activities
+}
+
 type issueActivity struct {
 	ID            string
 	Summary       string
@@ -33,13 +41,37 @@ type issueActivity struct {
 	SourceIconURL string
 	Repository    string
 	IssueNumber   int
-	Title         string
+	title         string
 	State         string
 	ActivityType  string
 	IssueType     string
-	URL           string
+	HTMLURL       string
 	TimeUpdated   time.Time
 	MatchScore    int
+}
+
+func (i issueActivity) UID() string {
+	return i.ID
+}
+
+func (i issueActivity) Title() string {
+	return i.title
+}
+
+func (i issueActivity) Body() string {
+	return i.Description
+}
+
+func (i issueActivity) URL() string {
+	return i.HTMLURL
+}
+
+func (i issueActivity) ImageURL() string {
+	return i.SourceIconURL
+}
+
+func (i issueActivity) CreatedAt() time.Time {
+	return i.TimeUpdated
 }
 
 type issueActivityList []issueActivity
@@ -131,7 +163,7 @@ type githubIssueResponse struct {
 }
 
 type githubIssueCommentResponse struct {
-	ID        int    `json:"id"`
+	ID        int    `json:"ID"`
 	Body      string `json:"body"`
 	IssueURL  string `json:"issue_url"`
 	HTMLURL   string `json:"html_url"`
@@ -195,11 +227,11 @@ func fetchIssueActivityTask(request *issueRequest) ([]issueActivity, error) {
 			Source:       "github",
 			Repository:   request.Repository,
 			IssueNumber:  issue.Number,
-			Title:        issue.Title,
+			title:        issue.Title,
 			State:        issue.State,
 			ActivityType: issue.State,
 			IssueType:    issueType,
-			URL:          issue.HTMLURL,
+			HTMLURL:      issue.HTMLURL,
 			TimeUpdated:  parseRFC3339Time(issue.UpdatedAt),
 		})
 	}
@@ -226,9 +258,9 @@ func fetchIssueActivityTask(request *issueRequest) ([]issueActivity, error) {
 			Source:       "github",
 			Repository:   request.Repository,
 			ActivityType: "commented",
-			Title:        title,
+			title:        title,
 			IssueType:    "issue",
-			URL:          comment.HTMLURL,
+			HTMLURL:      comment.HTMLURL,
 			TimeUpdated:  parseRFC3339Time(comment.UpdatedAt),
 		})
 	}

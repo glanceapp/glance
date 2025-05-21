@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"math"
 	"net/http"
-	"net/url"
 	"os"
 	"regexp"
 	"strings"
