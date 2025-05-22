@@ -464,9 +464,9 @@ The following helper functions provided by Go's `text/template` are available:
 - `eq(a, b any) bool`: Compares two values for equality.
 - `ne(a, b any) bool`: Compares two values for inequality.
 - `lt(a, b any) bool`: Compares two values for less than.
-- `lte(a, b any) bool`: Compares two values for less than or equal to.
+- `le(a, b any) bool`: Compares two values for less than or equal to.
 - `gt(a, b any) bool`: Compares two values for greater than.
-- `gte(a, b any) bool`: Compares two values for greater than or equal to.
+- `ge(a, b any) bool`: Compares two values for greater than or equal to.
 - `and(args ...bool) bool`: Returns true if **all** arguments are true; accepts two or more boolean values.
 - `or(args ...bool) bool`: Returns true if **any** argument is true; accepts two or more boolean values.
 - `not(a bool) bool`: Returns the opposite of the value.
