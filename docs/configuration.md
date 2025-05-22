@@ -872,6 +872,11 @@ A list of playlist IDs:
     - PL8mG-RkN2uTxTK4m_Vl2dYR9yE41kRdBg
 ```
 
+The playlist ID can be found in its link which is in the form of
+```
+https://www.youtube.com...&list={ID}&...
+```
+
 ##### `limit`
 The maximum number of videos to show.
 
