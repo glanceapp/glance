@@ -720,7 +720,6 @@ function setupAnalogClocks() {
     updateAnalogClocks();
 }
 
-
 async function setupCalendars() {
     const elems = document.getElementsByClassName("calendar");
     if (elems.length == 0) return;
