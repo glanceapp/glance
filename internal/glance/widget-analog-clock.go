@@ -13,6 +13,7 @@ type analogClockWidget struct {
 	widgetBase `yaml:",inline"`
 	cachedHTML template.HTML `yaml:"-"`
 	HideAmPmIndicator bool   `yaml:"hide-am-pm-indicator"`
+	HideDate bool  `yaml:"hide-date"`
 	DialMarkers string `yaml:"dial-markers"`
 	Timezones  []struct {
 		Timezone string `yaml:"timezone"`

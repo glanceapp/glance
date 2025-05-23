@@ -62,7 +62,7 @@
     flex-wrap: wrap;
 }
 
-.am-pm-indicator{
+.am-pm-indicator {
     position: absolute;
     text-align: center;
     width: 100%;
@@ -91,15 +91,58 @@
     transform: translate(-50%, -50%);
 }
 
-.label-12 { transform: translate(-50%, -50%) rotate(-90deg)   translate(var(--label-radius)) rotate(90deg); }
-.label-1  { transform: translate(-50%, -50%) rotate(-60deg)   translate(var(--label-radius)) rotate(60deg); }
-.label-2  { transform: translate(-50%, -50%) rotate(-30deg)   translate(var(--label-radius)) rotate(30deg); }
-.label-3  { transform: translate(-50%, -50%) rotate(0deg)     translate(var(--label-radius)) rotate(0deg); }
-.label-4  { transform: translate(-50%, -50%) rotate(30deg)    translate(var(--label-radius)) rotate(-30deg); }
-.label-5  { transform: translate(-50%, -50%) rotate(60deg)    translate(var(--label-radius)) rotate(-60deg); }
-.label-6  { transform: translate(-50%, -50%) rotate(90deg)    translate(var(--label-radius)) rotate(-90deg); }
-.label-7  { transform: translate(-50%, -50%) rotate(120deg)   translate(var(--label-radius)) rotate(-120deg); }
-.label-8  { transform: translate(-50%, -50%) rotate(150deg)   translate(var(--label-radius)) rotate(-150deg); }
-.label-9  { transform: translate(-50%, -50%) rotate(180deg)   translate(var(--label-radius)) rotate(-180deg); }
-.label-10 { transform: translate(-50%, -50%) rotate(210deg)   translate(var(--label-radius)) rotate(-210deg); }
-.label-11 { transform: translate(-50%, -50%) rotate(240deg)   translate(var(--label-radius)) rotate(-240deg); }
+.label-12 {
+    transform: translate(-50%, -50%) rotate(-90deg) translate(var(--label-radius)) rotate(90deg);
+}
+
+.label-1 {
+    transform: translate(-50%, -50%) rotate(-60deg) translate(var(--label-radius)) rotate(60deg);
+}
+
+.label-2 {
+    transform: translate(-50%, -50%) rotate(-30deg) translate(var(--label-radius)) rotate(30deg);
+}
+
+.label-3 {
+    transform: translate(-50%, -50%) rotate(0deg) translate(var(--label-radius)) rotate(0deg);
+}
+
+.label-4 {
+    transform: translate(-50%, -50%) rotate(30deg) translate(var(--label-radius)) rotate(-30deg);
+}
+
+.label-5 {
+    transform: translate(-50%, -50%) rotate(60deg) translate(var(--label-radius)) rotate(-60deg);
+}
+
+.label-6 {
+    transform: translate(-50%, -50%) rotate(90deg) translate(var(--label-radius)) rotate(-90deg);
+}
+
+.label-7 {
+    transform: translate(-50%, -50%) rotate(120deg) translate(var(--label-radius)) rotate(-120deg);
+}
+
+.label-8 {
+    transform: translate(-50%, -50%) rotate(150deg) translate(var(--label-radius)) rotate(-150deg);
+}
+
+.label-9 {
+    transform: translate(-50%, -50%) rotate(180deg) translate(var(--label-radius)) rotate(-180deg);
+}
+
+.label-10 {
+    transform: translate(-50%, -50%) rotate(210deg) translate(var(--label-radius)) rotate(-210deg);
+}
+
+.label-11 {
+    transform: translate(-50%, -50%) rotate(240deg) translate(var(--label-radius)) rotate(-240deg);
+}
+
+.date-slot {
+    position: absolute;
+    text-align: center;
+    top: 38%;
+    right: 35px;
+    line-height: 16px;
+}

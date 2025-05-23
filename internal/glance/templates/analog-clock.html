@@ -2,6 +2,7 @@
 
 {{ define "widget-content" }}
 {{ $hideAmPmIndicator := .HideAmPmIndicator }}
+{{ $hideDate := .HideDate }}
 {{ $dialMarkers := .DialMarkers }}
 <div class="analog-clock">
     <ul class="analog-clock-list">
@@ -11,6 +12,9 @@
                 <div class="hand minute-hand"></div>
                 <div class="hand second-hand"></div>
                 <div class="center-dot"></div>
+                {{ if not $hideDate }}
+                <div class="date-slot"></div>
+                {{ end }}
                 {{ if not $hideAmPmIndicator }}
                 <div class="text-truncate text-label am-pm-indicator"></div>
                 {{ end }}
@@ -46,6 +50,9 @@
                 <div class="hand minute-hand"></div>
                 <div class="hand second-hand"></div>
                 <div class="center-dot"></div>
+                {{ if not $hideDate }}
+                <div class="date-slot"></div>
+                {{ end }}
                 {{ if not $hideAmPmIndicator }}
                 <div class="text-truncate text-label am-pm-indicator"></div>
                 {{ end }}

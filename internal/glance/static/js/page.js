@@ -500,6 +500,7 @@ function afterContentReady(callback) {
 
 const weekDayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const shortMonthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function makeSettableTimeElement(element, hourFormat) {
     const fragment = document.createDocumentFragment();
@@ -642,6 +643,7 @@ function setupAnalogClocks() {
         const minuteHand = face.querySelector('.minute-hand');
         const secondHand = face.querySelector('.second-hand');
         const am_pm_indicator = face.querySelector('.am-pm-indicator');
+        const dateSlot = face.querySelector('.date-slot');
 
         let lastSecond = null;
         let rotation = 0; // keep continuous rotation
@@ -679,6 +681,9 @@ function setupAnalogClocks() {
 
             if (am_pm_indicator) {
                 am_pm_indicator.textContent = date.getHours() < 12 ? 'AM' : 'PM';
+            }
+            if (dateSlot) {
+                dateSlot.innerHTML = `${date.getDate()}<br/>${shortMonthNames[date.getMonth()]}`;
             }
         };
     }
