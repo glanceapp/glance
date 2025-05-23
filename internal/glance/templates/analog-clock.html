@@ -2,7 +2,7 @@
 
 {{ define "widget-content" }}
 {{ $hideAmPmIndicator := .HideAmPmIndicator }}
-{{ $tickStyle := .DialMarkers }}
+{{ $dialMarkers := .DialMarkers }}
 <div class="analog-clock">
     <ul class="analog-clock-list">
         <li class="items-center gap-15">
@@ -14,7 +14,7 @@
                 {{ if not $hideAmPmIndicator }}
                 <div class="text-truncate text-label am-pm-indicator"></div>
                 {{ end }}
-                {{ if eq $tickStyle "NumericalFull" }}
+                {{ if eq $dialMarkers "NumericalFull" }}
                 <div class="clock-marking-label-container">
                     <div class="clock-label label-1">1</div>
                     <div class="clock-label label-2">2</div>
@@ -29,7 +29,7 @@
                     <div class="clock-label label-11">11</div>
                     <div class="clock-label label-12">12</div>
                 </div>
-                {{ else if eq $tickStyle "NumericalMinimal" }}
+                {{ else if eq $dialMarkers "NumericalMinimal" }}
                 <div class="clock-marking-label-container">
                     <div class="clock-label label-3">3</div>
                     <div class="clock-label label-6">6</div>
@@ -51,7 +51,7 @@
                 {{ end }}
                 <div class="text-truncate text-label">{{ if ne .Label "" }}{{ .Label }}{{ else }}{{ .Timezone }}{{ end
                     }}</div>
-                {{ if eq $tickStyle "NumericalFull" }}
+                {{ if eq $dialMarkers "NumericalFull" }}
                 <div class="clock-marking-label-container">
                     <div class="clock-label label-1">1</div>
                     <div class="clock-label label-2">2</div>
@@ -66,7 +66,7 @@
                     <div class="clock-label label-11">11</div>
                     <div class="clock-label label-12">12</div>
                 </div>
-                {{ else if eq $tickStyle "NumericalMinimal" }}
+                {{ else if eq $dialMarkers "NumericalMinimal" }}
                 <div class="clock-marking-label-container">
                     <div class="clock-label label-3">3</div>
                     <div class="clock-label label-6">6</div>

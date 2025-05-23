@@ -21,7 +21,15 @@ type analogClockWidget struct {
 }
 
 func (widget *analogClockWidget) initialize() error {
-	widget.withTitle("AnalogClock").withError(nil)
+	widget.withTitle("Clock").withError(nil)
+
+	if widget.DialMarkers == "" {
+		widget.DialMarkers = "NumericalFull"
+	}
+
+	if widget.DialMarkers != "NumericalFull" && widget.DialMarkers != "NumericalMinimal" && widget.DialMarkers != "None" {
+		return errors.New("dial-markers must be either NumericalFull, NumericalMinimal, or None");
+	}
 
 	for t := range widget.Timezones {
 		if widget.Timezones[t].Timezone == "" {
