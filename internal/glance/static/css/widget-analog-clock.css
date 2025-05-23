@@ -88,7 +88,7 @@
     font-size: 14px;
     font-weight: bold;
     transform-origin: center;
-    background: var(--color-text-base);
+    color: var(--color-text-base);
     transform: translate(-50%, -50%);
 }
 
