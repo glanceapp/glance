@@ -1,6 +1,7 @@
 @import "widget-bookmarks.css";
 @import "widget-calendar.css";
 @import "widget-clock.css";
+@import "widget-analog-clock.css";
 @import "widget-dns-stats.css";
 @import "widget-docker-containers.css";
 @import "widget-group.css";

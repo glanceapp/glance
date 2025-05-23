@@ -1,0 +1,107 @@
+.analog-face {
+    --label-radius: 60px; /* You can easily change this later */
+    --tick-radius: -60px; /* Adjusted to be slightly less than label radius */
+    width: 160px;
+    height: 160px;
+    border: 6px solid #ccc;
+    border-radius: 50%;
+    position: relative;
+    margin: 0 auto;
+}
+
+.hand {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: 0% 50%;
+    transition: transform 0.5s ease-in-out;
+}
+
+.hour-hand {
+    width: 30%;
+    height: 4px;
+    background: #333;
+}
+
+.minute-hand {
+    width: 40%;
+    height: 3px;
+    background: #666;
+}
+
+.second-hand {
+    width: 45%;
+    height: 2px;
+    background: red;
+}
+
+.center-dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #000;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.text-label {
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    bottom: 30px;
+}
+
+.analog-clock-list {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+.am-pm-indicator{
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    top: 30px;
+}
+
+.clock-marking-label-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.clock-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    transform-origin: center;
+    background: var(--color-text-base);
+    transform: translate(-50%, -50%);
+}
+
+/* Adjusted for correct position starting at top (12 o'clock) */
+.label-12 { transform: translate(-50%, -50%) rotate(-90deg)   translate(var(--label-radius)) rotate(90deg); }
+.label-1  { transform: translate(-50%, -50%) rotate(-60deg)   translate(var(--label-radius)) rotate(60deg); }
+.label-2  { transform: translate(-50%, -50%) rotate(-30deg)   translate(var(--label-radius)) rotate(30deg); }
+.label-3  { transform: translate(-50%, -50%) rotate(0deg)     translate(var(--label-radius)) rotate(0deg); }
+.label-4  { transform: translate(-50%, -50%) rotate(30deg)    translate(var(--label-radius)) rotate(-30deg); }
+.label-5  { transform: translate(-50%, -50%) rotate(60deg)    translate(var(--label-radius)) rotate(-60deg); }
+.label-6  { transform: translate(-50%, -50%) rotate(90deg)    translate(var(--label-radius)) rotate(-90deg); }
+.label-7  { transform: translate(-50%, -50%) rotate(120deg)   translate(var(--label-radius)) rotate(-120deg); }
+.label-8  { transform: translate(-50%, -50%) rotate(150deg)   translate(var(--label-radius)) rotate(-150deg); }
+.label-9  { transform: translate(-50%, -50%) rotate(180deg)   translate(var(--label-radius)) rotate(-180deg); }
+.label-10 { transform: translate(-50%, -50%) rotate(210deg)   translate(var(--label-radius)) rotate(-210deg); }
+.label-11 { transform: translate(-50%, -50%) rotate(240deg)   translate(var(--label-radius)) rotate(-240deg); }

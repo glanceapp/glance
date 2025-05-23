@@ -631,6 +631,91 @@ function setupClocks() {
     updateClocks();
 }
 
+function setupAnalogClocks() {
+    const clocks = document.getElementsByClassName('analog-clock');
+    if (clocks.length === 0) return;
+
+    const updateCallbacks = [];
+
+    function createUpdater(face, tz) {
+        const hourHand = face.querySelector('.hour-hand');
+        const minuteHand = face.querySelector('.minute-hand');
+        const secondHand = face.querySelector('.second-hand');
+        const am_pm_indicator = face.querySelector('.am-pm-indicator');
+
+        let lastSecond = null;
+        let rotation = 0; // keep continuous rotation
+
+        return (now) => {
+            let date = now;
+            if (tz) {
+                const { time } = timeInZone(now, tz);
+                date = time;
+            }
+
+            const seconds = date.getSeconds();
+            const minutes = date.getMinutes();
+            const hours = date.getHours() % 12;
+
+            const hourDeg = (hours * 30 + minutes * 0.5) - 90;
+            const minDeg = (minutes * 6 + seconds * 0.1) - 90;
+
+            hourHand.style.transform = `rotate(${hourDeg}deg)`;
+            minuteHand.style.transform = `rotate(${minDeg}deg)`;
+
+            if (lastSecond === null) {
+                // First run, initialize rotation based on seconds
+                rotation = (seconds * 6) - 90;
+            } else {
+                // Calculate difference from last second
+                let diff = (seconds - lastSecond);
+                if (diff < 0) diff += 60;  // handle wrap around from 59 to 0
+
+                rotation += diff * 6; // increment rotation by degrees per second
+            }
+            lastSecond = seconds;
+
+            secondHand.style.transform = `rotate(${rotation}deg)`;
+
+            if (am_pm_indicator) {
+                am_pm_indicator.textContent = date.getHours() < 12 ? 'AM' : 'PM';
+            }
+        };
+    }
+
+    for (let i = 0; i < clocks.length; i++) {
+        const clock = clocks[i];
+
+        const faces = clock.querySelectorAll('.analog-face');
+        const timeZoneItems = clock.querySelectorAll('[data-time-in-zone]');
+
+        // Main face (local)
+        if (faces.length > 0) {
+            updateCallbacks.push(createUpdater(faces[0], null));
+        }
+
+        // Timezones
+        for (let z = 0; z < timeZoneItems.length; z++) {
+            const tz = timeZoneItems[z].dataset.timeInZone;
+            const face = timeZoneItems[z].querySelector('.analog-face');
+            if (face) {
+                updateCallbacks.push(createUpdater(face, tz));
+            }
+        }
+    }
+
+    const updateAnalogClocks = () => {
+        const now = new Date();
+        for (var i = 0; i < updateCallbacks.length; i++)
+            updateCallbacks[i](now);
+
+        setTimeout(updateAnalogClocks, 999);
+    };
+
+    updateAnalogClocks();
+}
+
+
 async function setupCalendars() {
     const elems = document.getElementsByClassName("calendar");
     if (elems.length == 0) return;
@@ -753,7 +838,8 @@ async function setupPage() {
 
     try {
         setupPopovers();
-        setupClocks()
+        setupClocks();
+        setupAnalogClocks();
         await setupCalendars();
         await setupTodos();
         setupCarousels();
