@@ -1,6 +1,5 @@
 .analog-face {
-    --label-radius: 60px; /* You can easily change this later */
-    --tick-radius: -60px; /* Adjusted to be slightly less than label radius */
+    --label-radius: 60px;
     width: 160px;
     height: 160px;
     border: 6px solid #ccc;
@@ -92,7 +91,6 @@
     transform: translate(-50%, -50%);
 }
 
-/* Adjusted for correct position starting at top (12 o'clock) */
 .label-12 { transform: translate(-50%, -50%) rotate(-90deg)   translate(var(--label-radius)) rotate(90deg); }
 .label-1  { transform: translate(-50%, -50%) rotate(-60deg)   translate(var(--label-radius)) rotate(60deg); }
 .label-2  { transform: translate(-50%, -50%) rotate(-30deg)   translate(var(--label-radius)) rotate(30deg); }
