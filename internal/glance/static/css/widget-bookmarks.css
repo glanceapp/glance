@@ -29,3 +29,16 @@
     height: 20px;
     opacity: 0.8;
 }
+
+.bookmarks-icon-link-grid {
+    width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+}
+.bookmarks-icon-grid {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
