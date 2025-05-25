@@ -2001,7 +2001,7 @@ HTTP Basic Authentication credentials for protected sites.
 
 ```yaml
 basic-auth:
-  usename: your-username
+  username: your-username
   password: your-password
 ```
 
