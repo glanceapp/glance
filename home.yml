@@ -25,6 +25,7 @@
         - type: search
           search-engine: google
           suggestions: true
+          suggestion-engine: startpage
           bangs:
             - title: YouTube
               shortcut: "!yt"
