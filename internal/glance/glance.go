@@ -406,7 +406,7 @@ func (a *application) handleNotFound(w http.ResponseWriter, _ *http.Request) {
 func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *http.Request) {
 
 	var searchEnginesSuggestionURLs = map[string]string{
-		"duckduckgo": "https://api.duckduckgo.com/ac/?q={QUERY}&type=list", //Doesn't work with the new API
+		"duckduckgo": "https://duckduckgo.com/ac/?q={QUERY}&kl=wt-wt",
 		"google":     "https://suggestqueries.google.com/complete/search?client=chrome&q={QUERY}",
 		"bing":       "https://api.bing.com/osjson.aspx?query={QUERY}",
 		"startpage":  "https://www.startpage.com/osuggestions?q={QUERY}",
@@ -422,19 +422,20 @@ func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *h
 		w.Write([]byte(`{"error": "suggestion_engine and query are required"}`))
 		return
 	}
+	var suggestion_engine_url string
 	if url, ok := searchEnginesSuggestionURLs[suggestion_engine]; !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(fmt.Sprintf(`{"error": "unknown suggestion URL: %s"}`, suggestion_engine)))
 		return
 	} else {
-		suggestion_engine = url
+		suggestion_engine_url = url
 	}
 
-	suggestion_engine = strings.ReplaceAll(suggestion_engine, "{QUERY}", url.QueryEscape(query))
+	suggestion_engine_url = strings.ReplaceAll(suggestion_engine_url, "{QUERY}", url.QueryEscape(query))
 	client := &http.Client{
 		Transport: &http.Transport{},
 	}
-	req, err := http.NewRequest("GET", suggestion_engine, nil)
+	req, err := http.NewRequest("GET", suggestion_engine_url, nil)
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:139.0) Gecko/20100101 Firefox/139.0")
 	resp, err := client.Do(req)
 	if err != nil {
@@ -443,7 +444,6 @@ func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *h
 		return
 	}
 	defer resp.Body.Close()
-	// fmt.Println("rawResponse:", rawResponse)
 
 	if resp.StatusCode != http.StatusOK {
 		w.WriteHeader(resp.StatusCode)
@@ -458,8 +458,7 @@ func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *h
 		w.Write([]byte(fmt.Sprintf(`{"error": "failed to parse suggestions: %v"}`, err)))
 		return
 	}
-	suggestions := createResponse(rawResponse)
-	// createResponse(rawResponse, &suggestions)
+	suggestions := createResponse(rawResponse, suggestion_engine)
 
 	result := map[string]any{
 		"query":       query,
@@ -468,18 +467,28 @@ func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *h
 
 	json.NewEncoder(w).Encode(result)
 }
-func createResponse(rawResponse []any) []string {
-	if len(rawResponse) < 2 {
-		return nil
+func createResponse(rawResponse []any, suggestionEngine string) []string {
+	suggestions := []string{}
+
+	if suggestionEngine == "duckduckgo" {
+		for _, item := range rawResponse {
+			if m, ok := item.(map[string]interface{}); ok {
+				if phrase, ok := m["phrase"].(string); ok && phrase != "" {
+					suggestions = append(suggestions, phrase)
+				}
+			}
+		}
+		return suggestions
 	}
-	rawList, ok := rawResponse[1].([]any)
-	if !ok {
-		return nil
-	}
-	suggestions := make([]string, 0, len(rawList))
-	for _, s := range rawList {
-		if str, ok := s.(string); ok {
-			suggestions = append(suggestions, str)
+
+	// Handle Google/Bing-style responses: ["query", ["s1", "s2", ...]]
+	if len(rawResponse) >= 2 {
+		if list, ok := rawResponse[1].([]interface{}); ok {
+			for _, item := range list {
+				if suggestion, ok := item.(string); ok {
+					suggestions = append(suggestions, suggestion)
+				}
+			}
 		}
 	}
 	return suggestions
