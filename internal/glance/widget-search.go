@@ -20,7 +20,7 @@ type searchWidget struct {
 	SearchEngineName string
 	SearchEngine     string       `yaml:"search-engine"`
 	Suggestions      bool         `yaml:"suggestions"`
-	SuggestionURL    string       `yaml:"suggestion-url"`
+	SuggestionEngine string       `yaml:"suggestion-engine"`
 	Bangs            []SearchBang `yaml:"bangs"`
 	NewTab           bool         `yaml:"new-tab"`
 	Target           string       `yaml:"target"`
@@ -54,7 +54,9 @@ func (widget *searchWidget) initialize() error {
 		widget.Placeholder = "Type here to search…"
 	}
 	if url, ok := searchEngines[widget.SearchEngine]; ok {
-		widget.SearchEngineName = widget.SearchEngine
+		if widget.SuggestionEngine == "" {
+			widget.SuggestionEngine = widget.SearchEngineName
+		}
 		widget.SearchEngine = url
 	}
 

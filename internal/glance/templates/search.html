@@ -7,7 +7,7 @@
 
 
 
-<div class="search widget-content-frame padding-inline-widget flex gap-15 items-center" {{ if .Suggestions }} data-default-suggestion-engine="{{ .SearchEngineName }}" {{ end }} data-default-search-url="{{ .SearchEngine }}" data-new-tab="{{ .NewTab }}" data-target="{{ .Target }}">
+<div class="search widget-content-frame padding-inline-widget flex gap-15 items-center" {{ if .Suggestions }} data-default-suggestion-engine="{{ .SuggestionEngine }}" {{ end }} data-default-search-url="{{ .SearchEngine }}" data-new-tab="{{ .NewTab }}" data-target="{{ .Target }}">
 
     <div class="search-bangs">
         {{ range .Bangs }}

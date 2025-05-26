@@ -406,7 +406,7 @@ func (a *application) handleNotFound(w http.ResponseWriter, _ *http.Request) {
 func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *http.Request) {
 
 	var searchEnginesSuggestionURLs = map[string]string{
-		"duckduckgo": "https://api.duckduckgo.com/ac/?q={QUERY}&type=list",
+		"duckduckgo": "https://api.duckduckgo.com/ac/?q={QUERY}&type=list", //Doesn't work with the new API
 		"google":     "https://suggestqueries.google.com/complete/search?client=chrome&q={QUERY}",
 		"bing":       "https://api.bing.com/osjson.aspx?query={QUERY}",
 		"startpage":  "https://www.startpage.com/osuggestions?q={QUERY}",
