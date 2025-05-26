@@ -95,6 +95,7 @@ function updateRelativeTimeForElements(elements)
     }
 }
 
+
 function setupSearchBoxes() {
     const searchWidgets = document.getElementsByClassName("search");
 
@@ -105,6 +106,7 @@ function setupSearchBoxes() {
     for (let i = 0; i < searchWidgets.length; i++) {
         const widget = searchWidgets[i];
         const defaultSearchUrl = widget.dataset.defaultSearchUrl;
+        const searchSuggestionsUrl = widget.dataset.defaultSuggestionEngine || null;
         const target = widget.dataset.target || "_blank";
         const newTab = widget.dataset.newTab === "true";
         const inputElement = widget.getElementsByClassName("search-input")[0];
@@ -125,7 +127,6 @@ function setupSearchBoxes() {
                 inputElement.blur();
                 return;
             }
-
             if (event.key == "Enter") {
                 const input = inputElement.value.trim();
                 let query;
@@ -169,6 +170,60 @@ function setupSearchBoxes() {
 
         const handleInput = (event) => {
             const value = event.target.value.trim();
+            if (event.target.value.trim().length > 0 && searchSuggestionsUrl && currentBang == null) {
+                fetch(`/api/search/suggestions?query=${inputElement.value.trim()}&suggestion_engine=${encodeURIComponent(searchSuggestionsUrl)}`, {method : "POST"})
+                .then((response) => {
+                    document.querySelectorAll(".search-suggestion").forEach((el) => el.remove());
+                    if (response.status != 200) {
+                        return;
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    const { suggestions } = data;
+                    const suggestionsContainer = widget.querySelector(".search-suggestions");
+                    suggestionsContainer.innerHTML = "";
+                    if (suggestions === undefined || suggestions.length == 0) {
+                        return;
+                    }
+
+
+                    suggestions.forEach((suggestion) => {
+                        const suggestionElement = elem("div")
+                        suggestionElement.classList.add("search-suggestion")
+                        try {
+                            let url = new URL(suggestion)
+                            suggestionElement.dataset.url = url.href;
+                            suggestionElement.innerText = url.host
+                        }
+                        catch (e) {
+                            suggestionElement.innerText = suggestion;
+                        }
+                        suggestionElement.appendTo(suggestionsContainer);
+                        suggestionElement.addEventListener("click", () => {
+                            if (suggestionElement.dataset.url !== undefined) {
+                                if (newTab) {
+                                    window.open(suggestionElement.dataset.url, target).focus();
+                                }
+                                else {
+                                    window.location.href = suggestionElement.dataset.url;
+                                }
+                                return
+                            }
+                            const url = defaultSearchUrl.replace("!QUERY!", encodeURIComponent(suggestion));
+                            if (newTab) {
+                                window.open(url, target).focus();
+                            } else {
+                                window.location.href = url;
+                            }
+                        });
+                    });
+                });
+            }
+            else {
+                document.querySelectorAll(".search-suggestion").forEach((el) => el.remove());
+            }
+            
             if (value in bangsMap) {
                 changeCurrentBang(bangsMap[value]);
                 return;
