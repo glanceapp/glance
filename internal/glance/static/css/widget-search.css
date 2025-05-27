@@ -73,7 +73,7 @@
     border: 1px solid var(--color-separator);
     border-radius: var(--border-radius);
     z-index: 1000;
-    max-height: 200px;
+    max-height: 300px;
     overflow-y: auto;
     margin: 0.5rem 2em 0;
 }
@@ -87,6 +87,9 @@
     cursor: pointer;
     border-bottom: 1px solid var(--color-separator);
     transition: background-color 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .search-shortcut-item:last-child {
@@ -95,16 +98,50 @@
 
 .search-shortcut-item:hover,
 .search-shortcut-item.highlighted {
-    background: var(--color-widget-background-highlight);
+    background: var(--color-primary);
+    color: var(--color-text-subdue);
+}
+
+.search-shortcut-item:hover .search-shortcut-title,
+.search-shortcut-item.highlighted .search-shortcut-title,
+.search-shortcut-item[data-type="suggestion"]:hover .search-shortcut-title,
+.search-shortcut-item[data-type="suggestion"].highlighted .search-shortcut-title {
+    color: var(--color-text-subdue);
+}
+
+.search-shortcut-item:hover .search-shortcut-url,
+.search-shortcut-item.highlighted .search-shortcut-url {
+    color: var(--color-text-subdue);
+    opacity: 0.8;
+}
+
+.search-shortcut-item:hover .search-shortcut-shortcut,
+.search-shortcut-item.highlighted .search-shortcut-shortcut {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-text-subdue);
+}
+
+.search-shortcut-item:hover .search-shortcut-icon,
+.search-shortcut-item.highlighted .search-shortcut-icon {
+    stroke: var(--color-text-subdue);
 }
 
 .search-shortcut-item.exact-match {
     background: var(--color-primary);
-    color: var(--color-text-highlight);
+    color: var(--color-text-subdue);
 }
 
-.search-shortcut-item.exact-match:hover {
-    background: var(--color-primary);
+.search-shortcut-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+    flex-shrink: 0;
+    stroke: var(--color-text-subdue);
+}
+
+.search-shortcut-content {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
 }
 
 .search-shortcut-title {
@@ -116,6 +153,7 @@
     font-size: 0.85em;
     color: var(--color-text-subdue);
     margin-top: 0.2rem;
+    margin-left: 1em;
 }
 
 .search-shortcut-shortcut {
@@ -124,7 +162,12 @@
     background: var(--color-widget-background-highlight);
     padding: 0.2rem 0.4rem;
     border-radius: calc(var(--border-radius) * 0.5);
-    margin-left: 0.5rem;
+    flex-shrink: 0;
+}
+
+.search-shortcut-item[data-type="suggestion"] .search-shortcut-title {
+    font-weight: normal;
+    color: var(--color-text-base);
 }
 
 .search-bang {

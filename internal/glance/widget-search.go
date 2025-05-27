@@ -21,15 +21,17 @@ type SearchShortcut struct {
 }
 
 type searchWidget struct {
-	widgetBase   `yaml:",inline"`
-	cachedHTML   template.HTML    `yaml:"-"`
-	SearchEngine string           `yaml:"search-engine"`
-	Bangs        []SearchBang     `yaml:"bangs"`
-	Shortcuts    []SearchShortcut `yaml:"shortcuts"`
-	NewTab       bool             `yaml:"new-tab"`
-	Target       string           `yaml:"target"`
-	Autofocus    bool             `yaml:"autofocus"`
-	Placeholder  string           `yaml:"placeholder"`
+	widgetBase       `yaml:",inline"`
+	cachedHTML       template.HTML    `yaml:"-"`
+	SearchEngine     string           `yaml:"search-engine"`
+	Bangs            []SearchBang     `yaml:"bangs"`
+	Shortcuts        []SearchShortcut `yaml:"shortcuts"`
+	Suggestions      bool             `yaml:"suggestions"`
+	SuggestionEngine string           `yaml:"suggestion-engine"`
+	NewTab           bool             `yaml:"new-tab"`
+	Target           string           `yaml:"target"`
+	Autofocus        bool             `yaml:"autofocus"`
+	Placeholder      string           `yaml:"placeholder"`
 }
 
 func convertSearchUrl(url string) string {
@@ -58,11 +60,17 @@ func (widget *searchWidget) initialize() error {
 		widget.Placeholder = "Type here to search…"
 	}
 
+	originalSearchEngine := widget.SearchEngine
 	if url, ok := searchEngines[widget.SearchEngine]; ok {
 		widget.SearchEngine = url
 	}
 
 	widget.SearchEngine = convertSearchUrl(widget.SearchEngine)
+
+	// Set default suggestion engine if suggestions are enabled
+	if widget.Suggestions && widget.SuggestionEngine == "" {
+		widget.SuggestionEngine = originalSearchEngine
+	}
 
 	for i := range widget.Bangs {
 		if widget.Bangs[i].Shortcut == "" {
@@ -83,10 +91,6 @@ func (widget *searchWidget) initialize() error {
 
 		if widget.Shortcuts[i].URL == "" {
 			return fmt.Errorf("search shortcut #%d has no URL", i+1)
-		}
-
-		if widget.Shortcuts[i].Shortcut == "" {
-			return fmt.Errorf("search shortcut #%d has no shortcut", i+1)
 		}
 	}
 

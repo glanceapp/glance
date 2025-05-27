@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -401,6 +404,125 @@ func (a *application) handleNotFound(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("Page not found"))
 }
 
+type searchSuggestionsResponse struct {
+	Query       string   `json:"query"`
+	Suggestions []string `json:"suggestions"`
+}
+
+func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *http.Request) {
+	if a.handleUnauthorizedResponse(w, r, showUnauthorizedJSON) {
+		return
+	}
+
+	query := r.URL.Query().Get("query")
+	engine := r.URL.Query().Get("suggestion_engine")
+
+	if query == "" {
+		http.Error(w, "Missing query parameter", http.StatusBadRequest)
+		return
+	}
+
+	if engine == "" {
+		http.Error(w, "Missing suggestion_engine parameter", http.StatusBadRequest)
+		return
+	}
+
+	suggestions, err := a.fetchSearchSuggestions(query, engine)
+	if err != nil {
+		log.Printf("Error fetching search suggestions: %v", err)
+		http.Error(w, "Failed to fetch suggestions", http.StatusInternalServerError)
+		return
+	}
+
+	response := searchSuggestionsResponse{
+		Query:       query,
+		Suggestions: suggestions,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (a *application) fetchSearchSuggestions(query, engine string) ([]string, error) {
+	var suggestionURL string
+
+	switch engine {
+	case "google":
+		suggestionURL = fmt.Sprintf("http://suggestqueries.google.com/complete/search?output=firefox&q=%s", url.QueryEscape(query))
+	case "duckduckgo":
+		suggestionURL = fmt.Sprintf("https://duckduckgo.com/ac/?q=%s&type=list", url.QueryEscape(query))
+	case "bing":
+		suggestionURL = fmt.Sprintf("https://www.bing.com/osjson.aspx?query=%s", url.QueryEscape(query))
+	case "startpage":
+		suggestionURL = fmt.Sprintf("https://startpage.com/suggestions?q=%s&format=opensearch", url.QueryEscape(query))
+	default:
+		return nil, fmt.Errorf("unsupported search engine: %s", engine)
+	}
+
+	resp, err := http.Get(suggestionURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch suggestions: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("suggestion API returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	return parseSuggestionResponse(body, engine)
+}
+
+func parseSuggestionResponse(body []byte, engine string) ([]string, error) {
+	var suggestions []string
+
+	switch engine {
+	case "google", "startpage":
+		// Firefox format: [query, [suggestions...]]
+		var response []interface{}
+		if err := json.Unmarshal(body, &response); err != nil {
+			return nil, fmt.Errorf("failed to parse JSON response: %v", err)
+		}
+
+		if len(response) < 2 {
+			return suggestions, nil
+		}
+
+		if suggestionsList, ok := response[1].([]interface{}); ok {
+			for _, item := range suggestionsList {
+				if suggestion, ok := item.(string); ok {
+					suggestions = append(suggestions, suggestion)
+				}
+			}
+		}
+
+	case "duckduckgo", "bing":
+		// Standard OpenSearch format: [query, [suggestions...]]
+		var response []interface{}
+		if err := json.Unmarshal(body, &response); err != nil {
+			return nil, fmt.Errorf("failed to parse JSON response: %v", err)
+		}
+
+		if len(response) < 2 {
+			return suggestions, nil
+		}
+
+		if suggestionsList, ok := response[1].([]interface{}); ok {
+			for _, item := range suggestionsList {
+				if suggestion, ok := item.(string); ok {
+					suggestions = append(suggestions, suggestion)
+				}
+			}
+		}
+	}
+
+	return suggestions, nil
+}
+
 func (a *application) handleWidgetRequest(w http.ResponseWriter, r *http.Request) {
 	// TODO: this requires a rework of the widget update logic so that rather
 	// than locking the entire page we lock individual widgets
@@ -449,6 +571,7 @@ func (a *application) server() (func() error, func() error) {
 	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	mux.HandleFunc("POST /api/search/suggestions", a.handleSearchSuggestionsRequest)
 
 	if a.RequiresAuth {
 		mux.HandleFunc("GET /login", a.handleLoginPageRequest)
