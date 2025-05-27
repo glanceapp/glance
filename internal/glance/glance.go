@@ -467,9 +467,10 @@ func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *h
 
 	json.NewEncoder(w).Encode(result)
 }
+
 func createResponse(rawResponse []any, suggestionEngine string) []string {
 	suggestions := []string{}
-
+	// Handle Google/Bing-style responses: [{params : "s1"}, {params : "s2"}, ...]
 	if suggestionEngine == "duckduckgo" {
 		for _, item := range rawResponse {
 			if m, ok := item.(map[string]interface{}); ok {

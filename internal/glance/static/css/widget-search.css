@@ -87,7 +87,7 @@
     border-radius: var(--border-radius);
     box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.1);
     margin-top: 0.5rem;
-    padding: 0.5rem 0;
+    padding: 0rem 0;
     z-index: 10;
     max-height: 30rem;
     overflow-y: auto;
@@ -104,6 +104,11 @@
 
 .search-suggestion:hover,
 .search-suggestion:focus {
+    background: var(--color-widget-background-highlight);
+    color: var(--color-text-highlight);
+}
+
+.active {
     background: var(--color-widget-background-highlight);
     color: var(--color-text-highlight);
 }

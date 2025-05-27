@@ -111,6 +111,7 @@ function setupSearchBoxes() {
         const newTab = widget.dataset.newTab === "true";
         const inputElement = widget.getElementsByClassName("search-input")[0];
         const bangElement = widget.getElementsByClassName("search-bang")[0];
+        const resultsContainer = widget.getElementsByClassName("search-suggestions")[0];
         const bangs = widget.querySelectorAll(".search-bangs > input");
         const bangsMap = {};
         const kbdElement = widget.getElementsByTagName("kbd")[0];
@@ -122,13 +123,17 @@ function setupSearchBoxes() {
             bangsMap[bang.dataset.shortcut] = bang;
         }
 
-        const handleKeyDown = (event) => {
+        const handleKeyPress = (event) => {
+            const input = inputElement.value.trim();
             if (event.key == "Escape") {
                 inputElement.blur();
                 return;
             }
             if (event.key == "Enter") {
-                const input = inputElement.value.trim();
+                if (resultsContainer.querySelector('.active')) {
+                    resultsContainer.querySelector('.active').click();
+                    return event.preventDefault();
+                }
                 let query;
                 let searchUrlTemplate;
 
@@ -157,8 +162,38 @@ function setupSearchBoxes() {
                 return;
             }
 
-            if (event.key == "ArrowUp" && lastQuery.length > 0) {
+            if (event.key == "ArrowUp" && lastQuery.length > 0 && input == "") {
                 inputElement.value = lastQuery;
+                return;
+            }
+            else if (event.key == "ArrowDown" || event.key == "ArrowUp" && searchSuggestionsUrl && currentBang == null) {
+                if (event.key == "ArrowDown" && !resultsContainer.querySelector('.active')){
+                    resultsContainer.children[0].classList.add('active');
+                }
+                else {
+                    const activeElement = resultsContainer.querySelector('.search-suggestions .active');
+                    let el;
+                    if (event.key == "ArrowDown") {
+                        el = activeElement.nextElementSibling
+                    }
+                    else if (event.key == "ArrowUp"){
+                        el = activeElement.previousElementSibling;
+                    }
+                    if (el !== null) {
+                        activeElement.classList.remove('active');
+                        el.classList.add('active');
+                        el.scrollIntoView({
+                            behavior: "smooth",
+                            block: "nearest",
+                            inline: "nearest"
+                        });
+                    }
+                }
+                return event.preventDefault()
+            }
+            if (event.key == "ArrowLeft" || event.key == "ArrowRight") {
+                // If the user presses left or right arrow, we want to focus the input
+                inputElement.focus();
                 return;
             }
         };
@@ -239,11 +274,11 @@ function setupSearchBoxes() {
         };
 
         inputElement.addEventListener("focus", () => {
-            document.addEventListener("keydown", handleKeyDown);
+            document.addEventListener("keydown", handleKeyPress);
             document.addEventListener("input", handleInput);
         });
         inputElement.addEventListener("blur", () => {
-            document.removeEventListener("keydown", handleKeyDown);
+            document.removeEventListener("keydown", handleKeyPress);
             document.removeEventListener("input", handleInput);
         });
 
