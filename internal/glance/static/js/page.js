@@ -643,13 +643,14 @@ async function setupCalendars() {
 }
 
 async function setupTodos() {
-    const elems = document.getElementsByClassName("todo");
+    var elems = Array.prototype.slice.call(document.getElementsByClassName("todo"));
     if (elems.length == 0) return;
 
     const todo = await import ('./todo.js');
 
-    for (let i = 0; i < elems.length; i++)
+    for (let i = 0; i < elems.length; i++){
         todo.default(elems[i]);
+    }
 }
 
 function setupTruncatedElementTitles() {
