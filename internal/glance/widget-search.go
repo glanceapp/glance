@@ -14,15 +14,22 @@ type SearchBang struct {
 	URL      string
 }
 
+type SearchShortcut struct {
+	Title    string `yaml:"title"`
+	URL      string `yaml:"url"`
+	Shortcut string `yaml:"shortcut"`
+}
+
 type searchWidget struct {
 	widgetBase   `yaml:",inline"`
-	cachedHTML   template.HTML `yaml:"-"`
-	SearchEngine string        `yaml:"search-engine"`
-	Bangs        []SearchBang  `yaml:"bangs"`
-	NewTab       bool          `yaml:"new-tab"`
-	Target       string        `yaml:"target"`
-	Autofocus    bool          `yaml:"autofocus"`
-	Placeholder  string        `yaml:"placeholder"`
+	cachedHTML   template.HTML    `yaml:"-"`
+	SearchEngine string           `yaml:"search-engine"`
+	Bangs        []SearchBang     `yaml:"bangs"`
+	Shortcuts    []SearchShortcut `yaml:"shortcuts"`
+	NewTab       bool             `yaml:"new-tab"`
+	Target       string           `yaml:"target"`
+	Autofocus    bool             `yaml:"autofocus"`
+	Placeholder  string           `yaml:"placeholder"`
 }
 
 func convertSearchUrl(url string) string {
@@ -67,6 +74,20 @@ func (widget *searchWidget) initialize() error {
 		}
 
 		widget.Bangs[i].URL = convertSearchUrl(widget.Bangs[i].URL)
+	}
+
+	for i := range widget.Shortcuts {
+		if widget.Shortcuts[i].Title == "" {
+			return fmt.Errorf("search shortcut #%d has no title", i+1)
+		}
+
+		if widget.Shortcuts[i].URL == "" {
+			return fmt.Errorf("search shortcut #%d has no URL", i+1)
+		}
+
+		if widget.Shortcuts[i].Shortcut == "" {
+			return fmt.Errorf("search shortcut #%d has no shortcut", i+1)
+		}
 	}
 
 	widget.cachedHTML = widget.renderTemplate(widget, searchWidgetTemplate)

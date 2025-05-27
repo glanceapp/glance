@@ -102,6 +102,35 @@ function setupSearchBoxes() {
         return;
     }
 
+    // Simple fuzzy matching function
+    function fuzzyMatch(text, query) {
+        const lowerText = text.toLowerCase();
+        const lowerQuery = query.toLowerCase();
+        
+        // Exact match gets highest priority
+        if (lowerText === lowerQuery) return { score: 1000, type: 'exact' };
+        if (lowerText.includes(lowerQuery)) return { score: 500, type: 'contains' };
+        
+        // Simple fuzzy matching
+        let score = 0;
+        let textIndex = 0;
+        
+        for (let i = 0; i < lowerQuery.length; i++) {
+            const char = lowerQuery[i];
+            const foundIndex = lowerText.indexOf(char, textIndex);
+            
+            if (foundIndex === -1) return { score: 0, type: 'none' };
+            
+            // Bonus for consecutive characters
+            if (foundIndex === textIndex) score += 10;
+            else score += 1;
+            
+            textIndex = foundIndex + 1;
+        }
+        
+        return { score, type: 'fuzzy' };
+    }
+
     for (let i = 0; i < searchWidgets.length; i++) {
         const widget = searchWidgets[i];
         const defaultSearchUrl = widget.dataset.defaultSearchUrl;
@@ -109,25 +138,159 @@ function setupSearchBoxes() {
         const newTab = widget.dataset.newTab === "true";
         const inputElement = widget.getElementsByClassName("search-input")[0];
         const bangElement = widget.getElementsByClassName("search-bang")[0];
+        const dropdownElement = widget.getElementsByClassName("search-shortcuts-dropdown")[0];
+        const shortcutsListElement = widget.getElementsByClassName("search-shortcuts-list")[0];
         const bangs = widget.querySelectorAll(".search-bangs > input");
+        const shortcuts = widget.querySelectorAll(".search-shortcuts > input");
         const bangsMap = {};
+        const shortcutsArray = [];
         const kbdElement = widget.getElementsByTagName("kbd")[0];
         let currentBang = null;
         let lastQuery = "";
+        let highlightedIndex = -1;
+        let filteredShortcuts = [];
 
         for (let j = 0; j < bangs.length; j++) {
             const bang = bangs[j];
             bangsMap[bang.dataset.shortcut] = bang;
         }
 
+        for (let j = 0; j < shortcuts.length; j++) {
+            const shortcut = shortcuts[j];
+            shortcutsArray.push({
+                title: shortcut.dataset.title,
+                url: shortcut.dataset.url,
+                shortcut: shortcut.dataset.shortcut
+            });
+        }
+
+        function hideDropdown() {
+            dropdownElement.classList.add("hidden");
+            highlightedIndex = -1;
+        }
+
+        function showDropdown() {
+            if (filteredShortcuts.length > 0) {
+                dropdownElement.classList.remove("hidden");
+            }
+        }
+
+        function updateDropdown(query) {
+            if (!query || shortcutsArray.length === 0) {
+                hideDropdown();
+                return;
+            }
+
+            // Filter and score shortcuts
+            const matches = shortcutsArray.map(shortcut => {
+                const titleMatch = fuzzyMatch(shortcut.title, query);
+                const shortcutMatch = fuzzyMatch(shortcut.shortcut, query);
+                const bestMatch = titleMatch.score > shortcutMatch.score ? titleMatch : shortcutMatch;
+                
+                return {
+                    ...shortcut,
+                    score: bestMatch.score,
+                    matchType: bestMatch.type,
+                    isExact: titleMatch.type === 'exact' || shortcutMatch.type === 'exact'
+                };
+            }).filter(item => item.score > 0)
+              .sort((a, b) => b.score - a.score);
+
+            filteredShortcuts = matches;
+            highlightedIndex = -1;
+
+            if (matches.length === 0) {
+                hideDropdown();
+                return;
+            }
+
+            // Render dropdown items
+            shortcutsListElement.innerHTML = matches.map((item, index) => `
+                <div class="search-shortcut-item ${item.isExact ? 'exact-match' : ''}" data-index="${index}">
+                    <div class="search-shortcut-title">
+                        ${item.title}
+                        <span class="search-shortcut-shortcut">${item.shortcut}</span>
+                    </div>
+                    <div class="search-shortcut-url">${item.url}</div>
+                </div>
+            `).join('');
+
+            // Add click event listeners
+            shortcutsListElement.querySelectorAll('.search-shortcut-item').forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    navigateToShortcut(matches[index]);
+                });
+            });
+
+            showDropdown();
+        }
+
+        function navigateToShortcut(shortcut) {
+            if (newTab) {
+                window.open(shortcut.url, target).focus();
+            } else {
+                window.location.href = shortcut.url;
+            }
+            inputElement.value = "";
+            hideDropdown();
+        }
+
+        function highlightItem(index) {
+            const items = shortcutsListElement.querySelectorAll('.search-shortcut-item');
+            items.forEach(item => item.classList.remove('highlighted'));
+            
+            if (index >= 0 && index < items.length) {
+                items[index].classList.add('highlighted');
+                highlightedIndex = index;
+            } else {
+                highlightedIndex = -1;
+            }
+        }
+
         const handleKeyDown = (event) => {
             if (event.key == "Escape") {
+                hideDropdown();
                 inputElement.blur();
                 return;
             }
 
+            // Handle dropdown navigation
+            if (!dropdownElement.classList.contains("hidden")) {
+                if (event.key === "ArrowDown") {
+                    event.preventDefault();
+                    const newIndex = Math.min(highlightedIndex + 1, filteredShortcuts.length - 1);
+                    highlightItem(newIndex);
+                    return;
+                }
+                
+                if (event.key === "ArrowUp") {
+                    event.preventDefault();
+                    const newIndex = Math.max(highlightedIndex - 1, -1);
+                    highlightItem(newIndex);
+                    return;
+                }
+                
+                if (event.key === "Enter" && highlightedIndex >= 0) {
+                    event.preventDefault();
+                    navigateToShortcut(filteredShortcuts[highlightedIndex]);
+                    return;
+                }
+            }
+
             if (event.key == "Enter") {
                 const input = inputElement.value.trim();
+                
+                // Check for exact shortcut match first
+                const exactMatch = shortcutsArray.find(s => 
+                    s.title.toLowerCase() === input.toLowerCase() || 
+                    s.shortcut.toLowerCase() === input.toLowerCase()
+                );
+                
+                if (exactMatch) {
+                    navigateToShortcut(exactMatch);
+                    return;
+                }
+
                 let query;
                 let searchUrlTemplate;
 
@@ -138,6 +301,7 @@ function setupSearchBoxes() {
                     query = input;
                     searchUrlTemplate = defaultSearchUrl;
                 }
+                
                 if (query.length == 0 && currentBang == null) {
                     return;
                 }
@@ -152,11 +316,11 @@ function setupSearchBoxes() {
 
                 lastQuery = query;
                 inputElement.value = "";
-
+                hideDropdown();
                 return;
             }
 
-            if (event.key == "ArrowUp" && lastQuery.length > 0) {
+            if (event.key == "ArrowUp" && lastQuery.length > 0 && dropdownElement.classList.contains("hidden")) {
                 inputElement.value = lastQuery;
                 return;
             }
@@ -169,27 +333,51 @@ function setupSearchBoxes() {
 
         const handleInput = (event) => {
             const value = event.target.value.trim();
+            
+            // Check for bangs first
             if (value in bangsMap) {
                 changeCurrentBang(bangsMap[value]);
+                hideDropdown();
                 return;
             }
 
             const words = value.split(" ");
             if (words.length >= 2 && words[0] in bangsMap) {
                 changeCurrentBang(bangsMap[words[0]]);
+                hideDropdown();
                 return;
             }
 
             changeCurrentBang(null);
+            
+            // Update shortcuts dropdown
+            updateDropdown(value);
         };
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!widget.contains(event.target)) {
+                hideDropdown();
+            }
+        });
 
         inputElement.addEventListener("focus", () => {
             document.addEventListener("keydown", handleKeyDown);
             document.addEventListener("input", handleInput);
+            if (inputElement.value.trim()) {
+                updateDropdown(inputElement.value.trim());
+            }
         });
-        inputElement.addEventListener("blur", () => {
-            document.removeEventListener("keydown", handleKeyDown);
-            document.removeEventListener("input", handleInput);
+        
+        inputElement.addEventListener("blur", (event) => {
+            // Delay hiding dropdown to allow for clicks
+            setTimeout(() => {
+                if (!widget.contains(document.activeElement)) {
+                    hideDropdown();
+                    document.removeEventListener("keydown", handleKeyDown);
+                    document.removeEventListener("input", handleInput);
+                }
+            }, 150);
         });
 
         document.addEventListener("keydown", (event) => {
