@@ -415,19 +415,42 @@ func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *h
 	}
 
 	query := r.URL.Query().Get("query")
-	engineURL := r.URL.Query().Get("suggestion_engine")
+	widgetIDStr := r.URL.Query().Get("widget_id")
 
 	if query == "" {
 		http.Error(w, "Missing query parameter", http.StatusBadRequest)
 		return
 	}
 
-	if engineURL == "" {
-		http.Error(w, "Missing suggestion_engine parameter", http.StatusBadRequest)
+	if widgetIDStr == "" {
+		http.Error(w, "Missing widget_id parameter", http.StatusBadRequest)
 		return
 	}
 
-	suggestions, err := a.fetchSearchSuggestions(query, engineURL)
+	widgetID, err := strconv.ParseUint(widgetIDStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid widget_id parameter", http.StatusBadRequest)
+		return
+	}
+
+	widget, exists := a.widgetByID[widgetID]
+	if !exists {
+		http.Error(w, "Widget not found", http.StatusNotFound)
+		return
+	}
+
+	searchWidget, ok := widget.(*searchWidget)
+	if !ok {
+		http.Error(w, "Widget is not a search widget", http.StatusBadRequest)
+		return
+	}
+
+	if !searchWidget.Suggestions {
+		http.Error(w, "Widget does not have suggestions enabled", http.StatusBadRequest)
+		return
+	}
+
+	suggestions, err := a.fetchSearchSuggestions(query, searchWidget.SuggestionEngine)
 	if err != nil {
 		log.Printf("Error fetching search suggestions: %v", err)
 		http.Error(w, "Failed to fetch suggestions", http.StatusInternalServerError)
@@ -444,15 +467,12 @@ func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *h
 }
 
 func (a *application) fetchSearchSuggestions(query, engineURL string) ([]string, error) {
-	// Replace {QUERY} placeholder with the actual query
 	suggestionURL := strings.ReplaceAll(engineURL, "{QUERY}", url.QueryEscape(query))
-	
-	// Also handle the !QUERY! format used internally
-	suggestionURL = strings.ReplaceAll(suggestionURL, "!QUERY!", url.QueryEscape(query))
 
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
+
 	resp, err := client.Get(suggestionURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch suggestions: %v", err)
@@ -468,15 +488,15 @@ func (a *application) fetchSearchSuggestions(query, engineURL string) ([]string,
 		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
 
-	return parseSuggestionResponse(body, engineURL)
+	return parseSuggestionResponse(body)
 }
 
-func parseSuggestionResponse(body []byte, engineURL string) ([]string, error) {
+func parseSuggestionResponse(body []byte) ([]string, error) {
 	var suggestions []string
 
 	// Try to parse as standard OpenSearch format: [query, [suggestions...]]
 	// This works for all the supported engines (Google, DuckDuckGo, Bing, Startpage)
-	var response []interface{}
+	var response []any
 	if err := json.Unmarshal(body, &response); err != nil {
 		return nil, fmt.Errorf("failed to parse JSON response: %v", err)
 	}
@@ -485,7 +505,7 @@ func parseSuggestionResponse(body []byte, engineURL string) ([]string, error) {
 		return suggestions, nil
 	}
 
-	if suggestionsList, ok := response[1].([]interface{}); ok {
+	if suggestionsList, ok := response[1].([]any); ok {
 		for _, item := range suggestionsList {
 			if suggestion, ok := item.(string); ok {
 				suggestions = append(suggestions, suggestion)

@@ -3,7 +3,7 @@ export default function SearchBox(widget) {
     const target = widget.dataset.target || "_blank";
     const newTab = widget.dataset.newTab === "true";
     const suggestionsEnabled = widget.dataset.suggestionsEnabled === "true";
-    const suggestionEngine = widget.dataset.suggestionEngine;
+    const widgetId = widget.dataset.widgetId;
     const inputElement = widget.getElementsByClassName("search-input")[0];
     const bangElement = widget.getElementsByClassName("search-bang")[0];
     const dropdownElement = widget.getElementsByClassName("search-shortcuts-dropdown")[0];
@@ -106,12 +106,12 @@ export default function SearchBox(widget) {
         renderDropdown();
         if (filteredResults.length > 0) {
             showDropdown();
-        } else if (!suggestionsEnabled || !suggestionEngine || currentBang !== null) {
+        } else if (!suggestionsEnabled || !widgetId || currentBang !== null) {
             hideDropdown();
         }
 
         // Fetch search suggestions if enabled and no bang is active (with debouncing)
-        if (suggestionsEnabled && suggestionEngine && currentBang === null) {
+        if (suggestionsEnabled && widgetId && currentBang === null) {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 fetchSuggestions(query).then(suggestions => {
@@ -177,7 +177,7 @@ export default function SearchBox(widget) {
 
     async function fetchSuggestions(query) {
         try {
-            const response = await fetch(`/api/search/suggestions?query=${encodeURIComponent(query)}&suggestion_engine=${encodeURIComponent(suggestionEngine)}`, {
+            const response = await fetch(`/api/search/suggestions?query=${encodeURIComponent(query)}&widget_id=${encodeURIComponent(widgetId)}`, {
                 method: 'POST'
             });
 
@@ -352,24 +352,37 @@ export default function SearchBox(widget) {
         }
     });
 
-    inputElement.addEventListener("focus", () => {
+    const attachFocusListeners = () => {
         document.addEventListener("keydown", handleKeyDown);
         document.addEventListener("input", handleInput);
         if (inputElement.value.trim()) {
             updateDropdown(inputElement.value.trim());
         }
+    };
+
+    const detachFocusListeners = () => {
+        hideDropdown();
+        document.removeEventListener("keydown", handleKeyDown);
+        document.removeEventListener("input", handleInput);
+    };
+
+    inputElement.addEventListener("focus", () => {
+        attachFocusListeners();
     });
 
     inputElement.addEventListener("blur", (event) => {
         // Delay hiding dropdown to allow for clicks
         setTimeout(() => {
             if (!widget.contains(document.activeElement)) {
-                hideDropdown();
-                document.removeEventListener("keydown", handleKeyDown);
-                document.removeEventListener("input", handleInput);
+                detachFocusListeners();
             }
         }, 150);
     });
+
+    // Check if input is already focused (e.g., due to autofocus)
+    if (document.activeElement === inputElement) {
+        attachFocusListeners();
+    }
 
     document.addEventListener("keydown", (event) => {
         if ((event.metaKey || event.ctrlKey) && event.key == "/") {
