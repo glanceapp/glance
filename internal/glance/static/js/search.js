@@ -97,7 +97,8 @@ export default function SearchBox(widget) {
                 isExact: titleMatch.type === 'exact' || aliasMatch.type === 'exact'
             };
         }).filter(item => item.score > 0)
-          .sort((a, b) => b.score - a.score);
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 5);
 
         // Start with shortcuts
         filteredResults = [...shortcutMatches];

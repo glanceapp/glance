@@ -121,28 +121,22 @@
     color: var(--color-text-highlight);
 }
 
+.search-shortcut-item.exact-match .search-shortcut-alias{
+    background: var(--color-primary);
+    color: var(--color-background);
+}
+
 .search-shortcut-item:hover .search-shortcut-icon,
 .search-shortcut-item.highlighted .search-shortcut-icon {
     stroke: var(--color-text-highlight);
 }
 
 .search-shortcut-item.exact-match {
-    background: var(--color-primary);
-    color: var(--color-text-subdue);
+    background: var(--color-widget-background-highlight);
 }
 
-.search-shortcut-item.exact-match:hover,
-.search-shortcut-item.exact-match.highlighted {
-    filter: brightness(110%);
-}
-
-.search-shortcut-item.exact-match .search-shortcut-title,
-.search-shortcut-item.exact-match .search-shortcut-url {
-    color: var(--color-text-subdue);
-}
-
-.search-shortcut-item.exact-match .search-shortcut-icon {
-    stroke: var(--color-text-subdue);
+.search-shortcut-item.exact-match .search-shortcut-title {
+    color: var(--color-primary);
 }
 
 .search-shortcut-icon {
