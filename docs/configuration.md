@@ -1167,7 +1167,7 @@ Example:
   shortcuts:
     - title: Gmail
       url: https://mail.google.com
-      shortcut: gm
+      alias: gm
     - title: GitHub
       url: https://github.com
   bangs:
@@ -1254,7 +1254,7 @@ An array of shortcuts to websites that appear in a dropdown as you type. Shortcu
 | ---- | ---- | -------- |
 | title | string | yes |
 | url | string | yes |
-| shortcut | string | no |
+| alias | string | no |
 
 ###### `title`
 The display name for the shortcut that will appear in the dropdown.
@@ -1262,7 +1262,7 @@ The display name for the shortcut that will appear in the dropdown.
 ###### `url`
 The URL to navigate to when the shortcut is selected.
 
-###### `shortcut`
+###### `alias`
 Optional short alias for the shortcut that can be typed to quickly find it. For example, "gm" for Gmail.
 
 ##### `bangs`

@@ -98,38 +98,51 @@
 
 .search-shortcut-item:hover,
 .search-shortcut-item.highlighted {
-    background: var(--color-primary);
-    color: var(--color-text-subdue);
+    background: var(--color-widget-background-highlight);
+    color: var(--color-text-highlight);
 }
 
 .search-shortcut-item:hover .search-shortcut-title,
 .search-shortcut-item.highlighted .search-shortcut-title,
-.search-shortcut-item.exact-match .search-shortcut-title,
 .search-shortcut-item[data-type="suggestion"]:hover .search-shortcut-title,
 .search-shortcut-item[data-type="suggestion"].highlighted .search-shortcut-title {
-    color: var(--color-text-subdue);
+    color: var(--color-text-highlight);
 }
 
 .search-shortcut-item:hover .search-shortcut-url,
 .search-shortcut-item.highlighted .search-shortcut-url {
-    color: var(--color-text-subdue);
+    color: var(--color-text-highlight);
     opacity: 0.8;
 }
 
 .search-shortcut-item:hover .search-shortcut-shortcut,
 .search-shortcut-item.highlighted .search-shortcut-shortcut {
     background: rgba(255, 255, 255, 0.2);
-    color: var(--color-text-subdue);
+    color: var(--color-text-highlight);
 }
 
 .search-shortcut-item:hover .search-shortcut-icon,
 .search-shortcut-item.highlighted .search-shortcut-icon {
-    stroke: var(--color-text-subdue);
+    stroke: var(--color-text-highlight);
 }
 
 .search-shortcut-item.exact-match {
     background: var(--color-primary);
     color: var(--color-text-subdue);
+}
+
+.search-shortcut-item.exact-match:hover,
+.search-shortcut-item.exact-match.highlighted {
+    filter: brightness(110%);
+}
+
+.search-shortcut-item.exact-match .search-shortcut-title,
+.search-shortcut-item.exact-match .search-shortcut-url {
+    color: var(--color-text-subdue);
+}
+
+.search-shortcut-item.exact-match .search-shortcut-icon {
+    stroke: var(--color-text-subdue);
 }
 
 .search-shortcut-icon {
@@ -155,6 +168,10 @@
     color: var(--color-text-subdue);
     margin-top: 0.2rem;
     margin-left: 1em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
 }
 
 .search-shortcut-shortcut {
