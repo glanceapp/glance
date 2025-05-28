@@ -415,19 +415,19 @@ func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *h
 	}
 
 	query := r.URL.Query().Get("query")
-	engine := r.URL.Query().Get("suggestion_engine")
+	engineURL := r.URL.Query().Get("suggestion_engine")
 
 	if query == "" {
 		http.Error(w, "Missing query parameter", http.StatusBadRequest)
 		return
 	}
 
-	if engine == "" {
+	if engineURL == "" {
 		http.Error(w, "Missing suggestion_engine parameter", http.StatusBadRequest)
 		return
 	}
 
-	suggestions, err := a.fetchSearchSuggestions(query, engine)
+	suggestions, err := a.fetchSearchSuggestions(query, engineURL)
 	if err != nil {
 		log.Printf("Error fetching search suggestions: %v", err)
 		http.Error(w, "Failed to fetch suggestions", http.StatusInternalServerError)
@@ -443,23 +443,17 @@ func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *h
 	json.NewEncoder(w).Encode(response)
 }
 
-func (a *application) fetchSearchSuggestions(query, engine string) ([]string, error) {
-	var suggestionURL string
+func (a *application) fetchSearchSuggestions(query, engineURL string) ([]string, error) {
+	// Replace {QUERY} placeholder with the actual query
+	suggestionURL := strings.ReplaceAll(engineURL, "{QUERY}", url.QueryEscape(query))
+	
+	// Also handle the !QUERY! format used internally
+	suggestionURL = strings.ReplaceAll(suggestionURL, "!QUERY!", url.QueryEscape(query))
 
-	switch engine {
-	case "google":
-		suggestionURL = fmt.Sprintf("http://suggestqueries.google.com/complete/search?output=firefox&q=%s", url.QueryEscape(query))
-	case "duckduckgo":
-		suggestionURL = fmt.Sprintf("https://duckduckgo.com/ac/?q=%s&type=list", url.QueryEscape(query))
-	case "bing":
-		suggestionURL = fmt.Sprintf("https://www.bing.com/osjson.aspx?query=%s", url.QueryEscape(query))
-	case "startpage":
-		suggestionURL = fmt.Sprintf("https://startpage.com/suggestions?q=%s&format=opensearch", url.QueryEscape(query))
-	default:
-		return nil, fmt.Errorf("unsupported search engine: %s", engine)
+	client := &http.Client{
+		Timeout: 5 * time.Second,
 	}
-
-	resp, err := http.Get(suggestionURL)
+	resp, err := client.Get(suggestionURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch suggestions: %v", err)
 	}
@@ -474,48 +468,27 @@ func (a *application) fetchSearchSuggestions(query, engine string) ([]string, er
 		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
 
-	return parseSuggestionResponse(body, engine)
+	return parseSuggestionResponse(body, engineURL)
 }
 
-func parseSuggestionResponse(body []byte, engine string) ([]string, error) {
+func parseSuggestionResponse(body []byte, engineURL string) ([]string, error) {
 	var suggestions []string
 
-	switch engine {
-	case "google", "startpage":
-		// Firefox format: [query, [suggestions...]]
-		var response []interface{}
-		if err := json.Unmarshal(body, &response); err != nil {
-			return nil, fmt.Errorf("failed to parse JSON response: %v", err)
-		}
+	// Try to parse as standard OpenSearch format: [query, [suggestions...]]
+	// This works for all the supported engines (Google, DuckDuckGo, Bing, Startpage)
+	var response []interface{}
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON response: %v", err)
+	}
 
-		if len(response) < 2 {
-			return suggestions, nil
-		}
+	if len(response) < 2 {
+		return suggestions, nil
+	}
 
-		if suggestionsList, ok := response[1].([]interface{}); ok {
-			for _, item := range suggestionsList {
-				if suggestion, ok := item.(string); ok {
-					suggestions = append(suggestions, suggestion)
-				}
-			}
-		}
-
-	case "duckduckgo", "bing":
-		// Standard OpenSearch format: [query, [suggestions...]]
-		var response []interface{}
-		if err := json.Unmarshal(body, &response); err != nil {
-			return nil, fmt.Errorf("failed to parse JSON response: %v", err)
-		}
-
-		if len(response) < 2 {
-			return suggestions, nil
-		}
-
-		if suggestionsList, ok := response[1].([]interface{}); ok {
-			for _, item := range suggestionsList {
-				if suggestion, ok := item.(string); ok {
-					suggestions = append(suggestions, suggestion)
-				}
+	if suggestionsList, ok := response[1].([]interface{}); ok {
+		for _, item := range suggestionsList {
+			if suggestion, ok := item.(string); ok {
+				suggestions = append(suggestions, suggestion)
 			}
 		}
 	}

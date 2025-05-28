@@ -45,8 +45,15 @@ var searchEngines = map[string]string{
 	"google":     "https://www.google.com/search?q={QUERY}",
 	"bing":       "https://www.bing.com/search?q={QUERY}",
 	"perplexity": "https://www.perplexity.ai/search?q={QUERY}",
-	"kagi": "https://kagi.com/search?q={QUERY}",
+	"kagi":       "https://kagi.com/search?q={QUERY}",
 	"startpage": "https://www.startpage.com/search?q={QUERY}",
+}
+
+var suggestionEngines = map[string]string{
+	"google":     "https://suggestqueries.google.com/complete/search?output=firefox&q={QUERY}",
+	"duckduckgo": "https://duckduckgo.com/ac/?q={QUERY}&type=list",
+	"bing":       "https://www.bing.com/osjson.aspx?query={QUERY}",
+	"startpage":  "https://startpage.com/suggestions?q={QUERY}&format=opensearch",
 }
 
 func (widget *searchWidget) initialize() error {
@@ -70,6 +77,13 @@ func (widget *searchWidget) initialize() error {
 	// Set default suggestion engine if suggestions are enabled
 	if widget.Suggestions && widget.SuggestionEngine == "" {
 		widget.SuggestionEngine = originalSearchEngine
+	}
+
+	// Convert suggestion engine preset to URL if applicable
+	if widget.Suggestions && widget.SuggestionEngine != "" {
+		if url, ok := suggestionEngines[widget.SuggestionEngine]; ok {
+			widget.SuggestionEngine = url
+		}
 	}
 
 	for i := range widget.Bangs {

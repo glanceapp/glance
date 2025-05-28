@@ -1156,13 +1156,20 @@ widgets:
 To register an app on Reddit, go to [this page](https://ssl.reddit.com/prefs/apps/).
 
 ### Search Widget
-Display a search bar that can be used to search for specific terms on various search engines.
+Display a search bar that can be used to search for specific terms on various search engines. Features include shortcuts for quick site navigation, search suggestions, and search bangs.
 
 Example:
 
 ```yaml
 - type: search
   search-engine: duckduckgo
+  suggestions: true
+  shortcuts:
+    - title: Gmail
+      url: https://mail.google.com
+      shortcut: gm
+    - title: GitHub
+      url: https://github.com
   bangs:
     - title: YouTube
       shortcut: "!yt"
@@ -1181,6 +1188,9 @@ Preview:
 | <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Perform search in a new tab | Search input is focused and not empty |
 | <kbd>Escape</kbd> | Leave focus | Search input is focused |
 | <kbd>Up</kbd> | Insert the last search query since the page was opened into the input field | Search input is focused |
+| <kbd>Down</kbd> / <kbd>Tab</kbd> | Navigate down in shortcuts/suggestions dropdown | Dropdown is visible |
+| <kbd>Up</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd> | Navigate up in shortcuts/suggestions dropdown | Dropdown is visible |
+| <kbd>Enter</kbd> | Select highlighted shortcut or suggestion | Dropdown is visible and item is highlighted |
 
 > [!TIP]
 >
@@ -1194,6 +1204,9 @@ Preview:
 | autofocus | boolean | no | false |
 | target | string | no | _blank |
 | placeholder | string | no | Type here to search… |
+| suggestions | boolean | no | false |
+| suggestion-engine | string | no | |
+| shortcuts | array | no | |
 | bangs | array | no | |
 
 ##### `search-engine`
@@ -1219,6 +1232,38 @@ The target to use when opening the search results in a new tab. Possible values 
 
 ##### `placeholder`
 When set, modifies the text displayed in the input field before typing.
+
+##### `suggestions`
+When set to `true`, enables search suggestions from the configured suggestion engine. Suggestions appear in a dropdown as you type.
+
+##### `suggestion-engine`
+The engine to use for search suggestions. Can be a preset value from the table below or a custom URL. If not specified and suggestions are enabled, defaults to the same value as `search-engine`. Use `{QUERY}` to indicate where the query value gets placed in custom URLs.
+
+| Name | URL |
+| ---- | --- |
+| google | `https://suggestqueries.google.com/complete/search?output=firefox&q={QUERY}` |
+| duckduckgo | `https://duckduckgo.com/ac/?q={QUERY}&type=list` |
+| bing | `https://www.bing.com/osjson.aspx?query={QUERY}` |
+| startpage | `https://startpage.com/suggestions?q={QUERY}&format=opensearch` |
+
+##### `shortcuts`
+An array of shortcuts to websites that appear in a dropdown as you type. Shortcuts are matched against the title and optional shortcut text using fuzzy matching.
+
+##### Properties for each shortcut
+| Name | Type | Required |
+| ---- | ---- | -------- |
+| title | string | yes |
+| url | string | yes |
+| shortcut | string | no |
+
+###### `title`
+The display name for the shortcut that will appear in the dropdown.
+
+###### `url`
+The URL to navigate to when the shortcut is selected.
+
+###### `shortcut`
+Optional short alias for the shortcut that can be typed to quickly find it. For example, "gm" for Gmail.
 
 ##### `bangs`
 What now? [Bangs](https://duckduckgo.com/bangs). They're shortcuts that allow you to use the same search box for many different sites. Assuming you have it configured, if for example you start your search input with `!yt` you'd be able to perform a search on YouTube:

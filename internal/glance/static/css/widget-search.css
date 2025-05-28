@@ -104,6 +104,7 @@
 
 .search-shortcut-item:hover .search-shortcut-title,
 .search-shortcut-item.highlighted .search-shortcut-title,
+.search-shortcut-item.exact-match .search-shortcut-title,
 .search-shortcut-item[data-type="suggestion"]:hover .search-shortcut-title,
 .search-shortcut-item[data-type="suggestion"].highlighted .search-shortcut-title {
     color: var(--color-text-subdue);
