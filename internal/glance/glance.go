@@ -453,9 +453,14 @@ func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *h
 	suggestions, err := a.fetchSearchSuggestions(query, searchWidget.SuggestionEngine)
 	if err != nil {
 		log.Printf("Error fetching search suggestions: %v", err)
+		// Set error on the widget to show the red dot indicator
+		searchWidget.withError(fmt.Errorf("suggestion service error: %v", err))
 		http.Error(w, "Failed to fetch suggestions", http.StatusInternalServerError)
 		return
 	}
+
+	// Clear any previous errors on successful response
+	searchWidget.withError(nil)
 
 	response := searchSuggestionsResponse{
 		Query:       query,

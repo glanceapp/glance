@@ -175,6 +175,32 @@ export default function SearchBox(widget) {
         });
     }
 
+    function showErrorIndicator() {
+        // Find the widget header in the parent widget container
+        const widgetContainer = widget.closest('.widget');
+        const widgetHeader = widgetContainer?.querySelector('.widget-header');
+        
+        if (!widgetHeader) return;
+        
+        // Check if error indicator already exists
+        if (widgetHeader.querySelector('.notice-icon-major')) {
+            return;
+        }
+        
+        const errorIndicator = document.createElement('div');
+        errorIndicator.className = 'notice-icon notice-icon-major';
+        errorIndicator.title = 'Search suggestions service error';
+        widgetHeader.appendChild(errorIndicator);
+    }
+    
+    function hideErrorIndicator() {
+        const widgetContainer = widget.closest('.widget');
+        const errorIndicator = widgetContainer?.querySelector('.widget-header .notice-icon-major');
+        if (errorIndicator) {
+            errorIndicator.remove();
+        }
+    }
+
     async function fetchSuggestions(query) {
         try {
             const response = await fetch(`/api/search/suggestions?query=${encodeURIComponent(query)}&widget_id=${encodeURIComponent(widgetId)}`, {
@@ -182,13 +208,18 @@ export default function SearchBox(widget) {
             });
 
             if (!response.ok) {
+                showErrorIndicator();
                 return [];
             }
 
+            // Clear error indicator on successful response
+            hideErrorIndicator();
+            
             const data = await response.json();
             return data.suggestions || [];
         } catch (error) {
             console.error('Failed to fetch suggestions:', error);
+            showErrorIndicator();
             return [];
         }
     }

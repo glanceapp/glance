@@ -108,6 +108,7 @@ func (widget *searchWidget) initialize() error {
 		}
 	}
 
+	widget.ContentAvailable = true
 	widget.cachedHTML = widget.renderTemplate(widget, searchWidgetTemplate)
 	return nil
 }
