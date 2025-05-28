@@ -33,7 +33,7 @@ export default function SearchBox(widget) {
         shortcutsArray.push({
             title: shortcut.dataset.title,
             url: shortcut.dataset.url,
-            shortcut: shortcut.dataset.shortcut || ""
+            alias: shortcut.dataset.alias || ""
         });
     }
 
@@ -86,15 +86,15 @@ export default function SearchBox(widget) {
         // Filter and score shortcuts
         const shortcutMatches = shortcutsArray.map(shortcut => {
             const titleMatch = fuzzyMatch(shortcut.title, query);
-            const shortcutMatch = shortcut.shortcut ? fuzzyMatch(shortcut.shortcut, query) : { score: 0, type: 'none' };
-            const bestMatch = titleMatch.score > shortcutMatch.score ? titleMatch : shortcutMatch;
+            const aliasMatch = shortcut.alias ? fuzzyMatch(shortcut.alias, query) : { score: 0, type: 'none' };
+            const bestMatch = titleMatch.score > aliasMatch.score ? titleMatch : aliasMatch;
 
             return {
                 ...shortcut,
                 type: 'shortcut',
                 score: bestMatch.score,
                 matchType: bestMatch.type,
-                isExact: titleMatch.type === 'exact' || shortcutMatch.type === 'exact'
+                isExact: titleMatch.type === 'exact' || aliasMatch.type === 'exact'
             };
         }).filter(item => item.score > 0)
           .sort((a, b) => b.score - a.score);
@@ -149,7 +149,7 @@ export default function SearchBox(widget) {
                             <div class="search-shortcut-title">${item.title}</div>
                             <div class="search-shortcut-url hide-on-mobile">${item.url}</div>
                         </div>
-                        ${item.shortcut ? `<div class="search-shortcut-shortcut">${item.shortcut}</div>` : ''}
+                        ${item.alias ? `<div class="search-shortcut-alias">${item.alias}</div>` : ''}
                     </div>
                 `;
             } else {
@@ -179,20 +179,20 @@ export default function SearchBox(widget) {
         // Find the widget header in the parent widget container
         const widgetContainer = widget.closest('.widget');
         const widgetHeader = widgetContainer?.querySelector('.widget-header');
-        
+
         if (!widgetHeader) return;
-        
+
         // Check if error indicator already exists
         if (widgetHeader.querySelector('.notice-icon-major')) {
             return;
         }
-        
+
         const errorIndicator = document.createElement('div');
         errorIndicator.className = 'notice-icon notice-icon-major';
         errorIndicator.title = 'Search suggestions service error';
         widgetHeader.appendChild(errorIndicator);
     }
-    
+
     function hideErrorIndicator() {
         const widgetContainer = widget.closest('.widget');
         const errorIndicator = widgetContainer?.querySelector('.widget-header .notice-icon-major');
@@ -214,7 +214,7 @@ export default function SearchBox(widget) {
 
             // Clear error indicator on successful response
             hideErrorIndicator();
-            
+
             const data = await response.json();
             return data.suggestions || [];
         } catch (error) {
@@ -310,7 +310,7 @@ export default function SearchBox(widget) {
             // Check for exact shortcut match first
             const exactMatch = shortcutsArray.find(s =>
                 s.title.toLowerCase() === input.toLowerCase() ||
-                (s.shortcut && s.shortcut.toLowerCase() === input.toLowerCase())
+                (s.alias && s.alias.toLowerCase() === input.toLowerCase())
             );
 
             if (exactMatch) {

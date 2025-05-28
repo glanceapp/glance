@@ -15,9 +15,9 @@ type SearchBang struct {
 }
 
 type SearchShortcut struct {
-	Title    string `yaml:"title"`
-	URL      string `yaml:"url"`
-	Shortcut string `yaml:"shortcut"`
+	Title string `yaml:"title"`
+	URL   string `yaml:"url"`
+	Alias string `yaml:"alias"`
 }
 
 type searchWidget struct {

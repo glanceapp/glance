@@ -12,7 +12,7 @@
 
     <div class="search-shortcuts">
         {{ range .Shortcuts }}
-        <input type="hidden" data-shortcut="{{ .Shortcut }}" data-title="{{ .Title }}" data-url="{{ .URL }}">
+        <input type="hidden" data-alias="{{ .Alias }}" data-title="{{ .Title }}" data-url="{{ .URL }}">
         {{ end }}
     </div>
 

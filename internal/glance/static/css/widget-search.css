@@ -115,8 +115,8 @@
     opacity: 0.8;
 }
 
-.search-shortcut-item:hover .search-shortcut-shortcut,
-.search-shortcut-item.highlighted .search-shortcut-shortcut {
+.search-shortcut-item:hover .search-shortcut-alias,
+.search-shortcut-item.highlighted .search-shortcut-alias {
     background: rgba(255, 255, 255, 0.2);
     color: var(--color-text-highlight);
 }
@@ -174,7 +174,7 @@
     max-width: 300px;
 }
 
-.search-shortcut-shortcut {
+.search-shortcut-alias {
     font-size: 0.8em;
     color: var(--color-text-base);
     background: var(--color-widget-background-highlight);
