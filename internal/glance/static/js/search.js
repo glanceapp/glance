@@ -37,18 +37,27 @@ export default function SearchBox(widget) {
         });
     }
 
-    // Simple fuzzy matching function
+    // Fuzzy matching function
     function fuzzyMatch(text, query) {
         const lowerText = text.toLowerCase();
         const lowerQuery = query.toLowerCase();
 
         // Exact match gets highest priority
         if (lowerText === lowerQuery) return { score: 1000, type: 'exact' };
-        if (lowerText.includes(lowerQuery)) return { score: 500, type: 'contains' };
 
-        // Simple fuzzy matching
+        // Check for substring matches with position-based scoring
+        const substringIndex = lowerText.indexOf(lowerQuery);
+        if (substringIndex !== -1) {
+            // Higher score for matches at the beginning
+            const positionBonus = Math.max(0, 100 - substringIndex * 5);
+            return { score: 500 + positionBonus, type: 'contains' };
+        }
+
+        // Fuzzy matching with position-aware scoring
         let score = 0;
         let textIndex = 0;
+        let consecutiveMatches = 0;
+        let firstMatchIndex = -1;
 
         for (let i = 0; i < lowerQuery.length; i++) {
             const char = lowerQuery[i];
@@ -56,12 +65,31 @@ export default function SearchBox(widget) {
 
             if (foundIndex === -1) return { score: 0, type: 'none' };
 
+            // Track first match position
+            if (firstMatchIndex === -1) {
+                firstMatchIndex = foundIndex;
+            }
+
             // Bonus for consecutive characters
-            if (foundIndex === textIndex) score += 10;
-            else score += 1;
+            if (foundIndex === textIndex) {
+                consecutiveMatches++;
+                score += 15; // Higher bonus for consecutive chars
+            } else {
+                consecutiveMatches = 0;
+                score += 2;
+            }
+
+            // Extra bonus for consecutive streaks
+            if (consecutiveMatches > 1) {
+                score += consecutiveMatches * 3;
+            }
 
             textIndex = foundIndex + 1;
         }
+
+        // Position bonus: higher score for matches starting earlier
+        const positionBonus = Math.max(0, 50 - firstMatchIndex * 3);
+        score += positionBonus;
 
         return { score, type: 'fuzzy' };
     }
