@@ -37,6 +37,34 @@ export default function SearchBox(widget) {
         });
     }
 
+    // URL detection function
+    function isUrl(input) {
+        const trimmed = input.trim();
+
+        // Check for protocol-prefixed URLs
+        if (/^https?:\/\/.+/.test(trimmed)) {
+            return trimmed;
+        }
+
+        // Check for IP addresses with optional port
+        if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/.test(trimmed)) {
+            return `http://${trimmed}`;
+        }
+
+        // Check for domain patterns (including localhost)
+        if (/^(www\.)?[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$/.test(trimmed) ||
+            /^localhost(:\d+)?$/.test(trimmed)) {
+            return `https://${trimmed}`;
+        }
+
+        // Check for domain with port (like example.com:8080)
+        if (/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+:\d+$/.test(trimmed)) {
+            return `https://${trimmed}`;
+        }
+
+        return null;
+    }
+
     // Fuzzy matching function
     function fuzzyMatch(text, query) {
         const lowerText = text.toLowerCase();
@@ -344,6 +372,19 @@ export default function SearchBox(widget) {
 
             if (exactMatch) {
                 navigateToShortcut(exactMatch);
+                return;
+            }
+
+            // Check if input is a URL
+            const detectedUrl = isUrl(input);
+            if (detectedUrl) {
+                if (newTab) {
+                    window.open(detectedUrl, target).focus();
+                } else {
+                    window.location.href = detectedUrl;
+                }
+                inputElement.value = "";
+                hideDropdown();
                 return;
             }
 
