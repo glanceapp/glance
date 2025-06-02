@@ -42,6 +42,10 @@ type application struct {
 	usernameHashToUsername map[string]string
 	authAttemptsMu         sync.Mutex
 	failedAuthAttempts     map[string]*failedAuthAttempt
+
+	// Background refresh system
+	backgroundRefreshTicker *time.Ticker
+	stopBackground          chan struct{}
 }
 
 func newApplication(c *config) (*application, error) {
@@ -501,6 +505,11 @@ func (a *application) server() (func() error, func() error) {
 			absAssetsPath,
 		)
 
+		// Start background refresh if enabled
+		if a.Config.Server.BackgroundRefreshEnabled {
+			a.startBackgroundRefresh()
+		}
+
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			return err
 		}
@@ -509,8 +518,75 @@ func (a *application) server() (func() error, func() error) {
 	}
 
 	stop := func() error {
+		// Stop background refresh first
+		a.stopBackgroundRefresh()
 		return server.Close()
 	}
 
 	return start, stop
+}
+
+// startBackgroundRefresh starts a goroutine that periodically refreshes outdated widgets
+func (a *application) startBackgroundRefresh() {
+	refreshInterval := a.Config.Server.BackgroundRefreshInterval
+	
+	a.backgroundRefreshTicker = time.NewTicker(refreshInterval)
+	a.stopBackground = make(chan struct{})
+	
+	log.Printf("Starting background widget refresh every %v", refreshInterval)
+	
+	go func() {
+		for {
+			select {
+			case <-a.backgroundRefreshTicker.C:
+				a.refreshAllOutdatedWidgets()
+			case <-a.stopBackground:
+				return
+			}
+		}
+	}()
+}
+
+// stopBackgroundRefresh stops the background refresh goroutine
+func (a *application) stopBackgroundRefresh() {
+	if a.backgroundRefreshTicker != nil {
+		a.backgroundRefreshTicker.Stop()
+	}
+	if a.stopBackground != nil {
+		close(a.stopBackground)
+	}
+}
+
+// refreshAllOutdatedWidgets updates all outdated widgets across all pages
+func (a *application) refreshAllOutdatedWidgets() {
+	log.Println("Running background widget refresh...")
+	
+	var wg sync.WaitGroup
+	
+	for _, pagePtr := range a.slugToPage {
+		wg.Add(1)
+		go func(p *page) {
+			defer wg.Done()
+			
+			// Use a timeout for each page to prevent hanging
+			done := make(chan struct{})
+			go func() {
+				defer close(done)
+				p.mu.Lock()
+				defer p.mu.Unlock()
+				p.updateOutdatedWidgets()
+			}()
+			
+			select {
+			case <-done:
+				// Update completed normally
+			case <-time.After(30 * time.Second):
+				// Timeout - log warning but continue
+				log.Printf("Background refresh timeout for page: %s", p.Slug)
+			}
+		}(pagePtr)
+	}
+	
+	wg.Wait()
+	log.Println("Background widget refresh completed")
 }
