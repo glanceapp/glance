@@ -396,7 +396,7 @@ export default function SearchBox(widget) {
                 searchUrlTemplate = defaultSearchUrl;
             } else {
                 query = input;
-                searchUrlTemplate = defaultSearchUrl;
+                searchUrlTemplate = currentBang.dataset.url;
             }
 
             if (query.length == 0 && currentBang == null) {
