@@ -273,6 +273,46 @@ func (p *page) updateOutdatedWidgets() {
 	wg.Wait()
 }
 
+// updateWidgetsWithinDuration updates widgets that are outdated or will become outdated within the given duration
+func (p *page) updateWidgetsWithinDuration(duration time.Duration) {
+	now := time.Now()
+
+	var wg sync.WaitGroup
+	context := context.Background()
+
+	for w := range p.HeadWidgets {
+		widget := p.HeadWidgets[w]
+
+		if !widget.requiresUpdateWithin(&now, duration) {
+			continue
+		}
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			widget.update(context)
+		}()
+	}
+
+	for c := range p.Columns {
+		for w := range p.Columns[c].Widgets {
+			widget := p.Columns[c].Widgets[w]
+
+			if !widget.requiresUpdateWithin(&now, duration) {
+				continue
+			}
+
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				widget.update(context)
+			}()
+		}
+	}
+
+	wg.Wait()
+}
+
 func (a *application) resolveUserDefinedAssetPath(path string) string {
 	if strings.HasPrefix(path, "/assets/") {
 		return a.Config.Server.BaseURL + path
@@ -557,11 +597,12 @@ func (a *application) stopBackgroundRefresh() {
 	}
 }
 
-// refreshAllOutdatedWidgets updates all outdated widgets across all pages
+// refreshAllOutdatedWidgets proactively updates widgets that are outdated or will become outdated before the next refresh cycle
 func (a *application) refreshAllOutdatedWidgets() {
 	log.Println("Running background widget refresh...")
 	
 	var wg sync.WaitGroup
+	refreshInterval := a.Config.Server.BackgroundRefreshInterval
 	
 	for _, pagePtr := range a.slugToPage {
 		wg.Add(1)
@@ -574,7 +615,8 @@ func (a *application) refreshAllOutdatedWidgets() {
 				defer close(done)
 				p.mu.Lock()
 				defer p.mu.Unlock()
-				p.updateOutdatedWidgets()
+				// Use predictive refresh: update widgets that will be outdated before next cycle
+				p.updateWidgetsWithinDuration(refreshInterval)
 			}()
 			
 			select {
