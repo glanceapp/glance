@@ -23,7 +23,7 @@
             {{- end }}
             {{- end }}
             <div class="grow min-width-0">
-                <a href="{{ .DiscussionUrl | safeURL }}" class="size-title-dynamic color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
+                <a href="{{ .DiscussionUrl | safeURL }}" class="size-title-dynamic color-primary-if-not-visited text-truncate-3-lines" target="_blank" rel="noreferrer">{{ .Title }}</a>
                 {{- if .Tags }}
                 <div class="inline-block forum-post-tags-container">
                     <ul class="attachments">
