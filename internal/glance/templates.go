@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"math"
 	"strconv"
-	"strings"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -21,6 +20,9 @@ var globalTemplateFunctions = template.FuncMap{
 	},
 	"safeURL": func(str string) template.URL {
 		return template.URL(str)
+	},
+	"safeHTML": func(str string) template.HTML {
+		return template.HTML(str)
 	},
 	"absInt": func(i int) int {
 		return int(math.Abs(float64(i)))
@@ -54,7 +56,6 @@ var globalTemplateFunctions = template.FuncMap{
 
 		return template.HTML(value + ` <span class="color-base size-h5">` + label + `</span>`)
 	},
-	"hasPrefix": strings.HasPrefix,
 }
 
 func mustParseTemplate(primary string, dependencies ...string) *template.Template {

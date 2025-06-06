@@ -20,6 +20,8 @@ const (
 	cliIntentDiagnose
 	cliIntentSensorsPrint
 	cliIntentMountpointInfo
+	cliIntentSecretMake
+	cliIntentPasswordHash
 )
 
 type cliOptions struct {
@@ -46,12 +48,15 @@ func parseCliOptions() (*cliOptions, error) {
 		flags.PrintDefaults()
 
 		fmt.Println("\nCommands:")
-		fmt.Println("  config:validate     Validate the config file")
-		fmt.Println("  config:print        Print the parsed config file with embedded includes")
-		fmt.Println("  sensors:print       List all sensors")
-		fmt.Println("  mountpoint:info     Print information about a given mountpoint path")
-		fmt.Println("  diagnose            Run diagnostic checks")
+		fmt.Println("  config:validate       Validate the config file")
+		fmt.Println("  config:print          Print the parsed config file with embedded includes")
+		fmt.Println("  password:hash <pwd>   Hash a password")
+		fmt.Println("  secret:make           Generate a random secret key")
+		fmt.Println("  sensors:print         List all sensors")
+		fmt.Println("  mountpoint:info       Print information about a given mountpoint path")
+		fmt.Println("  diagnose              Run diagnostic checks")
 	}
+
 	configPath := flags.String("config", "glance.yml", "Set config path")
 	err := flags.Parse(os.Args[1:])
 	if err != nil {
@@ -73,6 +78,14 @@ func parseCliOptions() (*cliOptions, error) {
 			intent = cliIntentSensorsPrint
 		} else if args[0] == "diagnose" {
 			intent = cliIntentDiagnose
+		} else if args[0] == "secret:make" {
+			intent = cliIntentSecretMake
+		} else {
+			return nil, unknownCommandErr
+		}
+	} else if len(args) == 2 {
+		if args[0] == "password:hash" {
+			intent = cliIntentPasswordHash
 		} else {
 			return nil, unknownCommandErr
 		}

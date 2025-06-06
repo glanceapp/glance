@@ -7,6 +7,7 @@
     - [Other ways of providing tokens/passwords/secrets](#other-ways-of-providing-tokenspasswordssecrets)
   - [Including other config files](#including-other-config-files)
   - [Config schema](#config-schema)
+- [Authentication](#authentication)
 - [Server](#server)
 - [Document](#document)
 - [Branding](#branding)
@@ -25,6 +26,7 @@
   - [Custom API](#custom-api)
   - [Extension](#extension)
   - [Weather](#weather)
+  - [Todo](#todo)
   - [Monitor](#monitor)
   - [Releases](#releases)
   - [Docker Containers](#docker-containers)
@@ -187,6 +189,67 @@ This assumes that the config you want to print is in your current working direct
 
 For property descriptions, validation and autocompletion of the config within your IDE, @not-first has kindly created a [schema](https://github.com/not-first/glance-schema). Massive thanks to them for this, go check it out and give them a star!
 
+## Authentication
+
+To make sure that only you and the people you want to share your dashboard with have access to it, you can set up authentication via username and password. This is done through a top level `auth` property. Example:
+
+```yaml
+auth:
+  secret-key: # this must be set to a random value generated using the secret:make CLI command
+  users:
+    admin:
+      password: 123456
+    svilen:
+      password: 123456
+```
+
+To generate a secret key, run the following command:
+
+```sh
+./glance secret:make
+```
+
+Or with Docker:
+
+```sh
+docker run --rm glanceapp/glance secret:make
+```
+
+### Using hashed passwords
+
+If you do not want to store plain passwords in your config file or in environment variables, you can hash your password and provide its hash instead:
+
+```sh
+./glance password:hash mysecretpassword
+```
+
+Or with Docker:
+
+```sh
+docker run --rm glanceapp/glance password:hash mysecretpassword
+```
+
+Then, in your config file use the `password-hash` property instead of `password`:
+
+```yaml
+auth:
+  secret-key: # this must be set to a random value generated using the secret:make CLI command
+  users:
+    admin:
+      password-hash: $2a$10$o6SXqiccI3DDP2dN4ADumuOeIHET6Q4bUMYZD6rT2Aqt6XQ3DyO.6
+```
+
+### Preventing brute-force attacks
+
+Glance will automatically block IP addresses of users who fail to authenticate 5 times in a row in the span of 5 minutes. In order for this feature to work correctly, Glance must know the real IP address of requests. If you're using a reverse proxy such as nginx, Traefik, NPM, etc, you must set the `proxied` property in the `server` configuration to `true`:
+
+```yaml
+server:
+  proxied: true
+```
+
+When set to `true`, Glance will use the `X-Forwarded-For` header to determine the original IP address of the request, so make sure that your reverse proxy is correctly configured to send that header.
+
 ## Server
 Server configuration is done through a top level `server` property. Example:
 
@@ -202,6 +265,7 @@ server:
 | ---- | ---- | -------- | ------- |
 | host | string | no |  |
 | port | number | no | 8080 |
+| proxied | boolean | no | false |
 | base-url | string | no | |
 | assets-path | string | no |  |
 
@@ -210,6 +274,9 @@ The address which the server will listen on. Setting it to `localhost` means tha
 
 #### `port`
 A number between 1 and 65,535, so long as that port isn't already used by anything else.
+
+#### `proxied`
+Set to `true` if you're using a reverse proxy in front of Glance. This will make Glance use the `X-Forwarded-*` headers to determine the original request details.
 
 #### `base-url`
 The base URL that Glance is hosted under. No need to specify this unless you're using a reverse proxy and are hosting Glance under a directory. If that's the case then you can set this value to `/glance` or whatever the directory is called. Note that the forward slash (`/`) in the beginning is required unless you specify the full domain and path.
@@ -322,9 +389,24 @@ Example:
 
 ```yaml
 theme:
+  # This will be the default theme
   background-color: 100 20 10
   primary-color: 40 90 40
   contrast-multiplier: 1.1
+
+  disable-picker: false
+  presets:
+    gruvbox-dark:
+      background-color: 0 0 16
+      primary-color: 43 59 81
+      positive-color: 61 66 44
+      negative-color: 6 96 59
+
+    zebra:
+      light: true
+      background-color: 0 0 95
+      primary-color: 0 0 10
+      negative-color: 0 90 50
 ```
 
 ### Available themes
@@ -341,6 +423,8 @@ If you don't want to spend time configuring your own theme, there are [several a
 | contrast-multiplier | number | no | 1 |
 | text-saturation-multiplier | number | no | 1 |
 | custom-css-file | string | no | |
+| disable-picker | bool | false | |
+| presets | object | no | |
 
 #### `light`
 Whether the scheme is light or dark. This does not change the background color, it inverts the text colors so that they look appropriately on a light background.
@@ -385,6 +469,33 @@ theme:
 >
 > In addition, you can also use the `css-class` property which is available on every widget to set custom class names for individual widgets.
 
+#### `disable-picker`
+When set to `true` hides the theme picker and disables the abiltity to switch between themes. All users who previously picked a non-default theme will be switched over to the default theme.
+
+#### `presets`
+Define additional theme presets that can be selected from the theme picker on the page. For each preset, you can specify the same properties as for the default theme, such as `background-color`, `primary-color`, `positive-color`, `negative-color`, `contrast-multiplier`, etc., except for the `custom-css-file` property.
+
+Example:
+
+```yaml
+theme:
+  presets:
+    my-custom-dark-theme:
+      background-color: 229 19 23
+      contrast-multiplier: 1.2
+      primary-color: 222 74 74
+      positive-color: 96 44 68
+      negative-color: 359 68 71
+    my-custom-light-theme:
+      light: true
+      background-color: 220 23 95
+      contrast-multiplier: 1.1
+      primary-color: 220 91 54
+      positive-color: 109 58 40
+      negative-color: 347 87 44
+```
+
+To override the default dark and light themes, use the key names `default-dark` and `default-light`.
 
 ## Pages & Columns
 ![illustration of pages and columns](images/pages-and-columns-illustration.png)
@@ -415,8 +526,8 @@ pages:
 | desktop-navigation-width | string | no | |
 | center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
-| expand-mobile-page-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
+| head-widgets | array | no | |
 | columns | array | yes | |
 
 #### `name`
@@ -447,15 +558,49 @@ When set to `true`, vertically centers the content on the page. Has no effect if
 #### `hide-desktop-navigation`
 Whether to show the navigation links at the top of the page on desktop.
 
-#### `expand-mobile-page-navigation`
-Whether the mobile page navigation should be expanded by default.
-
 #### `show-mobile-header`
 Whether to show a header displaying the name of the page on mobile. The header purposefully has a lot of vertical whitespace in order to push the content down and make it easier to reach on tall devices.
 
 Preview:
 
 ![](images/mobile-header-preview.png)
+
+#### `head-widgets`
+
+Head widgets will be shown at the top of the page, above the columns, and take up the combined width of all columns. You can specify any widget, though some will look better than others, such as the markets, RSS feed with `horizontal-cards` style, and videos widgets. Example:
+
+![](images/head-widgets-preview.png)
+
+```yaml
+pages:
+  - name: Home
+    head-widgets:
+      - type: markets
+        hide-header: true
+        markets:
+          - symbol: SPY
+            name: S&P 500
+          - symbol: BTC-USD
+            name: Bitcoin
+          - symbol: NVDA
+            name: NVIDIA
+          - symbol: AAPL
+            name: Apple
+          - symbol: MSFT
+            name: Microsoft
+
+    columns:
+      - size: small
+        widgets:
+          - type: calendar
+      - size: full
+        widgets:
+          - type: hacker-news
+      - size: small
+        widgets:
+          - type: weather
+            location: London, United Kingdom
+```
 
 ### Columns
 Columns are defined for each page using a `columns` property. There are two types of columns - `full` and `small`, which refers to their width. A small column takes up a fixed amount of width (300px) and a full column takes up the all of the remaining width. You can have up to 3 columns per page and you must have either 1 or 2 full columns. Example:
@@ -535,6 +680,7 @@ pages:
 | type | string | yes |
 | title | string | no |
 | title-url | string | no |
+| hide-header | boolean | no | false |
 | cache | string | no |
 | css-class | string | no |
 
@@ -546,6 +692,13 @@ The title of the widget. If left blank it will be defined by the widget.
 
 #### `title-url`
 The URL to go to when clicking on the widget's title. If left blank it will be defined by the widget (if available).
+
+#### `hide-header`
+When set to `true`, the header (title) of the widget will be hidden. You cannot hide the header of the group widget.
+
+> [!NOTE]
+>
+> If a widget fails to update, a red dot or circle is shown next to the title of that widget indicating that the it is not working. You will not be able to see this if you hide the header.
 
 #### `cache`
 How long to keep the fetched data in memory. The value is a string and must be a number followed by one of s, m, h, d. Examples:
@@ -995,6 +1148,8 @@ widgets:
       secret: ${REDDIT_APP_SECRET}
 ```
 
+To register an app on Reddit, go to [this page](https://ssl.reddit.com/prefs/apps/).
+
 ### Search Widget
 Display a search bar that can be used to search for specific terms on various search engines.
 
@@ -1372,7 +1527,7 @@ Examples:
 #### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| url | string | yes | |
+| url | string | no | |
 | headers | key (string) & value (string) | no | |
 | method | string | no | GET |
 | body-type | string | no | json |
@@ -1381,6 +1536,7 @@ Examples:
 | allow-insecure | boolean | no | false |
 | skip-json-validation | boolean | no | false |
 | template | string | yes | |
+| options | map | no | |
 | parameters | key (string) & value (string|array) | no | |
 | subrequests | map of requests | no | |
 
@@ -1432,6 +1588,95 @@ When set to `true`, skips the JSON validation step. This is useful when the API 
 
 ##### `template`
 The template that will be used to display the data. It relies on Go's `html/template` package so it's recommended to go through [its documentation](https://pkg.go.dev/text/template) to understand how to do basic things such as conditionals, loops, etc. In addition, it also uses [tidwall's gjson](https://github.com/tidwall/gjson) package to parse the JSON data so it's worth going through its documentation if you want to use more advanced JSON selectors. You can view additional examples with explanations and function definitions [here](custom-api.md).
+
+##### `options`
+A map of options that will be passed to the template and can be used to modify the behavior of the widget.
+
+<details>
+<summary>View examples</summary>
+
+<br>
+
+Instead of defining options within the template and having to modify the template itself like such:
+
+```yaml
+- type: custom-api
+  template: |
+    {{ /* User configurable options */ }}
+    {{ $collapseAfter := 5 }}
+    {{ $showThumbnails := true }}
+    {{ $showFlairs := false }}
+
+     <ul class="list list-gap-10 collapsible-container" data-collapse-after="{{ $collapseAfter }}">
+      {{ if $showThumbnails }}
+        <li>
+          <img src="{{ .JSON.String "thumbnail" }}" alt="thumbnail" />
+        </li>
+      {{ end }}
+      {{ if $showFlairs }}
+        <li>
+          <span class="flair">{{ .JSON.String "flair" }}</span>
+        </li>
+      {{ end }}
+     </ul>
+```
+
+You can use the `options` property to retrieve and define default values for these variables:
+
+```yaml
+- type: custom-api
+  template: |
+    <ul class="list list-gap-10 collapsible-container" data-collapse-after="{{ .Options.IntOr "collapse-after" 5 }}">
+      {{ if (.Options.BoolOr "show-thumbnails" true) }}
+        <li>
+          <img src="{{ .JSON.String "thumbnail" }}" alt="thumbnail" />
+        </li>
+      {{ end }}
+      {{ if (.Options.BoolOr "show-flairs" false) }}
+        <li>
+          <span class="flair">{{ .JSON.String "flair" }}</span>
+        </li>
+      {{ end }}
+    </ul>
+```
+
+This way, you can optionally specify the `collapse-after`, `show-thumbnails` and `show-flairs` properties in the widget configuration:
+
+```yaml
+- type: custom-api
+  options:
+    collapse-after: 5
+    show-thumbnails: true
+    show-flairs: false
+```
+
+Which means you can reuse the same template for multiple widgets with different options:
+
+```yaml
+# Note that `custom-widgets` isn't a special property, it's just used to define the reusable "anchor", see https://support.atlassian.com/bitbucket-cloud/docs/yaml-anchors/
+custom-widgets:
+  - &example-widget
+    type: custom-api
+    template: |
+      {{ .Options.StringOr "custom-option" "not defined" }}
+
+pages:
+  - name: Home
+    columns:
+      - size: full
+        widgets:
+          - <<: *example-widget
+            options:
+              custom-option: "Value 1"
+
+          - <<: *example-widget
+            options:
+              custom-option: "Value 2"
+```
+
+Currently, the available methods on the `.Options` object are: `StringOr`, `IntOr`, `BoolOr` and `FloatOr`.
+
+</details>
 
 ##### `parameters`
 A list of keys and values that will be sent to the custom-api as query paramters.
@@ -1587,6 +1832,44 @@ Otherwise, if set to `false` (which is the default) it'll be displayed as:
 ```
 Greenville, United States
 ```
+
+### Todo
+
+A simple to-do list that allows you to add, edit and delete tasks. The tasks are stored in the browser's local storage.
+
+Example:
+
+```yaml
+- type: to-do
+```
+
+Preview:
+
+![](images/todo-widget-preview.png)
+
+To reorder tasks, drag and drop them by grabbing the top side of the task:
+
+![](images/reorder-todo-tasks-prevew.gif)
+
+To delete a task, hover over it and click on the trash icon.
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| id | string | no | |
+
+##### `id`
+
+The ID of the todo list. If you want to have multiple todo lists, you must specify a different ID for each one. The ID is used to store the tasks in the browser's local storage. This means that if you have multiple todo lists with the same ID, they will share the same tasks.
+
+#### Keyboard shortcuts
+| Keys | Action | Condition |
+| ---- | ------ | --------- |
+| <kbd>Enter</kbd> | Add a task to the bottom of the list | When the "Add a task" field is focused |
+| <kbd>Ctrl</kbd> + <kbd>Enter</kbd> | Add a task to the top of the list | When the "Add a task" field is focused |
+| <kbd>Down Arrow</kbd> | Focus the last task that was added | When the "Add a task" field is focused |
+| <kbd>Escape</kbd> | Focus the "Add a task" field | When a task is focused |
 
 ### Monitor
 Display a list of sites and whether they are reachable (online) or not. This is determined by sending a GET request to the specified URL, if the response is 200 then the site is OK. The time it took to receive a response is also shown in milliseconds.
@@ -1864,7 +2147,7 @@ Alternatively, you can also define the values within your `glance.yml` via the `
 - type: docker-containers
   containers:
     container_name_1:
-      title: Container Name
+      name: Container Name
       description: Description of the container
       url: https://container.domain.com
       icon: si:container-icon

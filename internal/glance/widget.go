@@ -79,6 +79,8 @@ func newWidget(widgetType string) (widget, error) {
 		w = &dockerContainersWidget{}
 	case "server-stats":
 		w = &serverStatsWidget{}
+	case "to-do":
+		w = &todoWidget{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}
@@ -150,6 +152,7 @@ type widgetBase struct {
 	Type                string           `yaml:"type"`
 	Title               string           `yaml:"title"`
 	TitleURL            string           `yaml:"title-url"`
+	HideHeader          bool             `yaml:"hide-header"`
 	CSSClass            string           `yaml:"css-class"`
 	CustomCacheDuration durationField    `yaml:"cache"`
 	ContentAvailable    bool             `yaml:"-"`
@@ -161,7 +164,6 @@ type widgetBase struct {
 	cacheType           cacheType        `yaml:"-"`
 	nextUpdate          time.Time        `yaml:"-"`
 	updateRetriedTimes  int              `yaml:"-"`
-	HideHeader          bool             `yaml:"-"`
 }
 
 type widgetProviders struct {

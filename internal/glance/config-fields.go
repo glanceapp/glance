@@ -23,17 +23,27 @@ const (
 )
 
 type hslColorField struct {
-	Hue        float64
-	Saturation float64
-	Lightness  float64
+	H float64
+	S float64
+	L float64
 }
 
 func (c *hslColorField) String() string {
-	return fmt.Sprintf("hsl(%.1f, %.1f%%, %.1f%%)", c.Hue, c.Saturation, c.Lightness)
+	return fmt.Sprintf("hsl(%.1f, %.1f%%, %.1f%%)", c.H, c.S, c.L)
 }
 
 func (c *hslColorField) ToHex() string {
-	return hslToHex(c.Hue, c.Saturation, c.Lightness)
+	return hslToHex(c.H, c.S, c.L)
+}
+
+func (c1 *hslColorField) SameAs(c2 *hslColorField) bool {
+	if c1 == nil && c2 == nil {
+		return true
+	}
+	if c1 == nil || c2 == nil {
+		return false
+	}
+	return c1.H == c2.H && c1.S == c2.S && c1.L == c2.L
 }
 
 func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
@@ -76,9 +86,9 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 		return fmt.Errorf("HSL lightness must be between 0 and %d", hslLightnessMax)
 	}
 
-	c.Hue = hue
-	c.Saturation = saturation
-	c.Lightness = lightness
+	c.H = hue
+	c.S = saturation
+	c.L = lightness
 
 	return nil
 }
