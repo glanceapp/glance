@@ -139,6 +139,7 @@ type rssFeedRequest struct {
 	ItemLinkPrefix  string            `yaml:"item-link-prefix"`
 	Headers         map[string]string `yaml:"headers"`
 	IsDetailed      bool              `yaml:"-"`
+	ScrapeImages    bool              `yaml:"scrape-images"`
 }
 
 type rssFeedItemList []rssFeedItem
@@ -398,7 +399,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 		items = append(items, rssItem)
 	}
 
-	if !feedIncludesImage {
+	if (!feedIncludesImage) && request.ScrapeImages {
 
 		inputs := []fetchFirstImageFromRSSItemInput{}
 
