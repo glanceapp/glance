@@ -124,6 +124,7 @@ type rssFeedItem struct {
 	ChannelURL  string
 	Title       string
 	Link        string
+	LinkHost    string
 	ImageURL    string
 	Categories  []string
 	Description string
@@ -259,6 +260,10 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 			rssItem.Link = request.ItemLinkPrefix + item.Link
 		} else if strings.HasPrefix(item.Link, "http://") || strings.HasPrefix(item.Link, "https://") {
 			rssItem.Link = item.Link
+			if parsedURL, err := url.Parse(item.Link); err == nil {
+				rssItem.LinkHost = strings.TrimPrefix(parsedURL.Host, "www.")
+			}
+
 		} else {
 			parsedUrl, err := url.Parse(feed.Link)
 			if err != nil {

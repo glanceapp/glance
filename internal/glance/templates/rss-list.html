@@ -7,6 +7,7 @@
         <a class="title size-title-dynamic color-primary-if-not-visited" href="{{ .Link }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
         <ul class="list-horizontal-text flex-nowrap">
             <li {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
+            <li class="min-width-0">{{ .LinkHost }}</li>
             {{ if .HideChannel }}
             {{ else }}
             <li class="min-width-0">
