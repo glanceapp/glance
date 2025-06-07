@@ -38,6 +38,7 @@ type rssWidget struct {
 	CollapseAfter    int              `yaml:"collapse-after"`
 	SingleLineTitles bool             `yaml:"single-line-titles"`
 	PreserveOrder    bool             `yaml:"preserve-order"`
+	HideChannel      bool             `yaml:"hide-channel"`
 
 	Items          rssFeedItemList `yaml:"-"`
 	NoItemsMessage string          `yaml:"-"`
@@ -119,6 +120,7 @@ type cachedRSSFeed struct {
 
 type rssFeedItem struct {
 	ChannelName string
+	HideChannel bool
 	ChannelURL  string
 	Title       string
 	Link        string
@@ -133,6 +135,7 @@ type rssFeedRequest struct {
 	Title           string            `yaml:"title"`
 	HideCategories  bool              `yaml:"hide-categories"`
 	HideDescription bool              `yaml:"hide-description"`
+	HideChannel     bool              `yaml:"hide-channel"`
 	Limit           int               `yaml:"limit"`
 	ItemLinkPrefix  string            `yaml:"item-link-prefix"`
 	Headers         map[string]string `yaml:"headers"`
@@ -249,6 +252,8 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 		rssItem := rssFeedItem{
 			ChannelURL: feed.Link,
 		}
+
+		rssItem.HideChannel = widget.HideChannel
 
 		if request.ItemLinkPrefix != "" {
 			rssItem.Link = request.ItemLinkPrefix + item.Link
