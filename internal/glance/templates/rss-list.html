@@ -7,9 +7,12 @@
         <a class="title size-title-dynamic color-primary-if-not-visited" href="{{ .Link }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
         <ul class="list-horizontal-text flex-nowrap">
             <li {{ dynamicRelativeTimeAttrs .PublishedAt }}></li>
+            {{ if .HideChannel }}
+            {{ else }}
             <li class="min-width-0">
                 <a class="block text-truncate" href="{{ .ChannelURL }}" target="_blank" rel="noreferrer">{{ .ChannelName }}</a>
             </li>
+            {{ end }}
         </ul>
     </li>
     {{ else }}
