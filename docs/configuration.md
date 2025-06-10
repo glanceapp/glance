@@ -188,7 +188,7 @@ This assumes that the config you want to print is in your current working direct
 
 ## Icons
 
-For widgets which provide you with the ability to specify icons such as the monitor, bookmarks, docker containers, etc, you can use the `icon` property to specify a URL to an image. Alternatively, you can also use icon names from multiple libraries via prefixes:
+For widgets which provide you with the ability to specify icons such as the monitor, bookmarks, docker containers, etc, you can use the `icon` property to specify a URL to an image or use icon names from multiple libraries via prefixes:
 
 ```yml
 icon: si:immich # si for Simple icons https://simpleicons.org/

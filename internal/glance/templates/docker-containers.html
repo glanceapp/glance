@@ -5,7 +5,7 @@
     {{- range .Containers }}
     <li class="docker-container flex items-center gap-15">
         <div class="shrink-0" data-popover-type="html" data-popover-position="above" data-popover-offset="0.25" data-popover-margin="0.1rem" data-popover-max-width="400px" aria-hidden="true">
-            <img class="docker-container-icon{{ if .Icon.IsFlatIcon }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
+            <img class="docker-container-icon{{ if .Icon.AutoInvert }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
             <div data-popover-html>
                 <div class="color-highlight text-truncate block">{{ .Image }}</div>
                 <div>{{ .StateText }}</div>

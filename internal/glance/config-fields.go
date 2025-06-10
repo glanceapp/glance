@@ -131,10 +131,7 @@ func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 
 type customIconField struct {
 	URL        template.URL
-	IsFlatIcon bool
-	// TODO: along with whether the icon is flat, we also need to know
-	// whether the icon is black or white by default in order to properly
-	// invert the color based on the theme being light or dark
+	AutoInvert bool
 }
 
 func newCustomIconField(value string) customIconField {
@@ -142,7 +139,7 @@ func newCustomIconField(value string) customIconField {
 	field := customIconField{}
 
 	if strings.HasPrefix(value, autoInvertPrefix) {
-		field.IsFlatIcon = true
+		field.AutoInvert = true
 		value = strings.TrimPrefix(value, autoInvertPrefix)
 	}
 
@@ -164,12 +161,12 @@ func newCustomIconField(value string) customIconField {
 
 	switch prefix {
 	case "si":
-		field.IsFlatIcon = true
+		field.AutoInvert = true
 		field.URL = template.URL("https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + basename + ".svg")
 	case "di":
 		field.URL = template.URL("https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/" + ext + "/" + basename + "." + ext)
 	case "mdi":
-		field.IsFlatIcon = true
+		field.AutoInvert = true
 		field.URL = template.URL("https://cdn.jsdelivr.net/npm/@mdi/svg@latest/svg/" + basename + ".svg")
 	case "sh":
 		field.URL = template.URL("https://cdn.jsdelivr.net/gh/selfhst/icons/" + ext + "/" + basename + "." + ext)
