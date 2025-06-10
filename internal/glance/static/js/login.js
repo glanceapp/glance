@@ -70,6 +70,18 @@ function enableLoginButtonIfCriteriaMet() {
     );
 }
 
+function handleKeydown(event) {
+    if (event.key === "Enter") {
+        const isDisabled = loginButton.disabled;
+        if (!isDisabled) {
+            handleLoginAttempt();
+        }
+    }
+}
+
+usernameInput.on("keydown", handleKeydown);
+passwordInput.on("keydown", handleKeydown);
+
 usernameInput.on("input", enableLoginButtonIfCriteriaMet);
 passwordInput.on("input", enableLoginButtonIfCriteriaMet);
 
