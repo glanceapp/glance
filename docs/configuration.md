@@ -1968,6 +1968,7 @@ Properties for each site:
 | same-tab | boolean | no | false |
 | alt-status-codes | array | no | |
 | basic-auth | object | no | |
+| target | string | no | _blank |
 
 `title`
 
@@ -2019,6 +2020,10 @@ basic-auth:
   username: your-username
   password: your-password
 ```
+
+`target`
+
+Set a custom value for the link's `target` attribute. Possible values are `_blank`, `_self`, `_parent` and `_top`, you can read more about what they do [here](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target). This property has precedence over `same-tab`.
 
 ### Releases
 Display a list of latest releases for specific repositories on Github, GitLab, Codeberg or Docker Hub.
