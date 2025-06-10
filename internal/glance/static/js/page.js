@@ -194,7 +194,7 @@ function setupSearchBoxes() {
 
         document.addEventListener("keydown", (event) => {
             if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-            if (event.key != "s") return;
+            if (event.code != "KeyS") return;
 
             inputElement.focus();
             event.preventDefault();
