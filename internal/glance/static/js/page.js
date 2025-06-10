@@ -194,7 +194,7 @@ function setupSearchBoxes() {
 
         document.addEventListener("keydown", (event) => {
             if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-            if (event.key != "s") return;
+            if (event.code != "KeyS") return;
 
             inputElement.focus();
             event.preventDefault();
@@ -643,13 +643,14 @@ async function setupCalendars() {
 }
 
 async function setupTodos() {
-    const elems = document.getElementsByClassName("todo");
+    const elems = Array.from(document.getElementsByClassName("todo"));
     if (elems.length == 0) return;
 
     const todo = await import ('./todo.js');
 
-    for (let i = 0; i < elems.length; i++)
+    for (let i = 0; i < elems.length; i++){
         todo.default(elems[i]);
+    }
 }
 
 function setupTruncatedElementTitles() {
@@ -661,7 +662,8 @@ function setupTruncatedElementTitles() {
 
     for (let i = 0; i < elements.length; i++) {
         const element = elements[i];
-        if (element.getAttribute("title") === null) element.title = element.innerText;
+        if (element.getAttribute("title") === null)
+            element.title = element.innerText.trim().replace(/\s+/g, " ");
     }
 }
 
