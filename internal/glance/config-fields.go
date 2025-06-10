@@ -152,31 +152,27 @@ func newCustomIconField(value string) customIconField {
 		return field
 	}
 
+	basename, ext, found := strings.Cut(icon, ".")
+	if !found {
+		ext = "svg"
+		basename = icon
+	}
+
+	if ext != "svg" && ext != "png" {
+		ext = "svg"
+	}
+
 	switch prefix {
 	case "si":
-		field.URL = template.URL("https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + icon + ".svg")
 		field.IsFlatIcon = true
-	case "di", "sh":
-		// syntax: di:<icon_name>[.svg|.png]
-		// syntax: sh:<icon_name>[.svg|.png]
-		// if the icon name is specified without extension, it is assumed to be wanting the SVG icon
-		// otherwise, specify the extension of either .svg or .png to use either of the CDN offerings
-		// any other extension will be interpreted as .svg
-		basename, ext, found := strings.Cut(icon, ".")
-		if !found {
-			ext = "svg"
-			basename = icon
-		}
-
-		if ext != "svg" && ext != "png" {
-			ext = "svg"
-		}
-
-		if prefix == "di" {
-			field.URL = template.URL("https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/" + ext + "/" + basename + "." + ext)
-		} else {
-			field.URL = template.URL("https://cdn.jsdelivr.net/gh/selfhst/icons/" + ext + "/" + basename + "." + ext)
-		}
+		field.URL = template.URL("https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + basename + ".svg")
+	case "di":
+		field.URL = template.URL("https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/" + ext + "/" + basename + "." + ext)
+	case "mdi":
+		field.IsFlatIcon = true
+		field.URL = template.URL("https://cdn.jsdelivr.net/npm/@mdi/svg@latest/svg/" + basename + ".svg")
+	case "sh":
+		field.URL = template.URL("https://cdn.jsdelivr.net/gh/selfhst/icons/" + ext + "/" + basename + "." + ext)
 	default:
 		field.URL = template.URL(value)
 	}
