@@ -15,14 +15,17 @@ type SearchBang struct {
 }
 
 type searchWidget struct {
-	widgetBase   `yaml:",inline"`
-	cachedHTML   template.HTML `yaml:"-"`
-	SearchEngine string        `yaml:"search-engine"`
-	Bangs        []SearchBang  `yaml:"bangs"`
-	NewTab       bool          `yaml:"new-tab"`
-	Target       string        `yaml:"target"`
-	Autofocus    bool          `yaml:"autofocus"`
-	Placeholder  string        `yaml:"placeholder"`
+	widgetBase       `yaml:",inline"`
+	cachedHTML       template.HTML `yaml:"-"`
+	SearchEngineName string
+	SearchEngine     string       `yaml:"search-engine"`
+	Suggestions      bool         `yaml:"suggestions"`
+	SuggestionEngine string       `yaml:"suggestion-engine"`
+	Bangs            []SearchBang `yaml:"bangs"`
+	NewTab           bool         `yaml:"new-tab"`
+	Target           string       `yaml:"target"`
+	Autofocus        bool         `yaml:"autofocus"`
+	Placeholder      string       `yaml:"placeholder"`
 }
 
 func convertSearchUrl(url string) string {
@@ -36,8 +39,8 @@ var searchEngines = map[string]string{
 	"google":     "https://www.google.com/search?q={QUERY}",
 	"bing":       "https://www.bing.com/search?q={QUERY}",
 	"perplexity": "https://www.perplexity.ai/search?q={QUERY}",
-	"kagi": "https://kagi.com/search?q={QUERY}",
-	"startpage": "https://www.startpage.com/search?q={QUERY}",
+	"kagi":       "https://kagi.com/search?q={QUERY}",
+	"startpage":  "https://www.startpage.com/search?q={QUERY}",
 }
 
 func (widget *searchWidget) initialize() error {
@@ -50,8 +53,10 @@ func (widget *searchWidget) initialize() error {
 	if widget.Placeholder == "" {
 		widget.Placeholder = "Type here to search…"
 	}
-
 	if url, ok := searchEngines[widget.SearchEngine]; ok {
+		if widget.SuggestionEngine == "" {
+			widget.SuggestionEngine = widget.SearchEngineName
+		}
 		widget.SearchEngine = url
 	}
 

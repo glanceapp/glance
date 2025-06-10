@@ -95,6 +95,7 @@ function updateRelativeTimeForElements(elements)
     }
 }
 
+
 function setupSearchBoxes() {
     const searchWidgets = document.getElementsByClassName("search");
 
@@ -105,10 +106,12 @@ function setupSearchBoxes() {
     for (let i = 0; i < searchWidgets.length; i++) {
         const widget = searchWidgets[i];
         const defaultSearchUrl = widget.dataset.defaultSearchUrl;
+        const searchSuggestionsUrl = widget.dataset.defaultSuggestionEngine || null;
         const target = widget.dataset.target || "_blank";
         const newTab = widget.dataset.newTab === "true";
         const inputElement = widget.getElementsByClassName("search-input")[0];
         const bangElement = widget.getElementsByClassName("search-bang")[0];
+        const resultsContainer = widget.getElementsByClassName("search-suggestions")[0];
         const bangs = widget.querySelectorAll(".search-bangs > input");
         const bangsMap = {};
         const kbdElement = widget.getElementsByTagName("kbd")[0];
@@ -120,14 +123,17 @@ function setupSearchBoxes() {
             bangsMap[bang.dataset.shortcut] = bang;
         }
 
-        const handleKeyDown = (event) => {
+        const handleKeyPress = (event) => {
+            const input = inputElement.value.trim();
             if (event.key == "Escape") {
                 inputElement.blur();
                 return;
             }
-
             if (event.key == "Enter") {
-                const input = inputElement.value.trim();
+                if (resultsContainer.querySelector('.active')) {
+                    resultsContainer.querySelector('.active').click();
+                    return event.preventDefault();
+                }
                 let query;
                 let searchUrlTemplate;
 
@@ -156,8 +162,38 @@ function setupSearchBoxes() {
                 return;
             }
 
-            if (event.key == "ArrowUp" && lastQuery.length > 0) {
+            if (event.key == "ArrowUp" && lastQuery.length > 0 && input == "") {
                 inputElement.value = lastQuery;
+                return;
+            }
+            else if (event.key == "ArrowDown" || event.key == "ArrowUp" && searchSuggestionsUrl && currentBang == null) {
+                if (event.key == "ArrowDown" && !resultsContainer.querySelector('.active')){
+                    resultsContainer.children[0].classList.add('active');
+                }
+                else {
+                    const activeElement = resultsContainer.querySelector('.search-suggestions .active');
+                    let el;
+                    if (event.key == "ArrowDown") {
+                        el = activeElement.nextElementSibling
+                    }
+                    else if (event.key == "ArrowUp"){
+                        el = activeElement.previousElementSibling;
+                    }
+                    if (el !== null) {
+                        activeElement.classList.remove('active');
+                        el.classList.add('active');
+                        el.scrollIntoView({
+                            behavior: "smooth",
+                            block: "nearest",
+                            inline: "nearest"
+                        });
+                    }
+                }
+                return event.preventDefault()
+            }
+            if (event.key == "ArrowLeft" || event.key == "ArrowRight") {
+                // If the user presses left or right arrow, we want to focus the input
+                inputElement.focus();
                 return;
             }
         };
@@ -169,6 +205,60 @@ function setupSearchBoxes() {
 
         const handleInput = (event) => {
             const value = event.target.value.trim();
+            if (event.target.value.trim().length > 0 && searchSuggestionsUrl && currentBang == null) {
+                fetch(`/api/search/suggestions?query=${inputElement.value.trim()}&suggestion_engine=${encodeURIComponent(searchSuggestionsUrl)}`, {method : "POST"})
+                .then((response) => {
+                    document.querySelectorAll(".search-suggestion").forEach((el) => el.remove());
+                    if (response.status != 200) {
+                        return;
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    const { suggestions } = data;
+                    const suggestionsContainer = widget.querySelector(".search-suggestions");
+                    suggestionsContainer.innerHTML = "";
+                    if (suggestions === undefined || suggestions.length == 0) {
+                        return;
+                    }
+
+
+                    suggestions.forEach((suggestion) => {
+                        const suggestionElement = elem("div")
+                        suggestionElement.classList.add("search-suggestion")
+                        try {
+                            let url = new URL(suggestion)
+                            suggestionElement.dataset.url = url.href;
+                            suggestionElement.innerText = url.host
+                        }
+                        catch (e) {
+                            suggestionElement.innerText = suggestion;
+                        }
+                        suggestionElement.appendTo(suggestionsContainer);
+                        suggestionElement.addEventListener("click", () => {
+                            if (suggestionElement.dataset.url !== undefined) {
+                                if (newTab) {
+                                    window.open(suggestionElement.dataset.url, target).focus();
+                                }
+                                else {
+                                    window.location.href = suggestionElement.dataset.url;
+                                }
+                                return
+                            }
+                            const url = defaultSearchUrl.replace("!QUERY!", encodeURIComponent(suggestion));
+                            if (newTab) {
+                                window.open(url, target).focus();
+                            } else {
+                                window.location.href = url;
+                            }
+                        });
+                    });
+                });
+            }
+            else {
+                document.querySelectorAll(".search-suggestion").forEach((el) => el.remove());
+            }
+            
             if (value in bangsMap) {
                 changeCurrentBang(bangsMap[value]);
                 return;
@@ -184,11 +274,11 @@ function setupSearchBoxes() {
         };
 
         inputElement.addEventListener("focus", () => {
-            document.addEventListener("keydown", handleKeyDown);
+            document.addEventListener("keydown", handleKeyPress);
             document.addEventListener("input", handleInput);
         });
         inputElement.addEventListener("blur", () => {
-            document.removeEventListener("keydown", handleKeyDown);
+            document.removeEventListener("keydown", handleKeyPress);
             document.removeEventListener("input", handleInput);
         });
 

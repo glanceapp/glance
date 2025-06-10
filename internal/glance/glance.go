@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -400,6 +403,97 @@ func (a *application) handleNotFound(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	w.Write([]byte("Page not found"))
 }
+func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *http.Request) {
+
+	var searchEnginesSuggestionURLs = map[string]string{
+		"duckduckgo": "https://duckduckgo.com/ac/?q={QUERY}&kl=wt-wt",
+		"google":     "https://suggestqueries.google.com/complete/search?client=chrome&q={QUERY}",
+		"bing":       "https://api.bing.com/osjson.aspx?query={QUERY}",
+		"startpage":  "https://www.startpage.com/osuggestions?q={QUERY}",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	suggestion_engine := r.FormValue("suggestion_engine")
+	query := r.FormValue("query")
+
+	if suggestion_engine == "" || query == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "suggestion_engine and query are required"}`))
+		return
+	}
+	var suggestion_engine_url string
+	if url, ok := searchEnginesSuggestionURLs[suggestion_engine]; !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(fmt.Sprintf(`{"error": "unknown suggestion URL: %s"}`, suggestion_engine)))
+		return
+	} else {
+		suggestion_engine_url = url
+	}
+
+	suggestion_engine_url = strings.ReplaceAll(suggestion_engine_url, "{QUERY}", url.QueryEscape(query))
+	client := &http.Client{
+		Transport: &http.Transport{},
+	}
+	req, err := http.NewRequest("GET", suggestion_engine_url, nil)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:139.0) Gecko/20100101 Firefox/139.0")
+	resp, err := client.Do(req)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf(`{"error": "failed to fetch suggestions: %v"}`, err)))
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		w.WriteHeader(resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		w.Write([]byte(fmt.Sprintf(`{"error": "failed to fetch suggestions: %s"}`, body)))
+		return
+	}
+
+	var rawResponse []any
+	if err := json.NewDecoder(resp.Body).Decode(&rawResponse); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf(`{"error": "failed to parse suggestions: %v"}`, err)))
+		return
+	}
+	suggestions := createResponse(rawResponse, suggestion_engine)
+
+	result := map[string]any{
+		"query":       query,
+		"suggestions": suggestions,
+	}
+
+	json.NewEncoder(w).Encode(result)
+}
+
+func createResponse(rawResponse []any, suggestionEngine string) []string {
+	suggestions := []string{}
+	// Handle Google/Bing-style responses: [{params : "s1"}, {params : "s2"}, ...]
+	if suggestionEngine == "duckduckgo" {
+		for _, item := range rawResponse {
+			if m, ok := item.(map[string]interface{}); ok {
+				if phrase, ok := m["phrase"].(string); ok && phrase != "" {
+					suggestions = append(suggestions, phrase)
+				}
+			}
+		}
+		return suggestions
+	}
+
+	// Handle Google/Bing-style responses: ["query", ["s1", "s2", ...]]
+	if len(rawResponse) >= 2 {
+		if list, ok := rawResponse[1].([]interface{}); ok {
+			for _, item := range list {
+				if suggestion, ok := item.(string); ok {
+					suggestions = append(suggestions, suggestion)
+				}
+			}
+		}
+	}
+	return suggestions
+}
 
 func (a *application) handleWidgetRequest(w http.ResponseWriter, r *http.Request) {
 	// TODO: this requires a rework of the widget update logic so that rather
@@ -449,6 +543,7 @@ func (a *application) server() (func() error, func() error) {
 	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	mux.HandleFunc("POST /api/search/suggestions", a.handleSearchSuggestionsRequest)
 
 	if a.RequiresAuth {
 		mux.HandleFunc("GET /login", a.handleLoginPageRequest)

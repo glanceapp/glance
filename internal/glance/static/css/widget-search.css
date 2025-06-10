@@ -77,3 +77,50 @@
 .search-bang:empty {
     display: none;
 }
+
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--color-background);
+    border-radius: var(--border-radius);
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.1);
+    margin-top: 0.5rem;
+    padding: 0rem 0;
+    z-index: 10;
+    max-height: 30rem;
+    overflow-y: auto;
+    animation: fadeInUp 0.2s ease-out;
+}
+
+.search-suggestion {
+    padding: 1rem;
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    color: var(--color-text-base);
+    transition: background 0.2s, color 0.2s;
+}
+
+.search-suggestion:hover,
+.search-suggestion:focus {
+    background: var(--color-widget-background-highlight);
+    color: var(--color-text-highlight);
+}
+
+.active {
+    background: var(--color-widget-background-highlight);
+    color: var(--color-text-highlight);
+}
+
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
