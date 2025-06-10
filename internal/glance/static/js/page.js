@@ -643,7 +643,7 @@ async function setupCalendars() {
 }
 
 async function setupTodos() {
-    var elems = Array.prototype.slice.call(document.getElementsByClassName("todo"));
+    const elems = Array.from(document.getElementsByClassName("todo"));
     if (elems.length == 0) return;
 
     const todo = await import ('./todo.js');
