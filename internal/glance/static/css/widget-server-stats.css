@@ -1,0 +1,81 @@
+.widget-type-server-info {
+    position: relative;
+}
+
+.server + .server {
+    margin-top: 3rem;
+}
+
+.server {
+    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.server-info {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.server-details {
+    min-width: 0;
+}
+
+.server-icon {
+    height: 3rem;
+    width: 3rem;
+}
+
+.server-spicy-cpu-icon {
+    height: 1em;
+    align-self: center;
+    margin-left: 0.4em;
+    margin-bottom: 0.2rem;
+}
+
+.server-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+.server-stat-unavailable {
+    opacity: 0.5;
+}
+
+@container widget (min-width: 650px) {
+    .server {
+        gap: 2rem;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .server + .server {
+        margin-top: 1rem;
+    }
+
+    .server-info {
+        flex-direction: row-reverse;
+        justify-content: unset;
+        margin-right: auto;
+        z-index: 1;
+    }
+
+    .server-stats {
+        flex-direction: row;
+        justify-content: right;
+        min-width: 450px;
+        margin-top: 0;
+        gap: 2rem;
+        padding-bottom: 0.8rem;
+        z-index: 1;
+    }
+
+    .server-stats > * {
+        max-width: 200px;
+    }
+}

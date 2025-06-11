@@ -2,25 +2,8 @@
 
 {{ define "document-title" }}{{ .Page.Title }}{{ end }}
 
-{{ define "document-head-before" }}
-<script>
-    const pageData = {
-        slug: "{{ .Page.Slug }}",
-        baseURL: "{{ .App.Config.Server.BaseURL }}",
-    };
-</script>
-{{ end }}
-
-{{ define "document-root-attrs" }}class="{{ if .App.Config.Theme.Light }}light-scheme {{ end }}{{ if ne "" .Page.Width }}page-width-{{ .Page.Width }} {{ end }}{{ if .Page.CenterVertically }}page-center-vertically{{ end }}"{{ end }}
-
 {{ define "document-head-after" }}
-{{ .App.ParsedThemeStyle }}
-
-{{ if ne "" .App.Config.Theme.CustomCSSFile }}
-<link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.Config.Server.StartedAt.Unix }}">
-{{ end }}
-
-{{ if ne "" .App.Config.Document.Head }}{{ .App.Config.Document.Head }}{{ end }}
+<script type="module" src='{{ .App.StaticAssetPath "js/page.js" }}'></script>
 {{ end }}
 
 {{ define "navigation-links" }}
@@ -32,13 +15,41 @@
 {{ define "document-body" }}
 <div class="flex flex-column body-content">
     {{ if not .Page.HideDesktopNavigation }}
-    <div class="header-container content-bounds">
+    <div class="header-container content-bounds{{ if .Page.DesktopNavigationWidth }} content-bounds-{{ .Page.DesktopNavigationWidth }} {{ end }}">
         <div class="header flex padding-inline-widget widget-content-frame">
-            <!-- TODO: Replace G with actual logo, first need an actual logo -->
-            <div class="logo" aria-hidden="true">{{ if ne "" .App.Config.Branding.LogoURL }}<img src="{{ .App.Config.Branding.LogoURL }}" alt="">{{ else if ne "" .App.Config.Branding.LogoText }}{{ .App.Config.Branding.LogoText }}{{ else }}G{{ end }}</div>
-            <nav class="nav flex grow">
+            <div class="logo" aria-hidden="true">
+                {{- if .App.Config.Branding.LogoURL }}
+                <img src="{{ .App.Config.Branding.LogoURL }}" alt="">
+                {{- else if .App.Config.Branding.LogoText }}
+                {{- .App.Config.Branding.LogoText }}
+                {{- else }}
+                <svg style="max-height: 2rem;" width="100%" viewBox="0 0 108 108" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect fill="var(--color-text-subdue)" width="50" height="108" rx="6.875" />
+                    <path fill="var(--color-primary)" fill-rule="evenodd" clip-rule="evenodd" d="M64.875 0C61.078 0 58 3.07804 58 6.875V43.125C58 46.922 61.078 50 64.875 50H101.125C104.922 50 108 46.922 108 43.125V6.875C108 3.07804 104.922 0 101.125 0H64.875ZM75.7545 11L71.3078 15.6814H85.2233C85.9209 15.6814 86.5835 15.6633 87.2113 15.627C87.839 15.5544 88.3273 15.4093 88.6761 15.1915L70 34.5706L73.4004 38L91.8149 18.7843C91.6056 19.1835 91.4487 19.7097 91.3441 20.3629C91.2743 20.9798 91.2394 21.5968 91.2394 22.2137V37.1835L96 32.2843V11H75.7545Z"/>
+                    <rect fill="var(--color-text-base)" x="58" y="58" width="50" height="50" rx="6.875" />
+                </svg>
+                {{- end }}
+            </div>
+            <nav class="nav flex grow hide-scrollbars">
                 {{ template "navigation-links" . }}
             </nav>
+            {{ if not .App.Config.Theme.DisablePicker }}
+            <div class="theme-picker self-center" data-popover-type="html" data-popover-position="below" data-popover-show-delay="0">
+                <div class="current-theme-preview">
+                    {{ .Request.Theme.PreviewHTML }}
+                </div>
+                <div data-popover-html>
+                    <div class="theme-choices"></div>
+                </div>
+            </div>
+            {{ end }}
+            {{- if .App.RequiresAuth }}
+            <a class="block self-center" href="{{ .App.Config.Server.BaseURL }}/logout" title="Logout">
+                <svg class="logout-button" stroke="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                </svg>
+            </a>
+            {{- end }}
         </div>
     </div>
     {{ end }}
@@ -49,37 +60,61 @@
             {{ range $i, $column := .Page.Columns }}
             <label class="mobile-navigation-label"><input type="radio" class="mobile-navigation-input" name="column" value="{{ $i }}" autocomplete="off"{{ if eq $i $.Page.PrimaryColumnIndex }} checked{{ end }}><div class="mobile-navigation-pill"></div></label>
             {{ end }}
-            <label class="mobile-navigation-label"><input type="checkbox" class="mobile-navigation-page-links-input" autocomplete="on"{{ if .Page.ExpandMobilePageNavigation }} checked{{ end }}><div class="hamburger-icon"></div></label>
+            <label class="mobile-navigation-label"><input type="checkbox" class="mobile-navigation-page-links-input" autocomplete="on"><div class="hamburger-icon"></div></label>
         </div>
-        <div class="mobile-navigation-page-links">
+
+        <div class="mobile-navigation-page-links hide-scrollbars">
             {{ template "navigation-links" . }}
+        </div>
+
+        <div class="mobile-navigation-actions flex flex-column margin-block-10">
+            {{ if not .App.Config.Theme.DisablePicker }}
+            <div class="theme-picker flex justify-between items-center" data-popover-type="html" data-popover-position="above" data-popover-show-delay="0" data-popover-hide-delay="100" data-popover-anchor=".current-theme-preview" data-popover-trigger="click">
+                <div data-popover-html>
+                    <div class="theme-choices">
+                        {{ .App.Config.Theme.PreviewHTML }}
+                        {{ range $_, $preset := .App.Config.Theme.Presets.Items }}
+                        {{ $preset.PreviewHTML }}
+                        {{ end }}
+                    </div>
+                </div>
+
+                <div class="size-h3 pointer-events-none select-none">Change theme</div>
+
+                <div class="flex gap-15 items-center pointer-events-none">
+                    <div class="current-theme-preview">
+                        {{ .Request.Theme.PreviewHTML }}
+                    </div>
+                    <svg class="ui-icon" stroke="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.098 19.902a3.75 3.75 0 0 0 5.304 0l6.401-6.402M6.75 21A3.75 3.75 0 0 1 3 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 0 0 3.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.879 2.88M6.75 17.25h.008v.008H6.75v-.008Z" />
+                    </svg>
+                </div>
+            </div>
+            {{ end }}
+
+            {{ if .App.RequiresAuth }}
+            <a href="{{ .App.Config.Server.BaseURL }}/logout" class="flex justify-between items-center">
+                <div class="size-h3">Logout</div>
+                <svg class="ui-icon" stroke="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                </svg>
+            </a>
+            {{ end }}
         </div>
     </div>
 
-    <div class="content-bounds grow">
-        <main class="page" id="page" aria-live="polite" aria-busy="true">
+    <div class="content-bounds grow{{ if .Page.Width }} content-bounds-{{ .Page.Width }}{{ end }}">
+        <main class="page{{ if .Page.CenterVertically }} center-vertically{{ end }}" id="page" aria-live="polite" aria-busy="true">
             <h1 class="visually-hidden">{{ .Page.Title }}</h1>
             <div class="page-content" id="page-content"></div>
             <div class="page-loading-container">
-                <!-- TODO: add a bigger/better loading indicator -->
-                 <div class="visually-hidden">Loading</div>
+                <div class="visually-hidden">Loading</div>
                 <div class="loading-icon" aria-hidden="true"></div>
             </div>
         </main>
     </div>
 
-    {{ if not .App.Config.Branding.HideFooter }}
-    <footer class="footer flex items-center flex-column">
-    {{ if eq "" .App.Config.Branding.CustomFooter }}
-        <div>
-            <a class="size-h3" href="https://github.com/glanceapp/glance" target="_blank" rel="noreferrer">Glance</a> {{ if ne "dev" .App.Version }}<a class="visited-indicator" title="Release notes" href="https://github.com/glanceapp/glance/releases/tag/{{ .App.Version }}" target="_blank" rel="noreferrer">{{ .App.Version }}</a>{{ else }}({{ .App.Version }}){{ end }}
-        </div>
-    {{ else }}
-        {{ .App.Config.Branding.CustomFooter }}
-    {{ end }}
-    </footer>
-    {{ end }}
-
+    {{ template "footer.html" . }}
     <div class="mobile-navigation-offset"></div>
 </div>
 {{ end }}

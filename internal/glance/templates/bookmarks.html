@@ -2,22 +2,29 @@
 
 {{ define "widget-content" }}
 <div class="dynamic-columns list-gap-24 list-with-separator">
-    {{ range .Groups }}
+    {{- range .Groups }}
     <div class="bookmarks-group"{{ if .Color }} style="--bookmarks-group-color: {{ .Color.String | safeCSS }}"{{ end }}>
-        {{ if ne .Title "" }}<div class="bookmarks-group-title size-h3 margin-bottom-3">{{ .Title }}</div>{{ end }}
+        {{- if ne .Title "" }}
+        <div class="bookmarks-group-title size-h3 margin-bottom-3">{{ .Title }}</div>
+        {{- end }}
         <ul class="list list-gap-2">
-        {{ range .Links }}
-        <li class="flex items-center gap-10">
-            {{ if ne "" .Icon.URL }}
-            <div class="bookmarks-icon-container">
-                <img class="bookmarks-icon{{ if .Icon.IsFlatIcon }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
+        {{- range .Links }}
+        <li>
+            <div class="flex items-center gap-10">
+                {{- if ne "" .Icon.URL }}
+                <div class="bookmarks-icon-container">
+                    <img class="bookmarks-icon{{ if .Icon.AutoInvert }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
+                </div>
+                {{- end }}
+                <a href="{{ .URL | safeURL }}" class="bookmarks-link {{ if .HideArrow }}bookmarks-link-no-arrow {{ end }}color-highlight size-h4" {{ if .Target }}target="{{ .Target }}"{{ end }} rel="noreferrer">{{ .Title }}</a>
             </div>
-            {{ end }}
-            <a href="{{ .URL | safeURL }}" class="bookmarks-link {{ if .HideArrow }}bookmarks-link-no-arrow {{ end }}color-highlight size-h4" {{ if .Target }}target="{{ .Target }}"{{ end }} rel="noreferrer">{{ .Title }}</a>
+            {{- if .Description }}
+            <div class="margin-bottom-5">{{ .Description }}</div>
+            {{- end }}
         </li>
-        {{ end }}
+        {{- end }}
         </ul>
     </div>
-    {{ end }}
+    {{- end }}
 </div>
 {{ end }}
