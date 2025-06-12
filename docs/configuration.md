@@ -2062,6 +2062,14 @@ repositories:
   - codeberg:redict/redict
 ```
 
+You can also specify the url of the corresponding GitLab or Codeberg instance:
+
+```yaml
+repositories:
+  - repository: codeberg:AkkomaGang/akkoma
+    url: akkoma.dev
+```
+
 Official images on Docker Hub can be specified by omitting the owner:
 
 ```yaml
