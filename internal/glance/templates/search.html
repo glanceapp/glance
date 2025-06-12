@@ -3,10 +3,16 @@
 {{ define "widget-content-classes" }}widget-content-frameless{{ end }}
 
 {{ define "widget-content" }}
-<div class="search widget-content-frame padding-inline-widget flex gap-15 items-center" data-default-search-url="{{ .SearchEngine }}" data-new-tab="{{ .NewTab }}" data-target="{{ .Target }}">
+<div class="search widget-content-frame padding-inline-widget flex gap-15 items-center" data-default-search-url="{{ .SearchEngine }}" data-new-tab="{{ .NewTab }}" data-target="{{ .Target }}"{{ if .Suggestions }} data-suggestions-enabled="true" data-widget-id="{{ .GetID }}"{{ end }}>
     <div class="search-bangs">
         {{ range .Bangs }}
         <input type="hidden" data-shortcut="{{ .Shortcut }}" data-title="{{ .Title }}" data-url="{{ .URL }}">
+        {{ end }}
+    </div>
+
+    <div class="search-shortcuts">
+        {{ range .Shortcuts }}
+        <input type="hidden" data-alias="{{ .Alias }}" data-title="{{ .Title }}" data-url="{{ .URL }}">
         {{ end }}
     </div>
 
@@ -16,7 +22,13 @@
         </svg>
     </div>
 
-    <input class="search-input" type="text" placeholder="{{ .Placeholder }}" autocomplete="off"{{ if .Autofocus }} autofocus{{ end }}>
+    <div class="search-input-container">
+        <input class="search-input" type="text" placeholder="{{ .Placeholder }}" autocomplete="off"{{ if .Autofocus }} autofocus{{ end }}>
+    </div>
+    
+    <div class="search-shortcuts-dropdown hidden">
+        <div class="search-shortcuts-list"></div>
+    </div>
 
     <div class="search-bang"></div>
     <kbd class="hide-on-mobile" title="Press [S] to focus the search input">S</kbd>

@@ -57,6 +57,130 @@
 }
 
 .search-bangs { display: none; }
+.search-shortcuts { display: none; }
+
+.search-input-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-shortcuts-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--color-widget-background);
+    border: 1px solid var(--color-separator);
+    border-radius: var(--border-radius);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 0.5rem 2em 0;
+}
+
+.search-shortcuts-dropdown.hidden {
+    display: none;
+}
+
+.search-shortcut-item {
+    padding: 0.8rem 1.2rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--color-separator);
+    transition: background-color 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.search-shortcut-item:last-child {
+    border-bottom: none;
+}
+
+.search-shortcut-item:hover,
+.search-shortcut-item.highlighted {
+    background: var(--color-widget-background-highlight);
+    color: var(--color-text-highlight);
+}
+
+.search-shortcut-item:hover .search-shortcut-title,
+.search-shortcut-item.highlighted .search-shortcut-title,
+.search-shortcut-item[data-type="suggestion"]:hover .search-shortcut-title,
+.search-shortcut-item[data-type="suggestion"].highlighted .search-shortcut-title {
+    color: var(--color-text-highlight);
+}
+
+.search-shortcut-item:hover .search-shortcut-url,
+.search-shortcut-item.highlighted .search-shortcut-url {
+    color: var(--color-text-highlight);
+    opacity: 0.8;
+}
+
+.search-shortcut-item:hover .search-shortcut-alias,
+.search-shortcut-item.highlighted .search-shortcut-alias {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-text-highlight);
+}
+
+.search-shortcut-item.exact-match .search-shortcut-alias{
+    background: var(--color-primary);
+    color: var(--color-background);
+}
+
+.search-shortcut-item:hover .search-shortcut-icon,
+.search-shortcut-item.highlighted .search-shortcut-icon {
+    stroke: var(--color-text-highlight);
+}
+
+.search-shortcut-item.exact-match {
+    background: var(--color-widget-background-highlight);
+}
+
+.search-shortcut-item.exact-match .search-shortcut-title {
+    color: var(--color-primary);
+}
+
+.search-shortcut-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+    flex-shrink: 0;
+    stroke: var(--color-text-subdue);
+}
+
+.search-shortcut-content {
+    flex-grow: 1;
+    min-width: 0;
+    display: flex;
+}
+
+.search-shortcut-title {
+    font-weight: 500;
+    color: var(--color-text-highlight);
+}
+
+.search-shortcut-url {
+    font-size: 0.85em;
+    color: var(--color-text-subdue);
+    margin-top: 0.2rem;
+    margin-left: 1em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+}
+
+.search-shortcut-alias {
+    font-size: 0.8em;
+    color: var(--color-text-base);
+    background: var(--color-widget-background-highlight);
+    padding: 0.2rem 0.4rem;
+    border-radius: calc(var(--border-radius) * 0.5);
+    flex-shrink: 0;
+}
+
+.search-shortcut-item[data-type="suggestion"] .search-shortcut-title {
+    font-weight: normal;
+    color: var(--color-text-base);
+}
 
 .search-bang {
     border-radius: calc(var(--border-radius) * 2);
