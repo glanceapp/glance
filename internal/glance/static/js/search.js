@@ -395,7 +395,13 @@ export default function SearchBox(widget) {
                 query = input;
                 searchUrlTemplate = defaultSearchUrl;
             } else {
-                query = input;
+                // Extract query after the bang shortcut
+                const bangShortcut = currentBang.dataset.shortcut;
+                if (input.startsWith(bangShortcut + " ")) {
+                    query = input.substring(bangShortcut.length + 1);
+                } else {
+                    query = "";
+                }
                 searchUrlTemplate = currentBang.dataset.url;
             }
 
