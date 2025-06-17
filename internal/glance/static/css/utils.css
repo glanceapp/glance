@@ -53,6 +53,10 @@
     display: none;
 }
 
+.summary:active {
+    -webkit-tap-highlight-color: transparent;
+}
+
 .details[open] .summary {
     margin-bottom: .8rem;
 }
