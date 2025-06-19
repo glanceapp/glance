@@ -433,7 +433,7 @@ The following helper functions provided by Glance are available:
 - `duration(str string) time.Duration`: Parses a string such as `1h`, `24h`, `5h30m`, etc into a `time.Duration`.
 - `parseTime(layout string, s string) time.Time`: Parses a string into time.Time. The layout must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants). You can alternatively use these values instead of the literal format: "unix", "RFC3339", "RFC3339Nano", "DateTime", "DateOnly".
 - `formatTime(layout string, s string) time.Time`: Formats a `time.Time` into a string. The layout uses the same format as `parseTime`.
-- `parseLocalTime(layout string, s string) time.Time`: Same as the above, except in the absence of a timezone, it will use the local timezone instead of UTC.
+- `parseLocalTime(layout string, s string) time.Time`: Same as the above, except it will automatically convert the time to the server's timezone and in the absence of a timezone, it will use the local timezone instead of UTC.
 - `parseRelativeTime(layout string, s string) time.Time`: A shorthand for `{{ .String "date" | parseTime "rfc3339" | toRelativeTime }}`.
 - `add(a, b float) float`: Adds two numbers.
 - `sub(a, b float) float`: Subtracts two numbers.
