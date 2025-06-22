@@ -485,7 +485,16 @@ func (a *application) server() (func() error, func() error) {
 	mux.HandleFunc("GET /sw.js", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Cache-Control", "no-cache")
 		w.Header().Add("Content-Type", "application/javascript")
-		http.ServeFile(w, r, "internal/glance/static/js/sw.js")
+		
+		swContent, err := readAllFromStaticFS("js/sw.js")
+		if err != nil {
+			log.Printf("Error reading service worker: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("Service worker not found: %v", err)))
+			return
+		}
+		
+		w.Write(swContent)
 	})
 
 	mux.HandleFunc("GET /offline", func(w http.ResponseWriter, r *http.Request) {
