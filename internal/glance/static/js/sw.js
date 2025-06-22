@@ -3,17 +3,6 @@ const OFFLINE_PAGE = '/offline';
 
 const STATIC_CACHE_URLS = [
   '/',
-  '/static/css/bundle.css',
-  '/static/js/page.js',
-  '/static/js/utils.js',
-  '/static/js/animations.js',
-  '/static/js/masonry.js',
-  '/static/js/popover.js',
-  '/static/js/templating.js',
-  '/static/fonts/JetBrainsMono-Regular.woff2',
-  '/static/app-icon.png',
-  '/static/favicon.png',
-  '/static/favicon.svg',
   OFFLINE_PAGE
 ];
 
