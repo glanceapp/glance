@@ -21,6 +21,7 @@ var (
 	pageTemplate        = mustParseTemplate("page.html", "document.html", "footer.html")
 	pageContentTemplate = mustParseTemplate("page-content.html")
 	manifestTemplate    = mustParseTemplate("manifest.json")
+	offlineTemplate     = mustParseTemplate("offline.html", "document.html")
 )
 
 const STATIC_ASSETS_CACHE_DURATION = 24 * time.Hour
@@ -479,6 +480,29 @@ func (a *application) server() (func() error, func() error) {
 		w.Header().Add("Cache-Control", assetCacheControlValue)
 		w.Header().Add("Content-Type", "application/json")
 		w.Write(a.parsedManifest)
+	})
+
+	mux.HandleFunc("GET /sw.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Cache-Control", "no-cache")
+		w.Header().Add("Content-Type", "application/javascript")
+		http.ServeFile(w, r, "internal/glance/static/js/sw.js")
+	})
+
+	mux.HandleFunc("GET /offline", func(w http.ResponseWriter, r *http.Request) {
+		data := templateData{
+			App: a,
+		}
+		a.populateTemplateRequestData(&data.Request, r)
+
+		var responseBytes bytes.Buffer
+		err := offlineTemplate.Execute(&responseBytes, data)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		w.Write(responseBytes.Bytes())
 	})
 
 	var absAssetsPath string

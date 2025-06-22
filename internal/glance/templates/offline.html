@@ -1,0 +1,50 @@
+{{ define "document-title" }}Offline - {{ .App.Config.Branding.AppName }}{{ end }}
+
+{{ define "document-body" }}
+<div style="
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-align: center;
+    padding: 2rem;
+    max-width: 500px;
+    margin: 0 auto;
+">
+    <div style="
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.6;
+    ">📡</div>
+    
+    <h1 style="
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    ">You're offline</h1>
+    
+    <p style="
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+        opacity: 0.8;
+    ">
+        It looks like you've lost your internet connection. 
+        Check your network and try refreshing the page.
+    </p>
+    
+    <button onclick="window.location.reload()" style="
+        background: var(--color-primary, #3b82f6);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    " onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+        Try again
+    </button>
+</div>
+{{ end }}
