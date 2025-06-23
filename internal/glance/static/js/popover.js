@@ -130,7 +130,7 @@ function repositionContainer() {
     } else if (left + containerBounds.width > window.innerWidth) {
         containerElement.style.removeProperty("left");
         containerElement.style.right = 0;
-        containerElement.style.setProperty("--triangle-offset", containerBounds.width - containerInlinePadding - (window.innerWidth - targetBounds.left - targetBoundsWidthOffset) + -1 + "px");
+        containerElement.style.setProperty("--triangle-offset", containerBounds.width - containerInlinePadding - (document.documentElement.clientWidth - targetBounds.left - targetBoundsWidthOffset) + -1 + "px");
     } else {
         containerElement.style.removeProperty("right");
         containerElement.style.left = left + "px";

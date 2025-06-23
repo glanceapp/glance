@@ -6,6 +6,7 @@
   - [Environment variables](#environment-variables)
     - [Other ways of providing tokens/passwords/secrets](#other-ways-of-providing-tokenspasswordssecrets)
   - [Including other config files](#including-other-config-files)
+  - [Icons](#icons)
   - [Config schema](#config-schema)
 - [Authentication](#authentication)
 - [Server](#server)
@@ -184,6 +185,30 @@ docker run --rm -v ./glance.yml:/app/config/glance.yml glanceapp/glance config:p
 ```
 
 This assumes that the config you want to print is in your current working directory and is named `glance.yml`.
+
+## Icons
+
+For widgets which provide you with the ability to specify icons such as the monitor, bookmarks, docker containers, etc, you can use the `icon` property to specify a URL to an image or use icon names from multiple libraries via prefixes:
+
+```yml
+icon: si:immich # si for Simple icons https://simpleicons.org/
+icon: sh:immich # sh for selfh.st icons https://selfh.st/icons/
+icon: di:immich # di for Dashboard icons https://github.com/homarr-labs/dashboard-icons
+icon: mdi:camera # mdi for Material Design icons https://pictogrammers.com/library/mdi/
+```
+
+> [!NOTE]
+>
+> The icons are loaded externally and are hosted on `cdn.jsdelivr.net`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+
+Icons from the Simple icons library as well as Material Design icons will automatically invert their color to match your light or dark theme, however you may want to enable this manually for other icons. To do this, you can use the `auto-invert` prefix:
+
+```yaml
+icon: auto-invert https://example.com/path/to/icon.png # with a URL
+icon: auto-invert sh:glance-dark # with a selfh.st icon
+```
+
+This expects the icon to be black and will automatically invert it to white when using a dark theme.
 
 ## Config schema
 
@@ -870,6 +895,11 @@ A list of playlist IDs:
   playlists:
     - PL8mG-RkN2uTyZZ00ObwZxxoG_nJbs3qec
     - PL8mG-RkN2uTxTK4m_Vl2dYR9yE41kRdBg
+```
+
+The playlist ID can be found in its link which is in the form of
+```
+https://www.youtube.com...&list={ID}&...
 ```
 
 ##### `limit`
@@ -1957,17 +1987,7 @@ If the monitored service returns an error, the user will be redirected here. If 
 
 `icon`
 
-Optional URL to an image which will be used as the icon for the site. Can be an external URL or internal via [server configured assets](#assets-path). You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix or [Dashboard Icons](https://github.com/walkxcode/dashboard-icons) via a `di:` prefix:
-
-```yaml
-icon: si:jellyfin
-icon: si:gitea
-icon: si:adguard
-```
-
-> [!WARNING]
->
-> Simple Icons are loaded externally and are hosted on `cdn.jsdelivr.net`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+See [Icons](#icons) for more information on how to specify icons.
 
 `timeout`
 
@@ -1996,7 +2016,7 @@ HTTP Basic Authentication credentials for protected sites.
 
 ```yaml
 basic-auth:
-  usename: your-username
+  username: your-username
   password: your-password
 ```
 
@@ -2275,7 +2295,7 @@ Whether to only show running containers. If set to `true` only containers that a
 | Name | Description |
 | ---- | ----------- |
 | glance.name | The name displayed in the UI. If not specified, the name of the container will be used. |
-| glance.icon | The icon displayed in the UI. Can be an external URL or an icon prefixed with si:, sh: or di: like with the bookmarks and monitor widgets |
+| glance.icon | See [Icons](#icons) for more information on how to specify icons |
 | glance.url | The URL that the user will be redirected to when clicking on the container. |
 | glance.same-tab | Whether to open the link in the same or a new tab. Default is `false`. |
 | glance.description | A short description displayed in the UI. Default is empty. |
@@ -2590,17 +2610,7 @@ An array of groups which can optionally have a title and a custom color.
 
 `icon`
 
-URL pointing to an image. You can also directly use [Simple Icons](https://simpleicons.org/) via a `si:` prefix or [Dashboard Icons](https://github.com/walkxcode/dashboard-icons) via a `di:` prefix:
-
-```yaml
-icon: si:gmail
-icon: si:youtube
-icon: si:reddit
-```
-
-> [!WARNING]
->
-> Simple Icons are loaded externally and are hosted on `cdn.jsdelivr.net`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
+See [Icons](#icons) for more information on how to specify icons.
 
 `same-tab`
 
