@@ -221,6 +221,38 @@ JSON response:
 
 ```json
 {
+  "user": {
+    "id": 42,
+    "name": "Alice",
+    "active": true
+  }
+}
+```
+
+To loop through each property of the object, you would use the following:
+
+```html
+{{ range .JSON.Object "user" }}
+  <div>{{ .Key }}: {{ .Value.String "" }}</div>
+{{ end }}
+```
+
+Output:
+
+```html
+<div>id: 42</div>
+<div>name: Alice</div>
+<div>active: true</div>
+```
+
+Each property in the object is exposed as a pair, with `.Key` giving the property name and `.Value` providing access to the value using the usual JSON methods.
+
+<hr>
+
+JSON response:
+
+```json
+{
     "price": 100,
     "discount": 10
 }
@@ -413,6 +445,9 @@ The following functions are available on the `JSON` object:
 - `Float(key string) float`: Returns the value of the key as a float.
 - `Bool(key string) bool`: Returns the value of the key as a boolean.
 - `Array(key string) []JSON`: Returns the value of the key as an array of `JSON` objects.
+- `Object(key string)`: Returns the value of the key as a list of properties.
+  - `.Key`: the property name
+  - `.Value`: the property value
 - `Exists(key string) bool`: Returns true if the key exists in the JSON object.
 
 The following functions are available on the `Options` object:
