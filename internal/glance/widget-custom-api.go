@@ -357,6 +357,11 @@ type decoratedGJSONResult struct {
 	gjson.Result
 }
 
+type ObjectProperty struct {
+	Key   string
+	Value decoratedGJSONResult
+}
+
 func gJsonResultArrayToDecoratedResultArray(results []gjson.Result) []decoratedGJSONResult {
 	decoratedResults := make([]decoratedGJSONResult, len(results))
 
@@ -413,6 +418,32 @@ func (r *decoratedGJSONResult) Bool(key string) bool {
 
 func (r *decoratedGJSONResult) Get(key string) *decoratedGJSONResult {
 	return &decoratedGJSONResult{r.Result.Get(key)}
+}
+
+func gjsonResultObjectToPropertyArray(obj gjson.Result) []ObjectProperty {
+	results := make([]ObjectProperty, 0)
+	obj.ForEach(func(k, v gjson.Result) bool {
+		results = append(results, ObjectProperty{
+			Key:   k.String(),
+			Value: decoratedGJSONResult{v},
+		})
+		return true
+	})
+	return results
+}
+
+func (r *decoratedGJSONResult) Object(key string) []ObjectProperty {
+	var obj gjson.Result
+	if key == "" {
+		obj = r.Result
+	} else {
+		obj = r.Result.Get(key)
+	}
+
+	if !obj.IsObject() {
+		return []ObjectProperty{}
+	}
+	return gjsonResultObjectToPropertyArray(obj)
 }
 
 func customAPIDoMathOp[T int | float64](a, b T, op string) T {
