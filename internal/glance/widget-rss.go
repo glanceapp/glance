@@ -134,7 +134,7 @@ type rssFeedRequest struct {
 	Title           string            `yaml:"title"`
 	HideCategories  bool              `yaml:"hide-categories"`
 	HideDescription bool              `yaml:"hide-description"`
-    HideThumbnail   bool              `yaml:"hide-thumbnail"`
+	HideThumbnail   bool              `yaml:"hide-thumbnail"`
 	Limit           int               `yaml:"limit"`
 	ItemLinkPrefix  string            `yaml:"item-link-prefix"`
 	Headers         map[string]string `yaml:"headers"`
