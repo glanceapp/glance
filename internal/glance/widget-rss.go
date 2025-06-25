@@ -118,14 +118,15 @@ type cachedRSSFeed struct {
 }
 
 type rssFeedItem struct {
-	ChannelName string
-	ChannelURL  string
-	Title       string
-	Link        string
-	ImageURL    string
-	Categories  []string
-	Description string
-	PublishedAt time.Time
+	ChannelName   string
+	ChannelURL    string
+	Title         string
+	Link          string
+	ImageURL      string
+	Categories    []string
+	Description   string
+	PublishedAt   time.Time
+	HideThumbnail bool
 }
 
 type rssFeedRequest struct {
@@ -133,6 +134,7 @@ type rssFeedRequest struct {
 	Title           string            `yaml:"title"`
 	HideCategories  bool              `yaml:"hide-categories"`
 	HideDescription bool              `yaml:"hide-description"`
+    HideThumbnail   bool              `yaml:"hide-thumbnail"`
 	Limit           int               `yaml:"limit"`
 	ItemLinkPrefix  string            `yaml:"item-link-prefix"`
 	Headers         map[string]string `yaml:"headers"`
@@ -300,6 +302,10 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 				}
 
 				rssItem.Categories = categories
+			}
+			
+			if request.HideThumbnail {
+				rssItem.HideThumbnail = true
 			}
 		}
 
