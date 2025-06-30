@@ -826,6 +826,7 @@ An array of RSS/atom feeds. The title can optionally be changed.
 | title | string | no | the title provided by the feed | |
 | hide-categories | boolean | no | false | Only applicable for `detailed-list` style |
 | hide-description | boolean | no | false | Only applicable for `detailed-list` style |
+| hide-thumbnail | boolean | no | false | Only applicable for `detailed-list` style |
 | limit | integer | no | | |
 | item-link-prefix | string | no | | |
 | headers | key (string) & value (string) | no | | |
