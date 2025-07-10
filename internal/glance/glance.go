@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -401,6 +404,123 @@ func (a *application) handleNotFound(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("Page not found"))
 }
 
+type searchSuggestionsResponse struct {
+	Query       string   `json:"query"`
+	Suggestions []string `json:"suggestions"`
+}
+
+func (a *application) handleSearchSuggestionsRequest(w http.ResponseWriter, r *http.Request) {
+	if a.handleUnauthorizedResponse(w, r, showUnauthorizedJSON) {
+		return
+	}
+
+	query := r.URL.Query().Get("query")
+	widgetIDStr := r.URL.Query().Get("widget_id")
+
+	if query == "" {
+		http.Error(w, "Missing query parameter", http.StatusBadRequest)
+		return
+	}
+
+	if widgetIDStr == "" {
+		http.Error(w, "Missing widget_id parameter", http.StatusBadRequest)
+		return
+	}
+
+	widgetID, err := strconv.ParseUint(widgetIDStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid widget_id parameter", http.StatusBadRequest)
+		return
+	}
+
+	widget, exists := a.widgetByID[widgetID]
+	if !exists {
+		http.Error(w, "Widget not found", http.StatusNotFound)
+		return
+	}
+
+	searchWidget, ok := widget.(*searchWidget)
+	if !ok {
+		http.Error(w, "Widget is not a search widget", http.StatusBadRequest)
+		return
+	}
+
+	if !searchWidget.Suggestions {
+		http.Error(w, "Widget does not have suggestions enabled", http.StatusBadRequest)
+		return
+	}
+
+	suggestions, err := a.fetchSearchSuggestions(query, searchWidget.SuggestionEngine)
+	if err != nil {
+		log.Printf("Error fetching search suggestions: %v", err)
+		// Set error on the widget to show the red dot indicator
+		searchWidget.withError(fmt.Errorf("suggestion service error: %v", err))
+		http.Error(w, "Failed to fetch suggestions", http.StatusInternalServerError)
+		return
+	}
+
+	// Clear any previous errors on successful response
+	searchWidget.withError(nil)
+
+	response := searchSuggestionsResponse{
+		Query:       query,
+		Suggestions: suggestions,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (a *application) fetchSearchSuggestions(query, engineURL string) ([]string, error) {
+	suggestionURL := strings.ReplaceAll(engineURL, "{QUERY}", url.QueryEscape(query))
+
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	resp, err := client.Get(suggestionURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch suggestions: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("suggestion API returned status %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %v", err)
+	}
+
+	return parseSuggestionResponse(body)
+}
+
+func parseSuggestionResponse(body []byte) ([]string, error) {
+	var suggestions []string
+
+	// Try to parse as standard OpenSearch format: [query, [suggestions...]]
+	// This works for all the supported engines (Google, DuckDuckGo, Bing, Startpage)
+	var response []any
+	if err := json.Unmarshal(body, &response); err != nil {
+		return nil, fmt.Errorf("failed to parse JSON response: %v", err)
+	}
+
+	if len(response) < 2 {
+		return suggestions, nil
+	}
+
+	if suggestionsList, ok := response[1].([]any); ok {
+		for _, item := range suggestionsList {
+			if suggestion, ok := item.(string); ok {
+				suggestions = append(suggestions, suggestion)
+			}
+		}
+	}
+
+	return suggestions, nil
+}
+
 func (a *application) handleWidgetRequest(w http.ResponseWriter, r *http.Request) {
 	// TODO: this requires a rework of the widget update logic so that rather
 	// than locking the entire page we lock individual widgets
@@ -449,6 +569,7 @@ func (a *application) server() (func() error, func() error) {
 	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	mux.HandleFunc("POST /api/search/suggestions", a.handleSearchSuggestionsRequest)
 
 	if a.RequiresAuth {
 		mux.HandleFunc("GET /login", a.handleLoginPageRequest)
