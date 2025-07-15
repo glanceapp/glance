@@ -155,7 +155,7 @@ func fetchWatchesFromChangeDetection(instanceURL string, requestedWatchIDs []str
 
 		watch := changeDetectionWatch{
 			URL:     watchJson.URL,
-			DiffURL: fmt.Sprintf("%s/diff/%s?from_version=%d", instanceURL, requestedWatchIDs[i], watchJson.LastChanged-1),
+			DiffURL: fmt.Sprintf("%s/diff/%s", instanceURL, requestedWatchIDs[i]),
 		}
 
 		if watchJson.LastChanged == 0 {
