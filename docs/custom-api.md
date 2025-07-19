@@ -232,8 +232,8 @@ JSON response:
 To loop through each property of the object, you would use the following:
 
 ```html
-{{ range .JSON.Object "user" }}
-  <div>{{ .Key }}: {{ .Value.String "" }}</div>
+{{ range $key, $value := .JSON.Entries "user" }}
+  <div>{{ $key }}: {{ $value.String "" }}</div>
 {{ end }}
 ```
 
@@ -245,7 +245,7 @@ Output:
 <div>active: true</div>
 ```
 
-Each property in the object is exposed as a pair, with `.Key` giving the property name and `.Value` providing access to the value using the usual JSON methods.
+Each property in the object is exposed as a pair, with `$key` being a string and `$value` providing access to the value using the usual JSON methods.
 
 <hr>
 
