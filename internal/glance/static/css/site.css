@@ -61,6 +61,10 @@ button {
     width: 10px;
 }
 
+*:active {
+    -webkit-tap-highlight-color: transparent;
+}
+
 *:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 0.1rem;
