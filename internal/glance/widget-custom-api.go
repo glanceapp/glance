@@ -358,11 +358,6 @@ type decoratedGJSONResult struct {
 	gjson.Result
 }
 
-type ObjectProperty struct {
-	Key   string
-	Value decoratedGJSONResult
-}
-
 func gJsonResultArrayToDecoratedResultArray(results []gjson.Result) []decoratedGJSONResult {
 	decoratedResults := make([]decoratedGJSONResult, len(results))
 

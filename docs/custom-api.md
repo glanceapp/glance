@@ -445,10 +445,8 @@ The following functions are available on the `JSON` object:
 - `Float(key string) float`: Returns the value of the key as a float.
 - `Bool(key string) bool`: Returns the value of the key as a boolean.
 - `Array(key string) []JSON`: Returns the value of the key as an array of `JSON` objects.
-- `Object(key string)`: Returns the value of the key as a list of properties.
-  - `.Key`: the property name
-  - `.Value`: the property value
 - `Exists(key string) bool`: Returns true if the key exists in the JSON object.
+- `Entries(key string)`: Returns an iterator that allows you to loop through each property of the object. Example: `{{ range $key, $value := .JSON.Entries "user" }}`. This will yield pairs of key and value, where `$key` is a string and `$value` is a `JSON` object.
 
 The following functions are available on the `Options` object:
 
