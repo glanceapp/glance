@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"iter"
 	"log/slog"
 	"math"
 	"net/http"
@@ -413,6 +414,21 @@ func (r *decoratedGJSONResult) Bool(key string) bool {
 
 func (r *decoratedGJSONResult) Get(key string) *decoratedGJSONResult {
 	return &decoratedGJSONResult{r.Result.Get(key)}
+}
+
+func (r *decoratedGJSONResult) Entries(key string) iter.Seq2[string, *decoratedGJSONResult] {
+	var obj gjson.Result
+	if key == "" {
+		obj = r.Result
+	} else {
+		obj = r.Result.Get(key)
+	}
+
+	return func(yield func(string, *decoratedGJSONResult) bool) {
+		obj.ForEach(func(k, v gjson.Result) bool {
+			return yield(k.String(), &decoratedGJSONResult{v})
+		})
+	}
 }
 
 func customAPIDoMathOp[T int | float64](a, b T, op string) T {
