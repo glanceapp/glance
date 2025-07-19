@@ -870,6 +870,7 @@ Preview:
 | playlists | array | no | |
 | limit | integer | no | 25 |
 | style | string | no | horizontal-cards |
+| sort-by | string | no | posted |
 | collapse-after | integer | no | 7 |
 | collapse-after-rows | integer | no | 4 |
 | include-shorts | boolean | no | false |
@@ -904,6 +905,10 @@ https://www.youtube.com...&list={ID}&...
 
 ##### `limit`
 The maximum number of videos to show.
+
+##### `sort-by`
+Used to specify the order in which the videos should get returned. Possible values are `none`, `updated`, and `posted`. 
+Default value is `posted`.
 
 ##### `collapse-after`
 Specify the number of videos to show when using the `vertical-list` style before the "SHOW MORE" button appears.
