@@ -22,9 +22,9 @@
 
 {{ define "site" }}
 {{ if .Icon.URL }}
-<img class="monitor-site-icon{{ if .Icon.IsFlatIcon }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
+<img class="monitor-site-icon{{ if .Icon.AutoInvert }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
 {{ end }}
-<div class="min-width-0">
+<div class="grow min-width-0">
     <a class="size-h3 color-highlight text-truncate block" href="{{ .URL | safeURL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
     <ul class="list-horizontal-text">
         {{ if not .Status.Error }}

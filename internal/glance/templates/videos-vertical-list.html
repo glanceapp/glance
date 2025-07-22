@@ -6,7 +6,7 @@
     <li class="flex thumbnail-parent gap-10 items-center">
         <img class="video-horizontal-list-thumbnail thumbnail" loading="lazy" src="{{ .ThumbnailUrl }}" alt="">
         <div class="min-width-0">
-            <a class="block text-truncate color-primary-if-not-visited" href="{{ .Url }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
+            <a class="block text-truncate color-primary-if-not-visited" href="{{ .Url | safeURL }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
             <ul class="list-horizontal-text flex-nowrap">
                 <li class="shrink-0" {{ dynamicRelativeTimeAttrs .TimePosted }}></li>
                 <li class="min-width-0">

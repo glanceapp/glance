@@ -1,0 +1,398 @@
+:root[data-scheme=light] {
+    --scheme: 100% -;
+}
+
+.page {
+    height: 100%;
+    padding-block: var(--widget-gap);
+}
+
+.page-content, .page.content-ready .page-loading-container {
+    display: none;
+}
+
+.page.content-ready > .page-content {
+    display: block;
+    animation: pageContentEntrance .3s cubic-bezier(0.25, 1, 0.5, 1) backwards;
+}
+
+.page-column-small .size-title-dynamic {
+    font-size: var(--font-size-h4);
+}
+
+.page-column-full .size-title-dynamic {
+    font-size: var(--font-size-h3);
+}
+
+pre {
+    font: inherit;
+}
+
+
+input[type="text"] {
+    width: 100%;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+}
+
+button {
+    font: inherit;
+    border: 0;
+    cursor: pointer;
+    background: none;
+    color: inherit;
+}
+
+::selection {
+    background-color: hsl(var(--bghs), calc(var(--scheme) (var(--scheme) var(--bgl) + 20%)));
+    color: var(--color-text-highlight);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-text-subdue);
+    border-radius: var(--border-radius);
+}
+
+::-webkit-scrollbar {
+    background: var(--color-background);
+    height: 5px;
+    width: 10px;
+}
+
+*:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 0.1rem;
+    border-radius: var(--border-radius);
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+* {
+    padding: 0;
+    margin: 0;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background-color: var(--color-separator);
+}
+
+img, svg {
+    display: block;
+    max-width: 100%;
+}
+
+img[loading=lazy].loaded:not(.finished-transition) {
+    transition: opacity .4s;
+}
+
+img[loading=lazy].cached:not(.finished-transition) {
+    transition: none;
+}
+
+img[loading=lazy]:not(.loaded, .cached) {
+    opacity: 0;
+}
+
+html {
+    scrollbar-color: var(--color-text-subdue) transparent;
+    scroll-behavior: smooth;
+}
+
+html, body, .body-content {
+    height: 100%;
+}
+
+h1, h2, h3, h4, h5 {
+    font: inherit;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    overflow-wrap: break-word;
+}
+
+ul {
+    list-style: none;
+}
+
+body {
+    font-size: 1.3rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-ligatures: none;
+    line-height: 1.6;
+    color: var(--color-text-base);
+    background-color: var(--color-background);
+    overflow-y: scroll;
+}
+
+.page-column-small {
+    width: 300px;
+    flex-shrink: 0;
+}
+
+.page-column-full {
+    width: 100%;
+    min-width: 0;
+}
+
+.page-columns {
+    display: flex;
+    gap: var(--widget-gap);
+}
+
+@keyframes pageContentEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+}
+
+.page-loading-container {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: loadingContainerEntrance 200ms backwards;
+    animation-delay: 150ms;
+    font-size: 2rem;
+}
+
+.page-loading-container > .loading-icon {
+    translate: 0 -250%;
+}
+
+@keyframes loadingContainerEntrance {
+    from {
+        /* Using 0.001 instead of 0 fixes a random 1s freeze on Chrome on page load when all */
+        /* elements have opacity 0 and are animated in. I don't want to be a web dev anymore. */
+        opacity: 0.001;
+    }
+}
+
+.loading-icon {
+    min-width: 1.5em;
+    width: 1.5em;
+    height: 1.5em;
+    border: 0.25em solid hsl(var(--bghs), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 12%)));
+    border-top-color: hsl(var(--bghs), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 40%)));
+    border-radius: 50%;
+    animation: loadingIconSpin 800ms infinite linear;
+}
+
+@keyframes loadingIconSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.notice-icon {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+}
+
+.notice-icon-major {
+    background: var(--color-negative);
+}
+
+.notice-icon-minor {
+    border: 1px solid var(--color-negative);
+}
+
+kbd {
+    font: inherit;
+    padding: 0.1rem 0.8rem;
+    border-radius: var(--border-radius);
+    border: 2px solid var(--color-widget-background-highlight);
+    box-shadow: 0 2px 0 var(--color-widget-background-highlight);
+    user-select: none;
+    transition: transform .1s, box-shadow .1s;
+    font-size: var(--font-size-h5);
+    cursor: pointer;
+}
+
+kbd:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 0 0 var(--color-widget-background-highlight);
+}
+
+.content-bounds {
+    max-width: 1600px;
+    width: 100%;
+    margin-inline: auto;
+    padding: 0 var(--content-bounds-padding);
+}
+
+.content-bounds-wide {
+    max-width: 1920px;
+}
+
+.content-bounds-slim {
+    max-width: 1100px;
+}
+
+.page.center-vertically {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.header-container {
+    margin-top: calc(var(--widget-gap) / 2);
+    --header-height: 45px;
+    --header-items-gap: 2.5rem;
+}
+
+.header {
+    display: flex;
+    height: var(--header-height);
+    gap: var(--header-items-gap);
+}
+
+.logo {
+    height: 100%;
+    flex-shrink: 0;
+    line-height: var(--header-height);
+    font-size: 2rem;
+    color: var(--color-text-highlight);
+    border-right: 1px solid var(--color-widget-content-border);
+    padding-right: var(--widget-content-horizontal-padding);
+}
+
+.logo:has(img, svg) {
+    display: flex;
+    align-items: center;
+}
+
+.logo img {
+    max-height: 2.7rem;
+}
+
+.nav {
+    overflow-x: auto;
+    min-width: 0;
+    height: 100%;
+    gap: var(--header-items-gap);
+}
+
+.nav .nav-item {
+    line-height: var(--header-height);
+}
+
+.footer {
+    padding-bottom: calc(var(--widget-gap) * 1.5);
+    padding-top: calc(var(--widget-gap) / 2);
+    animation: loadingContainerEntrance 200ms backwards;
+    animation-delay: 150ms;
+}
+
+.mobile-navigation, .mobile-reachability-header {
+    display: none;
+}
+
+.nav-item {
+    display: block;
+    height: 100%;
+    border-bottom: 2px solid transparent;
+    transition: color .3s, border-color .3s;
+    font-size: var(--font-size-h3);
+    flex-shrink: 0;
+}
+
+.nav-item:not(.nav-item-current):hover {
+    border-bottom-color: var(--color-text-subdue);
+    color: var(--color-text-highlight);
+}
+
+.nav-item.nav-item-current {
+    border-bottom-color: var(--color-primary);
+    color: var(--color-text-highlight);
+}
+
+.logout-button {
+    width: 2rem;
+    height: 2rem;
+    stroke: var(--color-text-subdue);
+    transition: stroke .2s;
+}
+
+.logout-button:hover, .logout-button:focus {
+    stroke: var(--color-text-highlight);
+}
+
+.theme-choices {
+    --presets-per-row: 2;
+    display: grid;
+    grid-template-columns: repeat(var(--presets-per-row), 1fr);
+    align-items: center;
+    gap: 1.35rem;
+}
+
+.theme-choices:has(> :nth-child(3)) {
+    --presets-per-row: 3;
+}
+
+.theme-preset {
+    background-color: var(--color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 2rem;
+    padding-inline: 0.5rem;
+    border-radius: 0.3rem;
+    border: none;
+    cursor: pointer;
+    position: relative;
+}
+
+.theme-choices .theme-preset::before {
+    content: '';
+    position: absolute;
+    inset: -.4rem;
+    border-radius: .7rem;
+    border: 2px solid transparent;
+    transition: border-color .3s;
+}
+
+.theme-choices .theme-preset:hover::before {
+    border-color: var(--color-text-subdue);
+}
+
+.theme-choices .theme-preset.current::before {
+    border-color: var(--color-text-base);
+}
+
+.theme-preset-light {
+    gap: 0.3rem;
+    height: 1.8rem;
+}
+
+.theme-color {
+    background-color: var(--color);
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 0.2rem;
+}
+
+.theme-preset-light .theme-color {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.3rem;
+}
+
+.current-theme-preview {
+    opacity: 0.4;
+    transition: opacity .3s;
+}
+
+.theme-picker.popover-active .current-theme-preview, .theme-picker:hover {
+    opacity: 1;
+}

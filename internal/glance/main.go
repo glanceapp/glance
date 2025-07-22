@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 var buildVersion = "dev"
@@ -18,6 +20,8 @@ func Main() int {
 	}
 
 	switch options.intent {
+	case cliIntentVersionPrint:
+		fmt.Println(buildVersion)
 	case cliIntentServe:
 		// remove in v0.10.0
 		if serveUpdateNoticeIfConfigLocationNotMigrated(options.configPath) {
@@ -47,14 +51,49 @@ func Main() int {
 		}
 
 		fmt.Println(string(contents))
+	case cliIntentSensorsPrint:
+		return cliSensorsPrint()
+	case cliIntentMountpointInfo:
+		return cliMountpointInfo(options.args[1])
 	case cliIntentDiagnose:
 		runDiagnostic()
+	case cliIntentSecretMake:
+		key, err := makeAuthSecretKey(AUTH_SECRET_KEY_LENGTH)
+		if err != nil {
+			fmt.Printf("Failed to make secret key: %v\n", err)
+			return 1
+		}
+
+		fmt.Println(key)
+	case cliIntentPasswordHash:
+		password := options.args[1]
+
+		if password == "" {
+			fmt.Println("Password cannot be empty")
+			return 1
+		}
+
+		if len(password) < 6 {
+			fmt.Println("Password must be at least 6 characters long")
+			return 1
+		}
+
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			fmt.Printf("Failed to hash password: %v\n", err)
+			return 1
+		}
+
+		fmt.Println(string(hashedPassword))
 	}
 
 	return 0
 }
 
 func serveApp(configPath string) error {
+	// TODO: refactor if this gets any more complex, the current implementation is
+	// difficult to reason about due to all of the callbacks and simultaneous operations,
+	// use a single goroutine and a channel to initiate synchronous changes to the server
 	exitChannel := make(chan struct{})
 	hadValidConfigOnStartup := false
 	var stopServer func() error
@@ -73,14 +112,21 @@ func serveApp(configPath string) error {
 			}
 
 			return
-		} else if !hadValidConfigOnStartup {
-			hadValidConfigOnStartup = true
 		}
 
 		app, err := newApplication(config)
 		if err != nil {
 			log.Printf("Failed to create application: %v", err)
+
+			if !hadValidConfigOnStartup {
+				close(exitChannel)
+			}
+
 			return
+		}
+
+		if !hadValidConfigOnStartup {
+			hadValidConfigOnStartup = true
 		}
 
 		if stopServer != nil {

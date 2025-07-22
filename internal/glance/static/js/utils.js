@@ -36,3 +36,46 @@ export function openURLInNewTab(url, focus = true) {
 
     if (focus && newWindow != null) newWindow.focus();
 }
+
+
+export class Vec2 {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    static new(x = 0, y = 0) {
+        return new Vec2(x, y);
+    }
+
+    static fromEvent(event) {
+        return new Vec2(event.clientX, event.clientY);
+    }
+
+    setFromEvent(event) {
+        this.x = event.clientX;
+        this.y = event.clientY;
+        return this;
+    }
+
+    set(x, y) {
+        this.x = x;
+        this.y = y;
+        return this;
+    }
+}
+
+export function toggleableEvents(element, eventToHandlerMap) {
+    return [
+        () => {
+            for (const [event, handler] of Object.entries(eventToHandlerMap)) {
+                element.addEventListener(event, handler);
+            }
+        },
+        () => {
+            for (const [event, handler] of Object.entries(eventToHandlerMap)) {
+                element.removeEventListener(event, handler);
+            }
+        }
+    ];
+}
