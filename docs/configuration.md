@@ -874,6 +874,7 @@ Preview:
 | collapse-after | integer | no | 7 |
 | collapse-after-rows | integer | no | 4 |
 | include-shorts | boolean | no | false |
+| publish-threshold | int | no | 0 |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
@@ -926,6 +927,9 @@ Preview of `vertical-list`:
 Preview of `grid-cards`:
 
 ![](images/videos-widget-grid-cards-preview.png)
+
+##### `publish-threshold`
+Used to display only videos published in the last number of days specified through the provided value.
 
 ##### `video-url-template`
 Used to replace the default link for videos. Useful when you're running your own YouTube front-end. Example:
