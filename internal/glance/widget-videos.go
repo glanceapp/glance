@@ -192,11 +192,11 @@ func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate 
 				}
 			}
 
-            published := parseYoutubeFeedTime(v.Published)
-            dateThreshold := time.Now().AddDate(0, 0, -publishThreshold)
-            if publishThreshold > 0 && published.Before(dateThreshold) {
-                continue
-            }
+			published := parseYoutubeFeedTime(v.Published)
+			dateThreshold := time.Now().AddDate(0, 0, -publishThreshold)
+			if publishThreshold > 0 && published.Before(dateThreshold) {
+				continue
+			}
 
 			videos = append(videos, video{
 				ThumbnailUrl: v.Group.Thumbnail.Url,
