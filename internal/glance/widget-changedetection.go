@@ -18,6 +18,7 @@ type changeDetectionWidget struct {
 	ChangeDetections changeDetectionWatchList `yaml:"-"`
 	WatchUUIDs       []string                 `yaml:"watches"`
 	InstanceURL      string                   `yaml:"instance-url"`
+	LinkURL          string                   `yaml:"link-url"`
 	Token            string                   `yaml:"token"`
 	Limit            int                      `yaml:"limit"`
 	CollapseAfter    int                      `yaml:"collapse-after"`
@@ -38,6 +39,10 @@ func (widget *changeDetectionWidget) initialize() error {
 		widget.InstanceURL = "https://www.changedetection.io"
 	}
 
+	if widget.LinkURL == "" {
+                widget.LinkURL = widget.InstanceURL 
+        }
+
 	return nil
 }
 
@@ -52,7 +57,7 @@ func (widget *changeDetectionWidget) update(ctx context.Context) {
 		widget.WatchUUIDs = uuids
 	}
 
-	watches, err := fetchWatchesFromChangeDetection(widget.InstanceURL, widget.WatchUUIDs, string(widget.Token))
+	watches, err := fetchWatchesFromChangeDetection(widget.InstanceURL, widget.LinkURL, widget.WatchUUIDs, string(widget.Token))
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
@@ -116,7 +121,7 @@ func fetchWatchUUIDsFromChangeDetection(instanceURL string, token string) ([]str
 	return uuids, nil
 }
 
-func fetchWatchesFromChangeDetection(instanceURL string, requestedWatchIDs []string, token string) (changeDetectionWatchList, error) {
+func fetchWatchesFromChangeDetection(instanceURL string, linkURL string, requestedWatchIDs []string, token string) (changeDetectionWatchList, error) {
 	watches := make(changeDetectionWatchList, 0, len(requestedWatchIDs))
 
 	if len(requestedWatchIDs) == 0 {
@@ -155,7 +160,7 @@ func fetchWatchesFromChangeDetection(instanceURL string, requestedWatchIDs []str
 
 		watch := changeDetectionWatch{
 			URL:     watchJson.URL,
-			DiffURL: fmt.Sprintf("%s/diff/%s", instanceURL, requestedWatchIDs[i]),
+			DiffURL: fmt.Sprintf("%s/diff/%s", linkURL, requestedWatchIDs[i]),
 		}
 
 		if watchJson.LastChanged == 0 {
