@@ -31,6 +31,7 @@ type videosWidget struct {
 	Playlists         []string  `yaml:"playlists"`
 	Limit             int       `yaml:"limit"`
 	IncludeShorts     bool      `yaml:"include-shorts"`
+	SortBy            string    `yaml:"sort-by"`
 }
 
 func (widget *videosWidget) initialize() error {
@@ -64,7 +65,7 @@ func (widget *videosWidget) initialize() error {
 }
 
 func (widget *videosWidget) update(ctx context.Context) {
-	videos, err := fetchYoutubeChannelUploads(widget.Channels, widget.VideoUrlTemplate, widget.IncludeShorts)
+	videos, err := fetchYoutubeChannelUploads(widget.Channels, widget.VideoUrlTemplate, widget.IncludeShorts, widget.SortBy)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
@@ -98,6 +99,7 @@ type youtubeFeedResponseXml struct {
 	Videos      []struct {
 		Title     string `xml:"title"`
 		Published string `xml:"published"`
+		Updated   string `xml:"updated"`
 		Link      struct {
 			Href string `xml:"href,attr"`
 		} `xml:"link"`
@@ -126,11 +128,12 @@ type video struct {
 	Author       string
 	AuthorUrl    string
 	TimePosted   time.Time
+	TimeUpdated  time.Time
 }
 
 type videoList []video
 
-func (v videoList) sortByNewest() videoList {
+func (v videoList) sortByPosted() videoList {
 	sort.Slice(v, func(i, j int) bool {
 		return v[i].TimePosted.After(v[j].TimePosted)
 	})
@@ -138,7 +141,15 @@ func (v videoList) sortByNewest() videoList {
 	return v
 }
 
-func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate string, includeShorts bool) (videoList, error) {
+func (v videoList) sortByUpdated() videoList {
+	sort.Slice(v, func(i, j int) bool {
+		return v[i].TimeUpdated.After(v[j].TimeUpdated)
+	})
+
+	return v
+}
+
+func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate string, includeShorts bool, sortBy string) (videoList, error) {
 	requests := make([]*http.Request, 0, len(channelOrPlaylistIDs))
 
 	for i := range channelOrPlaylistIDs {
@@ -198,6 +209,7 @@ func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate 
 				Author:       response.Channel,
 				AuthorUrl:    response.ChannelLink + "/videos",
 				TimePosted:   parseYoutubeFeedTime(v.Published),
+				TimeUpdated:  parseYoutubeFeedTime(v.Updated),
 			})
 		}
 	}
@@ -206,7 +218,15 @@ func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate 
 		return nil, errNoContent
 	}
 
-	videos.sortByNewest()
+	switch sortBy {
+	case "none":
+	case "updated":
+		videos.sortByUpdated()
+	case "posted":
+		videos.sortByPosted()
+	default: // "posted"
+		videos.sortByPosted()
+	}
 
 	if failed > 0 {
 		return videos, fmt.Errorf("%w: missing videos from %d channels", errPartialContent, failed)

@@ -131,52 +131,45 @@ func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 
 type customIconField struct {
 	URL        template.URL
-	IsFlatIcon bool
-	// TODO: along with whether the icon is flat, we also need to know
-	// whether the icon is black or white by default in order to properly
-	// invert the color based on the theme being light or dark
+	AutoInvert bool
 }
 
 func newCustomIconField(value string) customIconField {
 	const autoInvertPrefix = "auto-invert "
 	field := customIconField{}
 
+	if strings.HasPrefix(value, autoInvertPrefix) {
+		field.AutoInvert = true
+		value = strings.TrimPrefix(value, autoInvertPrefix)
+	}
+
 	prefix, icon, found := strings.Cut(value, ":")
 	if !found {
-		if strings.HasPrefix(value, autoInvertPrefix) {
-			field.IsFlatIcon = true
-			value = strings.TrimPrefix(value, autoInvertPrefix)
-		}
-
 		field.URL = template.URL(value)
 		return field
 	}
 
+	basename, ext, found := strings.Cut(icon, ".")
+	if !found {
+		ext = "svg"
+		basename = icon
+	}
+
+	if ext != "svg" && ext != "png" {
+		ext = "svg"
+	}
+
 	switch prefix {
 	case "si":
-		field.URL = template.URL("https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + icon + ".svg")
-		field.IsFlatIcon = true
-	case "di", "sh":
-		// syntax: di:<icon_name>[.svg|.png]
-		// syntax: sh:<icon_name>[.svg|.png]
-		// if the icon name is specified without extension, it is assumed to be wanting the SVG icon
-		// otherwise, specify the extension of either .svg or .png to use either of the CDN offerings
-		// any other extension will be interpreted as .svg
-		basename, ext, found := strings.Cut(icon, ".")
-		if !found {
-			ext = "svg"
-			basename = icon
-		}
-
-		if ext != "svg" && ext != "png" {
-			ext = "svg"
-		}
-
-		if prefix == "di" {
-			field.URL = template.URL("https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/" + ext + "/" + basename + "." + ext)
-		} else {
-			field.URL = template.URL("https://cdn.jsdelivr.net/gh/selfhst/icons/" + ext + "/" + basename + "." + ext)
-		}
+		field.AutoInvert = true
+		field.URL = template.URL("https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + basename + ".svg")
+	case "di":
+		field.URL = template.URL("https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/" + ext + "/" + basename + "." + ext)
+	case "mdi":
+		field.AutoInvert = true
+		field.URL = template.URL("https://cdn.jsdelivr.net/npm/@mdi/svg@latest/svg/" + basename + ".svg")
+	case "sh":
+		field.URL = template.URL("https://cdn.jsdelivr.net/gh/selfhst/icons/" + ext + "/" + basename + "." + ext)
 	default:
 		field.URL = template.URL(value)
 	}

@@ -12,7 +12,7 @@
     {{- end }}
 {{- end }}
 {{- if .NegativeColor }}{{ $negative = .NegativeColor.String | safeCSS }}{{ end }}
-<button class="theme-preset{{ if .Light }} theme-preset-light{{ end }}" style="--color: {{ $background }}" data-key="{{ .Key }}">
+<button class="theme-preset{{ if .Light }} theme-preset-light{{ end }}" style="--color: {{ $background }}" data-key="{{ .Key }}" title="{{ .Key }}">
     <div class="theme-color" style="--color: {{ $primary }}"></div>
     <div class="theme-color" style="--color: {{ $positive }}"></div>
     <div class="theme-color" style="--color: {{ $negative }}"></div>
