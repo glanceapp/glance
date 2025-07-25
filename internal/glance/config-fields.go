@@ -48,6 +48,7 @@ func (c1 *hslColorField) SameAs(c2 *hslColorField) bool {
 
 func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	var value string
+	errorLine := fmt.Sprintf("line %d:", node.Line)
 
 	if err := node.Decode(&value); err != nil {
 		return err
@@ -56,7 +57,7 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	matches := hslColorFieldPattern.FindStringSubmatch(value)
 
 	if len(matches) != 4 {
-		return fmt.Errorf("invalid HSL color format: %s", value)
+		return fmt.Errorf("%s invalid HSL color format: %s", errorLine, value)
 	}
 
 	hue, err := strconv.ParseFloat(matches[1], 64)
@@ -65,7 +66,7 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	if hue > hslHueMax {
-		return fmt.Errorf("HSL hue must be between 0 and %d", hslHueMax)
+		return fmt.Errorf("%s HSL hue must be between 0 and %d", errorLine, hslHueMax)
 	}
 
 	saturation, err := strconv.ParseFloat(matches[2], 64)
@@ -74,7 +75,7 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	if saturation > hslSaturationMax {
-		return fmt.Errorf("HSL saturation must be between 0 and %d", hslSaturationMax)
+		return fmt.Errorf("%s HSL saturation must be between 0 and %d", errorLine, hslSaturationMax)
 	}
 
 	lightness, err := strconv.ParseFloat(matches[3], 64)
@@ -83,7 +84,7 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	if lightness > hslLightnessMax {
-		return fmt.Errorf("HSL lightness must be between 0 and %d", hslLightnessMax)
+		return fmt.Errorf("%s HSL lightness must be between 0 and %d", errorLine, hslLightnessMax)
 	}
 
 	c.H = hue
@@ -99,6 +100,7 @@ type durationField time.Duration
 
 func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 	var value string
+	errorLine := fmt.Sprintf("line %d:", node.Line)
 
 	if err := node.Decode(&value); err != nil {
 		return err
@@ -107,12 +109,12 @@ func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 	matches := durationFieldPattern.FindStringSubmatch(value)
 
 	if len(matches) != 3 {
-		return fmt.Errorf("invalid duration format: %s", value)
+		return fmt.Errorf("%s invalid duration format for value `%s`", errorLine, value)
 	}
 
 	duration, err := strconv.Atoi(matches[1])
 	if err != nil {
-		return err
+		return fmt.Errorf("%s invalid duration value: %s", errorLine, matches[1])
 	}
 
 	switch matches[2] {
@@ -245,6 +247,8 @@ func (q *queryParametersField) UnmarshalYAML(node *yaml.Node) error {
 
 	*q = make(queryParametersField)
 
+	errorLine := fmt.Sprintf("line %d:", node.Line)
+
 	// TODO: refactor the duplication in the switch cases if any more types get added
 	for key, value := range decoded {
 		switch v := value.(type) {
@@ -266,11 +270,11 @@ func (q *queryParametersField) UnmarshalYAML(node *yaml.Node) error {
 				case bool:
 					(*q)[key] = append((*q)[key], fmt.Sprintf("%t", item))
 				default:
-					return fmt.Errorf("invalid query parameter value type: %T", item)
+					return fmt.Errorf("%s invalid query parameter value type: %T", errorLine, item)
 				}
 			}
 		default:
-			return fmt.Errorf("invalid query parameter value type: %T", value)
+			return fmt.Errorf("%s invalid query parameter value type: %T", errorLine, value)
 		}
 	}
 
