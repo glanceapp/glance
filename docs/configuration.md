@@ -34,6 +34,8 @@
   - [DNS Stats](#dns-stats)
   - [Server Stats](#server-stats)
   - [Repository](#repository)
+  <!-- TODO: add docs -->
+  - [Trending Repositories](#trending-repositories)
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
   - [Calendar (legacy)](#calendar-legacy)
@@ -907,7 +909,7 @@ https://www.youtube.com...&list={ID}&...
 The maximum number of videos to show.
 
 ##### `sort-by`
-Used to specify the order in which the videos should get returned. Possible values are `none`, `updated`, and `posted`. 
+Used to specify the order in which the videos should get returned. Possible values are `none`, `updated`, and `posted`.
 Default value is `posted`.
 
 ##### `collapse-after`
