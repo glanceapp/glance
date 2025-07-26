@@ -2,6 +2,7 @@ package glance
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -94,39 +95,54 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
-var durationFieldPattern = regexp.MustCompile(`^(\d+)(s|m|h|d)$`)
+var durationFieldPattern = regexp.MustCompile(`^(\d+)(s|m|h|d|w|mo|y)$`)
 
 type durationField time.Duration
 
+func parseDurationValue(value string) (time.Duration, error) {
+	matches := durationFieldPattern.FindStringSubmatch(value)
+	if len(matches) != 3 {
+		return 0, fmt.Errorf("invalid format for value `%s`, must be a number followed by one of: s, m, h, d, w, mo, y", value)
+	}
+
+	duration, err := strconv.Atoi(matches[1])
+	if err != nil {
+		return 0, err
+	}
+
+	switch matches[2] {
+	case "s":
+		return time.Duration(duration) * time.Second, nil
+	case "m":
+		return time.Duration(duration) * time.Minute, nil
+	case "h":
+		return time.Duration(duration) * time.Hour, nil
+	case "d":
+		return time.Duration(duration) * 24 * time.Hour, nil
+	case "w":
+		return time.Duration(duration) * 7 * 24 * time.Hour, nil
+	case "mo":
+		return time.Duration(duration) * 30 * 24 * time.Hour, nil
+	case "y":
+		return time.Duration(duration) * 365 * 24 * time.Hour, nil
+	default:
+		return 0, fmt.Errorf("unknown duration unit: %s", matches[2])
+	}
+}
+
 func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 	var value string
-	errorLine := fmt.Sprintf("line %d:", node.Line)
 
 	if err := node.Decode(&value); err != nil {
 		return err
 	}
 
-	matches := durationFieldPattern.FindStringSubmatch(value)
-
-	if len(matches) != 3 {
-		return fmt.Errorf("%s invalid duration format for value `%s`", errorLine, value)
-	}
-
-	duration, err := strconv.Atoi(matches[1])
+	parsedDuration, err := parseDurationValue(value)
 	if err != nil {
-		return fmt.Errorf("%s invalid duration value: %s", errorLine, matches[1])
+		return fmt.Errorf("line %d: %w", node.Line, err)
 	}
 
-	switch matches[2] {
-	case "s":
-		*d = durationField(time.Duration(duration) * time.Second)
-	case "m":
-		*d = durationField(time.Duration(duration) * time.Minute)
-	case "h":
-		*d = durationField(time.Duration(duration) * time.Hour)
-	case "d":
-		*d = durationField(time.Duration(duration) * 24 * time.Hour)
-	}
+	*d = durationField(parsedDuration)
 
 	return nil
 }
@@ -291,4 +307,264 @@ func (q *queryParametersField) toQueryString() string {
 	}
 
 	return query.Encode()
+}
+
+type filterableData interface {
+	filterableField(field string) any
+}
+
+type filterableFields[T filterableData] struct {
+	filters       []func(T) bool
+	FilteredCount int  `yaml:"-"`
+	AllFiltered   bool `yaml:"-"`
+}
+
+func (f *filterableFields[T]) Apply(items []T) []T {
+	if len(f.filters) == 0 {
+		f.FilteredCount = 0
+		f.AllFiltered = false
+		return items
+	}
+
+	filtered := make([]T, 0, len(items))
+
+	for _, item := range items {
+		include := true
+		for _, shouldInclude := range f.filters {
+			if !shouldInclude(item) {
+				include = false
+				break
+			}
+		}
+		if include {
+			filtered = append(filtered, item)
+		}
+	}
+
+	f.FilteredCount = len(items) - len(filtered)
+	f.AllFiltered = f.FilteredCount == len(items)
+
+	return filtered
+}
+
+func (f *filterableFields[T]) UnmarshalYAML(node *yaml.Node) error {
+	untypedFilters := make(map[string]any)
+	if err := node.Decode(&untypedFilters); err != nil {
+		return errors.New("filters must be defined as an object where each key is the name of a field")
+	}
+
+	rawFilters := make(map[string][]string)
+	for key, value := range untypedFilters {
+		rawFilters[key] = []string{}
+
+		switch vt := value.(type) {
+		case string:
+			rawFilters[key] = append(rawFilters[key], vt)
+		case []any:
+			for _, item := range vt {
+				if str, ok := item.(string); ok {
+					rawFilters[key] = append(rawFilters[key], str)
+				} else {
+					return fmt.Errorf("filter value in array for %s must be a string, got %T", key, item)
+				}
+			}
+		case nil:
+			continue // skip empty filters
+		default:
+			return fmt.Errorf("filter value for %s must be a string or an array, got %T", key, value)
+		}
+	}
+
+	makeStringFilter := func(key string, values []string) (func(T) bool, error) {
+		parsedFilters := []func(string) bool{}
+
+		for _, value := range values {
+			value, negative := strings.CutPrefix(value, "!")
+
+			if value == "" {
+				return nil, errors.New("value is empty")
+			}
+
+			if pattern, ok := strings.CutPrefix(value, "re:"); ok {
+				re, err := regexp.Compile(pattern)
+				if err != nil {
+					return nil, fmt.Errorf("value `%s`: %w", value, err)
+				}
+
+				parsedFilters = append(parsedFilters, func(s string) bool {
+					return negative != re.MatchString(s)
+				})
+
+				continue
+			}
+
+			value = strings.ToLower(value)
+			parsedFilters = append(parsedFilters, func(s string) bool {
+				return negative != strings.Contains(strings.ToLower(s), value)
+			})
+		}
+
+		return func(item T) bool {
+			value, ok := item.filterableField(key).(string)
+			if !ok {
+				return false
+			}
+
+			for i := range parsedFilters {
+				if !parsedFilters[i](value) {
+					return false
+				}
+			}
+
+			return true
+		}, nil
+	}
+
+	makeIntFilter := func(key string, values []string) (func(T) bool, error) {
+		parsedFilters := []func(int) bool{}
+
+		parseNumber := func(value string) (int, error) {
+			var multiplier int
+			if strings.HasSuffix(value, "k") {
+				multiplier = 1_000
+				value = strings.TrimSuffix(value, "k")
+			} else if strings.HasSuffix(value, "m") {
+				multiplier = 1_000_000
+				value = strings.TrimSuffix(value, "m")
+			} else {
+				multiplier = 1
+			}
+
+			num, err := strconv.Atoi(value)
+			if err != nil {
+				return 0, fmt.Errorf("invalid number format for key %s: %w", key, err)
+			}
+
+			return num * multiplier, nil
+		}
+
+		for _, value := range values {
+			if number, ok := strings.CutPrefix(value, "<"); ok {
+				num, err := parseNumber(number)
+				if err != nil {
+					return nil, err
+				}
+
+				parsedFilters = append(parsedFilters, func(v int) bool {
+					return v < num
+				})
+			} else if number, ok := strings.CutPrefix(value, ">"); ok {
+				num, err := parseNumber(number)
+				if err != nil {
+					return nil, err
+				}
+
+				parsedFilters = append(parsedFilters, func(v int) bool {
+					return v > num
+				})
+			} else {
+				num, err := parseNumber(value)
+				if err != nil {
+					return nil, err
+				}
+
+				parsedFilters = append(parsedFilters, func(v int) bool {
+					return v == num
+				})
+			}
+		}
+
+		return func(item T) bool {
+			value, ok := item.filterableField(key).(int)
+			if !ok {
+				return false
+			}
+
+			for i := range parsedFilters {
+				if !parsedFilters[i](value) {
+					return false
+				}
+			}
+
+			return true
+		}, nil
+	}
+
+	makeTimeFilter := func(key string, values []string) (func(T) bool, error) {
+		parsedFilters := []func(time.Time) bool{}
+
+		for _, value := range values {
+			if number, ok := strings.CutPrefix(value, "<"); ok {
+				duration, err := parseDurationValue(number)
+				if err != nil {
+					return nil, err
+				}
+
+				parsedFilters = append(parsedFilters, func(t time.Time) bool {
+					return time.Since(t) < duration
+				})
+			} else if number, ok := strings.CutPrefix(value, ">"); ok {
+				duration, err := parseDurationValue(number)
+				if err != nil {
+					return nil, err
+				}
+
+				parsedFilters = append(parsedFilters, func(t time.Time) bool {
+					return time.Since(t) > duration
+				})
+			} else {
+				return nil, fmt.Errorf("invalid time filter format for value `%s`", value)
+			}
+		}
+
+		return func(item T) bool {
+			value, ok := item.filterableField(key).(time.Time)
+			if !ok {
+				return false
+			}
+
+			for i := range parsedFilters {
+				if !parsedFilters[i](value) {
+					return false
+				}
+			}
+
+			return true
+		}, nil
+	}
+
+	var data T
+	for key, values := range rawFilters {
+		if len(values) == 0 {
+			continue
+		}
+
+		value := data.filterableField(key)
+
+		if value == nil {
+			return fmt.Errorf("filter with key `%s` is not supported", key)
+		}
+
+		var filter func(T) bool
+		var err error
+
+		switch v := value.(type) {
+		case string:
+			filter, err = makeStringFilter(key, values)
+		case int:
+			filter, err = makeIntFilter(key, values)
+		case time.Time:
+			filter, err = makeTimeFilter(key, values)
+		default:
+			return fmt.Errorf("unsupported filter type for key %s: %T", key, v)
+		}
+
+		if err != nil {
+			return fmt.Errorf("failed to create filter for key %s: %w", key, err)
+		}
+
+		f.filters = append(f.filters, filter)
+	}
+
+	return nil
 }
