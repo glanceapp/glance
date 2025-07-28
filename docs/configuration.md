@@ -2310,7 +2310,7 @@ Whether to only show running containers. If set to `true` only containers that a
 | glance.category | The category of the container. Used to filter containers by category. |
 
 ### DNS Stats
-Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home, Pi-hole, or Technitium.
+Display statistics from a self-hosted ad-blocking DNS resolver such as AdGuard Home, Pi-hole, Technitium, or Unbound DNS in OPNsense.
 
 Example:
 
@@ -2328,7 +2328,7 @@ Preview:
 
 > [!NOTE]
 >
-> When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole or Technitium it will be the total number of blocked domains from all adlists.
+> When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole, Technitium, or Unbound DNS in OPNsense, it will be the total number of blocked domains from all adlists.
 
 #### Properties
 
@@ -2345,7 +2345,7 @@ Preview:
 | hour-format | string | no | 12h |
 
 ##### `service`
-Either `adguard`, `technitium`, or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
+Either `adguard`, `technitium`, `opnsense-unbound`, `pihole` (major version 5 and below), or `pihole-v6` (major version 6 and above).
 
 ##### `allow-insecure`
 Whether to allow invalid/self-signed certificates when making the request to the service.
@@ -2354,12 +2354,23 @@ Whether to allow invalid/self-signed certificates when making the request to the
 The base URL of the service.
 
 ##### `username`
-Only required when using AdGuard Home. The username used to log into the admin dashboard.
+
+##### Adguard Home (required)
+>The username used to log into the admin dashboard.
+
+##### Unbound DNS in OPNsense (required)
+>The OPNsense API key value.
 
 ##### `password`
-Required when using AdGuard Home, where the password is the one used to log into the admin dashboard.
 
-Also required when using Pi-hole major version 6 and above, where the password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
+##### Adguard Home (required)
+>The password used to log into the admin dashboard.
+
+##### Unbound DNS in OPNsense (required)
+>The OPNsense API password value.
+
+##### PiHole v6+ (required)
+>The password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
 
 ##### `token`
 Required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`.
