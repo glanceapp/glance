@@ -281,6 +281,7 @@ kbd:active {
 
 .nav {
     overflow-x: auto;
+    overflow-y: hidden;
     min-width: 0;
     height: 100%;
     gap: var(--header-items-gap);
