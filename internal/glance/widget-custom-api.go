@@ -651,7 +651,11 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			}
 			return out
 		},
-		"newRequest": func(url string) *CustomAPIRequest {
+		"newRequest": func(url string, params ...any) *CustomAPIRequest {
+			if len(params) > 0 {
+				url = fmt.Sprintf(url, params...)
+			}
+
 			return &CustomAPIRequest{
 				URL: url,
 			}
