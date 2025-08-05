@@ -279,16 +279,20 @@ kbd:active {
     max-height: 2.7rem;
 }
 
-.nav {
+.desktop-navigation {
     overflow-x: auto;
-    overflow-y: hidden;
     min-width: 0;
     height: 100%;
     gap: var(--header-items-gap);
 }
 
-.nav .nav-item {
-    line-height: var(--header-height);
+.desktop-navigation .nav-item {
+    display: flex;
+    align-items: center;
+}
+
+.desktop-navigation .nav-item-text {
+    margin-top: 3px;
 }
 
 .footer {
