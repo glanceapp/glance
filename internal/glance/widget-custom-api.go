@@ -679,6 +679,20 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			req.BodyType = "string"
 			return req
 		},
+		"withAllowInsecure": func(val any, req *CustomAPIRequest) *CustomAPIRequest {
+			switch v := val.(type) {
+			case bool:
+				req.AllowInsecure = v
+			case string:
+				if strings.ToLower(v) == "true" {
+					req.AllowInsecure = true
+				}
+			default:
+				slog.Warn("withAllowInsecure called with non-boolean value, must be string or bool", "value", v)
+			}
+
+			return req
+		},
 		"getResponse": func(req *CustomAPIRequest) *customAPIResponseData {
 			err := req.initialize()
 			if err != nil {
