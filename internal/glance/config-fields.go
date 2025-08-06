@@ -15,6 +15,7 @@ import (
 )
 
 var hslColorFieldPattern = regexp.MustCompile(`^(?:hsla?\()?([\d\.]+)(?: |,)+([\d\.]+)%?(?: |,)+([\d\.]+)%?\)?$`)
+var inStringPropertyPattern = regexp.MustCompile(`(?m)([a-zA-Z]+)\[(.*?)\]`)
 
 const (
 	hslHueMax        = 360
@@ -133,7 +134,28 @@ func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 
 type customIconField struct {
 	URL        template.URL
+	Color      string
 	AutoInvert bool
+}
+
+func (h *customIconField) Elem() template.HTML {
+	return h.ElemWithClass("")
+}
+
+func (h *customIconField) ElemWithClass(class string) template.HTML {
+	if h.AutoInvert && h.Color == "" {
+		class = "flat-icon " + class
+	}
+
+	if h.Color != "" {
+		return template.HTML(
+			`<div class="icon colored-icon ` + class + `" style="--icon-color: ` + h.Color + `; --icon-url: url('` + string(h.URL) + `')"></div>`,
+		)
+	}
+
+	return template.HTML(
+		`<img class="icon ` + class + `" src="` + string(h.URL) + `" alt="" loading="lazy">`,
+	)
 }
 
 func newCustomIconField(value string) customIconField {
@@ -143,6 +165,25 @@ func newCustomIconField(value string) customIconField {
 	if strings.HasPrefix(value, autoInvertPrefix) {
 		field.AutoInvert = true
 		value = strings.TrimPrefix(value, autoInvertPrefix)
+	}
+
+	value, properties := parseInStringProperties(value)
+
+	if color, ok := properties["color"]; ok {
+		switch color {
+		case "primary":
+			color = "var(--color-primary)"
+		case "positive":
+			color = "var(--color-positive)"
+		case "negative":
+			color = "var(--color-negative)"
+		case "base":
+			color = "var(--color-text-base)"
+		case "subdue":
+			color = "var(--color-text-subdue)"
+		}
+
+		field.Color = color
 	}
 
 	prefix, icon, found := strings.Cut(value, ":")
@@ -172,6 +213,9 @@ func newCustomIconField(value string) customIconField {
 		field.URL = template.URL("https://cdn.jsdelivr.net/npm/@mdi/svg@latest/svg/" + basename + ".svg")
 	case "sh":
 		field.URL = template.URL("https://cdn.jsdelivr.net/gh/selfhst/icons/" + ext + "/" + basename + "." + ext)
+	case "hi":
+		field.AutoInvert = true
+		field.URL = template.URL("https://cdn.jsdelivr.net/npm/heroicons@2.2.0/24/" + basename + ".svg")
 	default:
 		field.URL = template.URL(value)
 	}
@@ -187,6 +231,23 @@ func (i *customIconField) UnmarshalYAML(node *yaml.Node) error {
 
 	*i = newCustomIconField(value)
 	return nil
+}
+
+func parseInStringProperties(value string) (string, map[string]string) {
+	properties := make(map[string]string)
+
+	value = inStringPropertyPattern.ReplaceAllStringFunc(value, func(match string) string {
+		matches := inStringPropertyPattern.FindStringSubmatch(match)
+		if len(matches) != 3 {
+			return ""
+		}
+
+		properties[matches[1]] = matches[2]
+
+		return ""
+	})
+
+	return strings.TrimSpace(value), properties
 }
 
 type proxyOptionsField struct {

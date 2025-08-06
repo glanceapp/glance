@@ -376,7 +376,27 @@ details[open] .summary::after {
     gap: 0.5rem;
 }
 
-:root:not([data-scheme=light]) .flat-icon {
+.icon {
+    object-fit: contain;
+}
+
+.icon:not(.colored-icon) {
+    opacity: 0.9;
+    filter: grayscale(0.2);
+    transition: opacity 0.2s, filter 0.2s;
+}
+
+.icon-parent:hover .icon {
+    opacity: 1;
+    filter: none;
+}
+
+.colored-icon {
+    mask: var(--icon-url) no-repeat center / contain;
+    background-color: var(--icon-color);
+}
+
+:root:not([data-scheme=light]) .flat-icon:not(.colored-icon) {
     filter: invert(1);
 }
 
@@ -458,7 +478,6 @@ details[open] .summary::after {
     opacity: 1;
     filter: none;
 }
-
 
 .hide-scrollbars {
     scrollbar-width: none;
@@ -547,6 +566,13 @@ details[open] .summary::after {
     visibility: hidden;
 }
 
+.square-18 { width: 1.8rem; height: 1.8rem; }
+.square-20 { width: 2rem; height: 2rem; }
+.square-27 { width: 2.7rem; height: 2.7rem; }
+.square-30 { width: 3rem; height: 3rem; }
+.square-32 { width: 3.2rem; height: 3.2rem; }
+.square-40 { width: 4rem; height: 4rem; }
+
 .cursor-help { cursor: help; }
 .rounded { border-radius: var(--border-radius); }
 .break-all { word-break: break-all; }
@@ -588,8 +614,11 @@ details[open] .summary::after {
 .gap-15 { gap: 1.5rem; }
 .gap-20 { gap: 2rem; }
 .gap-25 { gap: 2.5rem; }
+.gap-30 { gap: 3rem; }
 .gap-35 { gap: 3.5rem; }
+.gap-40 { gap: 4rem; }
 .gap-45 { gap: 4.5rem; }
+.gap-50 { gap: 5rem; }
 .gap-55 { gap: 5.5rem; }
 .margin-left-auto { margin-left: auto; }
 .margin-top-3 { margin-top: 0.3rem; }

@@ -515,6 +515,10 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			}
 			return a % b
 		},
+		"iconWithClass": func(name, class string) template.HTML {
+			i := newCustomIconField(name)
+			return i.ElemWithClass(class)
+		},
 		"now": func() time.Time {
 			return time.Now()
 		},
