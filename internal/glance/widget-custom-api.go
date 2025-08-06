@@ -11,6 +11,7 @@ import (
 	"iter"
 	"log/slog"
 	"math"
+	"math/rand"
 	"net/http"
 	"regexp"
 	"sort"
@@ -33,6 +34,7 @@ type CustomAPIRequest struct {
 	Method             string               `yaml:"method"`
 	BodyType           string               `yaml:"body-type"`
 	Body               any                  `yaml:"body"`
+	MockResponse       string               `yaml:"mock-response"`
 	SkipJSONValidation bool                 `yaml:"skip-json-validation"`
 	bodyReader         io.ReadSeeker        `yaml:"-"`
 	httpRequest        *http.Request        `yaml:"-"`
@@ -230,6 +232,15 @@ func (data *customAPITemplateData) Subrequest(key string) *customAPIResponseData
 }
 
 func fetchCustomAPIResponse(ctx context.Context, req *CustomAPIRequest) (*customAPIResponseData, error) {
+	if req != nil && req.MockResponse != "" {
+		return &customAPIResponseData{
+			JSON: decoratedGJSONResult{gjson.Parse(req.MockResponse)},
+			Response: &http.Response{
+				StatusCode: http.StatusOK,
+			},
+		}, nil
+	}
+
 	if req == nil || req.URL == "" {
 		return &customAPIResponseData{
 			JSON:     decoratedGJSONResult{gjson.Result{}},
