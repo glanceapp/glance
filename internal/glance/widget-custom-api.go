@@ -716,6 +716,13 @@ var customAPITemplateFuncs = func() template.FuncMap {
 
 			return data
 		},
+		"randomElement": func(arr []decoratedGJSONResult) *decoratedGJSONResult {
+			if len(arr) == 0 {
+				return &decoratedGJSONResult{gjson.Result{}}
+			}
+
+			return &arr[rand.Intn(len(arr))]
+		},
 	}
 
 	for key, value := range globalTemplateFunctions {
