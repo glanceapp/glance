@@ -381,7 +381,7 @@ details[open] .summary::after {
 }
 
 .icon:not(.colored-icon) {
-    opacity: 0.9;
+    opacity: 0.8;
     filter: grayscale(0.2);
     transition: opacity 0.2s, filter 0.2s;
 }
