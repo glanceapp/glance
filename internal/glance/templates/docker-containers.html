@@ -5,7 +5,7 @@
     {{- range .Containers }}
     <li class="docker-container flex items-center gap-15">
         <div class="shrink-0" data-popover-type="html" data-popover-position="above" data-popover-offset="0.25" data-popover-margin="0.1rem" data-popover-max-width="400px" aria-hidden="true">
-            <img class="docker-container-icon{{ if .Icon.IsFlatIcon }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
+            <img class="docker-container-icon{{ if .Icon.AutoInvert }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
             <div data-popover-html>
                 <div class="color-highlight text-truncate block">{{ .Image }}</div>
                 <div>{{ .StateText }}</div>
@@ -14,7 +14,7 @@
                     {{- range .Children }}
                     <li class="flex gap-7 items-center">
                         <div class="margin-bottom-3">{{ template "state-icon" .StateIcon }}</div>
-                        <div class="color-highlight">{{ .Title }} <span class="size-h5 color-base">{{ .StateText }}</span></div>
+                        <div class="color-highlight">{{ .Name }} <span class="size-h5 color-base">{{ .StateText }}</span></div>
                     </li>
                     {{- end }}
                 </ul>
@@ -24,9 +24,9 @@
 
         <div class="min-width-0 grow">
             {{- if .URL }}
-            <a href="{{ .URL | safeURL }}" class="color-highlight size-title-dynamic block text-truncate" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
+            <a href="{{ .URL | safeURL }}" class="color-highlight size-title-dynamic block text-truncate" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Name }}</a>
             {{- else }}
-            <div class="color-highlight text-truncate size-title-dynamic">{{ .Title }}</div>
+            <div class="color-highlight text-truncate size-title-dynamic">{{ .Name }}</div>
             {{- end }}
             {{- if .Description }}
             <div class="text-truncate">{{ .Description }}</div>

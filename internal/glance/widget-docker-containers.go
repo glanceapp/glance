@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -15,10 +16,14 @@ import (
 var dockerContainersWidgetTemplate = mustParseTemplate("docker-containers.html", "widget-base.html")
 
 type dockerContainersWidget struct {
-	widgetBase    `yaml:",inline"`
-	HideByDefault bool                `yaml:"hide-by-default"`
-	SockPath      string              `yaml:"sock-path"`
-	Containers    dockerContainerList `yaml:"-"`
+	widgetBase           `yaml:",inline"`
+	HideByDefault        bool                         `yaml:"hide-by-default"`
+	RunningOnly          bool                         `yaml:"running-only"`
+	Category             string                       `yaml:"category"`
+	SockPath             string                       `yaml:"sock-path"`
+	FormatContainerNames bool                         `yaml:"format-container-names"`
+	Containers           dockerContainerList          `yaml:"-"`
+	LabelOverrides       map[string]map[string]string `yaml:"containers"`
 }
 
 func (widget *dockerContainersWidget) initialize() error {
@@ -32,7 +37,14 @@ func (widget *dockerContainersWidget) initialize() error {
 }
 
 func (widget *dockerContainersWidget) update(ctx context.Context) {
-	containers, err := fetchDockerContainers(widget.SockPath, widget.HideByDefault)
+	containers, err := fetchDockerContainers(
+		widget.SockPath,
+		widget.HideByDefault,
+		widget.Category,
+		widget.RunningOnly,
+		widget.FormatContainerNames,
+		widget.LabelOverrides,
+	)
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
@@ -54,6 +66,7 @@ const (
 	dockerContainerLabelIcon        = "glance.icon"
 	dockerContainerLabelID          = "glance.id"
 	dockerContainerLabelParent      = "glance.parent"
+	dockerContainerLabelCategory    = "glance.category"
 )
 
 const (
@@ -98,7 +111,7 @@ func (l *dockerContainerLabels) getOrDefault(label, def string) string {
 }
 
 type dockerContainer struct {
-	Title       string
+	Name        string
 	URL         string
 	SameTab     bool
 	Image       string
@@ -120,7 +133,7 @@ func (containers dockerContainerList) sortByStateIconThenTitle() {
 			return (*p)[containers[a].StateIcon] < (*p)[containers[b].StateIcon]
 		}
 
-		return strings.ToLower(containers[a].Title) < strings.ToLower(containers[b].Title)
+		return strings.ToLower(containers[a].Name) < strings.ToLower(containers[b].Name)
 	})
 }
 
@@ -137,8 +150,15 @@ func dockerContainerStateToStateIcon(state string) string {
 	}
 }
 
-func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContainerList, error) {
-	containers, err := fetchAllDockerContainersFromSock(socketPath)
+func fetchDockerContainers(
+	socketPath string,
+	hideByDefault bool,
+	category string,
+	runningOnly bool,
+	formatNames bool,
+	labelOverrides map[string]map[string]string,
+) (dockerContainerList, error) {
+	containers, err := fetchDockerContainersFromSource(socketPath, category, runningOnly, labelOverrides)
 	if err != nil {
 		return nil, fmt.Errorf("fetching containers: %w", err)
 	}
@@ -150,7 +170,7 @@ func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContain
 		container := &containers[i]
 
 		dc := dockerContainer{
-			Title:       deriveDockerContainerTitle(container),
+			Name:        deriveDockerContainerName(container, formatNames),
 			URL:         container.Labels.getOrDefault(dockerContainerLabelURL, ""),
 			Description: container.Labels.getOrDefault(dockerContainerLabelDescription, ""),
 			SameTab:     stringToBool(container.Labels.getOrDefault(dockerContainerLabelSameTab, "false")),
@@ -165,7 +185,7 @@ func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContain
 				for i := range children {
 					child := &children[i]
 					dc.Children = append(dc.Children, dockerContainer{
-						Title:     deriveDockerContainerTitle(child),
+						Name:      deriveDockerContainerName(child, formatNames),
 						StateText: child.Status,
 						StateIcon: dockerContainerStateToStateIcon(strings.ToLower(child.State)),
 					})
@@ -193,12 +213,31 @@ func fetchDockerContainers(socketPath string, hideByDefault bool) (dockerContain
 	return dockerContainers, nil
 }
 
-func deriveDockerContainerTitle(container *dockerContainerJsonResponse) string {
+func deriveDockerContainerName(container *dockerContainerJsonResponse, formatNames bool) string {
 	if v := container.Labels.getOrDefault(dockerContainerLabelName, ""); v != "" {
 		return v
 	}
 
-	return strings.TrimLeft(itemAtIndexOrDefault(container.Names, 0, "n/a"), "/")
+	if len(container.Names) == 0 || container.Names[0] == "" {
+		return "n/a"
+	}
+
+	name := strings.TrimLeft(container.Names[0], "/")
+
+	if formatNames {
+		name = strings.ReplaceAll(name, "_", " ")
+		name = strings.ReplaceAll(name, "-", " ")
+
+		words := strings.Split(name, " ")
+		for i := range words {
+			if len(words[i]) > 0 {
+				words[i] = strings.ToUpper(words[i][:1]) + words[i][1:]
+			}
+		}
+		name = strings.Join(words, " ")
+	}
+
+	return name
 }
 
 func groupDockerContainerChildren(
@@ -239,17 +278,46 @@ func isDockerContainerHidden(container *dockerContainerJsonResponse, hideByDefau
 	return hideByDefault
 }
 
-func fetchAllDockerContainersFromSock(socketPath string) ([]dockerContainerJsonResponse, error) {
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-		Transport: &http.Transport{
-			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", socketPath)
+
+func fetchDockerContainersFromSource(
+	source string,
+	category string,
+	runningOnly bool,
+	labelOverrides map[string]map[string]string,
+) ([]dockerContainerJsonResponse, error) {
+	var hostname string
+
+	var client *http.Client
+	if strings.HasPrefix(source, "tcp://") || strings.HasPrefix(source, "http://") {
+		client = &http.Client{}
+		parsed, err := url.Parse(source)
+		if err != nil {
+			return nil, fmt.Errorf("parsing URL: %w", err)
+		}
+
+		port := parsed.Port()
+		if port == "" {
+			port = "80"
+		}
+
+		hostname = parsed.Hostname() + ":" + port
+	} else {
+		hostname = "docker"
+		client = &http.Client{
+			Transport: &http.Transport{
+				DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+					return net.Dial("unix", source)
+				},
 			},
-		},
+		}
 	}
 
-	request, err := http.NewRequest("GET", "http://docker/containers/json?all=true", nil)
+
+	fetchAll := ternary(runningOnly, "false", "true")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	request, err := http.NewRequestWithContext(ctx, "GET", "http://"+hostname+"/containers/json?all="+fetchAll, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
@@ -267,6 +335,44 @@ func fetchAllDockerContainersFromSock(socketPath string) ([]dockerContainerJsonR
 	var containers []dockerContainerJsonResponse
 	if err := json.NewDecoder(response.Body).Decode(&containers); err != nil {
 		return nil, fmt.Errorf("decoding response: %w", err)
+	}
+
+	for i := range containers {
+		container := &containers[i]
+		name := strings.TrimLeft(itemAtIndexOrDefault(container.Names, 0, ""), "/")
+
+		if name == "" {
+			continue
+		}
+
+		overrides, ok := labelOverrides[name]
+		if !ok {
+			continue
+		}
+
+		if container.Labels == nil {
+			container.Labels = make(dockerContainerLabels)
+		}
+
+		for label, value := range overrides {
+			container.Labels["glance."+label] = value
+		}
+	}
+
+	// We have to filter here instead of using the `filters` parameter of Docker's API
+	// because the user may define a category override within their config
+	if category != "" {
+		filtered := make([]dockerContainerJsonResponse, 0, len(containers))
+
+		for i := range containers {
+			container := &containers[i]
+
+			if container.Labels.getOrDefault(dockerContainerLabelCategory, "") == category {
+				filtered = append(filtered, *container)
+			}
+		}
+
+		containers = filtered
 	}
 
 	return containers, nil

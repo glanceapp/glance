@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const httpTestRequestTimeout = 10 * time.Second
+const httpTestRequestTimeout = 15 * time.Second
 
 var diagnosticSteps = []diagnosticStep{
 	{
@@ -75,13 +75,17 @@ var diagnosticSteps = []diagnosticStep{
 	{
 		name: "fetch data from Reddit API",
 		fn: func() (string, error) {
-			return testHttpRequest("GET", "https://www.reddit.com/search.json", 200)
+			return testHttpRequestWithHeaders("GET", "https://www.reddit.com/search.json", map[string]string{
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
+			}, 200)
 		},
 	},
 	{
 		name: "fetch data from Yahoo finance API",
 		fn: func() (string, error) {
-			return testHttpRequest("GET", "https://query1.finance.yahoo.com/v8/finance/chart/NVDA", 200)
+			return testHttpRequestWithHeaders("GET", "https://query1.finance.yahoo.com/v8/finance/chart/NVDA", map[string]string{
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
+			}, 200)
 		},
 	},
 	{
@@ -163,7 +167,7 @@ func testHttpRequestWithHeaders(method, url string, headers map[string]string, e
 		request.Header.Add(key, value)
 	}
 
-	response, err := http.DefaultClient.Do(request)
+	response, err := defaultHTTPClient.Do(request)
 	if err != nil {
 		return "", err
 	}
