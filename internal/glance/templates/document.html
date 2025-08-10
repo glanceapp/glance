@@ -8,6 +8,7 @@
         /*{{ if .Page }}*/slug: "{{ .Page.Slug }}",/*{{ end }}*/
         baseURL: "{{ .App.Config.Server.BaseURL }}",
         theme: "{{ .Request.Theme.Key }}",
+        font: "{{ .Request.Theme.Font }}",
     };
     </script>
     <title>{{ block "document-title" . }}{{ end }}</title>

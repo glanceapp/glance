@@ -38,6 +38,45 @@ func (a *application) handleThemeChangeRequest(w http.ResponseWriter, r *http.Re
 	w.Write([]byte(properties.CSS))
 }
 
+func (a *application) handleFontChangeRequest(w http.ResponseWriter, r *http.Request) {
+	fontKey := r.PathValue("key")
+	if fontKey != "sans-serif" && fontKey != "monospace" {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Determine current theme properties (respect theme cookie)
+	properties := &a.Config.Theme.themeProperties
+	if !a.Config.Theme.DisablePicker {
+		if selectedTheme, err := r.Cookie("theme"); err == nil {
+			if preset, exists := a.Config.Theme.Presets.Get(selectedTheme.Value); exists {
+				properties = preset
+			}
+		}
+	}
+
+	// Apply font
+	propertiesCopy := *properties // copy to avoid mutating shared theme state
+	propertiesCopy.Font = fontKey
+	if err := propertiesCopy.init(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "font",
+		Value:    fontKey,
+		Path:     a.Config.Server.BaseURL + "/",
+		SameSite: http.SameSiteLaxMode,
+		Expires:  time.Now().Add(2 * 365 * 24 * time.Hour),
+	})
+
+	w.Header().Set("Content-Type", "text/css")
+	w.Header().Set("X-Scheme", ternary(propertiesCopy.Light, "light", "dark"))
+	w.Write([]byte(propertiesCopy.CSS))
+}
+
 type themeProperties struct {
 	BackgroundColor          *hslColorField `yaml:"background-color"`
 	PrimaryColor             *hslColorField `yaml:"primary-color"`
@@ -46,6 +85,7 @@ type themeProperties struct {
 	Light                    bool           `yaml:"light"`
 	ContrastMultiplier       float32        `yaml:"contrast-multiplier"`
 	TextSaturationMultiplier float32        `yaml:"text-saturation-multiplier"`
+	Font                     string         `yaml:"font"`
 
 	Key                  string        `yaml:"-"`
 	CSS                  template.CSS  `yaml:"-"`

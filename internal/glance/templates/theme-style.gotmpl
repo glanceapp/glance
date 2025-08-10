@@ -1,4 +1,13 @@
 :root {
+    {{- if .Font }}
+    {{- if eq .Font "sans-serif" }}
+    --font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    {{- else if eq .Font "monospace" }}
+    --font-family: 'JetBrains Mono', monospace;
+    {{- else }}
+    --font-family: {{ .Font }};
+    {{- end }}
+    {{- end }}
     {{ if .BackgroundColor }}
     --bgh: {{ .BackgroundColor.H }};
     --bgs: {{ .BackgroundColor.S }}%;

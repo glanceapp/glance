@@ -129,6 +129,7 @@ func newApplication(c *config) (*application, error) {
 
 		for key, properties := range config.Theme.Presets.Items() {
 			properties.Key = key
+			properties.Font = config.Theme.Font
 			if err := properties.init(); err != nil {
 				return nil, fmt.Errorf("initializing preset theme %s: %v", key, err)
 			}
@@ -136,6 +137,7 @@ func newApplication(c *config) (*application, error) {
 	}
 
 	config.Theme.Key = "default"
+	config.Theme.Font = config.Theme.Font
 	if err := config.Theme.init(); err != nil {
 		return nil, fmt.Errorf("initializing default theme: %v", err)
 	}
@@ -300,6 +302,17 @@ func (a *application) populateTemplateRequestData(data *templateRequestData, r *
 		}
 	}
 
+	// Apply font override from cookie if present; when present, recompile CSS on a copy
+	if fontCookie, err := r.Cookie("font"); err == nil {
+		propertiesCopy := *theme
+		propertiesCopy.Font = fontCookie.Value
+		if err := propertiesCopy.init(); err == nil {
+			data.Theme = &propertiesCopy
+			return
+		}
+		// if init fails, fall back to original theme
+	}
+
 	data.Theme = theme
 }
 
@@ -443,6 +456,7 @@ func (a *application) server() (func() error, func() error) {
 
 	if !a.Config.Theme.DisablePicker {
 		mux.HandleFunc("POST /api/set-theme/{key}", a.handleThemeChangeRequest)
+		mux.HandleFunc("POST /api/set-font/{key}", a.handleFontChangeRequest)
 	}
 
 	mux.HandleFunc("/api/widgets/{widget}/{path...}", a.handleWidgetRequest)

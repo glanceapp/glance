@@ -672,6 +672,7 @@ async function changeTheme(key, onChanged) {
 
     const response = await fetch(`${pageData.baseURL}/api/set-theme/${key}`, {
         method: "POST",
+        credentials: "same-origin",
     });
 
     if (response.status != 200) {
@@ -687,6 +688,29 @@ async function changeTheme(key, onChanged) {
     themeStyleElem.html(newThemeStyle);
     document.documentElement.setAttribute("data-theme", key);
     document.documentElement.setAttribute("data-scheme", response.headers.get("X-Scheme"));
+    typeof onChanged == "function" && onChanged();
+    setTimeout(() => { tempStyle.remove(); }, 10);
+}
+
+async function changeFont(key, onChanged) {
+    const themeStyleElem = find("#theme-style");
+
+    const response = await fetch(`${pageData.baseURL}/api/set-font/${key}`, {
+        method: "POST",
+        credentials: "same-origin",
+    });
+
+    if (response.status != 200) {
+        alert("Failed to set font: " + response.statusText);
+        return;
+    }
+    const newThemeStyle = await response.text();
+
+    const tempStyle = elem("style")
+        .html("* { transition: none !important; }")
+        .appendTo(document.head);
+
+    themeStyleElem.html(newThemeStyle);
     typeof onChanged == "function" && onChanged();
     setTimeout(() => { tempStyle.remove(); }, 10);
 }
@@ -743,8 +767,40 @@ function initThemePicker() {
     })
 }
 
+function initFontPicker() {
+    const presetElems = findAll(".font-choices .font-preset");
+    if (presetElems.length === 0) return;
+
+    let isLoading = false;
+
+    const setCurrent = (key) => {
+        presetElems.forEach((e) => {
+            if (e.dataset.key === key) e.classList.add("current");
+            else e.classList.remove("current");
+        });
+    };
+
+    if (pageData.font) setCurrent(pageData.font);
+
+    presetElems.forEach((presetElement) => {
+        const fontKey = presetElement.dataset.key;
+        if (!fontKey) return;
+
+        presetElement.addEventListener("click", () => {
+            if (isLoading) return;
+            isLoading = true;
+            changeFont(fontKey, function() {
+                isLoading = false;
+                pageData.font = fontKey;
+                setCurrent(fontKey);
+            });
+        });
+    });
+}
+
 async function setupPage() {
     initThemePicker();
+    initFontPicker();
 
     const pageElement = document.getElementById("page");
     const pageContentElement = document.getElementById("page-content");

@@ -124,7 +124,7 @@ ul {
 
 body {
     font-size: 1.3rem;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-family, 'JetBrains Mono', monospace);
     font-variant-ligatures: none;
     line-height: 1.6;
     color: var(--color-text-base);
@@ -367,6 +367,37 @@ kbd:active {
 }
 
 .theme-choices .theme-preset.current::before {
+    border-color: var(--color-text-base);
+}
+
+/* Apply the same rounded border style to font presets */
+.font-choices {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem; /* allow space for ::before inset (-.4rem) on adjacent buttons */
+}
+.font-choices .theme-preset {
+    position: relative;
+}
+/* Keep font picker labels static regardless of current selection */
+.font-choices .font-preset[data-key="sans-serif"] {
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+}
+.font-choices .font-preset[data-key="monospace"] {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+.font-choices .theme-preset::before {
+    content: '';
+    position: absolute;
+    inset: -.4rem;
+    border-radius: .7rem;
+    border: 2px solid transparent;
+    transition: border-color .3s;
+}
+.font-choices .theme-preset:hover::before {
+    border-color: var(--color-text-subdue);
+}
+.font-choices .theme-preset.current::before {
     border-color: var(--color-text-base);
 }
 

@@ -40,6 +40,11 @@
                 </div>
                 <div data-popover-html>
                     <div class="theme-choices"></div>
+                    <div class="margin-block-10"></div>
+                    <div class="font-choices">
+                        <button type="button" class="theme-preset font-preset" data-key="sans-serif" title="Sans-serif" style="font-family: &quot;Inter&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Arial, sans-serif;">sans-serif</button>
+                        <button type="button" class="theme-preset font-preset" data-key="monospace" title="Monospace" style="font-family: 'JetBrains Mono', monospace;">monospace</button>
+                    </div>
                 </div>
             </div>
             {{ end }}
@@ -76,6 +81,11 @@
                         {{ range $_, $preset := .App.Config.Theme.Presets.Items }}
                         {{ $preset.PreviewHTML }}
                         {{ end }}
+                    </div>
+                    <div class="margin-block-10"></div>
+                    <div class="font-choices">
+                        <button type="button" class="theme-preset font-preset" data-key="sans-serif" title="Sans-serif" style="font-family: &quot;Inter&quot;, system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Arial, sans-serif;">sans-serif</button>
+                        <button type="button" class="theme-preset font-preset" data-key="monospace" title="Monospace" style="font-family: 'JetBrains Mono', monospace;">monospace</button>
                     </div>
                 </div>
 
