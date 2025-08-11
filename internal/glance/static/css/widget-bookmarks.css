@@ -22,3 +22,9 @@
     padding: 0.5rem;
     flex-shrink: 0;
 }
+
+.bookmarks-grid {
+    display: grid;
+    gap: 2.5rem 0;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
