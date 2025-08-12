@@ -11,6 +11,7 @@ import (
 	"iter"
 	"log/slog"
 	"math"
+	"math/rand"
 	"net/http"
 	"regexp"
 	"sort"
@@ -33,9 +34,14 @@ type CustomAPIRequest struct {
 	Method             string               `yaml:"method"`
 	BodyType           string               `yaml:"body-type"`
 	Body               any                  `yaml:"body"`
+	MockResponse       string               `yaml:"mock-response"`
 	SkipJSONValidation bool                 `yaml:"skip-json-validation"`
-	bodyReader         io.ReadSeeker        `yaml:"-"`
-	httpRequest        *http.Request        `yaml:"-"`
+	BasicAuth          struct {
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+	} `yaml:"basic-auth"`
+	bodyReader  io.ReadSeeker `yaml:"-"`
+	httpRequest *http.Request `yaml:"-"`
 }
 
 type customAPIWidget struct {
@@ -188,6 +194,10 @@ func (req *CustomAPIRequest) initialize() error {
 		httpReq.Header.Add(key, value)
 	}
 
+	if req.BasicAuth.Username != "" || req.BasicAuth.Password != "" {
+		httpReq.SetBasicAuth(req.BasicAuth.Username, req.BasicAuth.Password)
+	}
+
 	req.httpRequest = httpReq
 
 	return nil
@@ -230,6 +240,15 @@ func (data *customAPITemplateData) Subrequest(key string) *customAPIResponseData
 }
 
 func fetchCustomAPIResponse(ctx context.Context, req *CustomAPIRequest) (*customAPIResponseData, error) {
+	if req != nil && req.MockResponse != "" {
+		return &customAPIResponseData{
+			JSON: decoratedGJSONResult{gjson.Parse(req.MockResponse)},
+			Response: &http.Response{
+				StatusCode: http.StatusOK,
+			},
+		}, nil
+	}
+
 	if req == nil || req.URL == "" {
 		return &customAPIResponseData{
 			JSON:     decoratedGJSONResult{gjson.Result{}},
@@ -515,6 +534,10 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			}
 			return a % b
 		},
+		"iconWithClass": func(name, class string) template.HTML {
+			i := newCustomIconField(name)
+			return i.ElemWithClass(class)
+		},
 		"now": func() time.Time {
 			return time.Now()
 		},
@@ -651,7 +674,11 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			}
 			return out
 		},
-		"newRequest": func(url string) *CustomAPIRequest {
+		"newRequest": func(url string, params ...any) *CustomAPIRequest {
+			if len(params) > 0 {
+				url = fmt.Sprintf(url, params...)
+			}
+
 			return &CustomAPIRequest{
 				URL: url,
 			}
@@ -675,6 +702,25 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			req.BodyType = "string"
 			return req
 		},
+		"withAllowInsecure": func(val any, req *CustomAPIRequest) *CustomAPIRequest {
+			switch v := val.(type) {
+			case bool:
+				req.AllowInsecure = v
+			case string:
+				if strings.ToLower(v) == "true" {
+					req.AllowInsecure = true
+				}
+			default:
+				slog.Warn("withAllowInsecure called with non-boolean value, must be string or bool", "value", v)
+			}
+
+			return req
+		},
+		"withBasicAuth": func(username, password string, req *CustomAPIRequest) *CustomAPIRequest {
+			req.BasicAuth.Username = username
+			req.BasicAuth.Password = password
+			return req
+		},
 		"getResponse": func(req *CustomAPIRequest) *customAPIResponseData {
 			err := req.initialize()
 			if err != nil {
@@ -693,6 +739,13 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			}
 
 			return data
+		},
+		"randomElement": func(arr []decoratedGJSONResult) *decoratedGJSONResult {
+			if len(arr) == 0 {
+				return &decoratedGJSONResult{gjson.Result{}}
+			}
+
+			return &arr[rand.Intn(len(arr))]
 		},
 	}
 

@@ -15,6 +15,7 @@ import (
 )
 
 var hslColorFieldPattern = regexp.MustCompile(`^(?:hsla?\()?([\d\.]+)(?: |,)+([\d\.]+)%?(?: |,)+([\d\.]+)%?\)?$`)
+var inStringPropertyPattern = regexp.MustCompile(`(?m)([a-zA-Z]+)\[(.*?)\]`)
 
 const (
 	hslHueMax        = 360
@@ -48,6 +49,7 @@ func (c1 *hslColorField) SameAs(c2 *hslColorField) bool {
 
 func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	var value string
+	errorLine := fmt.Sprintf("line %d:", node.Line)
 
 	if err := node.Decode(&value); err != nil {
 		return err
@@ -56,7 +58,7 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	matches := hslColorFieldPattern.FindStringSubmatch(value)
 
 	if len(matches) != 4 {
-		return fmt.Errorf("invalid HSL color format: %s", value)
+		return fmt.Errorf("%s invalid HSL color format: %s", errorLine, value)
 	}
 
 	hue, err := strconv.ParseFloat(matches[1], 64)
@@ -65,7 +67,7 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	if hue > hslHueMax {
-		return fmt.Errorf("HSL hue must be between 0 and %d", hslHueMax)
+		return fmt.Errorf("%s HSL hue must be between 0 and %d", errorLine, hslHueMax)
 	}
 
 	saturation, err := strconv.ParseFloat(matches[2], 64)
@@ -74,7 +76,7 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	if saturation > hslSaturationMax {
-		return fmt.Errorf("HSL saturation must be between 0 and %d", hslSaturationMax)
+		return fmt.Errorf("%s HSL saturation must be between 0 and %d", errorLine, hslSaturationMax)
 	}
 
 	lightness, err := strconv.ParseFloat(matches[3], 64)
@@ -83,7 +85,7 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	if lightness > hslLightnessMax {
-		return fmt.Errorf("HSL lightness must be between 0 and %d", hslLightnessMax)
+		return fmt.Errorf("%s HSL lightness must be between 0 and %d", errorLine, hslLightnessMax)
 	}
 
 	c.H = hue
@@ -99,6 +101,7 @@ type durationField time.Duration
 
 func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 	var value string
+	errorLine := fmt.Sprintf("line %d:", node.Line)
 
 	if err := node.Decode(&value); err != nil {
 		return err
@@ -107,12 +110,12 @@ func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 	matches := durationFieldPattern.FindStringSubmatch(value)
 
 	if len(matches) != 3 {
-		return fmt.Errorf("invalid duration format: %s", value)
+		return fmt.Errorf("%s invalid duration format for value `%s`", errorLine, value)
 	}
 
 	duration, err := strconv.Atoi(matches[1])
 	if err != nil {
-		return err
+		return fmt.Errorf("%s invalid duration value: %s", errorLine, matches[1])
 	}
 
 	switch matches[2] {
@@ -131,7 +134,28 @@ func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 
 type customIconField struct {
 	URL        template.URL
+	Color      string
 	AutoInvert bool
+}
+
+func (h *customIconField) Elem() template.HTML {
+	return h.ElemWithClass("")
+}
+
+func (h *customIconField) ElemWithClass(class string) template.HTML {
+	if h.AutoInvert && h.Color == "" {
+		class = "flat-icon " + class
+	}
+
+	if h.Color != "" {
+		return template.HTML(
+			`<div class="icon colored-icon ` + class + `" style="--icon-color: ` + h.Color + `; --icon-url: url('` + string(h.URL) + `')"></div>`,
+		)
+	}
+
+	return template.HTML(
+		`<img class="icon ` + class + `" src="` + string(h.URL) + `" alt="" loading="lazy">`,
+	)
 }
 
 func newCustomIconField(value string) customIconField {
@@ -141,6 +165,25 @@ func newCustomIconField(value string) customIconField {
 	if strings.HasPrefix(value, autoInvertPrefix) {
 		field.AutoInvert = true
 		value = strings.TrimPrefix(value, autoInvertPrefix)
+	}
+
+	value, properties := parseInStringProperties(value)
+
+	if color, ok := properties["color"]; ok {
+		switch color {
+		case "primary":
+			color = "var(--color-primary)"
+		case "positive":
+			color = "var(--color-positive)"
+		case "negative":
+			color = "var(--color-negative)"
+		case "base":
+			color = "var(--color-text-base)"
+		case "subdue":
+			color = "var(--color-text-subdue)"
+		}
+
+		field.Color = color
 	}
 
 	prefix, icon, found := strings.Cut(value, ":")
@@ -170,6 +213,9 @@ func newCustomIconField(value string) customIconField {
 		field.URL = template.URL("https://cdn.jsdelivr.net/npm/@mdi/svg@latest/svg/" + basename + ".svg")
 	case "sh":
 		field.URL = template.URL("https://cdn.jsdelivr.net/gh/selfhst/icons/" + ext + "/" + basename + "." + ext)
+	case "hi":
+		field.AutoInvert = true
+		field.URL = template.URL("https://cdn.jsdelivr.net/npm/heroicons@latest/24/" + basename + ".svg")
 	default:
 		field.URL = template.URL(value)
 	}
@@ -185,6 +231,23 @@ func (i *customIconField) UnmarshalYAML(node *yaml.Node) error {
 
 	*i = newCustomIconField(value)
 	return nil
+}
+
+func parseInStringProperties(value string) (string, map[string]string) {
+	properties := make(map[string]string)
+
+	value = inStringPropertyPattern.ReplaceAllStringFunc(value, func(match string) string {
+		matches := inStringPropertyPattern.FindStringSubmatch(match)
+		if len(matches) != 3 {
+			return ""
+		}
+
+		properties[matches[1]] = matches[2]
+
+		return ""
+	})
+
+	return strings.TrimSpace(value), properties
 }
 
 type proxyOptionsField struct {
@@ -245,6 +308,8 @@ func (q *queryParametersField) UnmarshalYAML(node *yaml.Node) error {
 
 	*q = make(queryParametersField)
 
+	errorLine := fmt.Sprintf("line %d:", node.Line)
+
 	// TODO: refactor the duplication in the switch cases if any more types get added
 	for key, value := range decoded {
 		switch v := value.(type) {
@@ -266,11 +331,11 @@ func (q *queryParametersField) UnmarshalYAML(node *yaml.Node) error {
 				case bool:
 					(*q)[key] = append((*q)[key], fmt.Sprintf("%t", item))
 				default:
-					return fmt.Errorf("invalid query parameter value type: %T", item)
+					return fmt.Errorf("%s invalid query parameter value type: %T", errorLine, item)
 				}
 			}
 		default:
-			return fmt.Errorf("invalid query parameter value type: %T", value)
+			return fmt.Errorf("%s invalid query parameter value type: %T", errorLine, value)
 		}
 	}
 

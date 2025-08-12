@@ -79,7 +79,7 @@ pages:
             channels:
               - theprimeagen
               - j_blow
-              - piratesoftware
+              - giantwaffle
               - cohhcarnage
               - christitustech
               - EJ_SA
@@ -197,6 +197,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./config:/app/config
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - 8080:8080
 ```

@@ -70,20 +70,21 @@ function enableLoginButtonIfCriteriaMet() {
     );
 }
 
-function handleKeydown(event) {
-    if (event.key === "Enter") {
-        const isDisabled = loginButton.disabled;
-        if (!isDisabled) {
-            handleLoginAttempt();
-        }
-    }
+function handleLoginWithEnter(event) {
+    if (event.key !== "Enter") return;
+    if (loginButton.disabled) return;
+
+    document.activeElement.blur();
+    handleLoginAttempt();
 }
 
-usernameInput.on("keydown", handleKeydown);
-passwordInput.on("keydown", handleKeydown);
+usernameInput
+    .on("input", enableLoginButtonIfCriteriaMet)
+    .on("keydown", handleLoginWithEnter);
 
-usernameInput.on("input", enableLoginButtonIfCriteriaMet);
-passwordInput.on("input", enableLoginButtonIfCriteriaMet);
+passwordInput
+    .on("input", enableLoginButtonIfCriteriaMet)
+    .on("keydown", handleLoginWithEnter);
 
 async function handleLoginAttempt() {
     state.lastUsername = usernameInput.value;
