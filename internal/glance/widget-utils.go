@@ -67,6 +67,8 @@ func decodeJsonFromRequest[T any](client requestDoer, request *http.Request) (T,
 		return result, err
 	}
 	defer response.Body.Close()
+	// get response header
+	request.Response = response
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {

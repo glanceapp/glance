@@ -2054,17 +2054,19 @@ Preview:
 | show-source-icon | boolean | no | false |  |
 | token | string | no | |
 | gitlab-token | string | no | |
+| gitee-token | string | no | |
 | limit | integer | no | 10 |
 | collapse-after | integer | no | 5 |
 
 ##### `repositories`
-A list of repositores to fetch the latest release for. Only the name/repo is required, not the full URL. A prefix can be specified for repositories hosted elsewhere such as GitLab, Codeberg and Docker Hub. Example:
+A list of repositores to fetch the latest release for. Only the name/repo is required, not the full URL. A prefix can be specified for repositories hosted elsewhere such as GitLab, Codeberg, Gitee and Docker Hub. Example:
 
 ```yaml
 repositories:
   - gitlab:inkscape/inkscape
   - dockerhub:glanceapp/glance
   - codeberg:redict/redict
+  - gitee:go-admin/go-admin
 ```
 
 Official images on Docker Hub can be specified by omitting the owner:
@@ -2124,6 +2126,9 @@ This way you can safely check your `glance.yml` in version control without expos
 
 ##### `gitlab-token`
 Same as the above but used when fetching GitLab releases.
+
+##### `gitee-token`
+Same as the above but used when fetching Gitee releases.
 
 ##### `limit`
 The maximum number of releases to show.
@@ -2525,6 +2530,49 @@ The owner and repository name that will have their information displayed.
 
 ##### `token`
 Without authentication Github allows for up to 60 requests per hour. You can easily exceed this limit and start seeing errors if your cache time is low or you have many instances of this widget. To circumvent this you can [create a read only token from your Github account](https://github.com/settings/personal-access-tokens/new) and provide it here.
+
+##### `pull-requests-limit`
+The maximum number of latest open pull requests to show. Set to `-1` to not show any.
+
+##### `issues-limit`
+The maximum number of latest open issues to show. Set to `-1` to not show any.
+
+##### `commits-limit`
+The maximum number of lastest commits to show from the default branch. Set to `-1` to not show any.
+
+### Gitee Repository
+Same as the Repository but used when fetching Gitee repository.
+Display general information about a repository as well as a list of the latest open pull requests and issues.
+
+Example:
+
+```yaml
+- type: repository
+  repository: go-admin/go-admin
+  pull-requests-limit: 5
+  issues-limit: 3
+  commits-limit: 3
+```
+
+Preview:
+
+![](images/gitee-repository-preview.png)
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| repository | string | yes |  |
+| token | string | no | |
+| pull-requests-limit | integer | no | 3 |
+| issues-limit | integer | no | 3 |
+| commits-limit | integer | no | -1 |
+
+##### `repository`
+The owner and repository name that will have their information displayed.
+
+##### `token`
+Without authentication Gitee allows for up to 60 requests per hour. You can easily exceed this limit and start seeing errors if your cache time is low or you have many instances of this widget. To circumvent this you can [create a read only token from your Gitee account](https://gitee.com/profile/personal_access_tokens/new) and provide it here.
 
 ##### `pull-requests-limit`
 The maximum number of latest open pull requests to show. Set to `-1` to not show any.
