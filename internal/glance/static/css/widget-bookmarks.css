@@ -1,0 +1,30 @@
+.bookmarks-group {
+    --bookmarks-group-color: var(--color-primary);
+}
+
+.bookmarks-group-title {
+    color: var(--bookmarks-group-color);
+}
+
+.bookmarks-link:not(.bookmarks-link-no-arrow)::after {
+    content: '↗' / "";
+    margin-left: 0.5em;
+    display: inline-block;
+    position: relative;
+    top: 0.15em;
+    color: var(--bookmarks-group-color);
+}
+
+.bookmarks-icon-container {
+    margin-block: 0.1rem;
+    background-color: var(--color-widget-background-highlight);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    flex-shrink: 0;
+}
+
+.bookmarks-grid {
+    display: grid;
+    gap: 2.5rem 0;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}

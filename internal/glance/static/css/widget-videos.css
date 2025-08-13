@@ -1,0 +1,13 @@
+.video-thumbnail {
+    width: 100%;
+    aspect-ratio: 16 / 8.9;
+    object-fit: cover;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.video-horizontal-list-thumbnail {
+    height: 4rem;
+    aspect-ratio: 16 / 8.9;
+    object-fit: cover;
+    border-radius: var(--border-radius);
+}

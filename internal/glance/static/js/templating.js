@@ -29,6 +29,15 @@ export function findAll(selector) {
     return document.querySelectorAll(selector);
 }
 
+
+HTMLCollection.prototype.map = function(fn) {
+    return Array.from(this).map(fn);
+}
+
+HTMLCollection.prototype.indexOf = function(element) {
+    return Array.prototype.indexOf.call(this, element);
+}
+
 const ep = HTMLElement.prototype;
 const fp = DocumentFragment.prototype;
 const tp = Text.prototype;
@@ -110,7 +119,7 @@ ep.appendTo = function(parent) {
     return this;
 }
 
-ep.swap = function(element) {
+ep.swapWith = function(element) {
     this.replaceWith(element);
     return element;
 }
@@ -144,6 +153,22 @@ ep.duplicate = function(n) {
 
 ep.styles = function(s) {
     Object.assign(this.style, s);
+    return this;
+}
+
+ep.clearStyles = function(...props) {
+    for (let i = 0; i < props.length; i++)
+        this.style.removeProperty(props[i]);
+    return this;
+}
+
+ep.disable = function() {
+    this.disabled = true;
+    return this;
+}
+
+ep.enable = function() {
+    this.disabled = false;
     return this;
 }
 

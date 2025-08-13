@@ -1,0 +1,53 @@
+{{- template "document.html" . }}
+
+{{- define "document-title" }}Login{{ end }}
+
+{{- define "document-head-before" }}
+<link rel="preload" href='{{ .App.StaticAssetPath "js/templating.js" }}' as="script"/>
+<link rel="prefetch" href='{{ .App.StaticAssetPath "js/page.js" }}'/>
+{{- end }}
+
+{{- define "document-head-after" }}
+<link rel="stylesheet" href='{{ .App.StaticAssetPath "css/login.css" }}'>
+<script type="module" src='{{ .App.StaticAssetPath "js/login.js" }}'></script>
+{{- end }}
+
+{{- define "document-body" }}
+<div class="flex flex-column body-content">
+    <div class="flex grow items-center justify-center" style="padding-bottom: 5rem">
+        <h1 class="visually-hidden">Login</h1>
+        <main id="login-container" class="grow login-bounds" style="display: none;">
+            <div class="animate-entrance">
+                <label class="form-label widget-header" for="username">Username</label>
+                <div class="form-input widget-content-frame padding-inline-widget flex gap-10 items-center">
+                    <svg class="form-input-icon" fill="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
+                    </svg>
+                    <input type="text" id="username" class="input" placeholder="Enter your username" autocomplete="off">
+                </div>
+            </div>
+
+            <div class="animate-entrance">
+                <label class="form-label widget-header margin-top-20" for="password">Password</label>
+                <div class="form-input widget-content-frame padding-inline-widget flex gap-10 items-center">
+                    <svg class="form-input-icon" fill="var(--color-text-subdue)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M8 7a5 5 0 1 1 3.61 4.804l-1.903 1.903A1 1 0 0 1 9 14H8v1a1 1 0 0 1-1 1H6v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 .293-.707L8.196 8.39A5.002 5.002 0 0 1 8 7Zm5-3a.75.75 0 0 0 0 1.5A1.5 1.5 0 0 1 14.5 7 .75.75 0 0 0 16 7a3 3 0 0 0-3-3Z" clip-rule="evenodd" />
+                    </svg>
+                    <input type="password" id="password" class="input" placeholder="********" autocomplete="off">
+                    <button class="toggle-password-visibility" id="toggle-password-visibility" tabindex="-1"></button>
+                </div>
+            </div>
+
+            <div class="login-error-message" id="error-message"></div>
+
+            <button class="login-button animate-entrance" id="login-button">
+                <div>LOGIN</div>
+                <svg stroke="currentColor" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+            </button>
+        </main>
+    </div>
+    {{ template "footer.html" . }}
+</div>
+{{- end }}

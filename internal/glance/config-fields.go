@@ -3,6 +3,7 @@ package glance
 import (
 	"crypto/tls"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -13,7 +14,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var hslColorFieldPattern = regexp.MustCompile(`^(?:hsla?\()?(\d{1,3})(?: |,)+(\d{1,3})%?(?: |,)+(\d{1,3})%?\)?$`)
+var hslColorFieldPattern = regexp.MustCompile(`^(?:hsla?\()?([\d\.]+)(?: |,)+([\d\.]+)%?(?: |,)+([\d\.]+)%?\)?$`)
+var inStringPropertyPattern = regexp.MustCompile(`(?m)([a-zA-Z]+)\[(.*?)\]`)
 
 const (
 	hslHueMax        = 360
@@ -22,17 +24,32 @@ const (
 )
 
 type hslColorField struct {
-	Hue        uint16
-	Saturation uint8
-	Lightness  uint8
+	H float64
+	S float64
+	L float64
 }
 
 func (c *hslColorField) String() string {
-	return fmt.Sprintf("hsl(%d, %d%%, %d%%)", c.Hue, c.Saturation, c.Lightness)
+	return fmt.Sprintf("hsl(%.1f, %.1f%%, %.1f%%)", c.H, c.S, c.L)
+}
+
+func (c *hslColorField) ToHex() string {
+	return hslToHex(c.H, c.S, c.L)
+}
+
+func (c1 *hslColorField) SameAs(c2 *hslColorField) bool {
+	if c1 == nil && c2 == nil {
+		return true
+	}
+	if c1 == nil || c2 == nil {
+		return false
+	}
+	return c1.H == c2.H && c1.S == c2.S && c1.L == c2.L
 }
 
 func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	var value string
+	errorLine := fmt.Sprintf("line %d:", node.Line)
 
 	if err := node.Decode(&value); err != nil {
 		return err
@@ -41,39 +58,39 @@ func (c *hslColorField) UnmarshalYAML(node *yaml.Node) error {
 	matches := hslColorFieldPattern.FindStringSubmatch(value)
 
 	if len(matches) != 4 {
-		return fmt.Errorf("invalid HSL color format: %s", value)
+		return fmt.Errorf("%s invalid HSL color format: %s", errorLine, value)
 	}
 
-	hue, err := strconv.ParseUint(matches[1], 10, 16)
+	hue, err := strconv.ParseFloat(matches[1], 64)
 	if err != nil {
 		return err
 	}
 
 	if hue > hslHueMax {
-		return fmt.Errorf("HSL hue must be between 0 and %d", hslHueMax)
+		return fmt.Errorf("%s HSL hue must be between 0 and %d", errorLine, hslHueMax)
 	}
 
-	saturation, err := strconv.ParseUint(matches[2], 10, 8)
+	saturation, err := strconv.ParseFloat(matches[2], 64)
 	if err != nil {
 		return err
 	}
 
 	if saturation > hslSaturationMax {
-		return fmt.Errorf("HSL saturation must be between 0 and %d", hslSaturationMax)
+		return fmt.Errorf("%s HSL saturation must be between 0 and %d", errorLine, hslSaturationMax)
 	}
 
-	lightness, err := strconv.ParseUint(matches[3], 10, 8)
+	lightness, err := strconv.ParseFloat(matches[3], 64)
 	if err != nil {
 		return err
 	}
 
 	if lightness > hslLightnessMax {
-		return fmt.Errorf("HSL lightness must be between 0 and %d", hslLightnessMax)
+		return fmt.Errorf("%s HSL lightness must be between 0 and %d", errorLine, hslLightnessMax)
 	}
 
-	c.Hue = uint16(hue)
-	c.Saturation = uint8(saturation)
-	c.Lightness = uint8(lightness)
+	c.H = hue
+	c.S = saturation
+	c.L = lightness
 
 	return nil
 }
@@ -84,6 +101,7 @@ type durationField time.Duration
 
 func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 	var value string
+	errorLine := fmt.Sprintf("line %d:", node.Line)
 
 	if err := node.Decode(&value); err != nil {
 		return err
@@ -92,12 +110,12 @@ func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 	matches := durationFieldPattern.FindStringSubmatch(value)
 
 	if len(matches) != 3 {
-		return fmt.Errorf("invalid duration format: %s", value)
+		return fmt.Errorf("%s invalid duration format for value `%s`", errorLine, value)
 	}
 
 	duration, err := strconv.Atoi(matches[1])
 	if err != nil {
-		return err
+		return fmt.Errorf("%s invalid duration value: %s", errorLine, matches[1])
 	}
 
 	switch matches[2] {
@@ -115,49 +133,91 @@ func (d *durationField) UnmarshalYAML(node *yaml.Node) error {
 }
 
 type customIconField struct {
-	URL        string
-	IsFlatIcon bool
-	// TODO: along with whether the icon is flat, we also need to know
-	// whether the icon is black or white by default in order to properly
-	// invert the color based on the theme being light or dark
+	URL        template.URL
+	Color      string
+	AutoInvert bool
+}
+
+func (h *customIconField) Elem() template.HTML {
+	return h.ElemWithClass("")
+}
+
+func (h *customIconField) ElemWithClass(class string) template.HTML {
+	if h.AutoInvert && h.Color == "" {
+		class = "flat-icon " + class
+	}
+
+	if h.Color != "" {
+		return template.HTML(
+			`<div class="icon colored-icon ` + class + `" style="--icon-color: ` + h.Color + `; --icon-url: url('` + string(h.URL) + `')"></div>`,
+		)
+	}
+
+	return template.HTML(
+		`<img class="icon ` + class + `" src="` + string(h.URL) + `" alt="" loading="lazy">`,
+	)
 }
 
 func newCustomIconField(value string) customIconField {
+	const autoInvertPrefix = "auto-invert "
 	field := customIconField{}
+
+	if strings.HasPrefix(value, autoInvertPrefix) {
+		field.AutoInvert = true
+		value = strings.TrimPrefix(value, autoInvertPrefix)
+	}
+
+	value, properties := parseInStringProperties(value)
+
+	if color, ok := properties["color"]; ok {
+		switch color {
+		case "primary":
+			color = "var(--color-primary)"
+		case "positive":
+			color = "var(--color-positive)"
+		case "negative":
+			color = "var(--color-negative)"
+		case "base":
+			color = "var(--color-text-base)"
+		case "subdue":
+			color = "var(--color-text-subdue)"
+		}
+
+		field.Color = color
+	}
 
 	prefix, icon, found := strings.Cut(value, ":")
 	if !found {
-		field.URL = value
+		field.URL = template.URL(value)
 		return field
+	}
+
+	basename, ext, found := strings.Cut(icon, ".")
+	if !found {
+		ext = "svg"
+		basename = icon
+	}
+
+	if ext != "svg" && ext != "png" {
+		ext = "svg"
 	}
 
 	switch prefix {
 	case "si":
-		field.URL = "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + icon + ".svg"
-		field.IsFlatIcon = true
-	case "di", "sh":
-		// syntax: di:<icon_name>[.svg|.png]
-		// syntax: sh:<icon_name>[.svg|.png]
-		// if the icon name is specified without extension, it is assumed to be wanting the SVG icon
-		// otherwise, specify the extension of either .svg or .png to use either of the CDN offerings
-		// any other extension will be interpreted as .svg
-		basename, ext, found := strings.Cut(icon, ".")
-		if !found {
-			ext = "svg"
-			basename = icon
-		}
-
-		if ext != "svg" && ext != "png" {
-			ext = "svg"
-		}
-
-		if prefix == "di" {
-			field.URL = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/" + ext + "/" + basename + "." + ext
-		} else {
-			field.URL = "https://cdn.jsdelivr.net/gh/selfhst/icons/" + ext + "/" + basename + "." + ext
-		}
+		field.AutoInvert = true
+		field.URL = template.URL("https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + basename + ".svg")
+	case "di":
+		field.URL = template.URL("https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/" + ext + "/" + basename + "." + ext)
+	case "mdi":
+		field.AutoInvert = true
+		field.URL = template.URL("https://cdn.jsdelivr.net/npm/@mdi/svg@latest/svg/" + basename + ".svg")
+	case "sh":
+		field.URL = template.URL("https://cdn.jsdelivr.net/gh/selfhst/icons/" + ext + "/" + basename + "." + ext)
+	case "hi":
+		field.AutoInvert = true
+		field.URL = template.URL("https://cdn.jsdelivr.net/npm/heroicons@latest/24/" + basename + ".svg")
 	default:
-		field.URL = value
+		field.URL = template.URL(value)
 	}
 
 	return field
@@ -171,6 +231,23 @@ func (i *customIconField) UnmarshalYAML(node *yaml.Node) error {
 
 	*i = newCustomIconField(value)
 	return nil
+}
+
+func parseInStringProperties(value string) (string, map[string]string) {
+	properties := make(map[string]string)
+
+	value = inStringPropertyPattern.ReplaceAllStringFunc(value, func(match string) string {
+		matches := inStringPropertyPattern.FindStringSubmatch(match)
+		if len(matches) != 3 {
+			return ""
+		}
+
+		properties[matches[1]] = matches[2]
+
+		return ""
+	})
+
+	return strings.TrimSpace(value), properties
 }
 
 type proxyOptionsField struct {
@@ -231,6 +308,8 @@ func (q *queryParametersField) UnmarshalYAML(node *yaml.Node) error {
 
 	*q = make(queryParametersField)
 
+	errorLine := fmt.Sprintf("line %d:", node.Line)
+
 	// TODO: refactor the duplication in the switch cases if any more types get added
 	for key, value := range decoded {
 		switch v := value.(type) {
@@ -252,11 +331,11 @@ func (q *queryParametersField) UnmarshalYAML(node *yaml.Node) error {
 				case bool:
 					(*q)[key] = append((*q)[key], fmt.Sprintf("%t", item))
 				default:
-					return fmt.Errorf("invalid query parameter value type: %T", item)
+					return fmt.Errorf("%s invalid query parameter value type: %T", errorLine, item)
 				}
 			}
 		default:
-			return fmt.Errorf("invalid query parameter value type: %T", value)
+			return fmt.Errorf("%s invalid query parameter value type: %T", errorLine, value)
 		}
 	}
 

@@ -1,23 +1,32 @@
 <!DOCTYPE html>
-<html {{ block "document-root-attrs" . }}{{ end }} lang="en" id="top">
+<html lang="en" id="top" data-theme="{{ .Request.Theme.Key }}" data-scheme="{{ if .Request.Theme.Light }}light{{ else }}dark{{ end }}">
 <head>
     {{ block "document-head-before" . }}{{ end }}
+    <script>
+    if (navigator.platform === 'iPhone') document.documentElement.classList.add('ios');
+    const pageData = {
+        /*{{ if .Page }}*/slug: "{{ .Page.Slug }}",/*{{ end }}*/
+        baseURL: "{{ .App.Config.Server.BaseURL }}",
+        theme: "{{ .Request.Theme.Key }}",
+    };
+    </script>
     <title>{{ block "document-title" . }}{{ end }}</title>
-    <script>if (navigator.platform === 'iPhone') document.documentElement.classList.add('ios');</script>
     <meta charset="UTF-8">
     <meta name="color-scheme" content="dark">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Glance">
-    <meta name="theme-color" content="{{ if ne nil .App.Config.Theme.BackgroundColor }}{{ .App.Config.Theme.BackgroundColor }}{{ else }}hsl(240, 8%, 9%){{ end }}">
-    <link rel="apple-touch-icon" sizes="512x512" href="{{ .App.AssetPath "app-icon.png" }}">
-    <link rel="manifest" href="{{ .App.AssetPath "manifest.json" }}">
-    <link rel="icon" type="image/png" href="{{ .App.Config.Branding.FaviconURL }}" />
-    <link rel="stylesheet" href="{{ .App.AssetPath "main.css" }}">
-    <script type="module" src="{{ .App.AssetPath "js/main.js" }}"></script>
+    <meta name="apple-mobile-web-app-title" content="{{ .App.Config.Branding.AppName }}">
+    <meta name="theme-color" content="{{ .Request.Theme.BackgroundColorAsHex }}">
+    <link rel="apple-touch-icon" sizes="512x512" href='{{ .App.Config.Branding.AppIconURL }}'>
+    <link rel="manifest" href='{{ .App.VersionedAssetPath "manifest.json" }}'>
+    <link rel="icon" type="{{ .App.Config.Branding.FaviconType }}" href="{{ .App.Config.Branding.FaviconURL }}" />
+    <link rel="stylesheet" href='{{ .App.StaticAssetPath "css/bundle.css" }}'>
+    <style id="theme-style">{{ .Request.Theme.CSS }}</style>
+    {{ if .App.Config.Theme.CustomCSSFile }}<link rel="stylesheet" href="{{ .App.Config.Theme.CustomCSSFile }}?v={{ .App.CreatedAt.Unix }}">{{ end }}
     {{ block "document-head-after" . }}{{ end }}
+    {{ if .App.Config.Document.Head }}{{ .App.Config.Document.Head }}{{ end }}
 </head>
 <body>
 {{ template "document-body" . }}

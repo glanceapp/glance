@@ -221,6 +221,38 @@ JSON response:
 
 ```json
 {
+  "user": {
+    "id": 42,
+    "name": "Alice",
+    "active": true
+  }
+}
+```
+
+To loop through each property of the object, you would use the following:
+
+```html
+{{ range $key, $value := .JSON.Entries "user" }}
+  <div>{{ $key }}: {{ $value.String "" }}</div>
+{{ end }}
+```
+
+Output:
+
+```html
+<div>id: 42</div>
+<div>name: Alice</div>
+<div>active: true</div>
+```
+
+Each property in the object is exposed as a pair, with `$key` being a string and `$value` providing access to the value using the usual JSON methods.
+
+<hr>
+
+JSON response:
+
+```json
+{
     "price": 100,
     "discount": 10
 }
@@ -238,7 +270,7 @@ Output:
 <div>90</div>
 ```
 
-Other operations include `add`, `mul`, and `div`.
+Other operations include `add`, `mul`, `div` and `mod`.
 
 <hr>
 
@@ -358,6 +390,52 @@ Output:
 <p>John</p>
 ```
 
+<hr>
+
+In some instances, you may need to make two consecutive API calls, where you use the result of the first call in the second call. To achieve this, you can make additional HTTP requests from within the template itself using the following syntax:
+
+```yaml
+- type: custom-api
+  url: https://api.example.com/get-id-of-something
+  template: |
+    {{ $theID := .JSON.String "id" }}
+
+    {{
+      $something := newRequest (concat "https://api.example.com/something/" $theID)
+        | withParameter "key" "value"
+        | withHeader "Authorization" "Bearer token"
+        | getResponse
+    }}
+
+    {{ $something.JSON.String "title" }}
+```
+
+Here, `$theID` gets retrieved from the result of the first API call and used in the second API call. The `newRequest` function creates a new request, and the `getResponse` function executes it. You can also use `withParameter` and `withHeader` to optionally add parameters and headers to the request.
+
+If you need to make a request to a URL that requires dynamic parameters, you can omit the `url` property in the YAML and run the request entirely from within the template itself:
+
+```yaml
+- type: custom-api
+  title: Events from the last 24h
+  template: |
+    {{
+      $events := newRequest "https://api.example.com/events"
+        | withParameter "after" (offsetNow "-24h" | formatTime "rfc3339")
+        | getResponse
+    }}
+
+    {{ if eq $events.Response.StatusCode 200 }}
+      {{ range $events.JSON.Array "events" }}
+        <div>{{ .String "title" }}</div>
+        <div {{ .String "date" | parseTime "rfc3339" | toRelativeTime }}></div>
+      {{ end }}
+    {{ else }}
+      <p>Failed to fetch data: {{ $events.Response.Status }}</p>
+    {{ end }}
+```
+
+*Note that you need to manually check for the correct status code.*
+
 ## Functions
 
 The following functions are available on the `JSON` object:
@@ -368,6 +446,15 @@ The following functions are available on the `JSON` object:
 - `Bool(key string) bool`: Returns the value of the key as a boolean.
 - `Array(key string) []JSON`: Returns the value of the key as an array of `JSON` objects.
 - `Exists(key string) bool`: Returns true if the key exists in the JSON object.
+- `Entries(key string)`: Returns an iterator that allows you to loop through each property of the object. Example: `{{ range $key, $value := .JSON.Entries "user" }}`. This will yield pairs of key and value, where `$key` is a string and `$value` is a `JSON` object.
+
+The following functions are available on the `Options` object:
+
+- `StringOr(key string, default string) string`: Returns the value of the key as a string, or the default value if the key does not exist.
+- `IntOr(key string, default int) int`: Returns the value of the key as an integer, or the default value if the key does not exist.
+- `FloatOr(key string, default float) float`: Returns the value of the key as a float, or the default value if the key does not exist.
+- `BoolOr(key string, default bool) bool`: Returns the value of the key as a boolean, or the default value if the key does not exist.
+- `JSON(key string) JSON`: Returns the value of the key as a stringified `JSON` object, or throws an error if the key does not exist.
 
 The following helper functions provided by Glance are available:
 
@@ -378,12 +465,14 @@ The following helper functions provided by Glance are available:
 - `offsetNow(offset string) time.Time`: Returns the current time with an offset. The offset can be positive or negative and must be in the format "3h" "-1h" or "2h30m10s".
 - `duration(str string) time.Duration`: Parses a string such as `1h`, `24h`, `5h30m`, etc into a `time.Duration`.
 - `parseTime(layout string, s string) time.Time`: Parses a string into time.Time. The layout must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants). You can alternatively use these values instead of the literal format: "unix", "RFC3339", "RFC3339Nano", "DateTime", "DateOnly".
-- `parseLocalTime(layout string, s string) time.Time`: Same as the above, except in the absence of a timezone, it will use the local timezone instead of UTC.
+- `formatTime(layout string, s string) time.Time`: Formats a `time.Time` into a string. The layout uses the same format as `parseTime`.
+- `parseLocalTime(layout string, s string) time.Time`: Same as the above, except it will automatically convert the time to the server's timezone and in the absence of a timezone, it will use the local timezone instead of UTC.
 - `parseRelativeTime(layout string, s string) time.Time`: A shorthand for `{{ .String "date" | parseTime "rfc3339" | toRelativeTime }}`.
 - `add(a, b float) float`: Adds two numbers.
 - `sub(a, b float) float`: Subtracts two numbers.
 - `mul(a, b float) float`: Multiplies two numbers.
 - `div(a, b float) float`: Divides two numbers.
+- `mod(a, b int) int`: Remainder after dividing a by b (a % b).
 - `formatApproxNumber(n int) string`: Formats a number to be more human-readable, e.g. 1000 -> 1k.
 - `formatNumber(n float|int) string`: Formats a number with commas, e.g. 1000 -> 1,000.
 - `trimPrefix(prefix string, str string) string`: Trims the prefix from a string.
@@ -399,17 +488,20 @@ The following helper functions provided by Glance are available:
 - `sortByTime(key string, layout string, order string, arr []JSON): []JSON`: Sorts an array of JSON objects by a time key in either ascending or descending order. The format must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants).
 - `concat(strings ...string) string`: Concatenates multiple strings together.
 - `unique(key string, arr []JSON) []JSON`: Returns a unique array of JSON objects based on the given key.
+- `percentChange(current float, previous float) float`: Calculates the percentage change between two numbers.
+- `startOfDay(t time.Time) time.Time`: Returns the start of the day for a given time.
+- `endOfDay(t time.Time) time.Time`: Returns the end of the day for a given time.
 
 The following helper functions provided by Go's `text/template` are available:
 
 - `eq(a, b any) bool`: Compares two values for equality.
 - `ne(a, b any) bool`: Compares two values for inequality.
 - `lt(a, b any) bool`: Compares two values for less than.
-- `lte(a, b any) bool`: Compares two values for less than or equal to.
+- `le(a, b any) bool`: Compares two values for less than or equal to.
 - `gt(a, b any) bool`: Compares two values for greater than.
-- `gte(a, b any) bool`: Compares two values for greater than or equal to.
-- `and(a, b bool) bool`: Returns true if both values are true.
-- `or(a, b bool) bool`: Returns true if either value is true.
+- `ge(a, b any) bool`: Compares two values for greater than or equal to.
+- `and(args ...bool) bool`: Returns true if **all** arguments are true; accepts two or more boolean values.
+- `or(args ...bool) bool`: Returns true if **any** argument is true; accepts two or more boolean values.
 - `not(a bool) bool`: Returns the opposite of the value.
 - `index(a any, b int) any`: Returns the value at the specified index of an array.
 - `len(a any) int`: Returns the length of an array.
