@@ -32,6 +32,7 @@ type rssWidget struct {
 	widgetBase       `yaml:",inline"`
 	FeedRequests     []rssFeedRequest `yaml:"feeds"`
 	Style            string           `yaml:"style"`
+	ShowThumbnails   bool             `yaml:"show-thumbnails"`
 	ThumbnailHeight  float64          `yaml:"thumbnail-height"`
 	CardHeight       float64          `yaml:"card-height"`
 	Limit            int              `yaml:"limit"`
