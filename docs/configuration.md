@@ -2499,6 +2499,7 @@ Example:
   pull-requests-limit: 5
   issues-limit: 3
   commits-limit: 3
+  exclude-draft-prs: true
 ```
 
 Preview:
@@ -2514,6 +2515,7 @@ Preview:
 | pull-requests-limit | integer | no | 3 |
 | issues-limit | integer | no | 3 |
 | commits-limit | integer | no | -1 |
+| exclude-draft-prs | boolean | no | false |
 
 ##### `repository`
 The owner and repository name that will have their information displayed.
@@ -2529,6 +2531,9 @@ The maximum number of latest open issues to show. Set to `-1` to not show any.
 
 ##### `commits-limit`
 The maximum number of lastest commits to show from the default branch. Set to `-1` to not show any.
+
+##### `exclude-draft-prs`
+Wheter to exclude draft pull requests from the list. Set to `false` by default to include them.
 
 ### Bookmarks
 Display a list of links which can be grouped.
