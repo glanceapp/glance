@@ -19,6 +19,7 @@ type repositoryWidget struct {
 	PullRequestsLimit   int        `yaml:"pull-requests-limit"`
 	IssuesLimit         int        `yaml:"issues-limit"`
 	CommitsLimit        int        `yaml:"commits-limit"`
+	ExcludeDraftPRs     bool       `yaml:"exclude-draft-prs"`
 	Repository          repository `yaml:"-"`
 }
 
@@ -47,6 +48,7 @@ func (widget *repositoryWidget) update(ctx context.Context) {
 		widget.PullRequestsLimit,
 		widget.IssuesLimit,
 		widget.CommitsLimit,
+		widget.ExcludeDraftPRs,
 	)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
@@ -111,13 +113,23 @@ type gitHubCommitResponseJson struct {
 	} `json:"commit"`
 }
 
-func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, maxIssues int, maxCommits int) (repository, error) {
+func buildPRQuery(repo string, excludeDraftPRs bool) string {
+	query := fmt.Sprintf("is:pr+is:open+repo:%s", repo)
+	if excludeDraftPRs {
+		query += "+-is:draft"
+	}
+	return query
+}
+
+func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, maxIssues int, maxCommits int, excludeDraftPRs bool) (repository, error) {
 	repositoryRequest, err := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s", repo), nil)
 	if err != nil {
 		return repository{}, fmt.Errorf("%w: could not create request with repository: %v", errNoContent, err)
 	}
 
-	PRsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=is:pr+is:open+repo:%s&per_page=%d", repo, maxPRs), nil)
+	prQuery := buildPRQuery(repo, excludeDraftPRs)
+
+	PRsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=%s&per_page=%d", prQuery, maxPRs), nil)
 	issuesRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/search/issues?q=is:issue+is:open+repo:%s&per_page=%d", repo, maxIssues), nil)
 	CommitsRequest, _ := http.NewRequest("GET", fmt.Sprintf("https://api.github.com/repos/%s/commits?per_page=%d", repo, maxCommits), nil)
 
