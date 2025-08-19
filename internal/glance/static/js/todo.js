@@ -8,7 +8,7 @@ const trashIconSvg = `<svg fill="currentColor" xmlns="http://www.w3.org/2000/svg
 
 export default function(element) {
     element.swapWith(
-        Todo(element.dataset.todoId)
+        Todo(element.dataset.widgetId)
     )
 }
 
@@ -38,19 +38,107 @@ function inputMarginAnim(entrance = true) {
 }
 
 function loadFromLocalStorage(id) {
-    return JSON.parse(localStorage.getItem(`todo-${id}`) || "[]");
+    // This function is now replaced by loadFromServer
+    return [];
 }
 
 function saveToLocalStorage(id, data) {
-    localStorage.setItem(`todo-${id}`, JSON.stringify(data));
+    // This function is now replaced by server-side saving
+    // No operation needed as data is saved automatically via API calls
+}
+
+async function loadFromServer(widgetId) {
+    try {
+        const response = await fetch(`/api/widgets/${widgetId}/items`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to load todos from server:', error);
+        return [];
+    }
+}
+
+async function addItemToServer(widgetId, item) {
+    try {
+        const response = await fetch(`/api/widgets/${widgetId}/items`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(item)
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to add item to server:', error);
+        throw error;
+    }
+}
+
+async function updateItemOnServer(widgetId, itemId, item) {
+    try {
+        const response = await fetch(`/api/widgets/${widgetId}/items/${itemId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(item)
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to update item on server:', error);
+        throw error;
+    }
+}
+
+async function deleteItemFromServer(widgetId, itemId) {
+    try {
+        const response = await fetch(`/api/widgets/${widgetId}/items/${itemId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+    } catch (error) {
+        console.error('Failed to delete item from server:', error);
+        throw error;
+    }
+}
+
+async function reorderItemsOnServer(widgetId, itemIds) {
+    try {
+        const response = await fetch(`/api/widgets/${widgetId}/reorder`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(itemIds)
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to reorder items on server:', error);
+        throw error;
+    }
 }
 
 function Item(unserialize = {}, onUpdate, onDelete, onEscape, onDragStart) {
     let item, input, inputArea;
 
     const serializeable = {
+        id: unserialize.id || null,
         text: unserialize.text || "",
-        checked: unserialize.checked || false
+        checked: unserialize.checked || false,
+        order: unserialize.order || 0
     };
 
     item = elem().classes("todo-item", "flex", "gap-10", "items-center").append(
@@ -101,7 +189,7 @@ function Item(unserialize = {}, onUpdate, onDelete, onEscape, onDragStart) {
     });
 }
 
-function Todo(id) {
+function Todo(widgetId) {
     let items, input, inputArea, inputContainer, lastAddedItem;
     let queuedForRemoval = 0;
     let reorderable;
@@ -113,50 +201,91 @@ function Todo(id) {
         reorderable.component.onDragStart(event, element);
     };
 
-    const saveItems = () => {
+    const onItemRepositioned = async () => {
         if (isDragging) return;
 
-        saveToLocalStorage(
-            id, items.children.map(item => item.component.serialize())
-        );
+        const itemIds = Array.from(items.children).map(item => {
+            const data = item.component.serialize();
+            return data.id;
+        }).filter(id => id); // Filter out items without IDs
+
+        if (itemIds.length > 0) {
+            try {
+                await reorderItemsOnServer(widgetId, itemIds);
+            } catch (error) {
+                console.error('Failed to reorder items:', error);
+            }
+        }
     };
 
-    const onItemRepositioned = () => saveItems();
-    const debouncedOnItemUpdate = throttledDebounce(saveItems, 10, 1000);
+    const debouncedOnItemUpdate = async (item) => {
+        const data = item.component.serialize();
+        if (data.id) {
+            try {
+                await updateItemOnServer(widgetId, data.id, data);
+            } catch (error) {
+                console.error('Failed to update item:', error);
+            }
+        }
+    };
 
-    const onItemDelete = (item) => {
+    const onItemDelete = async (item) => {
         if (lastAddedItem === item) lastAddedItem = null;
+        const data = item.component.serialize();
+
+        if (data.id) {
+            try {
+                await deleteItemFromServer(widgetId, data.id);
+            } catch (error) {
+                console.error('Failed to delete item:', error);
+                return; // Don't remove from UI if server delete failed
+            }
+        }
+
         const height = item.clientHeight;
         queuedForRemoval++;
         item.animate(itemAnim(height, false), () => {
             item.remove();
             queuedForRemoval--;
-            saveItems();
         });
 
         if (items.children.length - queuedForRemoval === 0)
             inputContainer.animate(inputMarginAnim(false));
     };
 
-    const newItem = (data) => Item(
-        data,
-        debouncedOnItemUpdate,
-        onItemDelete,
-        () => inputArea.focus(),
-        onDragStart
-    );
+    const newItem = (data) => {
+        const item = Item(
+            data,
+            () => debouncedOnItemUpdate(item),
+            onItemDelete,
+            () => inputArea.focus(),
+            onDragStart
+        );
+        return item;
+    };
 
-    const addNewItem = (itemText, prepend) => {
+    const addNewItem = async (itemText, prepend) => {
         const totalItemsBeforeAppending = items.children.length;
-        const item = lastAddedItem = newItem({ text: itemText });
 
-        prepend ? items.prepend(item) : items.append(item);
-        saveItems();
-        const height = item.clientHeight;
-        item.animate(itemAnim(height));
+        try {
+            // Add to server first
+            const serverItem = await addItemToServer(widgetId, {
+                text: itemText,
+                checked: false
+            });
 
-        if (totalItemsBeforeAppending === 0)
-            inputContainer.animate(inputMarginAnim());
+            // Then add to UI with server-provided ID
+            const item = lastAddedItem = newItem(serverItem);
+            prepend ? items.prepend(item) : items.append(item);
+
+            const height = item.clientHeight;
+            item.animate(itemAnim(height));
+
+            if (totalItemsBeforeAppending === 0)
+                inputContainer.animate(inputMarginAnim());
+        } catch (error) {
+            console.error('Failed to add item:', error);
+        }
     };
 
     const handleInputKeyDown = (e) => {
@@ -179,16 +308,28 @@ function Todo(id) {
         }
     };
 
-    items = elem()
-        .classes("todo-items")
-        .append(
-            ...loadFromLocalStorage(id).map(data => newItem(data))
-        );
+    items = elem().classes("todo-items");
 
-    return fragment().append(
+    // Load items from server
+    const loadItems = async () => {
+        try {
+            const serverItems = await loadFromServer(widgetId);
+            serverItems.forEach(data => {
+                const item = newItem(data);
+                items.append(item);
+            });
+
+            if (serverItems.length > 0) {
+                inputContainer.classList.add("margin-bottom-15");
+            }
+        } catch (error) {
+            console.error('Failed to load items:', error);
+        }
+    };
+
+    const container = fragment().append(
         inputContainer = elem()
             .classes("todo-input", "flex", "gap-10", "items-center")
-            .classesIf(items.children.length > 0, "margin-bottom-15")
             .styles({ paddingRight: "2.5rem" })
             .append(
                 elem().classes("todo-plus-icon", "shrink-0"),
@@ -203,6 +344,11 @@ function Todo(id) {
 
         reorderable = verticallyReorderable(items, onItemRepositioned, onDragEnd),
     );
+
+    // Load items after DOM is ready
+    setTimeout(loadItems, 0);
+
+    return container;
 }
 
 
