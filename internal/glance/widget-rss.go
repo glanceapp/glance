@@ -130,6 +130,7 @@ type rssFeedItem struct {
 
 type rssFeedRequest struct {
 	URL             string            `yaml:"url"`
+	Type			string 			  `yaml:"type"`
 	Title           string            `yaml:"title"`
 	HideCategories  bool              `yaml:"hide-categories"`
 	HideDescription bool              `yaml:"hide-description"`
@@ -303,10 +304,19 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 			}
 		}
 
-		if request.Title != "" {
-			rssItem.ChannelName = request.Title
-		} else {
-			rssItem.ChannelName = feed.Title
+		if request.Type == "freshrss" {
+			if parsedUrl, err := url.Parse(rssItem.Link); err == nil && parsedUrl.Scheme != "" && parsedUrl.Host != "" {
+				rssItem.ChannelName = parsedUrl.Host
+				rssItem.ChannelURL = parsedUrl.Scheme + "://" + parsedUrl.Host
+			}
+		}
+		
+		if rssItem.ChannelName == "" {
+			if request.Title != "" {
+				rssItem.ChannelName = request.Title
+			} else {
+				rssItem.ChannelName = feed.Title
+			}
 		}
 
 		if item.Image != nil {
