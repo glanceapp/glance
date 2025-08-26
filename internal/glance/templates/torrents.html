@@ -1,0 +1,33 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+{{- if .Torrents }}
+<ul class="list list-gap-20 collapsible-container" data-collapse-after="5">
+{{- range .Torrents }}
+    <li>
+        <div class="size-title-dynamic text-truncate{{ if not .Downloaded }} color-highlight{{ end }}">{{ .Name }}</div>
+        <ul class="list-horizontal-text horizontal-text-gap-5 text-compact margin-top-2">
+            {{- if not .Downloaded }}
+                <li>{{ .ProgressFormatted }}</li>
+            {{- else }}
+                <li title="{{ .StateDescription }}">{{ .State }}</li>
+            {{- end }}
+            {{- if .SpeedFormatted }}
+            <li>{{ .SpeedFormatted }}/s</li>
+            {{- end }}
+            {{- if eq .State "Downloading" }}
+            <li>{{ .ETAFormatted }} ETA</li>
+            {{- else if not .Downloaded }}
+            <li title="{{ .StateDescription }}">{{ .State }}</li>
+            {{- end }}
+        </ul>
+        <div class="progress-bar progress-bar-mini margin-top-5">
+            <div class="progress-value" style="--percent: {{ .Progress }};"></div>
+        </div>
+    </li>
+    {{- end }}
+</ul>
+{{- else }}
+<div class="text-center">No active torrents</div>
+{{- end }}
+{{ end }}

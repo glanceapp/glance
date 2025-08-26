@@ -79,6 +79,8 @@ func newWidget(widgetType string) (widget, error) {
 		w = &dockerContainersWidget{}
 	case "server-stats":
 		w = &serverStatsWidget{}
+	case "torrents":
+		w = &torrentsWidget{}
 	case "to-do":
 		w = &todoWidget{}
 	default:
