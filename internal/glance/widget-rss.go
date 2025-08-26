@@ -17,6 +17,8 @@ import (
 
 	"github.com/mmcdole/gofeed"
 	gofeedext "github.com/mmcdole/gofeed/extensions"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 var (
@@ -137,6 +139,7 @@ type rssFeedRequest struct {
 	ItemLinkPrefix  string            `yaml:"item-link-prefix"`
 	Headers         map[string]string `yaml:"headers"`
 	IsDetailed      bool              `yaml:"-"`
+	ScrapeImages    bool              `yaml:"scrape-images"`
 }
 
 type rssFeedItemList []rssFeedItem
@@ -187,6 +190,68 @@ func (widget *rssWidget) fetchItemsFromFeeds() (rssFeedItemList, error) {
 	}
 
 	return entries, nil
+}
+
+type fetchFirstImageFromRSSItemInput struct {
+	ItemLink string
+	Request  rssFeedRequest
+}
+
+func fetchFirstImageFromRSSItem(input fetchFirstImageFromRSSItemInput) (string, error) {
+
+	if input.ItemLink == "" {
+		return "", fmt.Errorf("item link is empty")
+	}
+
+	req, err := http.NewRequest("GET", input.ItemLink, nil)
+	if err != nil {
+		return "", err
+	}
+
+	for key, value := range input.Request.Headers {
+		req.Header.Add(key, value)
+	}
+
+	resp, err := defaultHTTPClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("ERROR: Failed to scrape image from RSS article page: %s\n", input.ItemLink)
+		return "", fmt.Errorf("failed to fetch HTML page: status %d", resp.StatusCode)
+	}
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	imgSrc := ""
+	doc.Find("article img, main img, .post-content img").EachWithBreak(func(i int, s *goquery.Selection) bool {
+		src, srcExists := s.Attr("src")
+		if srcExists && src != "" {
+			imgSrc = src
+			return false
+		}
+		return true
+	})
+
+	if imgSrc == "" {
+		return "", fmt.Errorf("no image found on page")
+	}
+
+	baseURL, err := url.Parse(input.ItemLink)
+	if err == nil {
+		resolvedURL, err := baseURL.Parse(imgSrc)
+		if err == nil {
+			return resolvedURL.String(), nil
+		}
+	}
+
+	fmt.Printf("DEBUG: Returning raw image src: %s\n", imgSrc)
+	return imgSrc, nil
 }
 
 func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFeedItem, error) {
@@ -242,6 +307,8 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 	}
 
 	items := make(rssFeedItemList, 0, len(feed.Items))
+
+	var feedIncludesImage bool = true
 
 	for i := range feed.Items {
 		item := feed.Items[i]
@@ -319,6 +386,8 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 			} else {
 				rssItem.ImageURL = feed.Image.URL
 			}
+		} else {
+			feedIncludesImage = false
 		}
 
 		if item.PublishedParsed != nil {
@@ -328,6 +397,42 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 		}
 
 		items = append(items, rssItem)
+	}
+
+	if (!feedIncludesImage) && request.ScrapeImages {
+
+		inputs := []fetchFirstImageFromRSSItemInput{}
+
+		for _, item := range items {
+			inputs = append(inputs, fetchFirstImageFromRSSItemInput{
+				ItemLink: item.Link,
+				Request:  request,
+			})
+		}
+
+		job := newJob(fetchFirstImageFromRSSItem, inputs).withWorkers(30)
+
+		images, errs, err := workerPoolDo(job)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %v", errNoContent, err)
+		}
+
+		failed := 0
+		for i := range images {
+			if errs[i] != nil {
+				failed++
+				slog.Error("Failed to scrape an image from article, error", errs[i])
+				continue
+			}
+
+			if failed > 0 {
+				slog.Error("Failed to scrape ", failed, " images from article pages")
+			}
+
+			items[i].ImageURL = images[i]
+
+		}
+
 	}
 
 	if resp.Header.Get("ETag") != "" || resp.Header.Get("Last-Modified") != "" {

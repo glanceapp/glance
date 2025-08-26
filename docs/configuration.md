@@ -829,6 +829,7 @@ An array of RSS/atom feeds. The title can optionally be changed.
 | limit | integer | no | | |
 | item-link-prefix | string | no | | |
 | headers | key (string) & value (string) | no | | |
+| scrape-images | boolean | no | false | |
 
 ###### `limit`
 The maximum number of articles to show from that specific feed. Useful if you have a feed which posts a lot of articles frequently and you want to prevent it from excessively pushing down articles from other feeds.
@@ -845,6 +846,18 @@ Optionally specify the headers that will be sent with the request. Example:
     - url: https://domain.com/rss
       headers:
         User-Agent: Custom User Agent
+```
+
+###### `scrape-images`
+Some RSS feeds don't provide images by default, this option will try to scrape the best fitting image directly from the RSS item.
+```yaml
+- type: rss
+  feeds:
+    - url: https://www.bleepingcomputer.com/feed/
+      headers:
+        User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3
+      title: Bleeping Computer
+      scrape-images: true
 ```
 
 ### Videos
