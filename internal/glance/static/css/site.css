@@ -1,4 +1,4 @@
-.light-scheme {
+:root[data-scheme=light] {
     --scheme: 100% -;
 }
 
@@ -13,6 +13,7 @@
 
 .page.content-ready > .page-content {
     display: block;
+    animation: pageContentEntrance .3s cubic-bezier(0.25, 1, 0.5, 1) backwards;
 }
 
 .page-column-small .size-title-dynamic {
@@ -25,6 +26,23 @@
 
 pre {
     font: inherit;
+}
+
+
+input[type="text"] {
+    width: 100%;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+}
+
+button {
+    font: inherit;
+    border: 0;
+    cursor: pointer;
+    background: none;
+    color: inherit;
 }
 
 ::selection {
@@ -41,6 +59,10 @@ pre {
     background: var(--color-background);
     height: 5px;
     width: 10px;
+}
+
+*:active {
+    -webkit-tap-highlight-color: transparent;
 }
 
 *:focus-visible {
@@ -127,10 +149,9 @@ body {
 .page-columns {
     display: flex;
     gap: var(--widget-gap);
-    animation: pageColumnsEntrance .3s cubic-bezier(0.25, 1, 0.5, 1) backwards;
 }
 
-@keyframes pageColumnsEntrance {
+@keyframes pageContentEntrance {
     from {
         opacity: 0;
         transform: translateY(10px);
@@ -153,7 +174,9 @@ body {
 
 @keyframes loadingContainerEntrance {
     from {
-        opacity: 0;
+        /* Using 0.001 instead of 0 fixes a random 1s freeze on Chrome on page load when all */
+        /* elements have opacity 0 and are animated in. I don't want to be a web dev anymore. */
+        opacity: 0.001;
     }
 }
 
@@ -219,7 +242,7 @@ kbd:active {
     max-width: 1100px;
 }
 
-.page-center-vertically .page {
+.page.center-vertically {
     display: flex;
     justify-content: center;
     flex-direction: column;
@@ -239,6 +262,7 @@ kbd:active {
 
 .logo {
     height: 100%;
+    flex-shrink: 0;
     line-height: var(--header-height);
     font-size: 2rem;
     color: var(--color-text-highlight);
@@ -246,7 +270,7 @@ kbd:active {
     padding-right: var(--widget-content-horizontal-padding);
 }
 
-.logo:has(img) {
+.logo:has(img, svg) {
     display: flex;
     align-items: center;
 }
@@ -255,13 +279,20 @@ kbd:active {
     max-height: 2.7rem;
 }
 
-.nav {
+.desktop-navigation {
+    overflow-x: auto;
+    min-width: 0;
     height: 100%;
     gap: var(--header-items-gap);
 }
 
-.nav .nav-item {
-    line-height: var(--header-height);
+.desktop-navigation .nav-item {
+    display: flex;
+    align-items: center;
+}
+
+.desktop-navigation .nav-item-text {
+    margin-top: 3px;
 }
 
 .footer {
@@ -292,4 +323,85 @@ kbd:active {
 .nav-item.nav-item-current {
     border-bottom-color: var(--color-primary);
     color: var(--color-text-highlight);
+}
+
+.logout-button {
+    width: 2rem;
+    height: 2rem;
+    stroke: var(--color-text-subdue);
+    transition: stroke .2s;
+}
+
+.logout-button:hover, .logout-button:focus {
+    stroke: var(--color-text-highlight);
+}
+
+.theme-choices {
+    --presets-per-row: 2;
+    display: grid;
+    grid-template-columns: repeat(var(--presets-per-row), 1fr);
+    align-items: center;
+    gap: 1.35rem;
+}
+
+.theme-choices:has(> :nth-child(3)) {
+    --presets-per-row: 3;
+}
+
+.theme-preset {
+    background-color: var(--color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 2rem;
+    padding-inline: 0.5rem;
+    border-radius: 0.3rem;
+    border: none;
+    cursor: pointer;
+    position: relative;
+}
+
+.theme-choices .theme-preset::before {
+    content: '';
+    position: absolute;
+    inset: -.4rem;
+    border-radius: .7rem;
+    border: 2px solid transparent;
+    transition: border-color .3s;
+}
+
+.theme-choices .theme-preset:hover::before {
+    border-color: var(--color-text-subdue);
+}
+
+.theme-choices .theme-preset.current::before {
+    border-color: var(--color-text-base);
+}
+
+.theme-preset-light {
+    gap: 0.3rem;
+    height: 1.8rem;
+}
+
+.theme-color {
+    background-color: var(--color);
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 0.2rem;
+}
+
+.theme-preset-light .theme-color {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.3rem;
+}
+
+.current-theme-preview {
+    opacity: 0.4;
+    transition: opacity .3s;
+}
+
+.theme-picker.popover-active .current-theme-preview, .theme-picker:hover {
+    opacity: 1;
 }

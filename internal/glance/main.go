@@ -6,6 +6,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"strconv"
+	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 var buildVersion = "dev"
@@ -18,6 +23,8 @@ func Main() int {
 	}
 
 	switch options.intent {
+	case cliIntentVersionPrint:
+		fmt.Println(buildVersion)
 	case cliIntentServe:
 		// remove in v0.10.0
 		if serveUpdateNoticeIfConfigLocationNotMigrated(options.configPath) {
@@ -47,14 +54,49 @@ func Main() int {
 		}
 
 		fmt.Println(string(contents))
+	case cliIntentSensorsPrint:
+		return cliSensorsPrint()
+	case cliIntentMountpointInfo:
+		return cliMountpointInfo(options.args[1])
 	case cliIntentDiagnose:
 		runDiagnostic()
+	case cliIntentSecretMake:
+		key, err := makeAuthSecretKey(AUTH_SECRET_KEY_LENGTH)
+		if err != nil {
+			fmt.Printf("Failed to make secret key: %v\n", err)
+			return 1
+		}
+
+		fmt.Println(key)
+	case cliIntentPasswordHash:
+		password := options.args[1]
+
+		if password == "" {
+			fmt.Println("Password cannot be empty")
+			return 1
+		}
+
+		if len(password) < 6 {
+			fmt.Println("Password must be at least 6 characters long")
+			return 1
+		}
+
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			fmt.Printf("Failed to hash password: %v\n", err)
+			return 1
+		}
+
+		fmt.Println(string(hashedPassword))
 	}
 
 	return 0
 }
 
 func serveApp(configPath string) error {
+	// TODO: refactor if this gets any more complex, the current implementation is
+	// difficult to reason about due to all of the callbacks and simultaneous operations,
+	// use a single goroutine and a channel to initiate synchronous changes to the server
 	exitChannel := make(chan struct{})
 	hadValidConfigOnStartup := false
 	var stopServer func() error
@@ -66,21 +108,33 @@ func serveApp(configPath string) error {
 
 		config, err := newConfigFromYAML(newContents)
 		if err != nil {
-			log.Printf("Config has errors: %v", err)
+			errStr := strings.ReplaceAll(err.Error(), "\n", "")
+			errStr = sequentialWhitespacePattern.ReplaceAllString(errStr, " ")
+			errStr = strings.ReplaceAll(errStr, "!!seq", "array")
+
+			log.Printf("Config has errors: %v", errStr)
+			printConfigLinesNearErrorIfAvailable(err, newContents)
 
 			if !hadValidConfigOnStartup {
 				close(exitChannel)
 			}
 
 			return
-		} else if !hadValidConfigOnStartup {
-			hadValidConfigOnStartup = true
 		}
 
 		app, err := newApplication(config)
 		if err != nil {
 			log.Printf("Failed to create application: %v", err)
+
+			if !hadValidConfigOnStartup {
+				close(exitChannel)
+			}
+
 			return
+		}
+
+		if !hadValidConfigOnStartup {
+			hadValidConfigOnStartup = true
 		}
 
 		if stopServer != nil {
@@ -132,6 +186,41 @@ func serveApp(configPath string) error {
 
 	<-exitChannel
 	return nil
+}
+
+var errorLinePattern = regexp.MustCompile(`line (\d+)`)
+
+func printConfigLinesNearErrorIfAvailable(err error, configContents []byte) {
+	if err == nil {
+		return
+	}
+
+	matches := errorLinePattern.FindStringSubmatch(err.Error())
+	if len(matches) < 2 {
+		return
+	}
+
+	errorAtLine, err := strconv.Atoi(matches[1])
+	if err != nil {
+		return
+	}
+
+	contents := strings.ReplaceAll(string(configContents), "\r\n", "\n")
+	lines := strings.Split(contents, "\n")
+
+	if errorAtLine < 1 || errorAtLine > len(lines) {
+		return
+	}
+
+	contextLength := 3
+
+	for i := max(0, errorAtLine-contextLength-1); i < min(len(lines), errorAtLine+contextLength); i++ {
+		if i == errorAtLine-1 {
+			fmt.Printf("-> %s\n", lines[i])
+		} else {
+			fmt.Printf("|  %s\n", lines[i])
+		}
+	}
 }
 
 func serveUpdateNoticeIfConfigLocationNotMigrated(configPath string) bool {

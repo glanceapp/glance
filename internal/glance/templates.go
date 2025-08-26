@@ -21,6 +21,9 @@ var globalTemplateFunctions = template.FuncMap{
 	"safeURL": func(str string) template.URL {
 		return template.URL(str)
 	},
+	"safeHTML": func(str string) template.HTML {
+		return template.HTML(str)
+	},
 	"absInt": func(i int) int {
 		return int(math.Abs(float64(i)))
 	},

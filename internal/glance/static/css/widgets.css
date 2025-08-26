@@ -2,10 +2,8 @@
 @import "widget-calendar.css";
 @import "widget-clock.css";
 @import "widget-dns-stats.css";
-@import "widget-docker-containers.css";
 @import "widget-group.css";
 @import "widget-markets.css";
-@import "widget-monitor.css";
 @import "widget-reddit.css";
 @import "widget-releases.css";
 @import "widget-rss.css";
@@ -14,6 +12,7 @@
 @import "widget-twitch.css";
 @import "widget-videos.css";
 @import "widget-weather.css";
+@import "widget-todo.css";
 @import "forum-posts.css";
 
 .widget-error-header {
@@ -41,6 +40,10 @@
     flex-shrink: 0;
     stroke: var(--color-negative);
     opacity: 0.6;
+}
+
+.head-widgets {
+    margin-bottom: var(--widget-gap);
 }
 
 .widget-content {

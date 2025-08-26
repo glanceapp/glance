@@ -82,7 +82,6 @@ func computeFSHash(files fs.FS) (string, error) {
 
 var cssImportPattern = regexp.MustCompile(`(?m)^@import "(.*?)";$`)
 var cssSingleLineCommentPattern = regexp.MustCompile(`(?m)^\s*\/\*.*?\*\/$`)
-var whitespaceAtBeginningOfLinePattern = regexp.MustCompile(`(?m)^\s+`)
 
 // Yes, we bundle at runtime, give comptime pls
 var bundledCSSContents = func() []byte {

@@ -10,10 +10,10 @@
         <ul class="list list-gap-2">
         {{- range .Links }}
         <li>
-            <div class="flex items-center gap-10">
+            <div class="flex items-center gap-10 icon-parent">
                 {{- if ne "" .Icon.URL }}
                 <div class="bookmarks-icon-container">
-                    <img class="bookmarks-icon{{ if .Icon.IsFlatIcon }} flat-icon{{ end }}" src="{{ .Icon.URL }}" alt="" loading="lazy">
+                    {{ .Icon.ElemWithClass "square-20" }}
                 </div>
                 {{- end }}
                 <a href="{{ .URL | safeURL }}" class="bookmarks-link {{ if .HideArrow }}bookmarks-link-no-arrow {{ end }}color-highlight size-h4" {{ if .Target }}target="{{ .Target }}"{{ end }} rel="noreferrer">{{ .Title }}</a>
