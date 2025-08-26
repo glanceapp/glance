@@ -79,8 +79,8 @@ func newWidget(widgetType string) (widget, error) {
 		w = &dockerContainersWidget{}
 	case "server-stats":
 		w = &serverStatsWidget{}
-	case "qbittorrent":
-		w = &qbittorrentWidget{}
+	case "torrents":
+		w = &torrentsWidget{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}

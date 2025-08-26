@@ -38,6 +38,10 @@
     top: 0.1rem;
 }
 
+.horizontal-text-gap-5 > *:not(:last-child)::after {
+    margin: 0 0.5rem;
+}
+
 .summary {
     width: 100%;
     cursor: pointer;
@@ -403,6 +407,11 @@ details[open] .summary::after {
     height: 3rem;
 }
 
+.progress-bar-mini {
+    height: .9rem;
+    border-radius: .3rem;
+}
+
 .popover-active > .progress-bar {
     transition: border-color .3s;
     border-color: var(--color-text-subdue);
@@ -415,6 +424,10 @@ details[open] .summary::after {
     width: calc(var(--percent) * 1%);
     min-width: 1px;
     flex: 1;
+}
+
+.progress-bar-mini > .progress-value {
+    --half-border-radius: .2rem;
 }
 
 .progress-value:first-child {
@@ -522,6 +535,7 @@ details[open] .summary::after {
 .gap-45 { gap: 4.5rem; }
 .gap-55 { gap: 5.5rem; }
 .margin-left-auto { margin-left: auto; }
+.margin-top-2 { margin-top: 0.2rem; }
 .margin-top-3 { margin-top: 0.3rem; }
 .margin-top-5 { margin-top: 0.5rem; }
 .margin-top-7 { margin-top: 0.7rem; }
