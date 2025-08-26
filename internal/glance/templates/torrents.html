@@ -12,8 +12,8 @@
             {{- else }}
                 <li title="{{ .StateDescription }}">{{ .State }}</li>
             {{- end }}
-            {{- if .SpeedFormatted }}
-            <li>{{ .SpeedFormatted }}/s</li>
+            {{- if .DownSpeedFormatted }}
+            <li>{{ .DownSpeedFormatted }}/s</li>
             {{- end }}
             {{- if eq .State "Downloading" }}
             <li>{{ .ETAFormatted }} ETA</li>

@@ -2,11 +2,14 @@ package glance
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"html/template"
+	"maps"
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -342,6 +345,11 @@ func (q *queryParametersField) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
+type sortKey struct {
+	name string
+	dir  int // 1 for asc, -1 for desc
+}
+
 func (q *queryParametersField) toQueryString() string {
 	query := url.Values{}
 
@@ -352,4 +360,87 @@ func (q *queryParametersField) toQueryString() string {
 	}
 
 	return query.Encode()
+}
+
+type sortableFields[T any] struct {
+	keys   []sortKey
+	fields map[string]func(a, b T) int
+}
+
+func (s *sortableFields[T]) UnmarshalYAML(node *yaml.Node) error {
+	var raw string
+	if err := node.Decode(&raw); err != nil {
+		return errors.New("sort-by must be a string")
+	}
+
+	return s.parse(raw)
+}
+
+func (s *sortableFields[T]) parse(raw string) error {
+	split := strings.Split(raw, ",")
+
+	for i := range split {
+		key := strings.TrimSpace(split[i])
+		direction := "asc"
+		name, dir, ok := strings.Cut(key, ":")
+		if ok {
+			key = strings.TrimSpace(name)
+			direction = strings.TrimSpace(dir)
+			if direction != "asc" && direction != "desc" {
+				return fmt.Errorf("unsupported sort direction `%s` in sort-by option `%s`, must be `asc` or `desc`", direction, key)
+			}
+		}
+
+		if key == "" {
+			continue
+		}
+
+		s.keys = append(s.keys, sortKey{
+			name: key,
+			dir:  ternary(direction == "asc", 1, -1),
+		})
+	}
+
+	return nil
+}
+
+func (s *sortableFields[T]) Default(sort string) error {
+	if len(s.keys) == 0 {
+		return s.parse(sort)
+	}
+
+	return nil
+}
+
+func (s *sortableFields[T]) Fields(fields map[string]func(a, b T) int) error {
+	for i := range s.keys {
+		option := s.keys[i].name
+		if _, ok := fields[option]; !ok {
+			keys := slices.Collect(maps.Keys(fields))
+			slices.Sort(keys)
+			formatted := strings.Join(keys, ", ")
+			return fmt.Errorf("unsupported sort-by option `%s`, must be one or more of [%s] separated by comma", option, formatted)
+		}
+	}
+
+	s.fields = fields
+
+	return nil
+}
+
+func (s *sortableFields[T]) Apply(data []T) {
+	slices.SortStableFunc(data, func(a, b T) int {
+		for _, key := range s.keys {
+			field, ok := s.fields[key.name]
+			if !ok {
+				continue
+			}
+
+			if result := field(a, b) * key.dir; result != 0 {
+				return result
+			}
+		}
+
+		return 0
+	})
 }

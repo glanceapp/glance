@@ -18,7 +18,8 @@ import (
 var torrentsWidgetTemplate = mustParseTemplate("torrents.html", "widget-base.html")
 
 type torrentsWidget struct {
-	widgetBase    `yaml:",inline"`
+	widgetBase `yaml:",inline"`
+
 	URL           string `yaml:"url"`
 	AllowInsecure bool   `yaml:"allow-insecure"`
 	Username      string `yaml:"username"`
@@ -27,10 +28,11 @@ type torrentsWidget struct {
 	CollapseAfter int    `yaml:"collapse-after"`
 	Client        string `yaml:"client"`
 
+	SortBy sortableFields[torrent] `yaml:"sort-by"`
+
 	Torrents []torrent `yaml:"-"`
 
-	// QBittorrent client
-	sessionID string // session ID for authentication
+	sessionID string
 }
 
 func (widget *torrentsWidget) initialize() error {
@@ -65,6 +67,30 @@ func (widget *torrentsWidget) initialize() error {
 		return fmt.Errorf("unsupported client: %s", widget.Client)
 	}
 
+	if err := widget.SortBy.Default("downloaded, down-speed:desc, up-speed:desc"); err != nil {
+		return err
+	}
+
+	if err := widget.SortBy.Fields(map[string]func(a, b torrent) int{
+		"name": func(a, b torrent) int {
+			return strings.Compare(a.Name, b.Name)
+		},
+		"progress": func(a, b torrent) int {
+			return numCompare(a.Progress, b.Progress)
+		},
+		"downloaded": func(a, b torrent) int {
+			return boolCompare(a.Downloaded, b.Downloaded)
+		},
+		"down-speed": func(a, b torrent) int {
+			return numCompare(a.DownSpeed, b.DownSpeed)
+		},
+		"up-speed": func(a, b torrent) int {
+			return numCompare(a.UpSpeed, b.UpSpeed)
+		},
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -83,17 +109,7 @@ func (widget *torrentsWidget) update(ctx context.Context) {
 		return
 	}
 
-	// Sort by Downloaded status first, then by Name
-	slices.SortStableFunc(torrents, func(a, b torrent) int {
-		if a.Downloaded != b.Downloaded {
-			if !a.Downloaded && b.Downloaded {
-				return -1
-			}
-			return 1
-		}
-
-		return strings.Compare(a.Name, b.Name)
-	})
+	widget.SortBy.Apply(torrents)
 
 	if len(torrents) > widget.Limit {
 		torrents = torrents[:widget.Limit]
@@ -110,7 +126,7 @@ const (
 	torrentStatusDownloading = "Downloading"
 	torrentStatusDownloaded  = "Downloaded"
 	torrentStatusSeeding     = "Seeding"
-	torrentStatusStopped     = "Stopped"
+	torrentStatusPaused      = "Paused"
 	torrentStatusStalled     = "Stalled"
 	torrentStatusError       = "Error"
 	torrentStatusOther       = "Other"
@@ -131,11 +147,11 @@ var qbittorrentStates = map[string][2]string{
 	"forcedUP":   {torrentStatusSeeding, "Torrent is forced to upload, ignoring queue limit"},
 
 	// Stopped/Paused states
-	"stoppedDL": {torrentStatusStopped, "Torrent is stopped"},
-	"pausedDL":  {torrentStatusStopped, "Torrent is paused and has not finished downloading"},
-	"pausedUP":  {torrentStatusStopped, "Torrent is paused and has finished downloading"},
-	"queuedDL":  {torrentStatusStopped, "Queuing is enabled and torrent is queued for download"},
-	"queuedUP":  {torrentStatusStopped, "Queuing is enabled and torrent is queued for upload"},
+	"stoppedDL": {torrentStatusPaused, "Torrent is stopped"},
+	"pausedDL":  {torrentStatusPaused, "Torrent is paused and has not finished downloading"},
+	"pausedUP":  {torrentStatusPaused, "Torrent is paused and has finished downloading"},
+	"queuedDL":  {torrentStatusPaused, "Queuing is enabled and torrent is queued for download"},
+	"queuedUP":  {torrentStatusPaused, "Queuing is enabled and torrent is queued for upload"},
 
 	// Stalled states
 	"stalledDL": {torrentStatusStalled, "Torrent is being downloaded, but no connections were made"},
@@ -152,14 +168,16 @@ var qbittorrentStates = map[string][2]string{
 }
 
 type torrent struct {
-	Name              string
-	ProgressFormatted string
-	Downloaded        bool
-	Progress          float64
-	State             string
-	StateDescription  string
-	SpeedFormatted    string
-	ETAFormatted      string
+	Name               string
+	ProgressFormatted  string
+	Downloaded         bool
+	Progress           float64
+	State              string
+	StateDescription   string
+	UpSpeed            uint64
+	DownSpeed          uint64
+	DownSpeedFormatted string
+	ETAFormatted       string
 }
 
 func (widget *torrentsWidget) formatETA(seconds uint64) string {
@@ -231,11 +249,12 @@ func (widget *torrentsWidget) _fetchQbtTorrents() ([]torrent, bool, error) {
 	}
 
 	type qbTorrent struct {
-		Name     string  `json:"name"`
-		Progress float64 `json:"progress"`
-		State    string  `json:"state"`
-		Speed    uint64  `json:"dlspeed"`
-		ETA      uint64  `json:"eta"` // in seconds
+		Name      string  `json:"name"`
+		Progress  float64 `json:"progress"`
+		State     string  `json:"state"`
+		DownSpeed uint64  `json:"dlspeed"`
+		UpSpeed   uint64  `json:"upspeed"`
+		ETA       uint64  `json:"eta"` // in seconds
 	}
 
 	var rawTorrents []qbTorrent
@@ -245,7 +264,6 @@ func (widget *torrentsWidget) _fetchQbtTorrents() ([]torrent, bool, error) {
 
 	torrents := make([]torrent, len(rawTorrents))
 	for i, raw := range rawTorrents {
-
 		state := raw.State
 		stateDescription := "Unknown state"
 		if mappedState, exists := qbittorrentStates[raw.State]; exists {
@@ -261,11 +279,13 @@ func (widget *torrentsWidget) _fetchQbtTorrents() ([]torrent, bool, error) {
 			State:             state,
 			StateDescription:  stateDescription,
 			ETAFormatted:      widget.formatETA(raw.ETA),
+			DownSpeed:         raw.DownSpeed,
+			UpSpeed:           raw.UpSpeed,
 		}
 
-		if raw.Speed > 0 {
-			speedValue, speedUnit := formatBytes(raw.Speed)
-			torrents[i].SpeedFormatted = fmt.Sprintf("%s %s", speedValue, speedUnit)
+		if raw.DownSpeed > 0 {
+			value, unit := formatBytes(raw.DownSpeed)
+			torrents[i].DownSpeedFormatted = fmt.Sprintf("%s %s", value, unit)
 		}
 	}
 
@@ -303,7 +323,6 @@ func (widget *torrentsWidget) fetchQbtSessionID() error {
 
 	cookies := resp.Cookies()
 	if len(cookies) == 0 {
-		fmt.Println(string(body))
 		return errors.New("no session cookie received, maybe the username or password is incorrect?")
 	}
 
