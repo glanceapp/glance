@@ -31,6 +31,7 @@ type config struct {
 	Server struct {
 		Host       string `yaml:"host"`
 		Port       uint16 `yaml:"port"`
+		SocketPath string `yaml:"socket-path"`
 		Proxied    bool   `yaml:"proxied"`
 		AssetsPath string `yaml:"assets-path"`
 		BaseURL    string `yaml:"base-url"`
@@ -481,6 +482,18 @@ func isConfigStateValid(config *config) error {
 		if _, err := os.Stat(config.Server.AssetsPath); os.IsNotExist(err) {
 			return fmt.Errorf("assets directory does not exist: %s", config.Server.AssetsPath)
 		}
+	}
+
+	// Validate server listening configuration
+	hasSocketPath := config.Server.SocketPath != ""
+	hasExplicitHostPort := config.Server.Host != ""
+	
+	if hasSocketPath && hasExplicitHostPort {
+		return fmt.Errorf("cannot specify both socket-path and host when using socket-path")
+	}
+	
+	if !hasSocketPath && !hasExplicitHostPort && config.Server.Port == 0 {
+		return fmt.Errorf("must specify either socket-path or host:port for server")
 	}
 
 	for i := range config.Pages {

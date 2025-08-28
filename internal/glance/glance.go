@@ -6,7 +6,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -489,19 +491,47 @@ func (a *application) server() (func() error, func() error) {
 	}
 
 	server := http.Server{
-		Addr:    fmt.Sprintf("%s:%d", a.Config.Server.Host, a.Config.Server.Port),
 		Handler: mux,
 	}
 
 	start := func() error {
-		log.Printf("Starting server on %s:%d (base-url: \"%s\", assets-path: \"%s\")\n",
-			a.Config.Server.Host,
-			a.Config.Server.Port,
-			a.Config.Server.BaseURL,
-			absAssetsPath,
-		)
+		var listener net.Listener
+		var err error
+		
+		if a.Config.Server.SocketPath != "" {
+			// Unix socket mode
+			// Remove existing socket file if it exists
+			if err := os.RemoveAll(a.Config.Server.SocketPath); err != nil {
+				return fmt.Errorf("failed to remove existing socket file: %w", err)
+			}
+			
+			listener, err = net.Listen("unix", a.Config.Server.SocketPath)
+			if err != nil {
+				return fmt.Errorf("failed to listen on unix socket: %w", err)
+			}
+			
+			log.Printf("Starting server on unix socket %s (base-url: \"%s\", assets-path: \"%s\")\n",
+				a.Config.Server.SocketPath,
+				a.Config.Server.BaseURL,
+				absAssetsPath,
+			)
+		} else {
+			// TCP mode
+			addr := fmt.Sprintf("%s:%d", a.Config.Server.Host, a.Config.Server.Port)
+			listener, err = net.Listen("tcp", addr)
+			if err != nil {
+				return fmt.Errorf("failed to listen on tcp address: %w", err)
+			}
+			
+			log.Printf("Starting server on %s:%d (base-url: \"%s\", assets-path: \"%s\")\n",
+				a.Config.Server.Host,
+				a.Config.Server.Port,
+				a.Config.Server.BaseURL,
+				absAssetsPath,
+			)
+		}
 
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
 			return err
 		}
 

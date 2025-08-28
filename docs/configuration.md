@@ -276,11 +276,20 @@ server:
 When set to `true`, Glance will use the `X-Forwarded-For` header to determine the original IP address of the request, so make sure that your reverse proxy is correctly configured to send that header.
 
 ## Server
-Server configuration is done through a top level `server` property. Example:
+Server configuration is done through a top level `server` property. You can configure the server to listen on either TCP or Unix socket.
 
+TCP example:
 ```yaml
 server:
+  host: localhost
   port: 8080
+  assets-path: /home/user/glance-assets
+```
+
+Unix socket example:
+```yaml
+server:
+  socket-path: /tmp/glance.sock
   assets-path: /home/user/glance-assets
 ```
 
@@ -290,6 +299,7 @@ server:
 | ---- | ---- | -------- | ------- |
 | host | string | no |  |
 | port | number | no | 8080 |
+| socket-path | string | no |  |
 | proxied | boolean | no | false |
 | base-url | string | no | |
 | assets-path | string | no |  |
@@ -299,6 +309,17 @@ The address which the server will listen on. Setting it to `localhost` means tha
 
 #### `port`
 A number between 1 and 65,535, so long as that port isn't already used by anything else.
+
+#### `socket-path`
+Path to a Unix socket file to listen on instead of TCP host:port. When specified, the server will listen on a Unix socket rather than a TCP port. Cannot be used together with `host`. The socket file will be created if it doesn't exist, and any existing file at the path will be removed before creating the socket.
+
+Example:
+```yaml
+server:
+  socket-path: /tmp/glance.sock
+```
+
+This is useful for running behind reverse proxies that support Unix sockets, or in containerized environments where you want to share the socket via a volume mount.
 
 #### `proxied`
 Set to `true` if you're using a reverse proxy in front of Glance. This will make Glance use the `X-Forwarded-*` headers to determine the original request details.
