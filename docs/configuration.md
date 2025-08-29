@@ -290,6 +290,7 @@ Unix socket example:
 ```yaml
 server:
   socket-path: /tmp/glance.sock
+  socket-mode: "0666"
   assets-path: /home/user/glance-assets
 ```
 
@@ -300,6 +301,7 @@ server:
 | host | string | no |  |
 | port | number | no | 8080 |
 | socket-path | string | no |  |
+| socket-mode | string | no |  |
 | proxied | boolean | no | false |
 | base-url | string | no | |
 | assets-path | string | no |  |
@@ -320,6 +322,22 @@ server:
 ```
 
 This is useful for running behind reverse proxies that support Unix sockets, or in containerized environments where you want to share the socket via a volume mount.
+
+#### `socket-mode`
+File permissions to set on the Unix socket file, specified as octal permissions (e.g., "0666" or "666"). Only valid when `socket-path` is also specified. If not specified, the socket will use the default permissions set by the system.
+
+Example:
+```yaml
+server:
+  socket-path: /tmp/glance.sock
+  socket-mode: "0666"
+```
+
+Common values:
+- `"0600"` - Owner read/write only
+- `"0660"` - Owner and group read/write
+- `"0666"` - All users read/write (most permissive)
+- `"0664"` - Owner and group read/write, others read only
 
 #### `proxied`
 Set to `true` if you're using a reverse proxy in front of Glance. This will make Glance use the `X-Forwarded-*` headers to determine the original request details.

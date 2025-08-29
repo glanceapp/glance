@@ -510,6 +510,18 @@ func (a *application) server() (func() error, func() error) {
 				return fmt.Errorf("failed to listen on unix socket: %w", err)
 			}
 			
+			// Set socket file permissions if socket-mode is specified
+			if a.Config.Server.SocketMode != "" {
+				mode, err := strconv.ParseUint(a.Config.Server.SocketMode, 8, 32)
+				if err != nil {
+					return fmt.Errorf("failed to parse socket-mode: %w", err)
+				}
+				
+				if err := os.Chmod(a.Config.Server.SocketPath, os.FileMode(mode)); err != nil {
+					return fmt.Errorf("failed to set socket permissions: %w", err)
+				}
+			}
+			
 			log.Printf("Starting server on unix socket %s (base-url: \"%s\", assets-path: \"%s\")\n",
 				a.Config.Server.SocketPath,
 				a.Config.Server.BaseURL,
