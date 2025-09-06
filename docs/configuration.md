@@ -34,6 +34,8 @@
   - [DNS Stats](#dns-stats)
   - [Server Stats](#server-stats)
   - [Repository](#repository)
+  <!-- TODO: add docs -->
+  - [Trending Repositories](#trending-repositories)
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
   - [Calendar (legacy)](#calendar-legacy)
