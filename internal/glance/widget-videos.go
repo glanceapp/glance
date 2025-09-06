@@ -32,6 +32,8 @@ type videosWidget struct {
 	Limit             int       `yaml:"limit"`
 	IncludeShorts     bool      `yaml:"include-shorts"`
 	SortBy            string    `yaml:"sort-by"`
+
+	Filters filterableFields[video] `yaml:"filters"`
 }
 
 func (widget *videosWidget) initialize() error {
@@ -70,6 +72,8 @@ func (widget *videosWidget) update(ctx context.Context) {
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
+
+	videos = widget.Filters.Apply(videos)
 
 	if len(videos) > widget.Limit {
 		videos = videos[:widget.Limit]
@@ -131,6 +135,19 @@ type video struct {
 	TimeUpdated  time.Time
 }
 
+func (v video) filterableField(field string) any {
+	switch field {
+	case "title":
+		return v.Title
+	case "posted":
+		return v.TimePosted
+	case "updated":
+		return v.TimeUpdated
+	default:
+		return nil
+	}
+}
+
 type videoList []video
 
 func (v videoList) sortByPosted() videoList {
@@ -154,9 +171,8 @@ func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate 
 
 	for i := range channelOrPlaylistIDs {
 		var feedUrl string
-		if strings.HasPrefix(channelOrPlaylistIDs[i], videosWidgetPlaylistPrefix) {
-			feedUrl = "https://www.youtube.com/feeds/videos.xml?playlist_id=" +
-				strings.TrimPrefix(channelOrPlaylistIDs[i], videosWidgetPlaylistPrefix)
+		if after, ok := strings.CutPrefix(channelOrPlaylistIDs[i], videosWidgetPlaylistPrefix); ok {
+			feedUrl = "https://www.youtube.com/feeds/videos.xml?playlist_id=" + after
 		} else if !includeShorts && strings.HasPrefix(channelOrPlaylistIDs[i], "UC") {
 			playlistId := strings.Replace(channelOrPlaylistIDs[i], "UC", "UULF", 1)
 			feedUrl = "https://www.youtube.com/feeds/videos.xml?playlist_id=" + playlistId
