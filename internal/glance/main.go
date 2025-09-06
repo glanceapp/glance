@@ -111,6 +111,7 @@ func serveApp(configPath string) error {
 			errStr := strings.ReplaceAll(err.Error(), "\n", "")
 			errStr = sequentialWhitespacePattern.ReplaceAllString(errStr, " ")
 			errStr = strings.ReplaceAll(errStr, "!!seq", "array")
+			errStr = strings.ReplaceAll(errStr, "!!str", "string")
 
 			log.Printf("Config has errors: %v", errStr)
 			printConfigLinesNearErrorIfAvailable(err, newContents)
