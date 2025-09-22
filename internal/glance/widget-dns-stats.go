@@ -3,6 +3,8 @@ package glance
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,6 +26,23 @@ const (
 	dnsStatsHoursPerBar int = dnsStatsHoursSpan / dnsStatsBars
 )
 
+type glinetChallengeParams struct {
+	Username string `json:"username"`
+}
+
+// JSON-RPC
+type glinetRPCRequest struct {
+	JSONRPC string `json:"jsonrpc"`
+	Method  string `json:"method"`
+	Params  any    `json:"params"`
+	ID      int    `json:"id"`
+}
+
+type glinetLoginParams struct {
+	Username string `json:"username"`
+	Hash     string `json:"hash"`
+}
+
 type dnsStatsWidget struct {
 	widgetBase `yaml:",inline"`
 
@@ -40,6 +59,24 @@ type dnsStatsWidget struct {
 	Token          string `yaml:"token"`
 	Username       string `yaml:"username"`
 	Password       string `yaml:"password"`
+	GLinetEndpoint string `yaml:"glinetEndpoint"`
+}
+
+type glinetChallengeResponse struct {
+	JSONRPC string `json:"jsonrpc"`
+	ID      int    `json:"id"`
+	Result  struct {
+		Salt       string `json:"salt"`
+		Nonce      string `json:"nonce"`
+		Alg        int    `json:"alg"`
+		HashMethod string `json:"hash-method"`
+	} `json:"result"`
+}
+
+type glinetLoginResponse struct {
+	Result struct {
+		Sid string `json:"sid"`
+	} `json:"result"`
 }
 
 const (
@@ -90,7 +127,7 @@ func (widget *dnsStatsWidget) update(ctx context.Context) {
 
 	switch widget.Service {
 	case dnsServiceAdguard:
-		stats, err = fetchAdguardStats(widget.URL, widget.AllowInsecure, widget.Username, widget.Password, widget.HideGraph)
+		stats, err = fetchAdguardStats(widget.URL, widget.AllowInsecure, widget.Username, widget.Password, widget.HideGraph, widget.GLinetEndpoint)
 	case dnsServicePihole:
 		stats, err = fetchPihole5Stats(widget.URL, widget.AllowInsecure, widget.Token, widget.HideGraph)
 	case dnsServiceTechnitium:
@@ -158,7 +195,7 @@ type adguardStatsResponse struct {
 	TopBlockedDomains []map[string]int `json:"top_blocked_domains"`
 }
 
-func fetchAdguardStats(instanceURL string, allowInsecure bool, username, password string, noGraph bool) (*dnsStats, error) {
+func fetchAdguardStats(instanceURL string, allowInsecure bool, username, password string, noGraph bool, glinetEndpoint string) (*dnsStats, error) {
 	requestURL := strings.TrimRight(instanceURL, "/") + "/control/stats"
 
 	request, err := http.NewRequest("GET", requestURL, nil)
@@ -166,9 +203,21 @@ func fetchAdguardStats(instanceURL string, allowInsecure bool, username, passwor
 		return nil, err
 	}
 
-	request.SetBasicAuth(username, password)
-
 	var client = ternary(allowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
+	// Verify if
+	if glinetEndpoint == "" {
+		request.SetBasicAuth(username, password)
+	} else {
+		token, err := doGlinetLogin(client, username, password, glinetEndpoint)
+		if err != nil {
+			return nil, err
+		}
+		cookie := &http.Cookie{
+			Name:  "Admin-Token",
+			Value: token,
+		}
+		request.AddCookie(cookie)
+	}
 	responseJson, err := decodeJsonFromRequest[adguardStatsResponse](client, request)
 	if err != nil {
 		return nil, err
@@ -743,7 +792,7 @@ func fetchTechnitiumStats(instanceUrl string, allowInsecure bool, token string, 
 
 	stats.BlockedPercent = int(float64(responseJson.Response.Stats.BlockedQueries) / float64(responseJson.Response.Stats.TotalQueries) * 100)
 
-	for i := 0; i < topBlockedDomainsCount; i++ {
+	for i := range topBlockedDomainsCount {
 		domain := responseJson.Response.TopBlockedDomains[i]
 		firstDomain := domain.Domain
 
@@ -789,7 +838,7 @@ func fetchTechnitiumStats(instanceUrl string, allowInsecure bool, token string, 
 
 	maxQueriesInSeries := 0
 
-	for i := 0; i < dnsStatsBars; i++ {
+	for i := range dnsStatsBars {
 		queries := 0
 		blocked := 0
 
@@ -812,9 +861,181 @@ func fetchTechnitiumStats(instanceUrl string, allowInsecure bool, token string, 
 		}
 	}
 
-	for i := 0; i < dnsStatsBars; i++ {
+	for i := range dnsStatsBars {
 		stats.Series[i].PercentTotal = int(float64(stats.Series[i].Queries) / float64(maxQueriesInSeries) * 100)
 	}
 
 	return stats, nil
+}
+
+// this function perfom the login using json-rpc and returns the value of the sessionID
+func doGlinetLogin(client *http.Client, username string, password string, endpoint string) (string, error) {
+	// Default GLiNet router username
+	if username == "" {
+		username = "root"
+	}
+	// Challenge
+
+	challengeResp, err := makeRPCRequest(client, endpoint, "challenge", glinetChallengeParams{Username: username})
+	if err != nil {
+		return "", err
+	}
+	var challenge glinetChallengeResponse
+	err = json.Unmarshal(challengeResp, &challenge)
+	if err != nil {
+		return "", err
+	}
+
+	cipherPassword, err := glinetHashPassword(challenge.Result.Alg, challenge.Result.Salt, password)
+	if err != nil {
+		return "", err
+	}
+	// Hashing
+	loginString := fmt.Sprintf("%s:%s:%s", username, cipherPassword, challenge.Result.Nonce)
+	hash := ""
+
+	// This is actually undocumented, in the old version (V4), this parameter didn't exist
+	// Lately GLiNet stopped supporting public API so we don't know much about it.
+	// This parameter defines the hashing function we need to use to hash $user.$ciphertext.$nonce
+	// As of today (22/09/2025) I have only found sha256 but I put a switch just in case
+	// they decide to change this algo again
+	switch challenge.Result.HashMethod {
+	case "sha256":
+		rawHash := sha256.Sum256([]byte(loginString))
+		hash = fmt.Sprintf("%x", rawHash)
+	default:
+		return hash, fmt.Errorf("unsupported algorithm found in glinet login process: %s, feel free to open an issue", challenge.Result.HashMethod)
+	}
+
+	// Sending LoginRequest
+	loginResp, err := makeRPCRequest(client, endpoint, "login", glinetLoginParams{
+		Username: username,
+		Hash:     hash,
+	})
+	if err != nil {
+		return "", err
+	}
+	var login glinetLoginResponse
+	err = json.Unmarshal(loginResp, &login)
+	if err != nil {
+		return "", err
+	}
+	return login.Result.Sid, nil
+}
+
+func glinetHashPassword(alg int, salt, password string) (string, error) {
+	out := ""
+	switch alg {
+	// MD5
+	case 1:
+		return MD5Crypt(password, salt), nil
+	default:
+		return out, fmt.Errorf("unsupported algorithm in glinet challenge: %d", alg)
+	}
+}
+
+// We need to implement MD5Crypt because go doesn't have it's own implementation
+func MD5Crypt(password, saltStr string) string {
+	alphabet := "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+
+	if len(saltStr) > 8 {
+		saltStr = saltStr[:8]
+	}
+
+	// Alternate sum
+	altHash := md5.New()
+	altHash.Write([]byte(password + saltStr + password))
+	altSum := altHash.Sum(nil)
+
+	// Main computation
+	mainHash := md5.New()
+	mainHash.Write([]byte(password + "$1$" + saltStr))
+
+	for i := len(password); i > 0; i -= 16 {
+		if i > 16 {
+			mainHash.Write(altSum)
+		} else {
+			mainHash.Write(altSum[:i])
+		}
+	}
+
+	for i := len(password); i > 0; i >>= 1 {
+		if i&1 == 1 {
+			mainHash.Write([]byte{0})
+		} else {
+			mainHash.Write([]byte{password[0]})
+		}
+	}
+
+	digest := mainHash.Sum(nil)
+
+	// 1000 rounds
+	for round := range 1000 {
+		roundHash := md5.New()
+		if round&1 == 1 {
+			roundHash.Write([]byte(password))
+		} else {
+			roundHash.Write(digest)
+		}
+		if round%3 != 0 {
+			roundHash.Write([]byte(saltStr))
+		}
+		if round%7 != 0 {
+			roundHash.Write([]byte(password))
+		}
+		if round&1 == 1 {
+			roundHash.Write(digest)
+		} else {
+			roundHash.Write([]byte(password))
+		}
+		digest = roundHash.Sum(nil)
+	}
+
+	// Encode using correct byte transpose order from specification
+	// https://passlib.readthedocs.io/en/stable/lib/passlib.hash.md5_crypt.html
+	order := []int{12, 6, 0, 13, 7, 1, 14, 8, 2, 15, 9, 3, 5, 10, 4, 11}
+	var result strings.Builder
+
+	// Process 5 groups of 3 bytes each
+	for i := range 5 {
+		a := digest[order[i*3]]
+		b := digest[order[i*3+1]]
+		c := digest[order[i*3+2]]
+		val := uint32(a) | uint32(b)<<8 | uint32(c)<<16
+		for j := 0; j < 4; j++ {
+			result.WriteByte(alphabet[val&63])
+			val >>= 6
+		}
+	}
+
+	// Handle final byte
+	val := uint32(digest[order[15]])
+	result.WriteByte(alphabet[val&63])
+	result.WriteByte(alphabet[(val>>6)&63])
+
+	return "$1$" + saltStr + "$" + result.String()
+}
+
+func makeRPCRequest(client *http.Client, host, method string, params interface{}) ([]byte, error) {
+	url := fmt.Sprintf("%s/rpc", host)
+
+	request := glinetRPCRequest{
+		JSONRPC: "2.0",
+		Method:  method,
+		Params:  params,
+		ID:      0,
+	}
+
+	jsonData, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return io.ReadAll(resp.Body)
 }
