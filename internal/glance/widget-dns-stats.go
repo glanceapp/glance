@@ -204,7 +204,8 @@ func fetchAdguardStats(instanceURL string, allowInsecure bool, username, passwor
 	}
 
 	var client = ternary(allowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
-	// Verify if
+	// Verify if the endpoint is empty, if is not then login using json RPC and set
+	// Admin-Token cookie instead of the standard basic auth
 	if glinetEndpoint == "" {
 		request.SetBasicAuth(username, password)
 	} else {
