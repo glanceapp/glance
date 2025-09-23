@@ -59,7 +59,7 @@ type dnsStatsWidget struct {
 	Token          string `yaml:"token"`
 	Username       string `yaml:"username"`
 	Password       string `yaml:"password"`
-	GLinetEndpoint string `yaml:"glinetEndpoint"`
+	GLinetEndpoint string `yaml:"glinet-endpoint"`
 }
 
 type glinetChallengeResponse struct {
