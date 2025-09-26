@@ -34,6 +34,8 @@
   - [DNS Stats](#dns-stats)
   - [Server Stats](#server-stats)
   - [Repository](#repository)
+  <!-- TODO: add docs -->
+  - [Trending Repositories](#trending-repositories)
   - [Bookmarks](#bookmarks)
   - [Calendar](#calendar)
   - [Calendar (legacy)](#calendar-legacy)
@@ -870,6 +872,7 @@ Preview:
 | playlists | array | no | |
 | limit | integer | no | 25 |
 | style | string | no | horizontal-cards |
+| sort-by | string | no | posted |
 | collapse-after | integer | no | 7 |
 | collapse-after-rows | integer | no | 4 |
 | include-shorts | boolean | no | false |
@@ -904,6 +907,10 @@ https://www.youtube.com...&list={ID}&...
 
 ##### `limit`
 The maximum number of videos to show.
+
+##### `sort-by`
+Used to specify the order in which the videos should get returned. Possible values are `none`, `updated`, and `posted`.
+Default value is `posted`.
 
 ##### `collapse-after`
 Specify the number of videos to show when using the `vertical-list` style before the "SHOW MORE" button appears.
@@ -2354,7 +2361,7 @@ Only required when using AdGuard Home. The username used to log into the admin d
 ##### `password`
 Required when using AdGuard Home, where the password is the one used to log into the admin dashboard.
 
-Also required when using Pi-hole major version 6 and above, where the password is the one used to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
+For Pi-hole version 6+, this field is required if you have set a password to log into Pi-hole. You can either use the password you use to log into the admin dashboard or the application password, which can be found in `Settings -> Web Interface / API -> Configure app password`.
 
 ##### `token`
 Required when using Pi-hole major version 5 or earlier. The API token which can be found in `Settings -> API -> Show API token`.
@@ -2499,6 +2506,7 @@ Example:
   pull-requests-limit: 5
   issues-limit: 3
   commits-limit: 3
+  exclude-draft-pull-requests: true
 ```
 
 Preview:
@@ -2514,6 +2522,7 @@ Preview:
 | pull-requests-limit | integer | no | 3 |
 | issues-limit | integer | no | 3 |
 | commits-limit | integer | no | -1 |
+| exclude-draft-pull-requests | boolean | no | false |
 
 ##### `repository`
 The owner and repository name that will have their information displayed.
@@ -2529,6 +2538,9 @@ The maximum number of latest open issues to show. Set to `-1` to not show any.
 
 ##### `commits-limit`
 The maximum number of lastest commits to show from the default branch. Set to `-1` to not show any.
+
+##### `exclude-draft-pull-requests`
+Wheter to exclude draft pull requests from the list. Set to `false` by default to include them.
 
 ### Bookmarks
 Display a list of links which can be grouped.

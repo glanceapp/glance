@@ -44,6 +44,8 @@ type rssWidget struct {
 
 	cachedFeedsMutex sync.Mutex
 	cachedFeeds      map[string]*cachedRSSFeed `yaml:"-"`
+
+	Filters filterableFields[rssFeedItem] `yaml:"filters"`
 }
 
 func (widget *rssWidget) initialize() error {
@@ -71,13 +73,14 @@ func (widget *rssWidget) initialize() error {
 		}
 	}
 
-	widget.NoItemsMessage = "No items were returned from the feeds."
 	widget.cachedFeeds = make(map[string]*cachedRSSFeed)
 
 	return nil
 }
 
 func (widget *rssWidget) update(ctx context.Context) {
+	widget.NoItemsMessage = "No items were returned from the feeds."
+
 	items, err := widget.fetchItemsFromFeeds()
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
@@ -86,6 +89,15 @@ func (widget *rssWidget) update(ctx context.Context) {
 
 	if !widget.PreserveOrder {
 		items.sortByNewest()
+	}
+
+	items = widget.Filters.Apply(items)
+
+	if widget.Filters.AllFiltered {
+		widget.NoItemsMessage = fmt.Sprintf(
+			"No items match the specified filters (%d filtered)",
+			widget.Filters.FilteredCount,
+		)
 	}
 
 	if len(items) > widget.Limit {
@@ -128,15 +140,29 @@ type rssFeedItem struct {
 	PublishedAt time.Time
 }
 
+func (i rssFeedItem) filterableField(field string) any {
+	switch field {
+	case "title":
+		return i.Title
+	case "description":
+		return i.Description
+	case "posted":
+		return i.PublishedAt
+	default:
+		return nil
+	}
+}
+
 type rssFeedRequest struct {
-	URL             string            `yaml:"url"`
-	Title           string            `yaml:"title"`
-	HideCategories  bool              `yaml:"hide-categories"`
-	HideDescription bool              `yaml:"hide-description"`
-	Limit           int               `yaml:"limit"`
-	ItemLinkPrefix  string            `yaml:"item-link-prefix"`
-	Headers         map[string]string `yaml:"headers"`
-	IsDetailed      bool              `yaml:"-"`
+	URL                 string            `yaml:"url"`
+	Title               string            `yaml:"title"`
+	HideCategories      bool              `yaml:"hide-categories"`
+	HideDescription     bool              `yaml:"hide-description"`
+	Limit               int               `yaml:"limit"`
+	ItemLinkPrefix      string            `yaml:"item-link-prefix"`
+	ThumbnailLinkPrefix string            `yaml:"thumbnail-link-prefix"`
+	Headers             map[string]string `yaml:"headers"`
+	IsDetailed          bool              `yaml:"-"`
 }
 
 type rssFeedItemList []rssFeedItem
@@ -319,6 +345,24 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 			} else {
 				rssItem.ImageURL = feed.Image.URL
 			}
+		}
+
+		// For some reason gofeed sometimes converts absolute URLs to relative ones, so we need to fix
+		// that here and provide the user with an option to override the prefix in case we get it wrong
+		if strings.HasPrefix(rssItem.ImageURL, "/") {
+			prefix := strings.TrimPrefix(feed.Link, "/")
+			if request.ThumbnailLinkPrefix != "" {
+				prefix = strings.TrimPrefix(request.ThumbnailLinkPrefix, "/")
+			} else if prefix == "" {
+				parsed, err := url.Parse(request.URL)
+				if err != nil {
+					prefix = request.URL
+				} else {
+					prefix = parsed.Scheme + "://" + parsed.Host
+				}
+			}
+
+			rssItem.ImageURL = strings.TrimRight(prefix, "/") + rssItem.ImageURL
 		}
 
 		if item.PublishedParsed != nil {

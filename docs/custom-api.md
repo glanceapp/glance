@@ -221,6 +221,38 @@ JSON response:
 
 ```json
 {
+  "user": {
+    "id": 42,
+    "name": "Alice",
+    "active": true
+  }
+}
+```
+
+To loop through each property of the object, you would use the following:
+
+```html
+{{ range $key, $value := .JSON.Entries "user" }}
+  <div>{{ $key }}: {{ $value.String "" }}</div>
+{{ end }}
+```
+
+Output:
+
+```html
+<div>id: 42</div>
+<div>name: Alice</div>
+<div>active: true</div>
+```
+
+Each property in the object is exposed as a pair, with `$key` being a string and `$value` providing access to the value using the usual JSON methods.
+
+<hr>
+
+JSON response:
+
+```json
+{
     "price": 100,
     "discount": 10
 }
@@ -414,6 +446,7 @@ The following functions are available on the `JSON` object:
 - `Bool(key string) bool`: Returns the value of the key as a boolean.
 - `Array(key string) []JSON`: Returns the value of the key as an array of `JSON` objects.
 - `Exists(key string) bool`: Returns true if the key exists in the JSON object.
+- `Entries(key string)`: Returns an iterator that allows you to loop through each property of the object. Example: `{{ range $key, $value := .JSON.Entries "user" }}`. This will yield pairs of key and value, where `$key` is a string and `$value` is a `JSON` object.
 
 The following functions are available on the `Options` object:
 
@@ -433,7 +466,7 @@ The following helper functions provided by Glance are available:
 - `duration(str string) time.Duration`: Parses a string such as `1h`, `24h`, `5h30m`, etc into a `time.Duration`.
 - `parseTime(layout string, s string) time.Time`: Parses a string into time.Time. The layout must be provided in Go's [date format](https://pkg.go.dev/time#pkg-constants). You can alternatively use these values instead of the literal format: "unix", "RFC3339", "RFC3339Nano", "DateTime", "DateOnly".
 - `formatTime(layout string, s string) time.Time`: Formats a `time.Time` into a string. The layout uses the same format as `parseTime`.
-- `parseLocalTime(layout string, s string) time.Time`: Same as the above, except in the absence of a timezone, it will use the local timezone instead of UTC.
+- `parseLocalTime(layout string, s string) time.Time`: Same as the above, except it will automatically convert the time to the server's timezone and in the absence of a timezone, it will use the local timezone instead of UTC.
 - `parseRelativeTime(layout string, s string) time.Time`: A shorthand for `{{ .String "date" | parseTime "rfc3339" | toRelativeTime }}`.
 - `add(a, b float) float`: Adds two numbers.
 - `sub(a, b float) float`: Subtracts two numbers.

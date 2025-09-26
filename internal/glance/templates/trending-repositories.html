@@ -1,0 +1,22 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
+    {{ range .Repositories }}
+    <li>
+        <a class="size-h4 block text-truncate color-primary-if-not-visited" href="https://github.com/{{ .Slug }}" target="_blank" rel="noreferrer">{{ .Slug }}</a>
+        {{ if .Description}}
+        <p class="text-truncate-2-lines margin-top-3">{{ .Description }}</p>
+        {{ end }}
+        <ul class="list-horizontal-text margin-top-3">
+            {{ if .Language }}
+            <li>{{ .Language }}</li>
+            {{ end }}
+            <li>{{ .Stars | formatNumber }} stars</li>
+        </ul>
+    </li>
+    {{ else }}
+    <p>No repositories found.</p>
+    {{ end }}
+</ul>
+{{ end }}

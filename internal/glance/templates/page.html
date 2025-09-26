@@ -8,7 +8,7 @@
 
 {{ define "navigation-links" }}
 {{ range .App.Config.Pages }}
-<a href="{{ $.App.Config.Server.BaseURL }}/{{ .Slug }}" class="nav-item{{ if eq .Slug $.Page.Slug }} nav-item-current{{ end }}"{{ if eq .Slug $.Page.Slug }} aria-current="page"{{ end }}>{{ .Title }}</a>
+<a href="{{ $.App.Config.Server.BaseURL }}/{{ .Slug }}" class="nav-item{{ if eq .Slug $.Page.Slug }} nav-item-current{{ end }}"{{ if eq .Slug $.Page.Slug }} aria-current="page"{{ end }}><div class="nav-item-text">{{ .Title }}</div></a>
 {{ end }}
 {{ end }}
 
@@ -30,7 +30,7 @@
                 </svg>
                 {{- end }}
             </div>
-            <nav class="nav flex grow hide-scrollbars">
+            <nav class="desktop-navigation flex grow hide-scrollbars">
                 {{ template "navigation-links" . }}
             </nav>
             {{ if not .App.Config.Theme.DisablePicker }}
