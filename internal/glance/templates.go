@@ -35,26 +35,8 @@ var globalTemplateFunctions = template.FuncMap{
 	},
 	"dynamicRelativeTimeAttrs": dynamicRelativeTimeAttrs,
 	"formatServerMegabytes": func(mb uint64) template.HTML {
-		var value string
-		var label string
-
-		if mb < 1_000 {
-			value = strconv.FormatUint(mb, 10)
-			label = "MB"
-		} else if mb < 1_000_000 {
-			if mb < 10_000 {
-				value = fmt.Sprintf("%.1f", float64(mb)/1_000)
-			} else {
-				value = strconv.FormatUint(mb/1_000, 10)
-			}
-
-			label = "GB"
-		} else {
-			value = fmt.Sprintf("%.1f", float64(mb)/1_000_000)
-			label = "TB"
-		}
-
-		return template.HTML(value + ` <span class="color-base size-h5">` + label + `</span>`)
+		value, unit := formatBytes(mb * 1000 * 1000)
+		return template.HTML(value + ` <span class="color-base size-h5">` + unit + `</span>`)
 	},
 }
 
@@ -88,4 +70,42 @@ func formatApproxNumber(count int) string {
 
 func dynamicRelativeTimeAttrs(t interface{ Unix() int64 }) template.HTMLAttr {
 	return template.HTMLAttr(`data-dynamic-relative-time="` + strconv.FormatInt(t.Unix(), 10) + `"`)
+}
+
+func formatBytes(bytes uint64) (value, unit string) {
+	const oneKB = 1000
+	const oneMB = oneKB * 1000
+	const oneGB = oneMB * 1000
+	const oneTB = oneGB * 1000
+
+	if bytes < oneKB {
+		value = strconv.FormatUint(bytes, 10)
+		unit = "B"
+	} else if bytes < oneMB {
+		if bytes < 10*oneKB {
+			value = fmt.Sprintf("%.1f", float64(bytes)/oneKB)
+		} else {
+			value = strconv.FormatUint(bytes/oneKB, 10)
+		}
+		unit = "KB"
+	} else if bytes < oneGB {
+		if bytes < 10*oneMB {
+			value = fmt.Sprintf("%.1f", float64(bytes)/oneMB)
+		} else {
+			value = strconv.FormatUint(bytes/(oneMB), 10)
+		}
+		unit = "MB"
+	} else if bytes < oneTB {
+		if bytes < 10*oneGB {
+			value = fmt.Sprintf("%.1f", float64(bytes)/oneGB)
+		} else {
+			value = strconv.FormatUint(bytes/oneGB, 10)
+		}
+		unit = "GB"
+	} else {
+		value = fmt.Sprintf("%.1f", float64(bytes)/oneTB)
+		unit = "TB"
+	}
+
+	return value, unit
 }
