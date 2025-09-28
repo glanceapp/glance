@@ -93,6 +93,17 @@ theme:
   negative-color: 0 100 67
 ```
 
+### Shades of Purple
+![screenshot](images/themes/shades-of-purple.png)
+```yaml
+theme:
+  background-color: 243 33 25
+  contrast-multiplier: 1.2
+  primary-color: 50 100 49
+  positive-color: 98 82 71
+  negative-color: 12 77 52
+```
+
 ## Light
 
 ### Catppuccin Latte
