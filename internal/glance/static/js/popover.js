@@ -120,8 +120,8 @@ function repositionContainer() {
     const containerInlinePadding = parseInt(containerComputedStyle.getPropertyValue("padding-inline"));
     const targetBoundsWidthOffset = targetBounds.width * (activeTarget.dataset.popoverTargetOffset || 0.5);
     const position = activeTarget.dataset.popoverPosition || "below";
-    const popoverOffest = activeTarget.dataset.popoverOffset || 0.5;
-    const left = Math.round(targetBounds.left + targetBoundsWidthOffset - (containerBounds.width * popoverOffest));
+    const popoverOffset = activeTarget.dataset.popoverOffset || 0.5;
+    const left = Math.round(targetBounds.left + targetBoundsWidthOffset - (containerBounds.width * popoverOffset));
 
     if (left < 0) {
         containerElement.style.left = 0;
