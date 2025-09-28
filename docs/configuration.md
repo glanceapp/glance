@@ -1865,12 +1865,15 @@ Greenville, United States
 
 ### Todo
 
-A simple to-do list that allows you to add, edit and delete tasks. The tasks are stored in the browser's local storage.
+A simple to-do list that allows you to add, edit and delete tasks. The tasks are stored persistently in a SQLite database on the server, ensuring data survives browser sessions and server restarts.
 
 Example:
 
 ```yaml
 - type: to-do
+  title: My Tasks
+  id: personal
+  data-path: ./data
 ```
 
 Preview:
@@ -1887,11 +1890,52 @@ To delete a task, hover over it and click on the trash icon.
 
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
-| id | string | no | |
+| id | string | no | auto-generated |
+| data-path | string | no | ./data |
 
 ##### `id`
 
-The ID of the todo list. If you want to have multiple todo lists, you must specify a different ID for each one. The ID is used to store the tasks in the browser's local storage. This means that if you have multiple todo lists with the same ID, they will share the same tasks.
+The ID of the todo list. If you want to have multiple todo lists, you must specify a different ID for each one. The ID is used to store the tasks in the SQLite database with separate namespaces. This means that if you have multiple todo lists with the same ID, they will share the same tasks. If not specified, a unique ID will be auto-generated based on the widget's position.
+
+Examples of using multiple todo lists:
+```yaml
+- type: to-do
+  title: Personal Tasks
+  id: personal
+  data-path: ./data
+
+- type: to-do
+  title: Work Projects
+  id: work
+  data-path: ./data
+```
+
+##### `data-path`
+
+The directory path where the SQLite database file (`todos.db`) will be stored. The directory will be created automatically if it doesn't exist. Relative paths are resolved from the Glance application directory.
+
+#### Database Storage
+
+Tasks are stored in a SQLite database with the following schema:
+- **Persistent storage**: All tasks survive browser refresh and server restart
+- **Multi-widget support**: Different todo lists are isolated by their `id`
+- **Ordering preservation**: Task order is maintained across sessions
+- **Timestamps**: Creation and modification times are tracked
+
+The SQLite database file will be created at `{data-path}/todos.db` and contains:
+- Task text and checked status
+- Custom ordering (via drag & drop)
+- Creation and modification timestamps
+- Separation by widget ID
+
+#### API Endpoints
+
+The todo widget exposes RESTful API endpoints for programmatic access:
+- `GET /api/widgets/{widget-id}/items` - Retrieve all tasks
+- `POST /api/widgets/{widget-id}/items` - Add a new task
+- `PUT /api/widgets/{widget-id}/items/{item-id}` - Update an existing task
+- `DELETE /api/widgets/{widget-id}/items/{item-id}` - Delete a task
+- `POST /api/widgets/{widget-id}/reorder` - Reorder tasks
 
 #### Keyboard shortcuts
 | Keys | Action | Condition |
