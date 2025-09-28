@@ -28,7 +28,7 @@
 * Docker containers status
 * Server stats
 * Custom widgets
-* [and many more...](docs/configuration.md#configuring-glance)
+* [And many more...](docs/configuration.md#configuring-glance)
 
 ### Fast and lightweight
 * Low memory usage
@@ -297,7 +297,7 @@ This is almost always caused by the browser extension Dark Reader. To fix this, 
 </details>
 
 <details>
-<summary><strong>cannot unmarshal !!map into []glance.page</strong></summary>
+<summary><strong>Cannot unmarshal !!map into []glance.page</strong></summary>
 
 The most common cause of this is having a `pages` key in your `glance.yml` and then also having a `pages` key inside one of your included pages. To fix this, remove the `pages` key from the top of your included pages.
 
