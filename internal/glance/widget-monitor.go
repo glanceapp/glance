@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -41,15 +42,48 @@ func (widget *monitorWidget) initialize() error {
 }
 
 func (widget *monitorWidget) update(ctx context.Context) {
-	requests := make([]*SiteStatusRequest, len(widget.Sites))
+	println("DEBUG: Starting update, number of sites:", len(widget.Sites))
 
+	var wg sync.WaitGroup
+	statuses := make([]siteStatus, len(widget.Sites))
+	var mu sync.Mutex
+	var fetchErr error
+
+	// Launch goroutines for each site
 	for i := range widget.Sites {
-		requests[i] = widget.Sites[i].SiteStatusRequest
+		println("DEBUG: Checking site", i, "- Request is nil:", widget.Sites[i].SiteStatusRequest == nil)
+
+		if widget.Sites[i].SiteStatusRequest == nil {
+			println("DEBUG: Skipping site", i, "- nil request")
+			continue
+		}
+
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+
+			println("DEBUG: Fetching status for site", idx)
+			status, err := fetchSiteStatusTask(widget.Sites[idx].SiteStatusRequest)
+			if err != nil && fetchErr == nil {
+				mu.Lock()
+				fetchErr = err
+				mu.Unlock()
+			}
+			println("DEBUG: Site", idx, "- Status Code:", status.Code, "Error:", status.Error)
+
+			mu.Lock()
+			statuses[idx] = status
+			mu.Unlock()
+		}(i)
 	}
 
-	statuses, err := fetchStatusForSites(requests)
+	// Wait for all goroutines to complete
+	println("DEBUG: Waiting for all goroutines to complete")
+	wg.Wait()
+	println("DEBUG: All goroutines completed")
 
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
+	if !widget.canContinueUpdateAfterHandlingErr(fetchErr) {
+		println("DEBUG: Update aborted due to error:", fetchErr)
 		return
 	}
 
@@ -60,19 +94,27 @@ func (widget *monitorWidget) update(ctx context.Context) {
 		status := &statuses[i]
 		site.Status = status
 
+		println("DEBUG: Processing site", i, "- Code:", status.Code, "Error:", status.Error)
+
 		if !slices.Contains(site.AltStatusCodes, status.Code) && (status.Code >= 400 || status.Error != nil) {
 			widget.HasFailing = true
+			println("DEBUG: Site", i, "marked as failing")
 		}
 
 		if status.Error != nil && site.ErrorURL != "" {
 			site.URL = site.ErrorURL
+			println("DEBUG: Site", i, "using error URL:", site.ErrorURL)
 		} else {
 			site.URL = site.DefaultURL
+			println("DEBUG: Site", i, "using default URL:", site.DefaultURL)
 		}
 
 		site.StatusText = statusCodeToText(status.Code, site.AltStatusCodes)
 		site.StatusStyle = statusCodeToStyle(status.Code, site.AltStatusCodes)
+		println("DEBUG: Site", i, "- StatusText:", site.StatusText, "StatusStyle:", site.StatusStyle)
 	}
+
+	println("DEBUG: Update complete - HasFailing:", widget.HasFailing)
 }
 
 func (widget *monitorWidget) Render() template.HTML {
@@ -180,14 +222,4 @@ func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (siteStatus, error) {
 	status.Code = response.StatusCode
 
 	return status, nil
-}
-
-func fetchStatusForSites(requests []*SiteStatusRequest) ([]siteStatus, error) {
-	job := newJob(fetchSiteStatusTask, requests).withWorkers(20)
-	results, _, err := workerPoolDo(job)
-	if err != nil {
-		return nil, err
-	}
-
-	return results, nil
 }
