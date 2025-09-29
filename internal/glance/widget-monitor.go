@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -42,48 +41,47 @@ func (widget *monitorWidget) initialize() error {
 }
 
 func (widget *monitorWidget) update(ctx context.Context) {
-	println("DEBUG: Starting update, number of sites:", len(widget.Sites))
 
-	var wg sync.WaitGroup
+	type result struct {
+		index  int
+		status siteStatus
+		err    error
+	}
+
+	resultChan := make(chan result, len(widget.Sites))
 	statuses := make([]siteStatus, len(widget.Sites))
-	var mu sync.Mutex
-	var fetchErr error
 
 	// Launch goroutines for each site
+	numSites := 0
 	for i := range widget.Sites {
-		println("DEBUG: Checking site", i, "- Request is nil:", widget.Sites[i].SiteStatusRequest == nil)
 
 		if widget.Sites[i].SiteStatusRequest == nil {
-			println("DEBUG: Skipping site", i, "- nil request")
 			continue
 		}
 
-		wg.Add(1)
+		numSites++
 		go func(idx int) {
-			defer wg.Done()
-
-			println("DEBUG: Fetching status for site", idx)
 			status, err := fetchSiteStatusTask(widget.Sites[idx].SiteStatusRequest)
-			if err != nil && fetchErr == nil {
-				mu.Lock()
-				fetchErr = err
-				mu.Unlock()
+			if status.Error != nil {
+				println("MONITOR: Site", idx, "- Status Code:", status.Code, "Error:", status.Error.Error())
 			}
-			println("DEBUG: Site", idx, "- Status Code:", status.Code, "Error:", status.Error)
 
-			mu.Lock()
-			statuses[idx] = status
-			mu.Unlock()
+			resultChan <- result{index: idx, status: status, err: err}
 		}(i)
 	}
 
-	// Wait for all goroutines to complete
-	println("DEBUG: Waiting for all goroutines to complete")
-	wg.Wait()
-	println("DEBUG: All goroutines completed")
+	// Collect results as they arrive
+	var fetchErr error
+	for i := 0; i < numSites; i++ {
+		res := <-resultChan
+		statuses[res.index] = res.status
+		if res.err != nil && fetchErr == nil {
+			fetchErr = res.err
+		}
+	}
+	close(resultChan)
 
 	if !widget.canContinueUpdateAfterHandlingErr(fetchErr) {
-		println("DEBUG: Update aborted due to error:", fetchErr)
 		return
 	}
 
@@ -94,27 +92,24 @@ func (widget *monitorWidget) update(ctx context.Context) {
 		status := &statuses[i]
 		site.Status = status
 
-		println("DEBUG: Processing site", i, "- Code:", status.Code, "Error:", status.Error)
+		if status.Error != nil {
+			println("MONITOR: Site", i, "Error:", status.Error.Error())
+		}
 
 		if !slices.Contains(site.AltStatusCodes, status.Code) && (status.Code >= 400 || status.Error != nil) {
 			widget.HasFailing = true
-			println("DEBUG: Site", i, "marked as failing")
 		}
 
 		if status.Error != nil && site.ErrorURL != "" {
 			site.URL = site.ErrorURL
-			println("DEBUG: Site", i, "using error URL:", site.ErrorURL)
 		} else {
 			site.URL = site.DefaultURL
-			println("DEBUG: Site", i, "using default URL:", site.DefaultURL)
 		}
 
 		site.StatusText = statusCodeToText(status.Code, site.AltStatusCodes)
 		site.StatusStyle = statusCodeToStyle(status.Code, site.AltStatusCodes)
-		println("DEBUG: Site", i, "- StatusText:", site.StatusText, "StatusStyle:", site.StatusStyle)
 	}
 
-	println("DEBUG: Update complete - HasFailing:", widget.HasFailing)
 }
 
 func (widget *monitorWidget) Render() template.HTML {
