@@ -5,10 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
-	"os"
-	"strings"
 	"time"
 
 	ics "github.com/arran4/golang-ical"
@@ -83,18 +80,6 @@ func (widget *calendarWidget) Render() template.HTML {
 	return widget.cachedHTML
 }
 
-func ParseEventsFromFile(file string) []*ics.VEvent {
-	eventString, err := os.ReadFile(file)
-	if err != nil {
-		log.Panic(err)
-	}
-	cal, err := ics.ParseCalendar(strings.NewReader(string(eventString)))
-	if err != nil {
-		log.Panic(err)
-	}
-	events := cal.Events()
-	return events
-}
 func ReadPublicIcs(url string) ([]*ics.VEvent, error) {
 	response, err := http.Get(url)
 	if err != nil {
