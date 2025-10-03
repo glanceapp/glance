@@ -33,6 +33,10 @@
     color: var(--color-text-highlight);
 }
 
+.calendar-event-date {
+    color: var(--color-primary)
+}
+
 .calendar-spillover-date {
     color: var(--color-text-subdue);
 }
@@ -68,4 +72,16 @@
     width: 2rem;
     height: 2rem;
     margin-left: 0.7rem;
+}
+
+.calendar-event-tooltip {
+    position: absolute;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    display: none;
+    z-index: 9999;
+    font-size: 12px;
 }

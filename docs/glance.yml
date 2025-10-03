@@ -7,6 +7,9 @@ pages:
         widgets:
           - type: calendar
             first-day-of-week: monday
+            ics:
+            - https://www.voetbalkrant.com/soccer/calendar/team/team_43_nl.ics
+            - https://www.voetbalkrant.com/soccer/calendar/team/team_1_nl.ics
 
           - type: rss
             limit: 10
