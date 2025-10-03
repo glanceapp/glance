@@ -33,6 +33,7 @@ type config struct {
 		Port       uint16 `yaml:"port"`
 		Proxied    bool   `yaml:"proxied"`
 		AssetsPath string `yaml:"assets-path"`
+		DataPath   string `yaml:"data-path"`
 		BaseURL    string `yaml:"base-url"`
 	} `yaml:"server"`
 
