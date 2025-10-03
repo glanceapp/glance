@@ -16,6 +16,7 @@ require (
 require (
 	github.com/PuerkitoBio/goquery v1.10.3 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
+	github.com/arran4/golang-ical v0.3.2
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
