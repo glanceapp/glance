@@ -295,6 +295,7 @@ server:
 | proxied | boolean | no | false |
 | base-url | string | no | |
 | assets-path | string | no |  |
+| data-path | string | no | ./data |
 
 #### `host`
 The address which the server will listen on. Setting it to `localhost` means that only the machine that the server is running on will be able to access the dashboard. By default it will listen on all interfaces.
@@ -348,6 +349,29 @@ To be able to point to an asset from your assets path, use the `/assets/` path l
 ```yaml
 icon: /assets/gitea-icon.png
 ```
+
+#### `data-path`
+The path to a directory where Glance will store data such as todo lists when using server-side storage. The default value is `./data` which creates a `data` directory relative to where Glance is running from.
+
+> [!IMPORTANT]
+>
+> When installing through docker the path will point to the files inside the container. Don't forget to mount your data path to the same path inside the container.
+> Example:
+>
+> If you want to store data in:
+> ```
+> /home/user/glance-data
+> ```
+>
+> You should mount:
+> ```
+> /home/user/glance-data:/app/data
+> ```
+>
+> And your config should contain:
+> ```
+> data-path: /app/data
+> ```
 
 ## Document
 If you want to insert custom HTML into the `<head>` of the document for all pages, you can do so by using the `document` property. Example:
@@ -1872,7 +1896,7 @@ Greenville, United States
 
 ### Todo
 
-A simple to-do list that allows you to add, edit and delete tasks. The tasks are stored in the browser's local storage.
+A simple to-do list that allows you to add, edit and delete tasks. Tasks can be stored either in the browser's local storage or on the server.
 
 Example:
 
@@ -1895,10 +1919,30 @@ To delete a task, hover over it and click on the trash icon.
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | id | string | no | |
+| storage-type | string | no | browser |
 
 ##### `id`
 
-The ID of the todo list. If you want to have multiple todo lists, you must specify a different ID for each one. The ID is used to store the tasks in the browser's local storage. This means that if you have multiple todo lists with the same ID, they will share the same tasks.
+The ID of the todo list. If you want to have multiple todo lists, you must specify a different ID for each one. The ID is used to store the tasks in the browser's local storage or server data-path files. This means that if you have multiple todo lists with the same ID, they will share the same tasks.
+
+When `storage-type` is set to `browser`, the ID is used to store the tasks in the browser's local storage. This means that if you have multiple todo lists with the same ID, they will share the same tasks.
+
+When `storage-type` is set to `server`, the ID determines the filename where tasks are stored on the server (in the `data-path/todos/` directory). If not specified, it will default to the widget's internal ID.
+
+##### `storage-type`
+
+Determines where the todo tasks are stored. Possible values are:
+
+* `browser` (default) - Tasks are stored in the browser's local storage. Data is only available on the device and browser where it was created.
+* `server` - Tasks are stored on the server in JSON files located in the `data-path/todos/` directory. This allows tasks to be synced across different devices and browsers.
+
+Example with server storage:
+
+```yaml
+- type: to-do
+  id: my-tasks
+  storage-type: server
+```
 
 #### Keyboard shortcuts
 | Keys | Action | Condition |
