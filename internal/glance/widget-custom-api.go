@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/tidwall/gjson"
 )
 
@@ -194,6 +195,7 @@ func (req *CustomAPIRequest) initialize() error {
 
 type customAPIResponseData struct {
 	JSON     decoratedGJSONResult
+	Body     string
 	Response *http.Response
 }
 
@@ -271,6 +273,7 @@ func fetchCustomAPIResponse(ctx context.Context, req *CustomAPIRequest) (*custom
 
 	return &customAPIResponseData{
 		JSON:     decoratedGJSONResult{gjson.Parse(body)},
+		Body:     body,
 		Response: resp,
 	}, nil
 }
@@ -475,11 +478,49 @@ var customAPITemplateFuncs = func() template.FuncMap {
 	}
 
 	funcs := template.FuncMap{
-		"toFloat": func(a int) float64 {
-			return float64(a)
+		"toFloat": func(a any) float64 {
+			switch a := a.(type) {
+			case int:
+				return float64(a)
+			case float64:
+				return a
+			case string:
+				v, err := strconv.ParseFloat(a, 64)
+				if err != nil {
+					return math.NaN()
+				}
+				return v
+			case []byte:
+				v, err := strconv.ParseFloat(string(a), 64)
+				if err != nil {
+					return math.NaN()
+				}
+				return v
+			default:
+				return math.NaN()
+			}
 		},
-		"toInt": func(a float64) int {
-			return int(a)
+		"toInt": func(a any) int {
+			switch a := a.(type) {
+			case int:
+				return a
+			case float64:
+				return int(a)
+			case string:
+				v, err := strconv.ParseInt(a, 10, 64)
+				if err != nil {
+					return 0
+				}
+				return int(v)
+			case []byte:
+				v, err := strconv.ParseInt(string(a), 10, 64)
+				if err != nil {
+					return 0
+				}
+				return int(v)
+			default:
+				return 0
+			}
 		},
 		"add": func(a, b any) any {
 			return doMathOpWithAny(a, b, "add")
@@ -556,6 +597,14 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			}
 
 			return getCachedRegexp(pattern).ReplaceAllString(s, replacement)
+		},
+		"parseHTML": func(body string) *goquery.Document {
+			doc, err := goquery.NewDocumentFromReader(strings.NewReader(body))
+			if err != nil {
+				return nil
+			}
+
+			return doc
 		},
 		"findMatch": func(pattern, s string) string {
 			if s == "" {
@@ -652,6 +701,10 @@ var customAPITemplateFuncs = func() template.FuncMap {
 				req.Parameters = make(queryParametersField)
 			}
 			req.Parameters[key] = append(req.Parameters[key], value)
+			return req
+		},
+		"withSkipJSONValidation": func(req *CustomAPIRequest) *CustomAPIRequest {
+			req.SkipJSONValidation = true
 			return req
 		},
 		"withStringBody": func(body string, req *CustomAPIRequest) *CustomAPIRequest {
