@@ -194,6 +194,7 @@ func (req *CustomAPIRequest) initialize() error {
 
 type customAPIResponseData struct {
 	JSON     decoratedGJSONResult
+	Body     string
 	Response *http.Response
 }
 
@@ -271,6 +272,7 @@ func fetchCustomAPIResponse(ctx context.Context, req *CustomAPIRequest) (*custom
 
 	return &customAPIResponseData{
 		JSON:     decoratedGJSONResult{gjson.Parse(body)},
+		Body:     body,
 		Response: resp,
 	}, nil
 }
