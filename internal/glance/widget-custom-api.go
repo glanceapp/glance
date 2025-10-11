@@ -475,11 +475,49 @@ var customAPITemplateFuncs = func() template.FuncMap {
 	}
 
 	funcs := template.FuncMap{
-		"toFloat": func(a int) float64 {
+		"toFloat": func(a any) float64 {
+			switch a := a.(type) {
+			case int:
 			return float64(a)
+			case float64:
+				return a
+			case string:
+				v, err := strconv.ParseFloat(a, 64)
+				if err != nil {
+					return math.NaN()
+				}
+				return v
+			case []byte:
+				v, err := strconv.ParseFloat(string(a), 64)
+				if err != nil {
+					return math.NaN()
+				}
+				return v
+			default:
+				return math.NaN()
+			}
 		},
-		"toInt": func(a float64) int {
+		"toInt": func(a any) int {
+			switch a := a.(type) {
+			case int:
+				return a
+			case float64:
 			return int(a)
+			case string:
+				v, err := strconv.ParseInt(a, 10, 64)
+				if err != nil {
+					return 0
+				}
+				return int(v)
+			case []byte:
+				v, err := strconv.ParseInt(string(a), 10, 64)
+				if err != nil {
+					return 0
+				}
+				return int(v)
+			default:
+				return 0
+			}
 		},
 		"add": func(a, b any) any {
 			return doMathOpWithAny(a, b, "add")
