@@ -694,6 +694,10 @@ var customAPITemplateFuncs = func() template.FuncMap {
 			req.Parameters[key] = append(req.Parameters[key], value)
 			return req
 		},
+		"withSkipJSONValidation": func(req *CustomAPIRequest) *CustomAPIRequest {
+			req.SkipJSONValidation = true
+			return req
+		},
 		"withStringBody": func(body string, req *CustomAPIRequest) *CustomAPIRequest {
 			req.Body = body
 			req.BodyType = "string"
