@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -14,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spf13/afero"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -439,6 +442,23 @@ func (a *application) server() (func() error, func() error) {
 	mux.HandleFunc("GET /{$}", a.handlePageRequest)
 	mux.HandleFunc("GET /{page}", a.handlePageRequest)
 
+	var absDataPath string
+	if a.Config.Server.DataPath == "" {
+		a.Config.Server.DataPath = "./data"
+	}
+	absDataPath, _ = filepath.Abs(a.Config.Server.DataPath)
+
+	fs := afero.NewOsFs()
+	todosDataPath := path.Join(absDataPath, "todos")
+	exist, _ := afero.DirExists(fs, todosDataPath)
+	if !exist {
+		fs.MkdirAll(todosDataPath, os.ModePerm)
+	}
+
+	todoWidget := &todoWidget{storage: afero.NewBasePathFs(fs, todosDataPath)}
+	mux.HandleFunc("GET /api/widgets/todo/{id}", todoWidget.handleRequest)
+	mux.HandleFunc("PUT /api/widgets/todo/{id}", todoWidget.handleRequest)
+
 	mux.HandleFunc("GET /api/pages/{page}/content/{$}", a.handlePageContentRequest)
 
 	if !a.Config.Theme.DisablePicker {
@@ -494,11 +514,12 @@ func (a *application) server() (func() error, func() error) {
 	}
 
 	start := func() error {
-		log.Printf("Starting server on %s:%d (base-url: \"%s\", assets-path: \"%s\")\n",
+		log.Printf("Starting server on %s:%d (base-url: \"%s\", assets-path: \"%s\", data-path: \"%s\")\n",
 			a.Config.Server.Host,
 			a.Config.Server.Port,
 			a.Config.Server.BaseURL,
 			absAssetsPath,
+			absDataPath,
 		)
 
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {

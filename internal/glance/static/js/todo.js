@@ -6,10 +6,12 @@ const trashIconSvg = `<svg fill="currentColor" xmlns="http://www.w3.org/2000/svg
   <path fill-rule="evenodd" d="M5 3.25V4H2.75a.75.75 0 0 0 0 1.5h.3l.815 8.15A1.5 1.5 0 0 0 5.357 15h5.285a1.5 1.5 0 0 0 1.493-1.35l.815-8.15h.3a.75.75 0 0 0 0-1.5H11v-.75A2.25 2.25 0 0 0 8.75 1h-1.5A2.25 2.25 0 0 0 5 3.25Zm2.25-.75a.75.75 0 0 0-.75.75V4h3v-.75a.75.75 0 0 0-.75-.75h-1.5ZM6.05 6a.75.75 0 0 1 .787.713l.275 5.5a.75.75 0 0 1-1.498.075l-.275-5.5A.75.75 0 0 1 6.05 6Zm3.9 0a.75.75 0 0 1 .712.787l-.275 5.5a.75.75 0 0 1-1.498-.075l.275-5.5a.75.75 0 0 1 .786-.711Z" clip-rule="evenodd" />
 </svg>`;
 
-export default function(element) {
-    element.swapWith(
-        Todo(element.dataset.todoId)
-    )
+export default async function (element) {
+    const todo = await Todo(
+        element.dataset.todoId,
+        element.dataset.todoStorageType
+    );
+    element.swapWith(todo);
 }
 
 function itemAnim(height, entrance = true) {
@@ -37,11 +39,23 @@ function inputMarginAnim(entrance = true) {
     }
 }
 
-function loadFromLocalStorage(id) {
+async function loadFromStorage(id, type) {
+    if (type === "server") {
+        const res = await fetch(`/api/widgets/todo/${id}`);
+        return await res.json();
+    }
     return JSON.parse(localStorage.getItem(`todo-${id}`) || "[]");
 }
 
-function saveToLocalStorage(id, data) {
+async function saveToStorage(id, type, data) {
+    if (type === "server") {
+        await fetch(`/api/widgets/todo/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+        return;
+    }
     localStorage.setItem(`todo-${id}`, JSON.stringify(data));
 }
 
@@ -101,7 +115,7 @@ function Item(unserialize = {}, onUpdate, onDelete, onEscape, onDragStart) {
     });
 }
 
-function Todo(id) {
+async function Todo(id, storageType) {
     let items, input, inputArea, inputContainer, lastAddedItem;
     let queuedForRemoval = 0;
     let reorderable;
@@ -116,8 +130,8 @@ function Todo(id) {
     const saveItems = () => {
         if (isDragging) return;
 
-        saveToLocalStorage(
-            id, items.children.map(item => item.component.serialize())
+        saveToStorage(
+            id, storageType, items.children.map(item => item.component.serialize())
         );
     };
 
@@ -179,11 +193,11 @@ function Todo(id) {
         }
     };
 
+    const todos = await loadFromStorage(id, storageType);
+
     items = elem()
         .classes("todo-items")
-        .append(
-            ...loadFromLocalStorage(id).map(data => newItem(data))
-        );
+        .append(...todos.map(data => newItem(data)));
 
     return fragment().append(
         inputContainer = elem()

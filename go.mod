@@ -6,10 +6,11 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/shirou/gopsutil/v4 v4.25.5
+	github.com/spf13/afero v1.15.0
 	github.com/tidwall/gjson v1.18.0
 	golang.org/x/crypto v0.39.0
 	golang.org/x/net v0.41.0
-	golang.org/x/text v0.26.0
+	golang.org/x/text v0.28.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
