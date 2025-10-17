@@ -743,8 +743,71 @@ function initThemePicker() {
     })
 }
 
+function initRefreshControls() {
+    const refreshButton = find(".refresh-button");
+    if (!refreshButton) return;
+
+    refreshButton.addEventListener("click", () => {
+        setupPage();
+    });
+
+    const autoRefreshToggleOn = find(".refresh-button-on");
+    const autoRefreshToggleOff = find(".refresh-button-off");
+
+    const localStorageKey = "auto-refresh-interval-id";
+
+    const loadOrSaveIntervalId = (intervalId) => {
+        if(intervalId) window.localStorage.setItem(localStorageKey, intervalId);
+        else return window.localStorage.getItem(localStorageKey);
+    }
+
+    const toggleAutoRefreshUI = (autoRefreshOn) => {
+        if (autoRefreshOn) {
+            autoRefreshToggleOn.classList.remove("display-none");
+            autoRefreshToggleOff.classList.add("display-none");
+        } else {
+            autoRefreshToggleOn.classList.add("display-none");
+            autoRefreshToggleOff.classList.remove("display-none");
+        }
+    }
+
+    const startAutoRefresh = () => {
+        //Remove any previous interval
+        stopAutoRefresh();
+
+        toggleAutoRefreshUI(true);
+
+        const intervalId = setInterval(() => {
+            setupPage();
+        }, 1000 * 60 * 3);
+        loadOrSaveIntervalId(intervalId);
+    };
+
+    const stopAutoRefresh = () => {
+        toggleAutoRefreshUI(false);
+
+        const intervalId = loadOrSaveIntervalId();
+
+        if (intervalId) {
+            clearInterval(intervalId);
+            window.localStorage.removeItem(localStorageKey);
+        }
+    };
+
+    autoRefreshToggleOn.addEventListener("click", () => {
+        stopAutoRefresh();
+    });
+
+    autoRefreshToggleOff.addEventListener("click", () => {
+        startAutoRefresh();
+    });
+
+    toggleAutoRefreshUI(!!loadOrSaveIntervalId());
+}
+
 async function setupPage() {
     initThemePicker();
+    initRefreshControls();
 
     const pageElement = document.getElementById("page");
     const pageContentElement = document.getElementById("page-content");
