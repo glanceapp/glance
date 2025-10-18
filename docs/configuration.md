@@ -771,6 +771,8 @@ Example:
 | preserve-order | bool | no | false |
 | single-line-titles | boolean | no | false |
 | collapse-after | integer | no | 5 |
+| hide-channel-name | boolean | no | false |
+| hide-link-host | boolean | no | false |
 
 ##### `limit`
 The maximum number of articles to show.
@@ -818,6 +820,12 @@ Used to modify the height of cards when using the `horizontal-cards-2` style. Th
 
 ##### `feeds`
 An array of RSS/atom feeds. The title can optionally be changed.
+
+##### `hide-channel-name`
+Used to hide the channel name from the feed. The default value is `false`.
+
+##### `hide-link-host`
+Used to hide the hostname of the link from the feed. The default value is `false`.
 
 ###### Properties for each feed
 | Name | Type | Required | Default | Notes |
