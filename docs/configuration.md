@@ -864,16 +864,20 @@ Preview:
 ![](images/videos-widget-preview.png)
 
 #### Properties
-| Name | Type | Required | Default |
-| ---- | ---- | -------- | ------- |
-| channels | array | yes | |
-| playlists | array | no | |
-| limit | integer | no | 25 |
-| style | string | no | horizontal-cards |
-| collapse-after | integer | no | 7 |
-| collapse-after-rows | integer | no | 4 |
-| include-shorts | boolean | no | false |
-| video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
+| Name                    | Type     | Required | Default                                    |
+|-------------------------|----------|----------|--------------------------------------------|
+| channels                | array    | yes      |                                            |
+| playlists               | array    | no       |                                            |
+| limit                   | integer  | no       | 25                                         |
+| style                   | string   | no       | horizontal-cards                           |
+| collapse-after          | integer  | no       | 7                                          |
+| collapse-after-rows     | integer  | no       | 4                                          |
+| include-shorts          | boolean  | no       | false                                      |
+| video-url-template      | string   | no       | https://www.youtube.com/watch?v={VIDEO-ID} |
+| use-dearrow-titles      | bool     | no       | false                                      |
+| use-dearrow-thumbnails  | bool     | no       | false                                      |
+| dearrow-titles-url      | string   | no       | https://sponsor.ajay.app                   |  
+| dearrow-thumbnails-url  | string   | no       | https://dearrow-thumb.ajay.app             |
 
 ##### `channels`
 A list of channels IDs.
@@ -932,6 +936,24 @@ video-url-template: https://invidious.your-domain.com/watch?v={VIDEO-ID}
 Placeholders:
 
 `{VIDEO-ID}` - the ID of the video
+
+##### `use-dearrow-titles`
+Tries to switch the video titles with more precise ones using the [DeArrow API](https://dearrow.ajay.app/).
+
+##### `use-dearrow-thumbnails`
+Tries to switch the video thumbails with less distracting ones using the [DeArrow API](https://dearrow.ajay.app/).
+
+##### `dearrow-titles-instance-url`
+The base URL for a DeArrow titles API instance hosted somewhere other than on ajay.app. Example:
+```yaml
+dearrow-titles-instance-url: https://dearrow.minibomba.pro/sbserver/
+```
+
+##### `dearrow-thumbnails-instance-url`
+The base URL for a DeArrow thumbnails API instance hosted somewhere other than on ajay.app. Example:
+```yaml
+dearrow-thumbnails-instance-url: https://dearrow.minibomba.pro/sbserver/
+```
 
 ### Hacker News
 Display a list of posts from [Hacker News](https://news.ycombinator.com/).
