@@ -134,6 +134,38 @@ type customIconField struct {
 	AutoInvert bool
 }
 
+/*
+	I'm sure there are better & more optimized ways to do this,
+	but I have little to no experience with Go.
+
+	I couldn't find an unpkg version for homarr and selfhst,
+	though there might be other alternatives ¯\_(ツ)_/¯
+*/
+var activeCDN string
+
+func detectCDN() string {
+	client := &http.Client{Timeout: 5 * time.Second}
+
+	candidates := []string{
+		"https://cdn.jsdelivr.net",
+		"https://unpkg.com",
+	}
+
+	for _, base := range candidates {
+		resp, err := client.Head(base)
+		if err != nil {
+			continue
+		}
+		resp.Body.Close()
+		if resp.StatusCode == http.StatusOK {
+			return base
+		}
+	}
+
+	return "None"
+}
+
+
 func newCustomIconField(value string) customIconField {
 	const autoInvertPrefix = "auto-invert "
 	field := customIconField{}
@@ -141,6 +173,10 @@ func newCustomIconField(value string) customIconField {
 	if strings.HasPrefix(value, autoInvertPrefix) {
 		field.AutoInvert = true
 		value = strings.TrimPrefix(value, autoInvertPrefix)
+	}
+
+	if activeCDN == "" {
+		activeCDN = detectCDN()
 	}
 
 	prefix, icon, found := strings.Cut(value, ":")
@@ -161,13 +197,13 @@ func newCustomIconField(value string) customIconField {
 
 	switch prefix {
 	case "si":
+		field.URL = template.URL(activeCDN + "/simple-icons@latest/icons/" + basename + ".svg")
 		field.AutoInvert = true
-		field.URL = template.URL("https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/" + basename + ".svg")
 	case "di":
 		field.URL = template.URL("https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/" + ext + "/" + basename + "." + ext)
 	case "mdi":
+		field.URL = template.URL(activeCDN + "/@mdi/svg@latest/svg/" + basename + ".svg")
 		field.AutoInvert = true
-		field.URL = template.URL("https://cdn.jsdelivr.net/npm/@mdi/svg@latest/svg/" + basename + ".svg")
 	case "sh":
 		field.URL = template.URL("https://cdn.jsdelivr.net/gh/selfhst/icons/" + ext + "/" + basename + "." + ext)
 	default:
