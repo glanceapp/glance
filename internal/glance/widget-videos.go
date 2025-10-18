@@ -31,6 +31,7 @@ type videosWidget struct {
 	Playlists         []string  `yaml:"playlists"`
 	Limit             int       `yaml:"limit"`
 	IncludeShorts     bool      `yaml:"include-shorts"`
+	PublishThreshold  int       `yaml:"publish-threshold"`
 	SortBy            string    `yaml:"sort-by"`
 
 	Filters filterableFields[video] `yaml:"filters"`
@@ -67,7 +68,7 @@ func (widget *videosWidget) initialize() error {
 }
 
 func (widget *videosWidget) update(ctx context.Context) {
-	videos, err := fetchYoutubeChannelUploads(widget.Channels, widget.VideoUrlTemplate, widget.IncludeShorts, widget.SortBy)
+	videos, err := fetchYoutubeChannelUploads(widget.Channels, widget.VideoUrlTemplate, widget.IncludeShorts, widget.PublishThreshold, widget.SortBy)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
@@ -166,7 +167,7 @@ func (v videoList) sortByUpdated() videoList {
 	return v
 }
 
-func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate string, includeShorts bool, sortBy string) (videoList, error) {
+func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate string, includeShorts bool, publishThreshold int, sortBy string) (videoList, error) {
 	requests := make([]*http.Request, 0, len(channelOrPlaylistIDs))
 
 	for i := range channelOrPlaylistIDs {
@@ -218,13 +219,19 @@ func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate 
 				}
 			}
 
+			published := parseYoutubeFeedTime(v.Published)
+			dateThreshold := time.Now().AddDate(0, 0, -publishThreshold)
+			if publishThreshold > 0 && published.Before(dateThreshold) {
+				continue
+			}
+
 			videos = append(videos, video{
 				ThumbnailUrl: v.Group.Thumbnail.Url,
 				Title:        v.Title,
 				Url:          videoUrl,
 				Author:       response.Channel,
 				AuthorUrl:    response.ChannelLink + "/videos",
-				TimePosted:   parseYoutubeFeedTime(v.Published),
+				TimePosted:   published,
 				TimeUpdated:  parseYoutubeFeedTime(v.Updated),
 			})
 		}
