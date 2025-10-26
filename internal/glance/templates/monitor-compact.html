@@ -2,7 +2,7 @@
 
 {{ define "widget-content" }}
 {{ if not (and .ShowFailingOnly (not .HasFailing)) }}
-<ul class="dynamic-columns list-gap-8">
+<ul class="dynamic-columns list-gap-10">
     {{ range .Sites }}
     {{ if and $.ShowFailingOnly (eq .StatusStyle "ok" ) }}{{ continue }}{{ end }}
     <div class="flex items-center gap-12">
@@ -21,6 +21,9 @@
 {{ end }}
 
 {{ define "site" }}
+{{ if .Icon.URL }}
+{{ .Icon.ElemWithClass "square-20" }}
+{{ end }}
 <a class="size-title-dynamic color-highlight text-truncate block grow" href="{{ .URL | safeURL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
 {{ if not .Status.TimedOut }}<div>{{ .Status.ResponseTime.Milliseconds | formatNumber }}ms</div>{{ end }}
 {{ if eq .StatusStyle "ok" }}
