@@ -2346,6 +2346,7 @@ Preview:
 | allow-insecure | bool | no | false |
 | url | string | yes |  |
 | username | string | when service is `adguard` |  |
+| glinet-endpoint| string | only if you have `adguard` installed inside a `GLiNet` router  | |
 | password | string | when service is `adguard` or `pihole-v6` |  |
 | token | string | when service is `pihole` |  |
 | hide-graph | bool | no | false |
