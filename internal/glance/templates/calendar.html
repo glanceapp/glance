@@ -2,6 +2,6 @@
 
 {{ define "widget-content" }}
 <div class="widget-small-content-bounds">
-    <div class="calendar" data-first-day-of-week="{{ .FirstDay }}"></div>
+    <div class="calendar" data-events="{{ .Events }}" data-first-day-of-week="{{ .FirstDay }}"></div>
 </div>
 {{ end }}

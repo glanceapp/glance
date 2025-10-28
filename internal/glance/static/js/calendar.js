@@ -31,12 +31,13 @@ const undoEntrance = slideFade({ direction: "left", distance: "100%", duration: 
 
 export default function(element) {
     element.swapWith(Calendar(
-        Number(element.dataset.firstDayOfWeek ?? 1)
+        Number(element.dataset.firstDayOfWeek ?? 1),
+        element.dataset.events
     ));
 }
 
 // TODO: when viewing the previous/next month, display the current date if it's within the spill-over days
-function Calendar(firstDay) {
+function Calendar(firstDay, event) {
     let header, dates;
     let advanceTimeTicker;
     let now = new Date();
@@ -63,7 +64,7 @@ function Calendar(firstDay) {
 
     const calendar = elem().classes("calendar").append(
         header = Header(nextClicked, prevClicked, undoClicked),
-        dates = Dates(firstDay)
+        dates = Dates(firstDay, event)
     );
 
     update(now);
@@ -127,7 +128,7 @@ function Header(nextClicked, prevClicked, undoClicked) {
     });
 }
 
-function Dates(firstDay) {
+function Dates(firstDay, events) {
     let dates, lastRenderedDate;
 
     const updateFullMonth = function(now, newDate) {
@@ -152,11 +153,38 @@ function Dates(firstDay) {
             )
         }
 
-        for (let i = 1; i <= currentMonthDays; i++, index++) {
-            children[index]
+        const tooltip = document.createElement("div");
+        tooltip.className = "calendar-event-tooltip"; // style this in CSS
+        document.body.appendChild(tooltip);
+        for (let i = 2; i <= currentMonthDays; i++, index++) {
+            const thisDate = new Date(newDate.getFullYear(), newDate.getMonth(), i);
+            var child = children[index];
+            child
                 .classesIf(isCurrentMonth && i === currentDate, "calendar-current-date")
                 .text(i);
+            if(events && events !== "null") {
+                const hasEvent = checkIfDateHasEvent(newDate, i, events);
+                if(hasEvent) {
+                    child.classes("calendar-event-date")
+                    child.addEventListener("mouseenter", (e) => {
+                        tooltip.innerHTML = getEventsForDate(thisDate, events).join("<br>")
+                        tooltip.style.display = "block";
+                        tooltip.style.left = e.pageX + 10 + "px";
+                        tooltip.style.top = e.pageY + 10 + "px";
+                    });
+
+                    child.addEventListener("mousemove", (e) => {
+                        tooltip.style.left = e.pageX + 10 + "px";
+                        tooltip.style.top = e.pageY + 10 + "px";
+                    });
+
+                    child.addEventListener("mouseleave", () => {
+                        tooltip.style.display = "none";
+                    });
+                }
+            }
         }
+
 
         for (let i = 0; i < nextMonthSpilloverDays; i++, index++) {
             children[index].classes("calendar-spillover-date").text(i + 1);
@@ -209,4 +237,37 @@ function msTillNextDay(now) {
       now.getMinutes() * 60_000 +
       now.getHours() * 3_600_000
     );
+}
+
+function checkIfDateHasEvent(activeMonth, date, events) {
+    const eventsObject = JSON.parse(events)
+
+    return eventsObject.some(event => {
+        const eventDate = new Date(event.Date)
+        return eventDate.getDate() === date && activeMonth.getMonth() === eventDate.getMonth()
+    })
+}
+
+function getEventsForDate(date, events) {
+    const eventsObject = JSON.parse(events)
+    //const target = formatDateLocal(date)
+
+    return eventsObject
+        .filter(ev => {
+            //const evDate = formatDateLocal(new Date(ev.Date))
+            const evDate = new Date(ev.Date)
+            return isSameDay(date, evDate)
+        })
+        .map(ev => {
+            const evDate = new Date(ev.Date)
+            const hours = String(evDate.getHours()).padStart(2, '0');
+            const minutes = String(evDate.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes} - ${ev.Name}`;
+    });
+}
+
+function isSameDay(dateOnly, timeDate) {
+    return dateOnly.getFullYear() === timeDate.getFullYear() &&
+           dateOnly.getMonth() === timeDate.getMonth() &&
+           dateOnly.getDate() === timeDate.getDate();
 }

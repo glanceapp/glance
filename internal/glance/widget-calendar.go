@@ -1,9 +1,14 @@
 package glance
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
+	"net/http"
 	"time"
+
+	ics "github.com/arran4/golang-ical"
 )
 
 var calendarWidgetTemplate = mustParseTemplate("calendar.html", "widget-base.html")
@@ -21,8 +26,15 @@ var calendarWeekdaysToInt = map[string]time.Weekday{
 type calendarWidget struct {
 	widgetBase     `yaml:",inline"`
 	FirstDayOfWeek string        `yaml:"first-day-of-week"`
+	Ics            []string      `yaml:"ics"`
 	FirstDay       int           `yaml:"-"`
 	cachedHTML     template.HTML `yaml:"-"`
+	Events         string        `yaml:"events"`
+}
+
+type calendarEvent struct {
+	Date time.Time
+	Name string
 }
 
 func (widget *calendarWidget) initialize() error {
@@ -34,6 +46,30 @@ func (widget *calendarWidget) initialize() error {
 		return errors.New("invalid first day of week")
 	}
 
+	var events []*ics.VEvent
+	var widgetEvents []calendarEvent
+	for _, url := range widget.Ics {
+		newEvents, err := ReadPublicIcs(url)
+		if err != nil {
+			fmt.Println(err)
+		}
+		events = append(events, newEvents...)
+	}
+
+	for _, event := range events {
+		startDate, _ := event.GetStartAt()
+		e := calendarEvent{
+			Date: startDate,
+			Name: event.GetProperty("SUMMARY").Value,
+		}
+		widgetEvents = append(widgetEvents, e)
+
+	}
+	jsonBytes, err := json.Marshal(widgetEvents)
+	if err != nil {
+		panic(err)
+	}
+	widget.Events = string(jsonBytes)
 	widget.FirstDay = int(calendarWeekdaysToInt[widget.FirstDayOfWeek])
 	widget.cachedHTML = widget.renderTemplate(widget, calendarWidgetTemplate)
 
@@ -42,4 +78,18 @@ func (widget *calendarWidget) initialize() error {
 
 func (widget *calendarWidget) Render() template.HTML {
 	return widget.cachedHTML
+}
+
+func ReadPublicIcs(url string) ([]*ics.VEvent, error) {
+	response, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	cal, err := ics.ParseCalendar(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	events := cal.Events()
+	return events, nil
 }
