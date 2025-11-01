@@ -138,6 +138,8 @@ type widget interface {
 	setProviders(*widgetProviders)
 	update(context.Context)
 	setID(uint64)
+	getNestedWidgets() widgets
+	getHandlerFunc() map[string]http.HandlerFunc
 	handleRequest(w http.ResponseWriter, r *http.Request)
 	setHideHeader(bool)
 }
@@ -202,8 +204,17 @@ func (w *widgetBase) setID(id uint64) {
 	w.ID = id
 }
 
+func (w *widgetBase) getNestedWidgets() widgets {
+	return nil
+}
+
 func (w *widgetBase) setHideHeader(value bool) {
 	w.HideHeader = value
+}
+
+func (w *widgetBase) getHandlerFunc() map[string]http.HandlerFunc {
+	// No API routes by default
+	return nil
 }
 
 func (widget *widgetBase) handleRequest(w http.ResponseWriter, r *http.Request) {

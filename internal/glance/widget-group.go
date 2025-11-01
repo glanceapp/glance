@@ -47,6 +47,10 @@ func (widget *groupWidget) requiresUpdate(now *time.Time) bool {
 	return widget.containerWidgetBase._requiresUpdate(now)
 }
 
+func (widget *groupWidget) getNestedWidgets() widgets {
+	return widget.Widgets
+}
+
 func (widget *groupWidget) Render() template.HTML {
 	return widget.renderTemplate(widget, groupWidgetTemplate)
 }

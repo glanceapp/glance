@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"path"
 	"path/filepath"
 	"slices"
@@ -16,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/spf13/afero"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -179,6 +177,11 @@ func newApplication(c *config) (*application, error) {
 			widget := page.HeadWidgets[i]
 			app.widgetByID[widget.GetID()] = widget
 			widget.setProviders(providers)
+
+			for _, nestedWidget := range widget.getNestedWidgets() {
+				app.widgetByID[nestedWidget.GetID()] = nestedWidget
+				nestedWidget.setProviders(providers)
+			}
 		}
 
 		for c := range page.Columns {
@@ -192,6 +195,11 @@ func newApplication(c *config) (*application, error) {
 				widget := column.Widgets[w]
 				app.widgetByID[widget.GetID()] = widget
 				widget.setProviders(providers)
+
+				for _, nestedWidget := range widget.getNestedWidgets() {
+					app.widgetByID[nestedWidget.GetID()] = nestedWidget
+					nestedWidget.setProviders(providers)
+				}
 			}
 		}
 	}
@@ -442,30 +450,28 @@ func (a *application) server() (func() error, func() error) {
 	mux.HandleFunc("GET /{$}", a.handlePageRequest)
 	mux.HandleFunc("GET /{page}", a.handlePageRequest)
 
-	var absDataPath string
-	if a.Config.Server.DataPath == "" {
-		a.Config.Server.DataPath = "./data"
-	}
-	absDataPath, _ = filepath.Abs(a.Config.Server.DataPath)
-
-	fs := afero.NewOsFs()
-	todosDataPath := path.Join(absDataPath, "todos")
-	exist, _ := afero.DirExists(fs, todosDataPath)
-	if !exist {
-		fs.MkdirAll(todosDataPath, os.ModePerm)
-	}
-
-	todoWidget := &todoWidget{storage: afero.NewBasePathFs(fs, todosDataPath)}
-	mux.HandleFunc("GET /api/widgets/todo/{id}", todoWidget.handleRequest)
-	mux.HandleFunc("PUT /api/widgets/todo/{id}", todoWidget.handleRequest)
-
 	mux.HandleFunc("GET /api/pages/{page}/content/{$}", a.handlePageContentRequest)
 
 	if !a.Config.Theme.DisablePicker {
 		mux.HandleFunc("POST /api/set-theme/{key}", a.handleThemeChangeRequest)
 	}
 
-	mux.HandleFunc("/api/widgets/{widget}/{path...}", a.handleWidgetRequest)
+	widgetsAPIs := make(map[string]bool)
+	for _, widget := range a.widgetByID {
+		for pattern, handler := range widget.getHandlerFunc() {
+			part := strings.Split(pattern, " ")
+			if len(part) != 2 {
+				panic(fmt.Errorf("invalid API route pattern: %s", pattern))
+			}
+			fullPattern := fmt.Sprintf("%s %s", part[0], path.Join("/api/widgets", widget.GetType(), part[1]))
+			if widgetsAPIs[fullPattern] {
+				continue
+			}
+			mux.HandleFunc(fullPattern, handler)
+			widgetsAPIs[fullPattern] = true
+		}
+	}
+
 	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
@@ -507,6 +513,13 @@ func (a *application) server() (func() error, func() error) {
 		assetsFS := fileServerWithCache(http.Dir(a.Config.Server.AssetsPath), 2*time.Hour)
 		mux.Handle("/assets/{path...}", http.StripPrefix("/assets/", assetsFS))
 	}
+
+	var absDataPath string
+	if a.Config.Server.DataPath == "" {
+		a.Config.Server.DataPath = "./data"
+	}
+	absDataPath, _ = filepath.Abs(a.Config.Server.DataPath)
+	setDataPath(absDataPath)
 
 	server := http.Server{
 		Addr:    fmt.Sprintf("%s:%d", a.Config.Server.Host, a.Config.Server.Port),
