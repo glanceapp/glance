@@ -212,6 +212,12 @@ icon: auto-invert sh:glance-dark # with a selfh.st icon
 
 This expects the icon to be black and will automatically invert it to white when using a dark theme.
 
+If there is no `.svg` version available for a `selfh.st` or `Dashboard` icon, then you can add the image extension of the format you wish to use.
+```yaml
+icon: sh:glance.png # use the .png version of the icon
+icon: sh:glance.webp # use the .webp version of the icon
+```
+
 ## Config schema
 
 For property descriptions, validation and autocompletion of the config within your IDE, @not-first has kindly created a [schema](https://github.com/not-first/glance-schema). Massive thanks to them for this, go check it out and give them a star!

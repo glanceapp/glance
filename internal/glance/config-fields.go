@@ -216,7 +216,7 @@ func newCustomIconField(value string) customIconField {
 		basename = icon
 	}
 
-	if ext != "svg" && ext != "png" {
+	if ext != "svg" && ext != "png" && ext != "webp" {
 		ext = "svg"
 	}
 
