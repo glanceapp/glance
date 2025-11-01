@@ -140,7 +140,6 @@ type widget interface {
 	setID(uint64)
 	getNestedWidgets() widgets
 	getHandlerFunc() map[string]http.HandlerFunc
-	handleRequest(w http.ResponseWriter, r *http.Request)
 	setHideHeader(bool)
 }
 
@@ -215,10 +214,6 @@ func (w *widgetBase) setHideHeader(value bool) {
 func (w *widgetBase) getHandlerFunc() map[string]http.HandlerFunc {
 	// No API routes by default
 	return nil
-}
-
-func (widget *widgetBase) handleRequest(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
 }
 
 func (w *widgetBase) GetType() string {
