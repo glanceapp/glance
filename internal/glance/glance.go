@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -176,6 +177,11 @@ func newApplication(c *config) (*application, error) {
 			widget := page.HeadWidgets[i]
 			app.widgetByID[widget.GetID()] = widget
 			widget.setProviders(providers)
+
+			for _, nestedWidget := range widget.getNestedWidgets() {
+				app.widgetByID[nestedWidget.GetID()] = nestedWidget
+				nestedWidget.setProviders(providers)
+			}
 		}
 
 		for c := range page.Columns {
@@ -189,6 +195,11 @@ func newApplication(c *config) (*application, error) {
 				widget := column.Widgets[w]
 				app.widgetByID[widget.GetID()] = widget
 				widget.setProviders(providers)
+
+				for _, nestedWidget := range widget.getNestedWidgets() {
+					app.widgetByID[nestedWidget.GetID()] = nestedWidget
+					nestedWidget.setProviders(providers)
+				}
 			}
 		}
 	}
@@ -401,29 +412,6 @@ func (a *application) handleNotFound(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("Page not found"))
 }
 
-func (a *application) handleWidgetRequest(w http.ResponseWriter, r *http.Request) {
-	// TODO: this requires a rework of the widget update logic so that rather
-	// than locking the entire page we lock individual widgets
-	w.WriteHeader(http.StatusNotImplemented)
-
-	// widgetValue := r.PathValue("widget")
-
-	// widgetID, err := strconv.ParseUint(widgetValue, 10, 64)
-	// if err != nil {
-	// 	a.handleNotFound(w, r)
-	// 	return
-	// }
-
-	// widget, exists := a.widgetByID[widgetID]
-
-	// if !exists {
-	// 	a.handleNotFound(w, r)
-	// 	return
-	// }
-
-	// widget.handleRequest(w, r)
-}
-
 func (a *application) StaticAssetPath(asset string) string {
 	return a.Config.Server.BaseURL + "/static/" + staticFSHash + "/" + asset
 }
@@ -445,7 +433,22 @@ func (a *application) server() (func() error, func() error) {
 		mux.HandleFunc("POST /api/set-theme/{key}", a.handleThemeChangeRequest)
 	}
 
-	mux.HandleFunc("/api/widgets/{widget}/{path...}", a.handleWidgetRequest)
+	widgetsAPIs := make(map[string]bool)
+	for _, widget := range a.widgetByID {
+		for pattern, handler := range widget.getHandlerFunc() {
+			part := strings.Split(pattern, " ")
+			if len(part) != 2 {
+				panic(fmt.Errorf("invalid API route pattern: %s", pattern))
+			}
+			fullPattern := fmt.Sprintf("%s %s", part[0], path.Join("/api/widgets", widget.GetType(), part[1]))
+			if widgetsAPIs[fullPattern] {
+				continue
+			}
+			mux.HandleFunc(fullPattern, handler)
+			widgetsAPIs[fullPattern] = true
+		}
+	}
+
 	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
@@ -488,17 +491,25 @@ func (a *application) server() (func() error, func() error) {
 		mux.Handle("/assets/{path...}", http.StripPrefix("/assets/", assetsFS))
 	}
 
+	var absDataPath string
+	if a.Config.Server.DataPath == "" {
+		a.Config.Server.DataPath = "./data"
+	}
+	absDataPath, _ = filepath.Abs(a.Config.Server.DataPath)
+	setDataPath(absDataPath)
+
 	server := http.Server{
 		Addr:    fmt.Sprintf("%s:%d", a.Config.Server.Host, a.Config.Server.Port),
 		Handler: mux,
 	}
 
 	start := func() error {
-		log.Printf("Starting server on %s:%d (base-url: \"%s\", assets-path: \"%s\")\n",
+		log.Printf("Starting server on %s:%d (base-url: \"%s\", assets-path: \"%s\", data-path: \"%s\")\n",
 			a.Config.Server.Host,
 			a.Config.Server.Port,
 			a.Config.Server.BaseURL,
 			absAssetsPath,
+			absDataPath,
 		)
 
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
