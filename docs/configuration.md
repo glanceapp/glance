@@ -357,7 +357,7 @@ icon: /assets/gitea-icon.png
 ```
 
 #### `data-path`
-The path to a directory where Glance will store data such as todo lists when using server-side storage. The default value is `./data` which creates a `data` directory relative to where Glance is running from.
+The path to a directory where Glance will store data such as to-do lists when using server-side storage. The default value is `./data` which creates a `data` directory relative to where Glance is running from.
 
 > [!IMPORTANT]
 >
@@ -1933,14 +1933,14 @@ The ID of the todo list. If you want to have multiple todo lists, you must speci
 
 When `storage-type` is set to `browser`, the ID is used to store the tasks in the browser's local storage. This means that if you have multiple todo lists with the same ID, they will share the same tasks.
 
-When `storage-type` is set to `server`, the ID determines the filename where tasks are stored on the server (in the `data-path/todos/` directory). If not specified, it will default to the widget's internal ID.
+When `storage-type` is set to `server`, the ID determines the filename where tasks are stored on the server (in the `data-path/to-do/` directory). If not specified, it will default to `"default"`. **Important:** For server storage, it's recommended to always specify a unique ID to avoid data conflicts between different todo widgets.
 
 ##### `storage-type`
 
 Determines where the todo tasks are stored. Possible values are:
 
 * `browser` (default) - Tasks are stored in the browser's local storage. Data is only available on the device and browser where it was created.
-* `server` - Tasks are stored on the server in JSON files located in the `data-path/todos/` directory. This allows tasks to be synced across different devices and browsers.
+* `server` - Tasks are stored on the server in JSON files located in the `data-path/to-do/` directory. This allows tasks to be synced across different devices and browsers.
 
 Example with server storage:
 
@@ -1949,6 +1949,12 @@ Example with server storage:
   id: my-tasks
   storage-type: server
 ```
+
+#### Best Practices
+
+- **Always specify an ID for server storage**: When using `storage-type: server`, it's strongly recommended to specify a unique `id` to prevent data conflicts between different todo widgets.
+- **Error Handling**: If saving fails (network issues, permission problems, etc.), an error message will be displayed to inform you of the issue.
+- **Data Backup**: For server storage, ensure your `data-path` directory is regularly backed up to prevent data loss.
 
 #### Keyboard shortcuts
 | Keys | Action | Condition |
