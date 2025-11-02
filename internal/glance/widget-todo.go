@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"net/http"
 	"os"
-	"strconv"
 )
 
 var todoWidgetTemplate = mustParseTemplate("todo.html", "widget-base.html")
@@ -24,7 +23,7 @@ func (widget *todoWidget) initialize() error {
 	switch widget.StorageType {
 	case "server":
 		if widget.TodoID == "" {
-			widget.TodoID = strconv.FormatUint(widget.GetID(), 10)
+			widget.TodoID = "default"
 		}
 	case "browser":
 	default:

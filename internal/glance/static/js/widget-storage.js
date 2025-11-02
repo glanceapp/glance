@@ -61,21 +61,35 @@ export class WidgetStorage {
     /**
      * Load data from browser localStorage
      * @param {string} key - The storage key
-     * @returns {any} - The loaded data
+     * @returns {Promise<any>} - The loaded data
      */
     loadFromBrowser(key) {
         const storageKey = `${this.widgetType}-${key}`;
-        const data = localStorage.getItem(storageKey);
-        return data ? JSON.parse(data) : [];
+        return new Promise((resolve, reject) => {
+            try {
+                const data = localStorage.getItem(storageKey);
+                resolve(data ? JSON.parse(data) : []);
+            } catch (error) {
+                reject(error);
+            }
+        });
     }
 
     /**
      * Save data to browser localStorage
      * @param {string} key - The storage key
      * @param {any} data - The data to save
+     * @returns {Promise<void>}
      */
     saveToBrowser(key, data) {
-        const storageKey = `${this.widgetType}-${key}`;
-        localStorage.setItem(storageKey, JSON.stringify(data));
+        return new Promise((resolve, reject) => {
+            const storageKey = `${this.widgetType}-${key}`;
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(data));
+                resolve();
+            } catch (error) {
+                reject(error);
+            }
+        });
     }
 }

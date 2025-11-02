@@ -1,6 +1,7 @@
 package glance
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -12,7 +13,10 @@ func setDataPath(path string) {
 }
 
 func ensureDir(widgetType string) error {
-	return os.MkdirAll(filepath.Join(dataPath, widgetType), 0755)
+	if err := os.MkdirAll(filepath.Join(dataPath, widgetType), 0755); err != nil {
+		return fmt.Errorf("ensure widget directory exists: %w", err)
+	}
+	return nil
 }
 
 func loadFile(widgetType, key string) ([]byte, error) {

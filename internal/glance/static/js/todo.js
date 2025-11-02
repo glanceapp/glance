@@ -110,12 +110,15 @@ async function Todo(id, storageType) {
         reorderable.component.onDragStart(event, element);
     };
 
-    const saveItems = () => {
+    const saveItems = async () => {
         if (isDragging) return;
 
-        storage.save(
-            id, items.children.map(item => item.component.serialize())
-        );
+        try {
+            await storage.save(id, items.children.map(item => item.component.serialize()))
+        } catch(error) {
+            console.error('Failed to save todo items.', error);
+            alert('Failed to save todo items. Please refresh page and try again.');
+        };
     };
 
     const onItemRepositioned = () => saveItems();
@@ -175,8 +178,14 @@ async function Todo(id, storageType) {
                 break;
         }
     };
-
-    const todos = await storage.load(id);
+    
+    let todos = [];
+    try {
+        todos = await storage.load(id);
+    } catch (error) {
+        console.error('Failed to load todo items.', error);
+        alert('Failed to load todo items. Please refresh page and try again.');
+    };
 
     items = elem()
         .classes("todo-items")
