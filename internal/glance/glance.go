@@ -221,7 +221,7 @@ func newApplication(c *config) (*application, error) {
 		config.Branding.AppBackgroundColor = config.Theme.BackgroundColorAsHex
 	}
 
-	manifest, err := executeTemplateToString(manifestTemplate, templateData{App: app})
+	manifest, err := executeTemplateToString(manifestTemplate, templateData{App: app, AccessiblePages: nil})
 	if err != nil {
 		return nil, fmt.Errorf("parsing manifest.json: %v", err)
 	}
@@ -278,13 +278,26 @@ func (a *application) resolveUserDefinedAssetPath(path string) string {
 }
 
 type templateRequestData struct {
-	Theme *themeProperties
+	Theme    *themeProperties
+	Username string
 }
 
 type templateData struct {
-	App     *application
-	Page    *page
-	Request templateRequestData
+	App             *application
+	Page            *page
+	Request         templateRequestData
+	AccessiblePages []*page
+}
+
+func (a *application) getAccessiblePages(username string) []*page {
+	accessiblePages := make([]*page, 0, len(a.Config.Pages))
+	for i := range a.Config.Pages {
+		p := &a.Config.Pages[i]
+		if a.userHasPageAccess(username, p) {
+			accessiblePages = append(accessiblePages, p)
+		}
+	}
+	return accessiblePages
 }
 
 func (a *application) populateTemplateRequestData(data *templateRequestData, r *http.Request) {
@@ -301,6 +314,7 @@ func (a *application) populateTemplateRequestData(data *templateRequestData, r *
 	}
 
 	data.Theme = theme
+	data.Username = a.getUsernameFromRequest(r)
 }
 
 func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) {
@@ -314,9 +328,16 @@ func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	username := a.getUsernameFromRequest(r)
+	if !a.userHasPageAccess(username, page) {
+		http.Error(w, "403 Forbidden - You don't have access to this page", http.StatusForbidden)
+		return
+	}
+
 	data := templateData{
-		Page: page,
-		App:  a,
+		Page:            page,
+		App:             a,
+		AccessiblePages: a.getAccessiblePages(username),
 	}
 	a.populateTemplateRequestData(&data.Request, r)
 
@@ -342,8 +363,17 @@ func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	// Check if user has access to this specific page
+	username := a.getUsernameFromRequest(r)
+	if !a.userHasPageAccess(username, page) {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(`{"error": "Forbidden - You don't have access to this page"}`))
+		return
+	}
+
 	pageData := templateData{
-		Page: page,
+		Page:            page,
+		AccessiblePages: nil,
 	}
 
 	var err error
