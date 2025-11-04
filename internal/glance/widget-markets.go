@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -22,6 +23,13 @@ type marketsWidget struct {
 	SymbolLinkTemplate string          `yaml:"symbol-link-template"`
 	Sort               string          `yaml:"sort-by"`
 	Markets            marketList      `yaml:"-"`
+	MarketDuration     MarketDuration  `yaml:"duration"` // 1d, 1w, 1m, 3m, 6m, 1y, 2y, 5y, max
+}
+
+type MarketDuration string // 1d, 1w, 1m, 3m, 6m, 1y, 2y, 5y, max
+
+func (md MarketDuration) Valid() bool {
+	return slices.Contains([]MarketDuration{"1d", "1w", "1m", "3m", "6m", "1y", "2y", "5y", "max"}, md)
 }
 
 func (widget *marketsWidget) initialize() error {
@@ -44,11 +52,15 @@ func (widget *marketsWidget) initialize() error {
 		}
 	}
 
+	if !widget.MarketDuration.Valid() {
+		widget.MarketDuration = "1d"
+	}
+
 	return nil
 }
 
 func (widget *marketsWidget) update(ctx context.Context) {
-	markets, err := fetchMarketsDataFromYahoo(widget.MarketRequests)
+	markets, err := fetchMarketsDataFromYahoo(widget.MarketRequests, widget.MarketDuration)
 
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
@@ -122,11 +134,11 @@ type marketResponseJson struct {
 // TODO: allow changing chart time frame
 const marketChartDays = 21
 
-func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, error) {
+func fetchMarketsDataFromYahoo(marketRequests []marketRequest, interval MarketDuration) (marketList, error) {
 	requests := make([]*http.Request, 0, len(marketRequests))
 
 	for i := range marketRequests {
-		request, _ := http.NewRequest("GET", fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=1mo&interval=1d", marketRequests[i].Symbol), nil)
+		request, _ := http.NewRequest("GET", fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=1mo&interval=%s", marketRequests[i].Symbol, interval), nil)
 		setBrowserUserAgentHeader(request)
 		requests = append(requests, request)
 	}
