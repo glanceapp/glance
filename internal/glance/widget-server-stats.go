@@ -45,6 +45,9 @@ func (widget *serverStatsWidget) update(context.Context) {
 
 	for i := range widget.Servers {
 		serv := &widget.Servers[i]
+		if serv.MountBarLimit == 0 {
+			serv.MountBarLimit = 2
+		}
 
 		if serv.Type == "local" {
 			info, errs := sysinfo.Collect(serv.SystemInfoRequest)
@@ -91,6 +94,7 @@ type serverStatsRequest struct {
 	StatusText                 string              `yaml:"-"`
 	Name                       string              `yaml:"name"`
 	HideSwap                   bool                `yaml:"hide-swap"`
+	MountBarLimit   		   int                 `yaml:"mount-bar-limit"`
 	Type                       string              `yaml:"type"`
 	URL                        string              `yaml:"url"`
 	Token                      string              `yaml:"token"`
