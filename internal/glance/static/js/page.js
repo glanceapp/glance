@@ -206,6 +206,38 @@ function setupSearchBoxes() {
     }
 }
 
+function setupNavbarShortcuts() {
+    const navItems = Array.from(
+      document.getElementsByClassName("nav-item")
+    ).filter(item => {
+        return !item.parentElement.className.includes('mobile');
+    });
+
+    if (navItems.length < 2) {
+        return;
+    }
+
+    const keyCodeMap = {
+        'Digit1': 1, 'Digit2': 2, 'Digit3': 3, 'Digit4': 4, 'Digit5': 5,
+        'Digit6': 6, 'Digit7': 7, 'Digit8': 8, 'Digit9': 9, 'Digit0': 10
+    };
+
+    document.addEventListener("keydown", (event) => {
+        if (event.ctrlKey && event.shiftKey) {
+            if (event.code in keyCodeMap) {
+                let keyNum = keyCodeMap[event.code];
+                if (!isNaN(keyNum) && keyNum >= 1 && keyNum <= navItems.length) {
+                    const index = keyNum - 1;
+                    const targetHref = navItems[index].getAttribute('href');
+                    if (targetHref !== window.location.pathname) {
+                      window.location.href = targetHref;
+                    }
+                }
+            }
+        }
+    });
+}
+
 function setupDynamicRelativeTime() {
     const elements = document.querySelectorAll("[data-dynamic-relative-time]");
     const updateInterval = 60 * 1000;
@@ -759,6 +791,7 @@ async function setupPage() {
         await setupTodos();
         setupCarousels();
         setupSearchBoxes();
+        setupNavbarShortcuts();
         setupCollapsibleLists();
         setupCollapsibleGrids();
         setupGroups();
