@@ -1,7 +1,18 @@
-<p align="center"><em>What if you could see everything at a...</em></p>
+<p align="center"><img src="docs/logo.png"></p>
 <h1 align="center">Glance</h1>
-<p align="center"><a href="#installation">Install</a> • <a href="docs/configuration.md#configuring-glance">Configuration</a> • <a href="https://discord.com/invite/7KQ7Xa9kJd">Discord</a> • <a href="https://github.com/sponsors/glanceapp">Sponsor</a></p>
-<p align="center"><a href="https://github.com/glanceapp/community-widgets">Community widgets</a> • <a href="docs/preconfigured-pages.md">Preconfigured pages</a> • <a href="docs/themes.md">Themes</a></p>
+<p align="center">
+  <a href="#installation">Install</a> •
+  <a href="docs/configuration.md#configuring-glance">Configuration</a> •
+  <a href="https://discord.com/invite/7KQ7Xa9kJd">Discord</a> •
+  <a href="https://github.com/sponsors/glanceapp">Sponsor</a>
+</p>
+<p align="center">
+  <a href="https://github.com/glanceapp/community-widgets">Community widgets</a> •
+  <a href="docs/preconfigured-pages.md">Preconfigured pages</a> •
+  <a href="docs/themes.md">Themes</a>
+</p>
+
+<p align="center">A lightweight, highly customizable dashboard that displays<br> your feeds in a beautiful, streamlined interface</p>
 
 ![](docs/images/readme-main-image.png)
 
