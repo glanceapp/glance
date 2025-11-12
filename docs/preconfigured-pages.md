@@ -86,92 +86,92 @@ Pull requests with your page configurations are welcome!
 <summary>View config (requires Glance <code>v0.6.0</code> or higher)</summary>
 
 ```yaml
-  - name: Markets
-    columns:
-      - size: small
-        widgets:
-          - type: markets
-            title: Indices
-            markets:
-              - symbol: SPY
-                name: S&P 500
-              - symbol: DX-Y.NYB
-                name: Dollar Index
+- name: Markets
+  columns:
+    - size: small
+      widgets:
+        - type: markets
+          title: Indices
+          markets:
+            - symbol: SPY
+              name: S&P 500
+            - symbol: DX-Y.NYB
+              name: Dollar Index
 
-          - type: markets
-            title: Crypto
-            markets:
-              - symbol: BTC-USD
-                name: Bitcoin
-              - symbol: ETH-USD
-                name: Ethereum
+        - type: markets
+          title: Crypto
+          markets:
+            - symbol: BTC-USD
+              name: Bitcoin
+            - symbol: ETH-USD
+              name: Ethereum
 
-          - type: markets
-            title: Stocks
-            sort-by: absolute-change
-            markets:
-              - symbol: NVDA
-                name: NVIDIA
-              - symbol: AAPL
-                name: Apple
-              - symbol: MSFT
-                name: Microsoft
-              - symbol: GOOGL
-                name: Google
-              - symbol: AMD
-                name: AMD
-              - symbol: RDDT
-                name: Reddit
-              - symbol: AMZN
-                name: Amazon
-              - symbol: TSLA
-                name: Tesla
-              - symbol: INTC
-                name: Intel
-              - symbol: META
-                name: Meta
+        - type: markets
+          title: Stocks
+          sort-by: absolute-change
+          markets:
+            - symbol: NVDA
+              name: NVIDIA
+            - symbol: AAPL
+              name: Apple
+            - symbol: MSFT
+              name: Microsoft
+            - symbol: GOOGL
+              name: Google
+            - symbol: AMD
+              name: AMD
+            - symbol: RDDT
+              name: Reddit
+            - symbol: AMZN
+              name: Amazon
+            - symbol: TSLA
+              name: Tesla
+            - symbol: INTC
+              name: Intel
+            - symbol: META
+              name: Meta
 
-      - size: full
-        widgets:
-          - type: rss
-            title: News
-            style: horizontal-cards
-            feeds:
-              - url: https://feeds.bloomberg.com/markets/news.rss
-                title: Bloomberg
-              - url: https://moxie.foxbusiness.com/google-publisher/markets.xml
-                title: Fox Business
-              - url: https://moxie.foxbusiness.com/google-publisher/technology.xml
-                title: Fox Business
+    - size: full
+      widgets:
+        - type: rss
+          title: News
+          style: horizontal-cards
+          feeds:
+            - url: https://feeds.bloomberg.com/markets/news.rss
+              title: Bloomberg
+            - url: https://moxie.foxbusiness.com/google-publisher/markets.xml
+              title: Fox Business
+            - url: https://moxie.foxbusiness.com/google-publisher/technology.xml
+              title: Fox Business
 
-          - type: group
-            widgets:
-              - type: reddit
-                show-thumbnails: true
-                subreddit: technology
-              - type: reddit
-                show-thumbnails: true
-                subreddit: wallstreetbets
+        - type: group
+          widgets:
+            - type: reddit
+              show-thumbnails: true
+              subreddit: technology
+            - type: reddit
+              show-thumbnails: true
+              subreddit: wallstreetbets
 
-          - type: videos
-            style: grid-cards
-            collapse-after-rows: 3
-            channels:
-              - UCvSXMi2LebwJEM1s4bz5IBA # New Money
-              - UCV6KDgJskWaEckne5aPA0aQ # Graham Stephan
-              - UCAzhpt9DmG6PnHXjmJTvRGQ # Federal Reserve
+        - type: videos
+          style: grid-cards
+          collapse-after-rows: 3
+          channels:
+            - UCvSXMi2LebwJEM1s4bz5IBA # New Money
+            - UCV6KDgJskWaEckne5aPA0aQ # Graham Stephan
+            - UCAzhpt9DmG6PnHXjmJTvRGQ # Federal Reserve
 
-      - size: small
-        widgets:
-          - type: rss
-            title: News
-            limit: 30
-            collapse-after: 13
-            feeds:
-              - url: https://www.ft.com/technology?format=rss
-                title: Financial Times
-              - url: https://feeds.a.dj.com/rss/RSSMarketsMain.xml
-                title: Wall Street Journal
+    - size: small
+      widgets:
+        - type: rss
+          title: News
+          limit: 30
+          collapse-after: 13
+          feeds:
+            - url: https://www.ft.com/technology?format=rss
+              title: Financial Times
+            - url: https://feeds.a.dj.com/rss/RSSMarketsMain.xml
+              title: Wall Street Journal
 ```
 </details>
 
