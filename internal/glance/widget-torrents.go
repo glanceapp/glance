@@ -39,6 +39,7 @@ func (widget *torrentsWidget) initialize() error {
 	widget.
 		withTitle("Torrents").
 		withTitleURL(widget.URL).
+		withTitleTarget("_blank").
 		withCacheDuration(time.Second * 5)
 
 	if widget.URL == "" {

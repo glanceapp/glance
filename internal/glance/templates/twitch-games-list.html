@@ -7,7 +7,7 @@
         <div class="flex gap-10 items-start">
             <img class="twitch-category-thumbnail thumbnail" loading="lazy" src="{{ .AvatarUrl }}" alt="">
             <div class="min-width-0">
-                <a class="size-h3 color-highlight text-truncate block" href="https://www.twitch.tv/directory/category/{{ .Slug }}" target="_blank" rel="noreferrer">{{ .Name }}</a>
+                <a class="size-h3 color-highlight text-truncate block" href="https://www.twitch.tv/directory/category/{{ .Slug }}" target="{{ $.Target }}" rel="noreferrer">{{ .Name }}</a>
                 <ul class="list-horizontal-text">
                     <li>{{ .ViewersCount | formatApproxNumber }} viewers</li>
                     {{ if .IsNew }}
