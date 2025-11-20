@@ -1,0 +1,21 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<ul class="bookmarks-grid">
+{{- range .Links }}
+<li class="icon-parent text-center padding-inline-10">
+    <a href="{{ .URL | safeURL }}" class="block" {{ if .Target }}target="{{ .Target }}"{{ end }} rel="noreferrer">
+        {{- if ne "" .Icon.URL }}
+        <div class="padding-10 rounded bg-highlight width-max-content margin-inline-auto">
+            {{ .Icon.ElemWithClass "square-40" }}
+        </div>
+        {{- end }}
+        <p class="margin-top-7 block text-truncate color-highlight size-h4">{{ .Title }}</p>
+    </a>
+    {{- if .Description }}
+    <div class="margin-top-5 text-truncate-2-lines text-compact">{{ .Description }}</div>
+    {{- end }}
+</li>
+{{- end }}
+</ul>
+{{ end }}

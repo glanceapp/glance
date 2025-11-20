@@ -18,6 +18,8 @@ type lobstersWidget struct {
 	SortBy         string        `yaml:"sort-by"`
 	Tags           []string      `yaml:"tags"`
 	ShowThumbnails bool          `yaml:"-"`
+
+	Filters filterableFields[forumPost] `yaml:"filters"`
 }
 
 func (widget *lobstersWidget) initialize() error {
@@ -50,6 +52,8 @@ func (widget *lobstersWidget) update(ctx context.Context) {
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
+
+	posts = widget.Filters.Apply(posts)
 
 	if widget.Limit < len(posts) {
 		posts = posts[:widget.Limit]

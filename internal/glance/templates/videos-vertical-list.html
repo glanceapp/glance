@@ -1,6 +1,9 @@
 {{ template "widget-base.html" . }}
 
 {{- define "widget-content" }}
+{{ if .Filters.AllFiltered }}
+<p>No videos match the specified filters ({{ .Filters.FilteredCount }} filtered)</p>
+{{ else }}
 <ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
     {{- range .Videos }}
     <li class="flex thumbnail-parent gap-10 items-center">
@@ -17,4 +20,5 @@
     </li>
     {{- end }}
 </ul>
+{{ end }}
 {{- end }}

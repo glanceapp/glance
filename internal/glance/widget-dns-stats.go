@@ -429,22 +429,24 @@ func fetchPiholeStats(
 		return nil
 	}
 
-	if sessionID == "" {
-		if err := fetchNewSessionID(); err != nil {
-			slog.Error("Failed to fetch Pihole v6 session ID", "error", err)
-			return nil, "", fmt.Errorf("fetching session ID: %v", err)
-		}
-	} else {
-		isValid, err := checkPiholeSessionIDIsValid(instanceURL, client, sessionID)
-		if err != nil {
-			slog.Error("Failed to check Pihole v6 session ID validity", "error", err)
-			return nil, "", fmt.Errorf("checking session ID: %v", err)
-		}
-
-		if !isValid {
+	if password != "" {
+		if sessionID == "" {
 			if err := fetchNewSessionID(); err != nil {
-				slog.Error("Failed to renew Pihole v6 session ID", "error", err)
-				return nil, "", fmt.Errorf("renewing session ID: %v", err)
+				slog.Error("Failed to fetch Pihole v6 session ID", "error", err)
+				return nil, "", fmt.Errorf("fetching session ID: %v", err)
+			}
+		} else {
+			isValid, err := checkPiholeSessionIDIsValid(instanceURL, client, sessionID)
+			if err != nil {
+				slog.Error("Failed to check Pihole v6 session ID validity", "error", err)
+				return nil, "", fmt.Errorf("checking session ID: %v", err)
+			}
+
+			if !isValid {
+				if err := fetchNewSessionID(); err != nil {
+					slog.Error("Failed to renew Pihole v6 session ID", "error", err)
+					return nil, "", fmt.Errorf("renewing session ID: %v", err)
+				}
 			}
 		}
 	}

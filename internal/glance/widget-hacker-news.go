@@ -20,6 +20,8 @@ type hackerNewsWidget struct {
 	CollapseAfter       int           `yaml:"collapse-after"`
 	CommentsUrlTemplate string        `yaml:"comments-url-template"`
 	ShowThumbnails      bool          `yaml:"-"`
+
+	Filters filterableFields[forumPost] `yaml:"filters"`
 }
 
 func (widget *hackerNewsWidget) initialize() error {
@@ -45,18 +47,19 @@ func (widget *hackerNewsWidget) initialize() error {
 
 func (widget *hackerNewsWidget) update(ctx context.Context) {
 	posts, err := fetchHackerNewsPosts(widget.SortBy, 40, widget.CommentsUrlTemplate)
-
 	if !widget.canContinueUpdateAfterHandlingErr(err) {
 		return
+	}
+
+	posts = widget.Filters.Apply(posts)
+
+	if widget.Limit < len(posts) {
+		posts = posts[:widget.Limit]
 	}
 
 	if widget.ExtraSortBy == "engagement" {
 		posts.calculateEngagement()
 		posts.sortByEngagement()
-	}
-
-	if widget.Limit < len(posts) {
-		posts = posts[:widget.Limit]
 	}
 
 	widget.Posts = posts

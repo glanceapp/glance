@@ -1,6 +1,9 @@
 {{ template "widget-base.html" . }}
 
 {{- define "widget-content" }}
+{{ if .Filters.AllFiltered }}
+<p>No posts match the specified filters ({{ .Filters.FilteredCount }} filtered)</p>
+{{ else }}
 <ul class="list list-gap-14 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
     {{- range .Posts }}
     <li>
@@ -46,4 +49,5 @@
     </li>
     {{- end }}
 </ul>
+{{ end }}
 {{- end }}
