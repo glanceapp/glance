@@ -812,7 +812,7 @@ Below is a preview of each style:
 ![preview of horizontal-cards-2 style for RSS widget](images/rss-widget-horizontal-cards-2-preview.png)
 
 ##### `show-thumbnails`
-Shows or hides thumbnails next to the feed. This only works if the style is `vertical-list`.
+Shows or hides thumbnails next to the feed. This only works if the `style` is `vertical-list`.
 
 ##### `thumbnail-height`
 Used to modify the height of the thumbnails. Works only when the style is set to `horizontal-cards`. The default value is `10` and the units are `rem`, if you want to for example double the height of the thumbnails you can set it to `20`.
