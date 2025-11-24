@@ -1571,6 +1571,7 @@ Examples:
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | url | string | no | |
+| host | string | no | |
 | headers | key (string) & value (string) | no | |
 | method | string | no | GET |
 | body-type | string | no | json |
@@ -1594,6 +1595,9 @@ headers:
   x-api-key: your-api-key
   Accept: application/json
 ```
+
+##### `host`
+Optionally specify the `Host` header that will be sent with the request. This is useful when `url` points to a reverse proxy. Note that setting the `Host` header in `headers` has no effect.
 
 ##### `method`
 The HTTP method to use when making the request. Possible values are `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` and `HEAD`.

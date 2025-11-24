@@ -30,6 +30,7 @@ type CustomAPIRequest struct {
 	URL                string               `yaml:"url"`
 	AllowInsecure      bool                 `yaml:"allow-insecure"`
 	Headers            map[string]string    `yaml:"headers"`
+	Host               string               `yaml:"host"`
 	Parameters         queryParametersField `yaml:"parameters"`
 	Method             string               `yaml:"method"`
 	BodyType           string               `yaml:"body-type"`
@@ -180,6 +181,10 @@ func (req *CustomAPIRequest) initialize() error {
 	httpReq, err := http.NewRequest(strings.ToUpper(req.Method), req.URL, req.bodyReader)
 	if err != nil {
 		return err
+	}
+
+	if req.Host != "" {
+		httpReq.Host = req.Host
 	}
 
 	if len(req.Parameters) > 0 {
@@ -688,6 +693,10 @@ var customAPITemplateFuncs = func() template.FuncMap {
 				req.Headers = make(map[string]string)
 			}
 			req.Headers[key] = value
+			return req
+		},
+		"withHost": func(value string, req *CustomAPIRequest) *CustomAPIRequest {
+			req.Host = value
 			return req
 		},
 		"withParameter": func(key, value string, req *CustomAPIRequest) *CustomAPIRequest {
