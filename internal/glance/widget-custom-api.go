@@ -195,6 +195,7 @@ func (req *CustomAPIRequest) initialize() error {
 type customAPIResponseData struct {
 	JSON     decoratedGJSONResult
 	Response *http.Response
+	RAW strings
 }
 
 type customAPITemplateData struct {
@@ -229,51 +230,60 @@ func (data *customAPITemplateData) Subrequest(key string) *customAPIResponseData
 }
 
 func fetchCustomAPIResponse(ctx context.Context, req *CustomAPIRequest) (*customAPIResponseData, error) {
-	if req == nil || req.URL == "" {
-		return &customAPIResponseData{
-			JSON:     decoratedGJSONResult{gjson.Result{}},
-			Response: &http.Response{},
-		}, nil
-	}
+    if req == nil || req.URL == "" {
+        return &customAPIResponseData{
+            JSON:     decoratedGJSONResult{gjson.Result{}},
+            Response: &http.Response{},
+			RAW: nil,
+        }, nil
+    }
 
-	if req.bodyReader != nil {
-		req.bodyReader.Seek(0, io.SeekStart)
-	}
+    if req.bodyReader != nil {
+        req.bodyReader.Seek(0, io.SeekStart)
+    }
 
-	client := ternary(req.AllowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
-	resp, err := client.Do(req.httpRequest.WithContext(ctx))
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
+    client := defaultHTTPClient
+    if req.AllowInsecure {
+        client = defaultInsecureHTTPClient
+    }
 
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+    resp, err := client.Do(req.httpRequest.WithContext(ctx))
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
 
-	body := strings.TrimSpace(string(bodyBytes))
+    bodyBytes, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return nil, err
+    }
 
-	if !req.SkipJSONValidation && body != "" && !gjson.Valid(body) {
-		if 200 <= resp.StatusCode && resp.StatusCode < 300 {
-			truncatedBody, isTruncated := limitStringLength(body, 100)
-			if isTruncated {
-				truncatedBody += "... <truncated>"
-			}
+    body := strings.TrimSpace(string(bodyBytes))
 
-			slog.Error("Invalid response JSON in custom API widget", "url", req.httpRequest.URL.String(), "body", truncatedBody)
-			return nil, errors.New("invalid response JSON")
-		}
+    if !req.SkipJSONValidation && body != "" && !gjson.Valid(body) {
+        if 200 <= resp.StatusCode && resp.StatusCode < 300 {
+            truncatedBody, isTruncated := limitStringLength(body, 100)
+            if isTruncated {
+                truncatedBody += "... <truncated>"
+            }
 
-		return nil, fmt.Errorf("%d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
+            slog.Error("Invalid response JSON in custom API widget",
+                "url", req.httpRequest.URL.String(),
+                "body", truncatedBody,
+            )
+            return nil, errors.New("invalid response JSON")
+        }
 
-	}
+        return nil, fmt.Errorf("%d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
+    }
 
-	return &customAPIResponseData{
-		JSON:     decoratedGJSONResult{gjson.Parse(body)},
-		Response: resp,
-	}, nil
+    return &customAPIResponseData{
+        JSON:     decoratedGJSONResult{gjson.Parse(body)},
+        Response: resp,
+        RAW:      body,
+    }, nil
 }
+
 
 func fetchAndRenderCustomAPIRequest(
 	primaryReq *CustomAPIRequest,
