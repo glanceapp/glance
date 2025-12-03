@@ -334,7 +334,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 		} else {
 			rssItem.ChannelName = feed.Title
 		}
-		
+
 		if item.Image != nil {
 			rssItem.ImageURL = item.Image.URL
 		} else if url := findThumbnailInItemExtensions(item); url != "" {
@@ -405,11 +405,10 @@ func recursiveFindThumbnailInEnclosures(enclosures []*gofeed.Enclosure) string {
 	url := ""
 	
 	for _, enclosure := range enclosures {
-		switch enclosure.Type {
-			case "image/generic":
-				url = enclosure.URL
-			case "image/jpeg", "image/png", "image/gif":
-				return enclosure.URL
+		if url == "" && enclosure.Type == "image/generic" {
+			url = enclosure.URL
+		} else if enclosure.Type == "image/jpeg" || enclosure.Type == "image/png" || enclosure.Type == "image/gif" {
+			return enclosure.URL
 		}
 	}
 
