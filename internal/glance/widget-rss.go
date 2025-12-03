@@ -308,7 +308,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 		} else {
 			rssItem.ChannelName = feed.Title
 		}
-
+		
 		if item.Image != nil {
 			rssItem.ImageURL = item.Image.URL
 		} else if url := findThumbnailInItemExtensions(item); url != "" {
@@ -344,13 +344,31 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 }
 
 func findThumbnailInItemExtensions(item *gofeed.Item) string {
-	media, ok := item.Extensions["media"]
-
-	if !ok {
-		return ""
-	}
+    media, ok := item.Extensions["media"]
+    if !ok {
+		enclosures := item.Enclosures
+        if len(enclosures) == 0 {
+            return ""
+        }
+		return recursiveFindThumbnailInEnclosures(enclosures)
+    }
 
 	return recursiveFindThumbnailInExtensions(media)
+}
+
+func recursiveFindThumbnailInEnclosures(enclosures []*gofeed.Enclosure) string {
+	url := ""
+	
+	for _, enclosure := range enclosures {
+		switch enclosure.Type {
+			case "image/generic":
+				url = enclosure.URL
+			case "image/jpeg", "image/png", "image/gif":
+				return enclosure.URL
+		}
+	}
+
+	return url
 }
 
 func recursiveFindThumbnailInExtensions(extensions map[string][]gofeedext.Extension) string {
@@ -359,6 +377,13 @@ func recursiveFindThumbnailInExtensions(extensions map[string][]gofeedext.Extens
 			if ext.Name == "thumbnail" || ext.Name == "image" {
 				if url, ok := ext.Attrs["url"]; ok {
 					return url
+				}
+			}
+			if ext.Name == "link" {
+				if ext.Attrs["type"] == "image/jpeg" || ext.Attrs["type"] == "image/png" || ext.Attrs["type"] == "image/gif" {
+					if url, ok := ext.Attrs["href"]; ok {
+						return url
+					}
 				}
 			}
 
