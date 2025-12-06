@@ -1205,6 +1205,7 @@ Example:
     - title: YouTube
       shortcut: "!yt"
       url: https://www.youtube.com/results?search_query={QUERY}
+      raw-query: false
 ```
 
 Preview:
@@ -1264,11 +1265,12 @@ What now? [Bangs](https://duckduckgo.com/bangs). They're shortcuts that allow yo
 ![](images/search-widget-bangs-preview.png)
 
 ##### Properties for each bang
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| title | string | no |
-| shortcut | string | yes |
-| url | string | yes |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| title | string | no | |
+| shortcut | string | yes | |
+| url | string | yes | |
+| raw-query | boolean | no | false |
 
 ###### `title`
 Optional title that will appear on the right side of the search bar when the query starts with the associated shortcut.
@@ -1290,6 +1292,43 @@ The URL of the search engine. Use `{QUERY}` to indicate where the query value ge
 url: https://www.reddit.com/search?q={QUERY}
 url: https://store.steampowered.com/search/?term={QUERY}
 url: https://www.amazon.com/s?k={QUERY}
+```
+
+###### `raw-query`
+Optional boolean that determines whether the query is inserted raw (without URL encoding) into the URL.
+
+> ```yaml
+> shortcut: "!gh"
+> url: https://github.com/{QUERY}
+> raw-query: false
+>
+> shortcut: "!ghr"
+> url: https://github.com/{QUERY}
+> raw-query: true
+>```
+
+Typing
+
+```
+!gh glanceapp/glance
+```
+
+would result in
+
+```
+https://github.com/glanceapp%2Fglance
+```
+
+whereas
+
+```
+!ghr glanceapp/glance
+```
+
+would result in
+
+```
+https://github.com/glanceapp/glance
 ```
 
 ### Group
