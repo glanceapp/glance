@@ -6,7 +6,7 @@
 <div class="search widget-content-frame padding-inline-widget flex gap-15 items-center" data-default-search-url="{{ .SearchEngine }}" data-new-tab="{{ .NewTab }}" data-target="{{ .Target }}">
     <div class="search-bangs">
         {{ range .Bangs }}
-        <input type="hidden" data-shortcut="{{ .Shortcut }}" data-title="{{ .Title }}" data-url="{{ .URL }}">
+        <input type="hidden" data-shortcut="{{ .Shortcut }}" data-title="{{ .Title }}" data-url="{{ .URL }}" data-regex="{{ .Regex }}">
         {{ end }}
     </div>
 
