@@ -1,9 +1,8 @@
-<style>
 :root {
     {{ if .BackgroundColor }}
-    --bgh: {{ .BackgroundColor.Hue }};
-    --bgs: {{ .BackgroundColor.Saturation }}%;
-    --bgl: {{ .BackgroundColor.Lightness }}%;
+    --bgh: {{ .BackgroundColor.H }};
+    --bgs: {{ .BackgroundColor.S }}%;
+    --bgl: {{ .BackgroundColor.L }}%;
     {{ end }}
     {{ if ne 0.0 .ContrastMultiplier }}--cm: {{ .ContrastMultiplier }};{{ end }}
     {{ if ne 0.0 .TextSaturationMultiplier }}--tsm: {{ .TextSaturationMultiplier }};{{ end }}
@@ -11,4 +10,3 @@
     {{ if .PositiveColor }}--color-positive: {{ .PositiveColor.String | safeCSS }};{{ end }}
     {{ if .NegativeColor }}--color-negative: {{ .NegativeColor.String | safeCSS }};{{ end }}
 }
-</style>

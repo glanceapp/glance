@@ -1,0 +1,120 @@
+.dns-stats-totals {
+    transition: opacity .3s;
+    transition-delay: 50ms;
+}
+
+.dns-stats:has(.dns-stats-graph .popover-active) .dns-stats-totals {
+    opacity: 0.1;
+    transition-delay: 0s;
+}
+
+.dns-stats-graph {
+    --graph-height: 70px;
+    height: var(--graph-height);
+    position: relative;
+    margin-bottom: 2.5rem;
+}
+
+.dns-stats-graph-gridlines-container {
+    position: absolute;
+    inset: 0;
+}
+
+.dns-stats-graph-gridlines {
+    height: 100%;
+    width: 100%;
+}
+
+.dns-stats-graph-columns {
+    display: flex;
+    height: 100%;
+}
+
+.dns-stats-graph-column {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-direction: column;
+    width: calc(100% / 8);
+    position: relative;
+}
+
+.dns-stats-graph-column::before {
+    content: '';
+    position: absolute;
+    inset: 1px 0;
+    opacity: 0;
+    background: var(--color-text-base);
+    transition: opacity .2s;
+}
+
+.dns-stats-graph-column:hover::before {
+    opacity: 0.05;
+}
+
+.dns-stats-graph-bar {
+    width: 14px;
+    height: calc((var(--bar-height) / 100) * var(--graph-height));
+    border: 1px solid var(--color-progress-border);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    display: flex;
+    background: var(--color-widget-background);
+    padding: 2px 2px 0 2px;
+    flex-direction: column;
+    gap: 2px;
+    transition: border-color .2s;
+    min-height: 10px;
+}
+
+.dns-stats-graph-column.popover-active .dns-stats-graph-bar {
+    border-color: var(--color-text-subdue);
+    border-bottom-color: var(--color-progress-border);
+}
+
+.dns-stats-graph-bar > * {
+    border-radius: 2px;
+    background: var(--color-vertical-progress-value);
+    min-height: 1px;
+}
+
+.dns-stats-graph-bar > .queries {
+    flex-grow: 1;
+}
+
+.dns-stats-graph-bar > *:last-child {
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.dns-stats-graph-bar > .blocked {
+    background-color: var(--color-negative);
+    flex-basis: calc(var(--percent) - 1px);
+}
+
+.dns-stats-graph-column:nth-child(even) .dns-stats-graph-time {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.dns-stats-graph-time, .dns-stats-graph-columns:hover .dns-stats-graph-time {
+    position: absolute;
+    font-size: var(--font-size-h6);
+    inset-inline: 0;
+    text-align: center;
+    height: 2.5rem;
+    line-height: 2.5rem;
+    top: 100%;
+    user-select: none;
+    opacity: 0;
+    transform: translateY(-0.5rem);
+    transition: opacity .2s, transform .2s;
+}
+
+.dns-stats-graph-column:hover .dns-stats-graph-time {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.dns-stats-graph-columns:hover .dns-stats-graph-column:not(:hover) .dns-stats-graph-time {
+    opacity: 0;
+}

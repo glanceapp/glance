@@ -19,12 +19,13 @@ const extensionWidgetDefaultTitle = "Extension"
 
 type extensionWidget struct {
 	widgetBase          `yaml:",inline"`
-	URL                 string            `yaml:"url"`
-	FallbackContentType string            `yaml:"fallback-content-type"`
-	Parameters          map[string]string `yaml:"parameters"`
-	AllowHtml           bool              `yaml:"allow-potentially-dangerous-html"`
-	Extension           extension         `yaml:"-"`
-	cachedHTML          template.HTML     `yaml:"-"`
+	URL                 string               `yaml:"url"`
+	FallbackContentType string               `yaml:"fallback-content-type"`
+	Parameters          queryParametersField `yaml:"parameters"`
+	Headers             map[string]string    `yaml:"headers"`
+	AllowHtml           bool                 `yaml:"allow-potentially-dangerous-html"`
+	Extension           extension            `yaml:"-"`
+	cachedHTML          template.HTML        `yaml:"-"`
 }
 
 func (widget *extensionWidget) initialize() error {
@@ -46,6 +47,7 @@ func (widget *extensionWidget) update(ctx context.Context) {
 		URL:                 widget.URL,
 		FallbackContentType: widget.FallbackContentType,
 		Parameters:          widget.Parameters,
+		Headers:             widget.Headers,
 		AllowHtml:           widget.AllowHtml,
 	})
 
@@ -55,6 +57,10 @@ func (widget *extensionWidget) update(ctx context.Context) {
 
 	if widget.Title == extensionWidgetDefaultTitle && extension.Title != "" {
 		widget.Title = extension.Title
+	}
+
+	if widget.TitleURL == "" && extension.TitleURL != "" {
+		widget.TitleURL = extension.TitleURL
 	}
 
 	widget.cachedHTML = widget.renderTemplate(widget, extensionWidgetTemplate)
@@ -67,8 +73,8 @@ func (widget *extensionWidget) Render() template.HTML {
 type extensionType int
 
 const (
-	extensionContentHTML    extensionType = iota
-	extensionContentUnknown               = iota
+	extensionContentHTML extensionType = iota
+	extensionContentUnknown
 )
 
 var extensionStringToType = map[string]extensionType{
@@ -77,19 +83,22 @@ var extensionStringToType = map[string]extensionType{
 
 const (
 	extensionHeaderTitle            = "Widget-Title"
+	extensionHeaderTitleURL         = "Widget-Title-URL"
 	extensionHeaderContentType      = "Widget-Content-Type"
 	extensionHeaderContentFrameless = "Widget-Content-Frameless"
 )
 
 type extensionRequestOptions struct {
-	URL                 string            `yaml:"url"`
-	FallbackContentType string            `yaml:"fallback-content-type"`
-	Parameters          map[string]string `yaml:"parameters"`
-	AllowHtml           bool              `yaml:"allow-potentially-dangerous-html"`
+	URL                 string               `yaml:"url"`
+	FallbackContentType string               `yaml:"fallback-content-type"`
+	Parameters          queryParametersField `yaml:"parameters"`
+	Headers             map[string]string    `yaml:"headers"`
+	AllowHtml           bool                 `yaml:"allow-potentially-dangerous-html"`
 }
 
 type extension struct {
 	Title     string
+	TitleURL  string
 	Content   template.HTML
 	Frameless bool
 }
@@ -109,14 +118,13 @@ func convertExtensionContent(options extensionRequestOptions, content []byte, co
 
 func fetchExtension(options extensionRequestOptions) (extension, error) {
 	request, _ := http.NewRequest("GET", options.URL, nil)
-
-	query := url.Values{}
-
-	for key, value := range options.Parameters {
-		query.Set(key, value)
+	if len(options.Parameters) > 0 {
+		request.URL.RawQuery = options.Parameters.toQueryString()
 	}
 
-	request.URL.RawQuery = query.Encode()
+	for key, value := range options.Headers {
+		request.Header.Add(key, value)
+	}
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
@@ -138,6 +146,10 @@ func fetchExtension(options extensionRequestOptions) (extension, error) {
 		extension.Title = "Extension"
 	} else {
 		extension.Title = response.Header.Get(extensionHeaderTitle)
+	}
+
+	if response.Header.Get(extensionHeaderTitleURL) != "" {
+		extension.TitleURL = response.Header.Get(extensionHeaderTitleURL)
 	}
 
 	contentType, ok := extensionStringToType[response.Header.Get(extensionHeaderContentType)]

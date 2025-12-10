@@ -1,0 +1,13 @@
+.market-chart {
+    margin-left: auto;
+    width: 6.5rem;
+    flex-shrink: 0;
+}
+
+.market-chart svg {
+    width: 100%;
+}
+
+.market-values {
+    min-width: 8rem;
+}

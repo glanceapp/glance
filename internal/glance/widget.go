@@ -18,6 +18,10 @@ import (
 var widgetIDCounter atomic.Uint64
 
 func newWidget(widgetType string) (widget, error) {
+	if widgetType == "" {
+		return nil, errors.New("widget 'type' property is empty or not specified")
+	}
+
 	var w widget
 
 	switch widgetType {
@@ -75,6 +79,8 @@ func newWidget(widgetType string) (widget, error) {
 		w = &dockerContainersWidget{}
 	case "server-stats":
 		w = &serverStatsWidget{}
+	case "to-do":
+		w = &todoWidget{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}
@@ -104,7 +110,7 @@ func (w *widgets) UnmarshalYAML(node *yaml.Node) error {
 
 		widget, err := newWidget(meta.Type)
 		if err != nil {
-			return err
+			return fmt.Errorf("line %d: %w", node.Line, err)
 		}
 
 		if err = node.Decode(widget); err != nil {
@@ -146,6 +152,7 @@ type widgetBase struct {
 	Type                string           `yaml:"type"`
 	Title               string           `yaml:"title"`
 	TitleURL            string           `yaml:"title-url"`
+	HideHeader          bool             `yaml:"hide-header"`
 	CSSClass            string           `yaml:"css-class"`
 	CustomCacheDuration durationField    `yaml:"cache"`
 	ContentAvailable    bool             `yaml:"-"`
@@ -157,7 +164,6 @@ type widgetBase struct {
 	cacheType           cacheType        `yaml:"-"`
 	nextUpdate          time.Time        `yaml:"-"`
 	updateRetriedTimes  int              `yaml:"-"`
-	HideHeader          bool             `yaml:"-"`
 }
 
 type widgetProviders struct {

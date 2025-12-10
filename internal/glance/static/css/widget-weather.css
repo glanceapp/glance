@@ -1,0 +1,139 @@
+.weather-column {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    flex-direction: column;
+    width: calc(100% / 12);
+    padding-top: 3px;
+}
+
+.weather-column-value, .weather-columns:hover .weather-column-value {
+    font-size: 13px;
+    color: var(--color-text-highlight);
+    letter-spacing: -0.1rem;
+    margin-right: 0.1rem;
+    position: relative;
+    margin-bottom: 0.3rem;
+    opacity: 0;
+    transform: translateY(0.5rem);
+    transition: opacity .2s, transform .2s;
+    user-select: none;
+}
+
+.weather-column-current .weather-column-value, .weather-column:hover .weather-column-value {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.weather-column-value::after {
+    position: absolute;
+    content: '°';
+    left: 100%;
+    color: var(--color-text-subdue);
+}
+
+.weather-column-value.weather-column-value-negative::before {
+    position: absolute;
+    content: '-';
+    right: 100%;
+}
+
+.weather-bar, .weather-columns:hover .weather-bar {
+    height: calc(20px + var(--weather-bar-height) * 40px);
+    width: 6px;
+    background-color: hsl(var(--ths), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 18%)));
+    border: 1px solid hsl(var(--ths), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 24%)));
+    border-bottom: 0;
+    border-radius: 6px 6px 0 0;
+    mask-image: linear-gradient(0deg, transparent 0, #000 10px);
+    -webkit-mask-image: linear-gradient(0deg, transparent 0, #000 10px);
+    transition: background-color .2s, border-color .2s, width .2s;
+}
+
+.weather-column-current .weather-bar, .weather-column:hover .weather-bar {
+    width: 10px;
+    background-color: hsl(var(--ths), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 40%)));
+    border: 1px solid hsl(var(--ths), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 50%)));
+}
+
+.weather-column-rain {
+    position: absolute;
+    inset: 0;
+    bottom: 20%;
+    overflow: hidden;
+    mask-image: linear-gradient(0deg, transparent 40%, #000);
+    -webkit-mask-image: linear-gradient(0deg, transparent 40%, #000);
+}
+
+.weather-column-rain::before {
+    content: '';
+    position: absolute;
+    /* TODO: figure out a way to make it look continuous between columns, right now */
+    /* depending on the width of the page the rain inside two columns next to each other */
+    /* can overlap and look bad */
+    background: radial-gradient(circle at 4px 4px, hsl(200, 90%, 70%, 0.4) 1px, transparent 0);
+    background-size: 8px 8px;
+    transform: rotate(45deg) translate(-50%, 25%);
+    height: 130%;
+    aspect-ratio: 1;
+    left: 55%;
+}
+
+.weather-column:nth-child(3) .weather-column-time,
+.weather-column:nth-child(7) .weather-column-time,
+.weather-column:nth-child(11) .weather-column-time {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.weather-column-time, .weather-columns:hover .weather-column-time {
+    margin-top: 0.3rem;
+    font-size: var(--font-size-h6);
+    opacity: 0;
+    transform: translateY(-0.5rem);
+    transition: opacity .2s, transform .2s;
+    user-select: none;
+}
+
+.weather-column:hover .weather-column-time {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.weather-column-daylight {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, transparent 30px, hsl(50, 50%, 30%, 0.2));
+}
+
+.weather-column-daylight-sunrise {
+    border-radius: 20px 0 0 0;
+}
+
+.weather-column-daylight-sunset {
+    border-radius: 0 20px 0 0;
+}
+
+.location-icon {
+    width: 0.8em;
+    height: 0.8em;
+    border-radius: 0 50% 50% 50%;
+    background-color: currentColor;
+    transform: rotate(225deg) translate(.1em, .1em);
+    position: relative;
+    flex-shrink: 0;
+}
+
+.location-icon::after {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    width: .4em;
+    height: .4em;
+    border-radius: 50%;
+    background-color: var(--color-widget-background);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}

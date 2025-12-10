@@ -1,0 +1,22 @@
+.reddit-card-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 0% 20%;
+    opacity: 0.15;
+    filter: blur(1px);
+}
+
+.reddit-card-thumbnail-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: var(--border-radius);
+}
+
+.reddit-card-thumbnail-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, var(--color-widget-background) 10%, transparent);
+}

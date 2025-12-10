@@ -11,13 +11,13 @@
 
         <a class="market-chart" {{ if ne "" .ChartLink }} href="{{ .ChartLink }}" target="_blank" rel="noreferrer"{{ end }}>
             <svg class="market-chart shrink-0" viewBox="0 0 100 50">
-                <polyline fill="none" stroke="var(--color-text-subdue)" stroke-width="1.5px" points="{{ .SvgChartPoints }}" vector-effect="non-scaling-stroke"></polyline>
+                <polyline fill="none" stroke="var(--color-text-subdue)" stroke-linejoin="round" stroke-width="1.5px" points="{{ .SvgChartPoints }}" vector-effect="non-scaling-stroke"></polyline>
             </svg>
         </a>
 
         <div class="market-values shrink-0">
             <div class="size-h3 text-right {{ if eq .PercentChange 0.0 }}{{ else if gt .PercentChange 0.0 }}color-positive{{ else }}color-negative{{ end }}">{{ printf "%+.2f" .PercentChange }}%</div>
-            <div class="text-right">{{ .Currency }}{{ .Price | formatPrice }}</div>
+            <div class="text-right">{{ .Currency }}{{ .Price | formatPriceWithPrecision .PriceHint }}</div>
         </div>
     </div>
     {{ end }}

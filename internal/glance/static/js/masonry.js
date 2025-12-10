@@ -37,9 +37,6 @@ export function setupMasonries() {
                 columnsFragment.append(column);
             }
 
-            // poor man's masonry
-            // TODO: add an option that allows placing items in the
-            // shortest column instead of iterating the columns in order
             for (let i = 0; i < items.length; i++) {
                 columnsFragment.children[i % columnsCount].appendChild(items[i]);
             }

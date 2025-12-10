@@ -82,6 +82,39 @@ theme:
   negative-color: 209 88 54
 ```
 
+### Dracula
+![screenshot](images/themes/dracula.png)
+```yaml
+theme:
+  background-color: 231 15 21
+  primary-color: 265 89 79
+  contrast-multiplier: 1.2
+  positive-color: 135 94 66
+  negative-color: 0 100 67
+```
+
+### Shades of Purple
+![screenshot](images/themes/shades-of-purple.png)
+```yaml
+theme:
+  background-color: 243 33 25
+  contrast-multiplier: 1.2
+  primary-color: 50 100 49
+  positive-color: 98 82 71
+  negative-color: 12 77 52
+```
+
+### Neon Pink 
+![screenshot](images/themes/neon-pink.png)
+```yaml
+theme:
+  background-color: 240 27 11
+  contrast-multiplier: 1.5
+  primary-color: 321 100 71
+  positive-color: 165 78 51
+  negative-color: 360 100 71
+```
+
 ## Light
 
 ### Catppuccin Latte

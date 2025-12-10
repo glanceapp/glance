@@ -1,0 +1,47 @@
+.twitch-category-thumbnail {
+    width: 5rem;
+    aspect-ratio: 3 / 4;
+    border-radius: var(--border-radius);
+}
+
+.twitch-channel-avatar {
+    aspect-ratio: 1;
+    border-radius: 50%;
+}
+
+.twitch-channel-avatar-container {
+    width: 4.4rem;
+    height: 4.4rem;
+    border: 2px solid var(--color-text-subdue);
+    padding: 2px;
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.twitch-channel-live .twitch-channel-avatar-container {
+    border: 2px solid var(--color-positive);
+    margin-bottom: 1rem;
+}
+
+.twitch-channel-live .twitch-channel-avatar-container::after {
+    content: 'LIVE';
+    position: absolute;
+    background: var(--color-positive);
+    color: var(--color-widget-background);
+    font-size: var(--font-size-h6);
+    left: 50%;
+    bottom: -35%;
+    border-radius: var(--border-radius);
+    padding-inline: 0.3rem;
+    transform: translate(-50%);
+    border: 2px solid var(--color-widget-background);
+}
+
+.twitch-stream-preview {
+    max-width: 100%;
+    width: 400px;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--border-radius);
+    object-fit: cover;
+}

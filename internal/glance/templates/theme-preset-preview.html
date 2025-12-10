@@ -1,0 +1,19 @@
+{{- $background := "hsl(240, 8%, 9%)" | safeCSS }}
+{{- $primary := "hsl(43, 50%, 70%)" | safeCSS  }}
+{{- $positive := "hsl(43, 50%, 70%)" | safeCSS }}
+{{- $negative := "hsl(0, 70%, 70%)" | safeCSS }}
+{{- if .BackgroundColor }}{{ $background = .BackgroundColor.String | safeCSS }}{{ end }}
+{{- if .PrimaryColor }}
+    {{- $primary = .PrimaryColor.String | safeCSS }}
+    {{- if not .PositiveColor }}
+        {{- $positive = $primary }}
+    {{- else }}
+        {{- $positive = .PositiveColor.String | safeCSS }}
+    {{- end }}
+{{- end }}
+{{- if .NegativeColor }}{{ $negative = .NegativeColor.String | safeCSS }}{{ end }}
+<button class="theme-preset{{ if .Light }} theme-preset-light{{ end }}" style="--color: {{ $background }}" data-key="{{ .Key }}">
+    <div class="theme-color" style="--color: {{ $primary }}"></div>
+    <div class="theme-color" style="--color: {{ $positive }}"></div>
+    <div class="theme-color" style="--color: {{ $negative }}"></div>
+</button>

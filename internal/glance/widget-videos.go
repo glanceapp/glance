@@ -56,7 +56,7 @@ func (widget *videosWidget) initialize() error {
 		widget.Channels = append(widget.Channels, make([]string, len(widget.Playlists))...)
 
 		for i := range widget.Playlists {
-			widget.Channels[initialLen+i] = "playlist:" + widget.Playlists[i]
+			widget.Channels[initialLen+i] = videosWidgetPlaylistPrefix + widget.Playlists[i]
 		}
 	}
 

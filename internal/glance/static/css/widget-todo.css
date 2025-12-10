@@ -1,0 +1,129 @@
+.todo-widget {
+    padding-top: 4rem;
+}
+
+.todo-plus-icon {
+    --icon-color: var(--color-text-subdue);
+    position: relative;
+    width: 1.4rem;
+    height: 1.4rem;
+}
+
+.todo-plus-icon::before, .todo-plus-icon::after {
+    content: "";
+    position: absolute;
+    background-color: var(--icon-color);
+    transition: background-color .2s;
+}
+
+.todo-plus-icon::before {
+    width: 2px;
+    inset-block: 0.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.todo-plus-icon::after {
+    height: 2px;
+    inset-inline: 0.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.todo-input textarea::placeholder {
+    color: var(--color-text-base-muted);
+}
+
+.todo-input {
+    position: relative;
+    color: var(--color-text-highlight);
+}
+
+.todo-input:focus-within .todo-plus-icon {
+    --icon-color: var(--color-text-base);
+}
+
+.todo-item {
+    transform-origin: center;
+    padding: 0.5rem 0;
+}
+
+.todo-item-checkbox {
+    -webkit-appearance: none;
+    appearance: none;
+    border: 2px solid var(--color-text-subdue);
+    width: 1.4rem;
+    height: 1.4rem;
+    position: relative;
+    cursor: pointer;
+    border-radius: 0.3rem;
+    transition: border-color .2s;
+}
+
+.todo-item-checkbox::before {
+    content: "";
+    inset: -1rem;
+    position: absolute;
+}
+
+.todo-item-checkbox::after {
+    content: '';
+    position: absolute;
+    inset: 0.3rem;
+    border-radius: 0.1rem;
+    opacity: 0;
+    transition: opacity .2s;
+}
+
+.todo-item-checkbox:checked::after {
+    background: var(--color-primary);
+    opacity: 1;
+}
+
+.todo-item-checkbox:focus-visible {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.todo-item-text {
+    color: var(--color-text-base);
+    transition: color .35s;
+}
+
+.todo-item-text:focus {
+    color: var(--color-text-highlight);
+}
+
+.todo-item-drag-handle {
+    position: absolute;
+    top: -0.5rem;
+    inset-inline: 0;
+    height: 1rem;
+    cursor: grab;
+}
+
+.todo-item.is-being-dragged .todo-item-drag-handle {
+    height: 3rem;
+    top: -1.5rem;
+}
+
+.todo-item:has(.todo-item-checkbox:checked) .todo-item-text {
+    text-decoration: line-through;
+    color: var(--color-text-subdue);
+}
+
+.todo-item-delete {
+    width: 1.5rem;
+    height: 1.5rem;
+    opacity: 0;
+    transition: opacity .2s;
+    outline-offset: .5rem;
+}
+
+.todo-item:hover .todo-item-delete, .todo-item:focus-within .todo-item-delete {
+    opacity: 1;
+}
+
+.todo-item.is-being-dragged .todo-item-delete {
+    opacity: 0;
+}

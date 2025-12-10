@@ -31,3 +31,28 @@ export function slideFade({
         },
     };
 }
+
+
+export function animateReposition(
+    element,
+    onAnimEnd,
+    animOptions = { duration: 400, easing: easeOutQuint }
+) {
+    const rectBefore = element.getBoundingClientRect();
+
+    return () => {
+        const rectAfter = element.getBoundingClientRect();
+        const offsetY = rectBefore.y - rectAfter.y;
+        const offsetX = rectBefore.x - rectAfter.x;
+
+        element.animate({
+            keyframes: [
+                { transform: `translate(${offsetX}px, ${offsetY}px)` },
+                { transform: 'none' }
+            ],
+            options: animOptions
+        }, onAnimEnd);
+
+        return rectAfter;
+    }
+}

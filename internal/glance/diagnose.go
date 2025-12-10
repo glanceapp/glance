@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const httpTestRequestTimeout = 10 * time.Second
+const httpTestRequestTimeout = 15 * time.Second
 
 var diagnosticSteps = []diagnosticStep{
 	{
@@ -75,13 +75,17 @@ var diagnosticSteps = []diagnosticStep{
 	{
 		name: "fetch data from Reddit API",
 		fn: func() (string, error) {
-			return testHttpRequest("GET", "https://www.reddit.com/search.json", 200)
+			return testHttpRequestWithHeaders("GET", "https://www.reddit.com/search.json", map[string]string{
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
+			}, 200)
 		},
 	},
 	{
 		name: "fetch data from Yahoo finance API",
 		fn: func() (string, error) {
-			return testHttpRequest("GET", "https://query1.finance.yahoo.com/v8/finance/chart/NVDA", 200)
+			return testHttpRequestWithHeaders("GET", "https://query1.finance.yahoo.com/v8/finance/chart/NVDA", map[string]string{
+				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
+			}, 200)
 		},
 	},
 	{
@@ -103,7 +107,7 @@ func runDiagnostic() {
 	fmt.Println("Glance version: " + buildVersion)
 	fmt.Println("Go version: " + runtime.Version())
 	fmt.Printf("Platform: %s / %s / %d CPUs\n", runtime.GOOS, runtime.GOARCH, runtime.NumCPU())
-	fmt.Println("In Docker container: " + boolToString(isRunningInsideDockerContainer(), "yes", "no"))
+	fmt.Println("In Docker container: " + ternary(isRunningInsideDockerContainer(), "yes", "no"))
 
 	fmt.Printf("\nChecking network connectivity, this may take up to %d seconds...\n\n", int(httpTestRequestTimeout.Seconds()))
 
@@ -129,7 +133,7 @@ func runDiagnostic() {
 
 		fmt.Printf(
 			"%s %s %s| %dms\n",
-			boolToString(step.err == nil, "✓ Can", "✗ Can't"),
+			ternary(step.err == nil, "✓ Can", "✗ Can't"),
 			step.name,
 			extraInfo,
 			step.elapsed.Milliseconds(),
@@ -163,7 +167,7 @@ func testHttpRequestWithHeaders(method, url string, headers map[string]string, e
 		request.Header.Add(key, value)
 	}
 
-	response, err := http.DefaultClient.Do(request)
+	response, err := defaultHTTPClient.Do(request)
 	if err != nil {
 		return "", err
 	}

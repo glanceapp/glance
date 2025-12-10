@@ -24,6 +24,10 @@ var (
 const defaultClientTimeout = 5 * time.Second
 
 var defaultHTTPClient = &http.Client{
+	Transport: &http.Transport{
+		MaxIdleConnsPerHost: 10,
+		Proxy:               http.ProxyFromEnvironment,
+	},
 	Timeout: defaultClientTimeout,
 }
 
@@ -31,6 +35,7 @@ var defaultInsecureHTTPClient = &http.Client{
 	Timeout: defaultClientTimeout,
 	Transport: &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		Proxy:           http.ProxyFromEnvironment,
 	},
 }
 
@@ -38,15 +43,20 @@ type requestDoer interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
+var glanceUserAgentString = "Glance/" + buildVersion + " +https://github.com/glanceapp/glance"
 var userAgentPersistentVersion atomic.Int32
 
-func setBrowserUserAgentHeader(request *http.Request) {
+func getBrowserUserAgentHeader() string {
 	if rand.IntN(2000) == 0 {
 		userAgentPersistentVersion.Store(rand.Int32N(5))
 	}
 
 	version := strconv.Itoa(130 + int(userAgentPersistentVersion.Load()))
-	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:"+version+".0) Gecko/20100101 Firefox/"+version+".0")
+	return "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:" + version + ".0) Gecko/20100101 Firefox/" + version + ".0"
+}
+
+func setBrowserUserAgentHeader(request *http.Request) {
+	request.Header.Set("User-Agent", getBrowserUserAgentHeader())
 }
 
 func decodeJsonFromRequest[T any](client requestDoer, request *http.Request) (T, error) {
@@ -67,7 +77,7 @@ func decodeJsonFromRequest[T any](client requestDoer, request *http.Request) (T,
 		truncatedBody, _ := limitStringLength(string(body), 256)
 
 		return result, fmt.Errorf(
-			"unexpected status code %d for %s, response: %s",
+			"unexpected status code %d from %s, response: %s",
 			response.StatusCode,
 			request.URL,
 			truncatedBody,
@@ -147,10 +157,8 @@ const defaultNumWorkers = 10
 func (job *workerPoolJob[I, O]) withWorkers(workers int) *workerPoolJob[I, O] {
 	if workers == 0 {
 		job.workers = defaultNumWorkers
-	} else if workers > len(job.data) {
-		job.workers = len(job.data)
 	} else {
-		job.workers = workers
+		job.workers = min(workers, len(job.data))
 	}
 
 	return job
@@ -178,6 +186,11 @@ func workerPoolDo[I any, O any](job *workerPoolJob[I, O]) ([]O, []error, error) 
 	errs := make([]error, len(job.data))
 
 	if len(job.data) == 0 {
+		return results, errs, nil
+	}
+
+	if len(job.data) == 1 {
+		results[0], errs[0] = job.task(job.data[0])
 		return results, errs, nil
 	}
 

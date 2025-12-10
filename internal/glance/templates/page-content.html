@@ -2,12 +2,20 @@
 <div class="mobile-reachability-header">{{ .Page.Title }}</div>
 {{ end }}
 
-<div class="page-columns">
-{{ range .Page.Columns }}
-    <div class="page-column page-column-{{ .Size }}">
-        {{ range .Widgets }}
-            {{ .Render }}
-        {{ end }}
-    </div>
+{{ if .Page.HeadWidgets }}
+<div class="head-widgets">
+    {{- range .Page.HeadWidgets }}
+    {{- .Render }}
+    {{- end }}
+</div>
 {{ end }}
+
+<div class="page-columns">
+{{- range .Page.Columns }}
+    <div class="page-column page-column-{{ .Size }}">
+        {{- range .Widgets }}
+        {{- .Render }}
+        {{- end }}
+    </div>
+{{- end }}
 </div>

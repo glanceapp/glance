@@ -115,9 +115,14 @@ func statusCodeToStyle(status int, altStatusCodes []int) string {
 }
 
 type SiteStatusRequest struct {
-	DefaultURL    string `yaml:"url"`
-	CheckURL      string `yaml:"check-url"`
-	AllowInsecure bool   `yaml:"allow-insecure"`
+	DefaultURL    string        `yaml:"url"`
+	CheckURL      string        `yaml:"check-url"`
+	AllowInsecure bool          `yaml:"allow-insecure"`
+	Timeout       durationField `yaml:"timeout"`
+	BasicAuth     struct {
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+	} `yaml:"basic-auth"`
 }
 
 type siteStatus struct {
@@ -134,16 +139,22 @@ func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (siteStatus, error) {
 	} else {
 		url = statusRequest.DefaultURL
 	}
-	request, err := http.NewRequest(http.MethodGet, url, nil)
+
+	timeout := ternary(statusRequest.Timeout > 0, time.Duration(statusRequest.Timeout), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return siteStatus{
 			Error: err,
 		}, nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-	defer cancel()
-	request = request.WithContext(ctx)
+	if statusRequest.BasicAuth.Username != "" || statusRequest.BasicAuth.Password != "" {
+		request.SetBasicAuth(statusRequest.BasicAuth.Username, statusRequest.BasicAuth.Password)
+	}
+
 	requestSentAt := time.Now()
 	var response *http.Response
 

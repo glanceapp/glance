@@ -16,9 +16,10 @@ type bookmarksWidget struct {
 		HideArrow bool           `yaml:"hide-arrow"`
 		Target    string         `yaml:"target"`
 		Links     []struct {
-			Title string          `yaml:"title"`
-			URL   string          `yaml:"url"`
-			Icon  customIconField `yaml:"icon"`
+			Title       string          `yaml:"title"`
+			URL         string          `yaml:"url"`
+			Description string          `yaml:"description"`
+			Icon        customIconField `yaml:"icon"`
 			// we need a pointer to bool to know whether a value was provided,
 			// however there's no way to dereference a pointer in a template so
 			// {{ if not .SameTab }} would return true for any non-nil pointer

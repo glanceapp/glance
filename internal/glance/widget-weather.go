@@ -170,7 +170,7 @@ func parsePlaceName(name string) (string, string) {
 
 func fetchOpenMeteoPlaceFromName(location string) (*openMeteoPlaceResponseJson, error) {
 	location, area := parsePlaceName(location)
-	requestUrl := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?name=%s&count=10&language=en&format=json", url.QueryEscape(location))
+	requestUrl := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?name=%s&count=20&language=en&format=json", url.QueryEscape(location))
 	request, _ := http.NewRequest("GET", requestUrl, nil)
 	responseJson, err := decodeJsonFromRequest[openMeteoPlacesResponseJson](defaultHTTPClient, request)
 	if err != nil {

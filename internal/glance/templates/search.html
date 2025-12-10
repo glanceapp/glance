@@ -3,7 +3,7 @@
 {{ define "widget-content-classes" }}widget-content-frameless{{ end }}
 
 {{ define "widget-content" }}
-<div class="search widget-content-frame padding-inline-widget flex gap-15 items-center" data-default-search-url="{{ .SearchEngine }}" data-new-tab="{{ .NewTab }}">
+<div class="search widget-content-frame padding-inline-widget flex gap-15 items-center" data-default-search-url="{{ .SearchEngine }}" data-new-tab="{{ .NewTab }}" data-target="{{ .Target }}">
     <div class="search-bangs">
         {{ range .Bangs }}
         <input type="hidden" data-shortcut="{{ .Shortcut }}" data-title="{{ .Title }}" data-url="{{ .URL }}">

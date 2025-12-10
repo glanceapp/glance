@@ -1,5 +1,5 @@
-<div class="widget widget-type-{{ .GetType }}{{ if ne "" .CSSClass }} {{ .CSSClass }}{{ end }}">
-    {{- if not .HideHeader}}
+<div class="widget widget-type-{{ .GetType }}{{ if .CSSClass }} {{ .CSSClass }}{{ end }}">
+    {{- if not .HideHeader }}
     <div class="widget-header">
         {{- if ne "" .TitleURL }}
         <h2><a href="{{ .TitleURL | safeURL }}" target="_blank" rel="noreferrer" class="uppercase">{{ .Title }}</a></h2>

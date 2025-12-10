@@ -1,0 +1,65 @@
+.popover-container, [data-popover-html] {
+    display: none;
+}
+
+.popover-container {
+    --triangle-size: 10px;
+    --triangle-offset: 50%;
+    --triangle-margin: calc(var(--triangle-size) + 3px);
+    --entrance-y-offset: 8px;
+    --entrance-direction: calc(var(--entrance-y-offset) * -1);
+
+    z-index: 20;
+    position: absolute;
+    padding-top: var(--triangle-margin);
+    padding-inline: var(--content-bounds-padding);
+}
+
+.popover-container.position-above {
+    --entrance-direction: var(--entrance-y-offset);
+    padding-top: 0;
+    padding-bottom: var(--triangle-margin);
+}
+
+.popover-frame {
+    --shadow-properties: 0 15px 20px -10px;
+    --shadow-color: hsla(var(--bghs), calc(var(--bgl) * 0.2), 0.5);
+    position: relative;
+    padding: 10px;
+    background: var(--color-popover-background);
+    border: 1px solid var(--color-popover-border);
+    border-radius: 5px;
+    animation: popoverFrameEntrance 0.3s backwards cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--shadow-properties) var(--shadow-color);
+}
+
+.popover-frame::before {
+    content: '';
+    position: absolute;
+    width: var(--triangle-size);
+    height: var(--triangle-size);
+    transform: rotate(45deg);
+    background-color: var(--color-popover-background);
+    border-top-left-radius: 2px;
+    border-left: 1px solid var(--color-popover-border);
+    border-top: 1px solid var(--color-popover-border);
+    left: calc(var(--triangle-offset) - (var(--triangle-size) / 2));
+    top: calc(var(--triangle-size) / 2 * -1 - 1px);
+}
+
+.popover-container.position-above .popover-frame::before {
+    transform: rotate(-135deg);
+    top: auto;
+    bottom: calc(var(--triangle-size) / 2 * -1 - 1px);
+}
+
+.popover-container.position-above .popover-frame {
+    --shadow-properties: 0 10px 20px -10px;
+}
+
+@keyframes popoverFrameEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(var(--entrance-direction));
+    }
+}
