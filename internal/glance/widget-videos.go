@@ -191,12 +191,20 @@ func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate 
 				}
 			}
 
+			var authorUrl string
+			if videoUrlTemplate == "" {
+				authorUrl = response.ChannelLink + "/videos"
+			} else {
+				baseUrl := strings.Split(videoUrlTemplate, "/watch")[0]
+				authorUrl = baseUrl + strings.TrimPrefix(response.ChannelLink, "https://www.youtube.com")
+			}
+
 			videos = append(videos, video{
 				ThumbnailUrl: v.Group.Thumbnail.Url,
 				Title:        v.Title,
 				Url:          videoUrl,
 				Author:       response.Channel,
-				AuthorUrl:    response.ChannelLink + "/videos",
+				AuthorUrl:    authorUrl,
 				TimePosted:   parseYoutubeFeedTime(v.Published),
 			})
 		}
