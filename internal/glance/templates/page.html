@@ -15,7 +15,7 @@
 {{ define "document-body" }}
 <div class="flex flex-column body-content">
     {{ if not .Page.HideDesktopNavigation }}
-    <div class="header-container content-bounds{{ if .Page.DesktopNavigationWidth }} content-bounds-{{ .Page.DesktopNavigationWidth }} {{ end }} {{ if .Page.StickyDesktopNavigation }} sticky-desktop-navigation {{ end }}">
+    <div class="header-container content-bounds{{ if .Page.DesktopNavigationWidth }} content-bounds-{{ .Page.DesktopNavigationWidth }}{{ end }}{{ if .Page.StickyDesktopNavigation }} sticky-desktop-navigation{{ end }}">
         <div class="header flex padding-inline-widget widget-content-frame">
             <div class="logo" aria-hidden="true">
                 {{- if .App.Config.Branding.LogoURL }}
