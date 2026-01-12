@@ -1,0 +1,71 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+{{ $portfolio := .GetPortfolio }}
+{{ $chartType := .GetChartType }}
+{{ $chartHeight := .GetChartHeight }}
+<div class="ghostfolio" data-default-range="{{ .GetDefaultRange }}" data-chart-type="{{ $chartType }}" data-portfolio='{{ .GetPortfolioDataJSON }}'>
+    {{ if and $portfolio $portfolio.HasData }}
+    <div class="ghostfolio-container">
+        <div class="ghostfolio-header">
+            <div class="ghostfolio-summary">
+                <div class="ghostfolio-value">
+                    <span class="ghostfolio-currency" data-currency>{{ $portfolio.Currency }}</span>
+                    <span class="ghostfolio-amount" data-amount>{{ $portfolio.TotalValue | formatPrice }}</span>
+                </div>
+                <div class="ghostfolio-performance {{ if ge $portfolio.NetPerformancePct 0.0 }}color-positive{{ else }}color-negative{{ end }}" data-performance>
+                    <span class="ghostfolio-perf-value" data-perf-value>{{ if ge $portfolio.NetPerformance 0.0 }}+{{ end }}{{ $portfolio.Currency }}{{ $portfolio.NetPerformance | formatPrice }}</span>
+                    <span class="ghostfolio-perf-percent" data-perf-percent>({{ printf "%+.2f" $portfolio.NetPerformancePct }}%)</span>
+                </div>
+            </div>
+
+            <div class="ghostfolio-range-selector">
+                {{ range .GetRangeOptions }}
+                <button class="ghostfolio-range-btn{{ if eq $.GetDefaultRange .Value }} active{{ end }}" data-range="{{ .Value }}">
+                    {{ .Label }}
+                </button>
+                {{ end }}
+            </div>
+        </div>
+
+        <div class="ghostfolio-chart" data-chart style="height: {{ $chartHeight }}px;">
+            <svg class="ghostfolio-chart-svg" viewBox="0 0 100 50" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="ghostfolio-gradient-{{ .GetID }}" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" class="ghostfolio-gradient-start {{ if ge $portfolio.NetPerformancePct 0.0 }}positive{{ else }}negative{{ end }}" data-gradient-start />
+                        <stop offset="100%" class="ghostfolio-gradient-end {{ if ge $portfolio.NetPerformancePct 0.0 }}positive{{ else }}negative{{ end }}" data-gradient-end />
+                    </linearGradient>
+                </defs>
+                <polygon 
+                    class="ghostfolio-chart-fill"
+                    fill="url(#ghostfolio-gradient-{{ .GetID }})" 
+                    points="0,50 {{ if eq $chartType "performance" }}{{ $portfolio.PerformanceChartPoints }}{{ else }}{{ $portfolio.ChartPoints }}{{ end }} 100,50"
+                    data-polygon
+                />
+                <polyline 
+                    class="ghostfolio-chart-line {{ if ge $portfolio.NetPerformancePct 0.0 }}positive{{ else }}negative{{ end }}"
+                    fill="none" 
+                    stroke-linejoin="round" 
+                    stroke-width="2" 
+                    points="{{ if eq $chartType "performance" }}{{ $portfolio.PerformanceChartPoints }}{{ else }}{{ $portfolio.ChartPoints }}{{ end }}" 
+                    vector-effect="non-scaling-stroke"
+                    data-polyline
+                />
+                <!-- Hover line -->
+                <line class="ghostfolio-hover-line" x1="0" y1="0" x2="0" y2="50" data-hover-line />
+            </svg>
+            <!-- Hover dot (HTML element for perfect circle) -->
+            <div class="ghostfolio-hover-dot" data-hover-dot></div>
+            <!-- Tooltip -->
+            <div class="ghostfolio-tooltip" data-tooltip>
+                <div class="ghostfolio-tooltip-date" data-tooltip-date></div>
+                <div class="ghostfolio-tooltip-value" data-tooltip-value></div>
+                <div class="ghostfolio-tooltip-perf" data-tooltip-perf></div>
+            </div>
+        </div>
+    </div>
+    {{ else }}
+    <p class="color-subdue text-center">No portfolio data available</p>
+    {{ end }}
+</div>
+{{ end }}
