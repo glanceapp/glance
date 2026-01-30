@@ -24,18 +24,21 @@ func (widget *containerWidgetBase) _update(ctx context.Context) {
 	var wg sync.WaitGroup
 	now := time.Now()
 
-	for w := range widget.Widgets {
-		widget := widget.Widgets[w]
+	for i := range widget.Widgets {
+		w := widget.Widgets[i]
 
-		if !widget.requiresUpdate(&now) {
+		if !w.requiresUpdate(&now) {
 			continue
 		}
 
 		wg.Add(1)
-		go func() {
+		go func(item interface {
+			update(context.Context)
+			requiresUpdate(*time.Time) bool
+		}) {
 			defer wg.Done()
-			widget.update(ctx)
-		}()
+			item.update(ctx)
+		}(w)
 	}
 
 	wg.Wait()
