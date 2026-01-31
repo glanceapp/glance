@@ -195,7 +195,7 @@ func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, max
 			for i := range PRsResponse.Tickets {
 				details.PullRequests = append(details.PullRequests, githubTicket{
 					Number:    PRsResponse.Tickets[i].Number,
-					CreatedAt: parseRFC3339Time(PRsResponse.Tickets[i].CreatedAt),
+					CreatedAt: mustParseRFC3339Time(PRsResponse.Tickets[i].CreatedAt),
 					Title:     PRsResponse.Tickets[i].Title,
 				})
 			}
@@ -212,7 +212,7 @@ func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, max
 			for i := range issuesResponse.Tickets {
 				details.Issues = append(details.Issues, githubTicket{
 					Number:    issuesResponse.Tickets[i].Number,
-					CreatedAt: parseRFC3339Time(issuesResponse.Tickets[i].CreatedAt),
+					CreatedAt: mustParseRFC3339Time(issuesResponse.Tickets[i].CreatedAt),
 					Title:     issuesResponse.Tickets[i].Title,
 				})
 			}
@@ -227,7 +227,7 @@ func fetchRepositoryDetailsFromGithub(repo string, token string, maxPRs int, max
 				details.Commits = append(details.Commits, githubCommitDetails{
 					Sha:       commitsResponse[i].Sha,
 					Author:    commitsResponse[i].Commit.Author.Name,
-					CreatedAt: parseRFC3339Time(commitsResponse[i].Commit.Author.Date),
+					CreatedAt: mustParseRFC3339Time(commitsResponse[i].Commit.Author.Date),
 					Message:   strings.SplitN(commitsResponse[i].Commit.Message, "\n\n", 2)[0],
 				})
 			}

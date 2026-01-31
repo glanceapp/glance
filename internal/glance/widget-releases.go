@@ -253,7 +253,7 @@ func fetchLatestGithubRelease(request *releaseRequest) (*appRelease, error) {
 		Name:         request.Repository,
 		Version:      normalizeVersionFormat(response.TagName),
 		NotesUrl:     response.HtmlUrl,
-		TimeReleased: parseRFC3339Time(response.PublishedAt),
+		TimeReleased: mustParseRFC3339Time(response.PublishedAt),
 		Downvotes:    response.Reactions.Downvotes,
 	}, nil
 }
@@ -344,7 +344,7 @@ func fetchLatestDockerHubRelease(request *releaseRequest) (*appRelease, error) {
 		NotesUrl:     notesURL,
 		Name:         displayName,
 		Version:      tag.Name,
-		TimeReleased: parseRFC3339Time(tag.LastPushed),
+			TimeReleased: mustParseRFC3339Time(tag.LastPushed),
 	}, nil
 }
 
@@ -383,7 +383,7 @@ func fetchLatestGitLabRelease(request *releaseRequest) (*appRelease, error) {
 		Name:         request.Repository,
 		Version:      normalizeVersionFormat(response.TagName),
 		NotesUrl:     response.Links.Self,
-		TimeReleased: parseRFC3339Time(response.ReleasedAt),
+		TimeReleased: mustParseRFC3339Time(response.ReleasedAt),
 	}, nil
 }
 
@@ -416,6 +416,6 @@ func fetchLatestCodebergRelease(request *releaseRequest) (*appRelease, error) {
 		Name:         request.Repository,
 		Version:      normalizeVersionFormat(response.TagName),
 		NotesUrl:     response.HtmlUrl,
-		TimeReleased: parseRFC3339Time(response.PublishedAt),
+		TimeReleased: mustParseRFC3339Time(response.PublishedAt),
 	}, nil
 }

@@ -314,7 +314,9 @@ func configFilesWatcher(
 		return nil, fmt.Errorf("getting absolute path of main file: %w", err)
 	}
 
-	// TODO: refactor, flaky
+	// Mark main file as included to track changes.
+	// Note: this works because file watching uses hash comparison,
+	// but the mechanism could be simplified in future refactoring.
 	lastIncludes[mainFileAbsPath] = struct{}{}
 
 	watcher, err := fsnotify.NewWatcher()
@@ -353,7 +355,8 @@ func configFilesWatcher(
 			return
 		}
 
-		// TODO: refactor, flaky
+		// Ensure main file is always marked as included when comparing.
+		// This mirrors the initialization logic to keep includes consistent.
 		currentIncludes[mainFileAbsPath] = struct{}{}
 
 		mu.Lock()

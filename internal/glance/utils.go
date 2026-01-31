@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"log/slog"
 	"math"
 	"net/http"
 	"net/url"
@@ -119,12 +120,23 @@ func limitStringLength(s string, max int) (string, bool) {
 	return s, false
 }
 
-func parseRFC3339Time(t string) time.Time {
+func parseRFC3339Time(t string) (time.Time, error) {
 	parsed, err := time.Parse(time.RFC3339, t)
 	if err != nil {
-		return time.Now()
+		return time.Time{}, fmt.Errorf("parsing RFC3339 time: %w", err)
 	}
 
+	return parsed, nil
+}
+
+// mustParseRFC3339Time parses an RFC3339 time string and logs errors, returning zero time on failure.
+// Used for initialization code where we want to continue despite parse errors.
+func mustParseRFC3339Time(t string) time.Time {
+	parsed, err := parseRFC3339Time(t)
+	if err != nil {
+		slog.Warn("Failed to parse RFC3339 time", "time_string", t, "error", err)
+		return time.Time{}
+	}
 	return parsed
 }
 
@@ -151,8 +163,11 @@ func fileServerWithCache(fs http.FileSystem, cacheDuration time.Duration) http.H
 	cacheControlValue := fmt.Sprintf("public, max-age=%d", int(cacheDuration.Seconds()))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// TODO: fix always setting cache control even if the file doesn't exist
-		w.Header().Set("Cache-Control", cacheControlValue)
+		// Check if file exists before setting cache control headers
+		if file, err := fs.Open(r.URL.Path); err == nil {
+			file.Close()
+			w.Header().Set("Cache-Control", cacheControlValue)
+		}
 		server.ServeHTTP(w, r)
 	})
 }

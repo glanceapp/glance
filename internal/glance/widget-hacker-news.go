@@ -76,7 +76,10 @@ type hackerNewsPostResponseJson struct {
 }
 
 func fetchHackerNewsPostIds(sort string) ([]int, error) {
-	request, _ := http.NewRequest("GET", fmt.Sprintf("https://hacker-news.firebaseio.com/v0/%sstories.json", sort), nil)
+	request, err := http.NewRequest("GET", fmt.Sprintf("https://hacker-news.firebaseio.com/v0/%sstories.json", sort), nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
 	response, err := decodeJsonFromRequest[[]int](defaultHTTPClient, request)
 	if err != nil {
 		return nil, fmt.Errorf("%w: could not fetch list of post IDs", errNoContent)
@@ -89,7 +92,10 @@ func fetchHackerNewsPostsFromIds(postIds []int, commentsUrlTemplate string) (for
 	requests := make([]*http.Request, len(postIds))
 
 	for i, id := range postIds {
-		request, _ := http.NewRequest("GET", fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%d.json", id), nil)
+		request, err := http.NewRequest("GET", fmt.Sprintf("https://hacker-news.firebaseio.com/v0/item/%d.json", id), nil)
+		if err != nil {
+			return nil, fmt.Errorf("creating request for post %d: %w", id, err)
+		}
 		requests[i] = request
 	}
 
