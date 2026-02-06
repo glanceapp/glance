@@ -1245,6 +1245,7 @@ Either a value from the table below or a URL to a custom search engine. Use `{QU
 | perplexity | `https://www.perplexity.ai/search?q={QUERY}` |
 | kagi | `https://kagi.com/search?q={QUERY}` |
 | startpage | `https://www.startpage.com/search?q={QUERY}` |
+| qwant | `https://www.qwant.com/?q={QUERY}&t=web`|
 
 ##### `new-tab`
 When set to `true`, swaps the shortcuts for showing results in the same or new tab, defaulting to showing results in a new tab.
