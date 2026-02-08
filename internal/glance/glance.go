@@ -235,7 +235,7 @@ func newApplication(c *config) (*application, error) {
 	}
 	app.parsedManifest = []byte(manifest)
 
-	// start background monitor updater to check monitor widgets periodically
+	// start background updater to check monitor and custom-api widgets periodically
 	go func() {
 		ticker := time.NewTicker(15 * time.Second)
 		defer ticker.Stop()
@@ -251,6 +251,8 @@ func newApplication(c *config) (*application, error) {
 					for i := range page.HeadWidgets {
 						if mon, ok := page.HeadWidgets[i].(*monitorWidget); ok {
 							mon.update(app.monitorCtx)
+						} else if api, ok := page.HeadWidgets[i].(*customAPIWidget); ok {
+							api.update(app.monitorCtx)
 						}
 					}
 
@@ -259,6 +261,8 @@ func newApplication(c *config) (*application, error) {
 						for w := range page.Columns[c].Widgets {
 							if mon, ok := page.Columns[c].Widgets[w].(*monitorWidget); ok {
 								mon.update(app.monitorCtx)
+							} else if api, ok := page.Columns[c].Widgets[w].(*customAPIWidget); ok {
+								api.update(app.monitorCtx)
 							}
 						}
 					}

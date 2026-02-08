@@ -46,6 +46,7 @@ type customAPIWidget struct {
 	Frameless         bool                         `yaml:"frameless"`
 	compiledTemplate  *template.Template           `yaml:"-"`
 	CompiledHTML      template.HTML                `yaml:"-"`
+	PrevCompiledHTML  template.HTML                `yaml:"-"` // for change detection (live-events)
 }
 
 func (widget *customAPIWidget) initialize() error {
@@ -83,7 +84,17 @@ func (widget *customAPIWidget) update(ctx context.Context) {
 		return
 	}
 
-	widget.CompiledHTML = compiledHTML
+	// Detect content change for live-events
+	if widget.CompiledHTML != compiledHTML {
+		widget.PrevCompiledHTML = widget.CompiledHTML
+		widget.CompiledHTML = compiledHTML
+
+		// Emit live-event for data change
+		publishEvent("custom-api:data_changed", map[string]interface{}{
+			"widget_id": widget.GetID(),
+			"title":     widget.Title,
+		})
+	}
 }
 
 func (widget *customAPIWidget) Render() template.HTML {

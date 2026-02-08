@@ -869,6 +869,39 @@ async function setupPage() {
                         } catch (e) {
                             console.error('Failed to fetch widget content after monitor event', e);
                         }
+                    } else if (msg.type === 'custom-api:data_changed') {
+                        // update custom-api widget when data changes
+                        try {
+                            const widgetId = msg.data && msg.data.widget_id;
+                            if (widgetId) {
+                                const resp = await fetch(`${pageData.baseURL}/api/widgets/${widgetId}/content/`);
+                                if (resp.ok) {
+                                    const html = await resp.text();
+                                    const widgetElem = document.querySelector(`[data-widget-id="${widgetId}"]`);
+                                    if (widgetElem) {
+                                        widgetElem.outerHTML = html;
+
+                                        // re-run initializers globally
+                                        // setup functions now have guards to prevent duplicate listeners
+                                        setupPopovers();
+                                        setupClocks();
+                                        setupCarousels();
+                                        setupCollapsibleLists();
+                                        setupCollapsibleGrids();
+                                        setupGroups();
+                                        setupMasonries();
+                                        setupDynamicRelativeTime();
+                                        setupLazyImages();
+
+                                        for (let i = 0; i < contentReadyCallbacks.length; i++) {
+                                            contentReadyCallbacks[i]();
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Failed to fetch widget content after custom-api event', e);
+                        }
                     }
                 } catch (e) {
                     console.error('Failed to handle SSE message', e);
