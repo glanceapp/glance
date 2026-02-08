@@ -53,7 +53,7 @@ services:
       # If you have custom assets (CSS/JS) that you want to test without rebuilding
       # - ./public:/app/public:ro
     environment:
-      - TZ=Europe/Bucharest
+      - TZ=Etc/UTC
       - GLANCE_CONFIG=/app/glance.yml
     # Important for SSE (Live Events) data flow
     logging:
