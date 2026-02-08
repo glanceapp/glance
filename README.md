@@ -49,7 +49,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./glance.yml:/app/glance.yml:ro
+      - ./config:/app/config:ro # add glance.yml to config folder
       # If you have custom assets (CSS/JS) that you want to test without rebuilding
       # - ./public:/app/public:ro
     environment:
