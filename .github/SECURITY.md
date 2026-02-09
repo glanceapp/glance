@@ -6,4 +6,4 @@ Security updates will be applied to the latest as well as previous minor version
 
 ## Reporting a Vulnerability
 
-Please report any suspected security vulnerabilities to [glanceapp@duck.com](mailto:glanceapp@duck.com) and do not disclose them publicly. You should receive a response within a few days and if confirmed the issue will be resolved as soon as possible.
+Please report any suspected security vulnerabilities to [Discussions](https://github.com/frozendark01/glance/discussions) and do not disclose them publicly. You should receive a response within a few days and if confirmed the issue will be resolved as soon as possible.

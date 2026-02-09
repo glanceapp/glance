@@ -1,4 +1,4 @@
-project_name: glanceapp/glance
+project_name: glance
 
 checksum:
   disable: true
@@ -9,23 +9,18 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
-      - openbsd
-      - freebsd
       - windows
       - darwin
     goarch:
       - amd64
       - arm64
-      - arm
-      - 386
-    goarm:
-      - 7
+    # Am ajustat calea către variabila de versiune pentru a se potrivi cu repo-ul tău
     ldflags:
-      - -s -w -X github.com/glanceapp/glance/internal/glance.buildVersion={{ .Tag }}
+      - -s -w -X github.com/frozendark01/glance/internal/glance.buildVersion={{ .Tag }}
+    main: ./cmd/glance/main.go
 
 archives:
-  -
-    name_template: "glance-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
+  - name_template: "glance-{{ .Os }}-{{ .Arch }}"
     files:
       - nothing*
     format_overrides:
@@ -34,7 +29,7 @@ archives:
 
 dockers:
   - image_templates:
-      - &amd64_image "{{ .ProjectName }}:{{ .Tag }}-amd64"
+      - &amd64_image "ghcr.io/frozendark01/glance:{{ .Tag }}-amd64"
     build_flag_templates:
       - --platform=linux/amd64
     goarch: amd64
@@ -42,28 +37,19 @@ dockers:
     dockerfile: Dockerfile.goreleaser
 
   - image_templates:
-      - &arm64v8_image "{{ .ProjectName }}:{{ .Tag }}-arm64"
+      - &arm64v8_image "ghcr.io/frozendark01/glance:{{ .Tag }}-arm64"
     build_flag_templates:
       - --platform=linux/arm64
     goarch: arm64
     use: buildx
     dockerfile: Dockerfile.goreleaser
 
-  - image_templates:
-      - &armv7_image "{{ .ProjectName }}:{{ .Tag }}-armv7"
-    build_flag_templates:
-      - --platform=linux/arm/v7
-    goarch: arm
-    goarm: 7
-    use: buildx
-    dockerfile: Dockerfile.goreleaser
-
 docker_manifests:
-  - name_template: "{{ .ProjectName }}:{{ .Tag }}"
-    image_templates: &multiarch_images
+  - name_template: "ghcr.io/frozendark01/glance:{{ .Tag }}"
+    image_templates:
       - *amd64_image
       - *arm64v8_image
-      - *armv7_image
-  - name_template: "{{ .ProjectName }}:latest"
-    skip_push: auto
-    image_templates: *multiarch_images
+  - name_template: "ghcr.io/frozendark01/glance:latest"
+    image_templates:
+      - *amd64_image
+      - *arm64v8_image

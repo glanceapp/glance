@@ -2,6 +2,7 @@ name: Create release
 
 permissions:
   contents: write
+  packages: write  # Necesar pentru a urca imagini pe GHCR
 
 on:
   push:
@@ -12,16 +13,17 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the target Git reference
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Log in to Docker Hub
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Golang
         uses: actions/setup-go@v5
@@ -33,7 +35,9 @@ jobs:
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          args: release
