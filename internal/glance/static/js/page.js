@@ -878,7 +878,7 @@ async function setupPage() {
                                 if (resp.ok) {
                                     const html = await resp.text();
                                     const widgetElem = document.querySelector(`[data-widget-id="${widgetId}"]`);
-                                    if (widgetElem) {
+                                    if (widgetElem && html !== widgetElem.outerHTML) {
                                         widgetElem.outerHTML = html;
 
                                         // re-run initializers globally
@@ -910,9 +910,10 @@ async function setupPage() {
 
             es.onerror = (e) => {
                 console.error('SSE connection error', e);
-                try { es.close(); } catch (e) {}
-                // attempt reconnect after a short delay
-                setTimeout(() => setupSSE(), 3000);
+                // Do not forcibly close the EventSource here. Let the browser
+                // manage automatic reconnects. Forcing a close causes the
+                // client to unregister immediately which can cause missed
+                // events when they occur during a reconnect window.
             };
 
             return true;

@@ -46,6 +46,23 @@ type application struct {
 	monitorCancel          context.CancelFunc
 }
 
+// registerWidgetRecursive registers a widget and all its child widgets (if any)
+func (a *application) registerWidgetRecursive(w widget) {
+	a.widgetByID[w.GetID()] = w
+	
+	// If this widget is a container (group or split-column), register its children too
+	switch cw := w.(type) {
+	case *groupWidget:
+		for _, childWidget := range cw.Widgets {
+			a.registerWidgetRecursive(childWidget)
+		}
+	case *splitColumnWidget:
+		for _, childWidget := range cw.Widgets {
+			a.registerWidgetRecursive(childWidget)
+		}
+	}
+}
+
 func newApplication(c *config) (*application, error) {
 	app := &application{
 		Version:    buildVersion,
@@ -182,7 +199,7 @@ func newApplication(c *config) (*application, error) {
 
 		for i := range page.HeadWidgets {
 			widget := page.HeadWidgets[i]
-			app.widgetByID[widget.GetID()] = widget
+			app.registerWidgetRecursive(widget)
 			widget.setProviders(providers)
 		}
 
@@ -195,7 +212,7 @@ func newApplication(c *config) (*application, error) {
 
 			for w := range column.Widgets {
 				widget := column.Widgets[w]
-				app.widgetByID[widget.GetID()] = widget
+				app.registerWidgetRecursive(widget)
 				widget.setProviders(providers)
 			}
 		}
@@ -240,6 +257,28 @@ func newApplication(c *config) (*application, error) {
 		ticker := time.NewTicker(15 * time.Second)
 		defer ticker.Stop()
 
+		updateWidgetIfNeeded := func(w widget) {
+			if mon, ok := w.(*monitorWidget); ok {
+				mon.update(app.monitorCtx)
+			} else if api, ok := w.(*customAPIWidget); ok {
+				api.update(app.monitorCtx)
+			}
+		}
+
+		var updateWidgetsRecursive func([]widget)
+		updateWidgetsRecursive = func(widgets []widget) {
+			for i := range widgets {
+				w := widgets[i]
+				updateWidgetIfNeeded(w)
+				// recursively update widgets in containers
+				if group, ok := w.(*groupWidget); ok {
+					updateWidgetsRecursive(group.Widgets)
+				} else if split, ok := w.(*splitColumnWidget); ok {
+					updateWidgetsRecursive(split.Widgets)
+				}
+			}
+		}
+
 		for {
 			select {
 			case <-app.monitorCtx.Done():
@@ -247,24 +286,10 @@ func newApplication(c *config) (*application, error) {
 			case <-ticker.C:
 				for _, page := range app.slugToPage {
 					page.mu.Lock()
-					// head widgets
-					for i := range page.HeadWidgets {
-						if mon, ok := page.HeadWidgets[i].(*monitorWidget); ok {
-							mon.update(app.monitorCtx)
-						} else if api, ok := page.HeadWidgets[i].(*customAPIWidget); ok {
-							api.update(app.monitorCtx)
-						}
-					}
-
-					// column widgets
+					// recursively update head and column widgets
+					updateWidgetsRecursive(page.HeadWidgets)
 					for c := range page.Columns {
-						for w := range page.Columns[c].Widgets {
-							if mon, ok := page.Columns[c].Widgets[w].(*monitorWidget); ok {
-								mon.update(app.monitorCtx)
-							} else if api, ok := page.Columns[c].Widgets[w].(*customAPIWidget); ok {
-								api.update(app.monitorCtx)
-							}
-						}
+						updateWidgetsRecursive(page.Columns[c].Widgets)
 					}
 					page.mu.Unlock()
 				}

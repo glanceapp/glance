@@ -1,10 +1,9 @@
 <p align="center"><img src="docs/logo.png"></p>
-<h1 align="center">Glance</h1>
+<h1 align="center">Glance </h1>
 <p align="center">
   <a href="#installation">Install</a> •
   <a href="docs/configuration.md#configuring-glance">Configuration</a> •
-  <a href="https://discord.com/invite/7KQ7Xa9kJd">Discord</a> •
-  <a href="https://github.com/sponsors/glanceapp">Sponsor</a>
+
 </p>
 <p align="center">
   <a href="https://github.com/glanceapp/community-widgets">Community widgets</a> •
@@ -19,7 +18,7 @@
 ### Problem Statement
 Previously, when a monitored service changed status, users had to manually refresh the page to see the updated state. This created a poor user experience for services with frequently changing states.
 
-### Solution
+### Solution for monitoring services eg: DNS, TCP/HTTP/ICMP
 Implemented a push-based real-time notification system using:
 
 * Server-Sent Events (SSE) for bidirectional server-to-client communication
@@ -30,12 +29,37 @@ Implemented a push-based real-time notification system using:
 * More detailes - LIVE_EVENTS_IMPLEMENTATION •
 * Docker compose using provided directory structure (recommended)
 
-Create a new directory called `glance` as well as the template files within it by running:
+### Solution for monitoring services eg: custopm-api widgets
+* Added recursive polling that dives into container widgets (groups, split-columns)
+* Polls monitor and custom-api widgets every 15 seconds
+* Detects content changes and emits events
+* Custom-api widget change detection (widget-custom-api.go):
+* Added PrevCompiledHTML field to track previous content
+* Compares rendered HTML to detect changes
+* Emits custom-api:data_changed event when changes detected
+* Event hub with caching (events.go):
+
+* Server-Sent Events broadcast to connected clients
+* Event caching: Stores recent events for reconnecting clients
+* Debouncing per widget to prevent event spam
+* Robust numeric type handling for widget IDs
+* Browser-side DOM updates (page.js):
+
+* Listens for custom-api:data_changed events
+* Fetches updated widget HTML via /api/widgets/{id}/content/
+* Replaces widget DOM with new content
+* Re-initializes all widget setup functions
+* Widget registration fix:
+
+* Widgets inside containers are now registered in widgetByID map
+* Allows endpoint to fetch child widgets by ID
+
+
+### Install Galance
+
+Create a new directory called `glance` and add glance.yml file in the directory
 When ready, run:
 
-```bash
-docker compose up -d
-```
 ```bash
 services:
   glance:
@@ -60,6 +84,8 @@ services:
         max-size: "10mb"
         max-file: "3"
 ```
-TO DO: add the same Live Events to custom-api widgets.
+```bash
+docker compose up -d
+```
 
-Thank you
+This is a fork of Glance Dashboard with Live-Events. No manual refresh needed!
