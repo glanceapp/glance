@@ -14,7 +14,6 @@ builds:
     goarch:
       - amd64
       - arm64
-    # Am ajustat calea către variabila de versiune pentru a se potrivi cu repo-ul tău
     ldflags:
       - -s -w -X github.com/frozendark01/glance/internal/glance.buildVersion={{ .Tag }}
     main: ./main.go
