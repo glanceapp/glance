@@ -588,23 +588,37 @@ function setupClocks() {
     }
 
     const updateCallbacks = [];
+    const clockStates = [];
 
     for (var i = 0; i < clocks.length; i++) {
         const clock = clocks[i];
+        
+        // Guard: skip if already initialized
+        if (clock.dataset.clockInitialized === 'true') {
+            continue;
+        }
+        clock.dataset.clockInitialized = 'true';
+        
         const hourFormat = clock.dataset.hourFormat;
         const localTimeContainer = clock.querySelector('[data-local-time]');
         const localDateElement = localTimeContainer.querySelector('[data-date]');
         const localWeekdayElement = localTimeContainer.querySelector('[data-weekday]');
         const localYearElement = localTimeContainer.querySelector('[data-year]');
+        const timeElement = localTimeContainer.querySelector('[data-time]');
         const timeZoneContainers = clock.querySelectorAll('[data-time-in-zone]');
 
-        const setLocalTime = makeSettableTimeElement(
-            localTimeContainer.querySelector('[data-time]'),
-            hourFormat
-        );
+        const clockState = { timeDisplay: '', initialized: false };
+        clockStates.push(clockState);
+
+        const setLocalTime = makeSettableTimeElement(timeElement, hourFormat);
 
         updateCallbacks.push((now) => {
-            setLocalTime(now);
+            if (!clockState.initialized) {
+                setLocalTime(now);
+                clockState.initialized = true;
+            } else {
+                setLocalTime(now);
+            }
             localDateElement.textContent = now.getDate() + ' ' + monthNames[now.getMonth()];
             localWeekdayElement.textContent = weekDayNames[now.getDay()];
             localYearElement.textContent = now.getFullYear();
@@ -635,10 +649,13 @@ function setupClocks() {
         for (var i = 0; i < updateCallbacks.length; i++)
             updateCallbacks[i](now);
 
-        setTimeout(updateClocks, (60 - now.getSeconds()) * 1000);
+        setTimeout(updateClocks, 15000);
     };
 
-    updateClocks();
+    // Only start the update loop if there are clocks to update
+    if (updateCallbacks.length > 0) {
+        updateClocks();
+    }
 }
 
 async function setupCalendars() {
