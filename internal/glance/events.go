@@ -30,7 +30,6 @@ func (h *eventHub) register() chan []byte {
 	ch := make(chan []byte, 8)
 	h.mu.Lock()
 	h.clients[ch] = struct{}{}
-	clientsCount := len(h.clients)
 	// snapshot recent events to send after unlocking
 	recent := make([][]byte, 0, len(h.lastEvents))
 	for _, v := range h.lastEvents {
@@ -40,7 +39,9 @@ func (h *eventHub) register() chan []byte {
 		recent = append(recent, b)
 	}
 	h.mu.Unlock()
-	log.Printf("SSE client registered (clients=%d)", clientsCount)
+	// Only log in debug scenarios
+	// clientsCount := len(h.clients)
+	// log.Printf("SSE client registered (clients=%d)", clientsCount)
 
 	// deliver recent events asynchronously so register() remains non-blocking
 	go func() {
@@ -58,10 +59,11 @@ func (h *eventHub) register() chan []byte {
 func (h *eventHub) unregister(ch chan []byte) {
 	h.mu.Lock()
 	delete(h.clients, ch)
-	clientsCount := len(h.clients)
+	// clientsCount := len(h.clients)
 	h.mu.Unlock()
 	close(ch)
-	log.Printf("SSE client unregistered (clients=%d)", clientsCount)
+	// Only log in debug scenarios
+	// log.Printf("SSE client unregistered (clients=%d)", clientsCount)
 }
 
 func (h *eventHub) broadcast(msg []byte) {
@@ -106,7 +108,8 @@ func (a *application) handleEvents(w http.ResponseWriter, r *http.Request) {
 	msgCh := globalEventHub.register()
 	defer globalEventHub.unregister(msgCh)
 
-	log.Printf("handleEvents: client connected %s", r.RemoteAddr)
+	// Only log client connection in debug scenarios
+	// log.Printf("handleEvents: client connected %s", r.RemoteAddr)
 
 	ctx := r.Context()
 
@@ -121,7 +124,8 @@ func (a *application) handleEvents(w http.ResponseWriter, r *http.Request) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Printf("handleEvents: client context done %s", r.RemoteAddr)
+			// Only log in debug scenarios
+			// log.Printf("handleEvents: client context done %s", r.RemoteAddr)
 			return
 		case msg, ok := <-msgCh:
 			if !ok {
@@ -236,7 +240,10 @@ func publishEvent(eventType string, payload any) {
 		}
 		globalEventHub.mu.Unlock()
 
-		log.Printf("publishing event %s to %d clients", eventType, clientsCount)
+		// Only log if no clients connected (potential issue)
+		if clientsCount == 0 && eventType != "monitor:site_changed" && eventType != "page:update" {
+			log.Printf("publishing event %s (no clients)", eventType)
+		}
 	}
 
 	globalEventHub.broadcast(b)
