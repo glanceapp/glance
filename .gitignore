@@ -3,3 +3,6 @@
 /playground
 /.idea
 /glance*.yml
+glance
+glance.exe
+*.log
