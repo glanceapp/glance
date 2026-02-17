@@ -1879,7 +1879,7 @@ Preview:
 
 To reorder tasks, drag and drop them by grabbing the top side of the task:
 
-![](images/reorder-todo-tasks-prevew.gif)
+![](images/reorder-todo-tasks-preview.gif)
 
 To delete a task, hover over it and click on the trash icon.
 
