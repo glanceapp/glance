@@ -3,6 +3,7 @@
     aspect-ratio: 16 / 8.9;
     object-fit: cover;
     border-radius: var(--border-radius) var(--border-radius) 0 0;
+    cursor: pointer;
 }
 
 .video-horizontal-list-thumbnail {
