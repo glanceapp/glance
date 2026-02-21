@@ -2784,10 +2784,8 @@ Example:
       name: Bitcoin
       chart-link: https://www.tradingview.com/chart/?symbol=INDEX:BTCUSD
     - symbol: NVDA
-      market: NASDAQ
       name: NVIDIA
     - symbol: AAPL
-      market: NASDAQ
       symbol-link: https://www.google.com/search?tbm=nws&q=apple
       name: Apple
 ```
@@ -2815,22 +2813,22 @@ By default the markets are displayed in the order they were defined. You can cus
 A template for the link to go to when clicking on the chart that will be applied to all markets. The value `{SYMBOL}` will be replaced with the symbol of the market, and `{MARKET}` will be replaced with the market parameter. You can override this on a per-market basis by specifying a `chart-link` property. Example:
 
 ```yaml
-chart-link-template: https://www.tradingview.com/chart/?symbol={SYMBOL}
+chart-link-template: https://www.tradingview.com/chart/?symbol={SYMBOL}?market={MARKET}
 ```
 
 ##### `symbol-link-template`
 A template for the link to go to when clicking on the symbol that will be applied to all markets. The value `{SYMBOL}` will be replaced with the symbol of the market, and `{MARKET}` will be replaced with the market parameter. You can override this on a per-market basis by specifying a `symbol-link` property. Example:
 
 ```yaml
-symbol-link-template: https://www.google.com/search?tbm=nws&q={SYMBOL}
+symbol-link-template: https://www.google.com/finance/beta/quote/{SYMBOL}:{MARKET}
 ```
 
 ###### Properties for each market
 | Name | Type | Required |
 | ---- | ---- | -------- |
 | symbol | string | yes |
-| market | string | no |
 | name | string | no |
+| market | string | no |
 | symbol-link | string | no |
 | chart-link | string | no |
 
@@ -2838,13 +2836,13 @@ symbol-link-template: https://www.google.com/search?tbm=nws&q={SYMBOL}
 
 The symbol, as seen in Yahoo Finance.
 
-`market`
-
-The market the symbol belongs to, which can be used in `{MARKET}` replacements.
-
 `name`
 
 The name that will be displayed under the symbol.
+
+`market`
+
+The market the symbol belongs to, which can be used in `{MARKET}` replacements.
 
 `symbol-link`
 
