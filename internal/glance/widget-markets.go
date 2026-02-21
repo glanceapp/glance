@@ -36,11 +36,13 @@ func (widget *marketsWidget) initialize() error {
 		m := &widget.MarketRequests[i]
 
 		if widget.ChartLinkTemplate != "" && m.ChartLink == "" {
-			m.ChartLink = strings.ReplaceAll(widget.ChartLinkTemplate, "{SYMBOL}", m.Symbol)
+			link := strings.ReplaceAll(widget.ChartLinkTemplate, "{SYMBOL}", m.Symbol)
+			m.ChartLink = strings.ReplaceAll(link, "{MARKET}", m.Market)
 		}
 
 		if widget.SymbolLinkTemplate != "" && m.SymbolLink == "" {
-			m.SymbolLink = strings.ReplaceAll(widget.SymbolLinkTemplate, "{SYMBOL}", m.Symbol)
+			link := strings.ReplaceAll(widget.SymbolLinkTemplate, "{SYMBOL}", m.Symbol)
+			m.SymbolLink = strings.ReplaceAll(link, "{MARKET}", m.Market)
 		}
 	}
 
@@ -70,6 +72,7 @@ func (widget *marketsWidget) Render() template.HTML {
 type marketRequest struct {
 	CustomName string `yaml:"name"`
 	Symbol     string `yaml:"symbol"`
+	Market     string `yaml:"market"`
 	ChartLink  string `yaml:"chart-link"`
 	SymbolLink string `yaml:"symbol-link"`
 }
