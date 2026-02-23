@@ -4,6 +4,7 @@ go 1.24.4
 
 require (
 	github.com/fsnotify/fsnotify v1.9.0
+	github.com/gomarkdown/markdown v0.0.0-20260217112301-37c66b85d6ab
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/shirou/gopsutil/v4 v4.25.5
 	github.com/tidwall/gjson v1.18.0
