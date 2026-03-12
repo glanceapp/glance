@@ -13,7 +13,7 @@
                 </div>
                 {{ end }}
                 {{ if .Exists }}
-                <a href="https://twitch.tv/{{ .Login }}" target="_blank" rel="noreferrer">
+                <a href="https://twitch.tv/{{ .Login }}" target="{{ if $.SameTab }}_self{{ else }}_blank{{ end }}" rel="noreferrer">
                     <img class="twitch-channel-avatar thumbnail" src="{{ .AvatarUrl }}" alt="" loading="lazy">
                 </a>
                 {{ else }}
@@ -23,11 +23,11 @@
                 {{ end }}
             </div>
             <div class="min-width-0">
-                <a href="https://twitch.tv/{{ .Login }}" class="size-h3{{ if .IsLive }} color-highlight{{ end }} block text-truncate" target="_blank" rel="noreferrer">{{ .Name }}</a>
+                <a href="https://twitch.tv/{{ .Login }}" class="size-h3{{ if .IsLive }} color-highlight{{ end }} block text-truncate" target="{{ if $.SameTab }}_self{{ else }}_blank{{ end }}" rel="noreferrer">{{ .Name }}</a>
                 {{ if .Exists }}
                     {{ if .IsLive }}
                         {{ if .Category }}
-                            <a class="text-truncate block" href="https://www.twitch.tv/directory/category/{{ .CategorySlug }}" target="_blank" rel="noreferrer">{{ .Category }}</a>
+                            <a class="text-truncate block" href="https://www.twitch.tv/directory/category/{{ .CategorySlug }}" target="{{ if $.SameTab }}_self{{ else }}_blank{{ end }}" rel="noreferrer">{{ .Category }}</a>
                         {{ end }}
                     <ul class="list-horizontal-text">
                         <li {{ dynamicRelativeTimeAttrs .LiveSince }}></li>
