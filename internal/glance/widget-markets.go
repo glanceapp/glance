@@ -42,6 +42,18 @@ func (widget *marketsWidget) initialize() error {
 		if widget.SymbolLinkTemplate != "" && m.SymbolLink == "" {
 			m.SymbolLink = strings.ReplaceAll(widget.SymbolLinkTemplate, "{SYMBOL}", m.Symbol)
 		}
+
+		if m.Range == "" {
+			m.Range = "1mo"
+		} else if !marketValidRanges[m.Range] {
+			return fmt.Errorf("invalid range %q for symbol %s, valid values: 1d 5d 1mo 3mo 6mo 1y 2y 5y 10y ytd max", m.Range, m.Symbol)
+		}
+
+		if m.Interval == "" {
+			m.Interval = "1d"
+		} else if !marketValidIntervals[m.Interval] {
+			return fmt.Errorf("invalid interval %q for symbol %s, valid values: 1m 2m 5m 15m 30m 60m 90m 1h 4h 1d 5d 1wk 1mo 3mo", m.Interval, m.Symbol)
+		}
 	}
 
 	return nil
@@ -72,6 +84,8 @@ type marketRequest struct {
 	Symbol     string `yaml:"symbol"`
 	ChartLink  string `yaml:"chart-link"`
 	SymbolLink string `yaml:"symbol-link"`
+	Range      string `yaml:"range"`
+	Interval   string `yaml:"interval"`
 }
 
 type market struct {
@@ -126,7 +140,13 @@ func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, erro
 	requests := make([]*http.Request, 0, len(marketRequests))
 
 	for i := range marketRequests {
-		request, _ := http.NewRequest("GET", fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=1mo&interval=1d", marketRequests[i].Symbol), nil)
+		url := fmt.Sprintf(
+			"https://query1.finance.yahoo.com/v8/finance/chart/%s?range=%s&interval=%s",
+			marketRequests[i].Symbol,
+			marketRequests[i].Range,
+			marketRequests[i].Interval,
+		)
+		request, _ := http.NewRequest("GET", url, nil)
 		setBrowserUserAgentHeader(request)
 		requests = append(requests, request)
 	}
@@ -231,4 +251,15 @@ var currencyToSymbol = map[string]string{
 	"DKK": "kr",
 	"PLN": "zł",
 	"PHP": "₱",
+}
+
+var marketValidRanges = map[string]bool{
+	"1d": true, "5d": true, "1mo": true, "3mo": true, "6mo": true,
+	"1y": true, "2y": true, "5y": true, "10y": true, "ytd": true, "max": true,
+}
+
+var marketValidIntervals = map[string]bool{
+	"1m": true, "2m": true, "5m": true, "15m": true, "30m": true,
+	"60m": true, "90m": true, "1h": true, "4h": true,
+	"1d": true, "5d": true, "1wk": true, "1mo": true, "3mo": true,
 }
