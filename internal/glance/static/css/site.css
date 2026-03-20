@@ -405,3 +405,43 @@ kbd:active {
 .theme-picker.popover-active .current-theme-preview, .theme-picker:hover {
     opacity: 1;
 }
+
+.page-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.widget-loading {
+    flex: 1;
+    min-height: 10rem;
+}
+
+.widget-loading-spinner {
+    padding: var(--widget-content-padding);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    font-size: 1rem;
+}
+
+.widget-retry-notice {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.widget-retry-notice span {
+    font-size: 0.85rem;
+    color: var(--color-text-subdue);
+}
+
+.widget-fade-in {
+    animation: widgetFadeIn .3s ease-out;
+}
+
+@keyframes widgetFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}

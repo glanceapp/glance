@@ -12,8 +12,9 @@ async function fetchPageContent(pageData) {
     return content;
 }
 
-function setupCarousels() {
-    const carouselElements = document.getElementsByClassName("carousel-container");
+function setupCarousels(root) {
+    root = root || document;
+    const carouselElements = root.getElementsByClassName("carousel-container");
 
     if (carouselElements.length == 0) {
         return;
@@ -95,8 +96,11 @@ function updateRelativeTimeForElements(elements)
     }
 }
 
-function setupSearchBoxes() {
-    const searchWidgets = document.getElementsByClassName("search");
+let searchKeyListenerRegistered = false;
+
+function setupSearchBoxes(root) {
+    root = root || document;
+    const searchWidgets = root.getElementsByClassName("search");
 
     if (searchWidgets.length == 0) {
         return;
@@ -192,13 +196,19 @@ function setupSearchBoxes() {
             document.removeEventListener("input", handleInput);
         });
 
-        document.addEventListener("keydown", (event) => {
-            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-            if (event.code != "KeyS") return;
+        if (!searchKeyListenerRegistered) {
+            searchKeyListenerRegistered = true;
+            document.addEventListener("keydown", (event) => {
+                if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+                if (event.code != "KeyS") return;
 
-            inputElement.focus();
-            event.preventDefault();
-        });
+                const firstSearchInput = document.querySelector(".search .search-input");
+                if (firstSearchInput) {
+                    firstSearchInput.focus();
+                    event.preventDefault();
+                }
+            });
+        }
 
         kbdElement.addEventListener("mousedown", () => {
             requestAnimationFrame(() => inputElement.focus());
@@ -206,15 +216,33 @@ function setupSearchBoxes() {
     }
 }
 
-function setupDynamicRelativeTime() {
-    const elements = document.querySelectorAll("[data-dynamic-relative-time]");
-    const updateInterval = 60 * 1000;
-    let lastUpdateTime = Date.now();
+const allRelativeTimeElements = [];
+let relativeTimeTimerStarted = false;
+
+function setupDynamicRelativeTime(root) {
+    root = root || document;
+    const elements = root.querySelectorAll("[data-dynamic-relative-time]");
+
+    if (elements.length == 0) {
+        return;
+    }
+
+    for (let i = 0; i < elements.length; i++) {
+        allRelativeTimeElements.push(elements[i]);
+    }
 
     updateRelativeTimeForElements(elements);
 
+    if (relativeTimeTimerStarted) {
+        return;
+    }
+
+    relativeTimeTimerStarted = true;
+    const updateInterval = 60 * 1000;
+    let lastUpdateTime = Date.now();
+
     const updateElementsAndTimestamp = () => {
-        updateRelativeTimeForElements(elements);
+        updateRelativeTimeForElements(allRelativeTimeElements);
         lastUpdateTime = Date.now();
     };
 
@@ -248,8 +276,9 @@ function setupDynamicRelativeTime() {
     });
 }
 
-function setupGroups() {
-    const groups = document.getElementsByClassName("widget-type-group");
+function setupGroups(root) {
+    root = root || document;
+    const groups = root.getElementsByClassName("widget-type-group");
 
     if (groups.length == 0) {
         return;
@@ -308,8 +337,9 @@ function setupGroups() {
     }
 }
 
-function setupLazyImages() {
-    const images = document.querySelectorAll("img[loading=lazy]");
+function setupLazyImages(root) {
+    root = root || document;
+    const images = root.querySelectorAll("img[loading=lazy]");
 
     if (images.length == 0) {
         return;
@@ -383,8 +413,9 @@ function attachExpandToggleButton(collapsibleContainer) {
 };
 
 
-function setupCollapsibleLists() {
-    const collapsibleLists = document.querySelectorAll(".list.collapsible-container");
+function setupCollapsibleLists(root) {
+    root = root || document;
+    const collapsibleLists = root.querySelectorAll(".list.collapsible-container");
 
     if (collapsibleLists.length == 0) {
         return;
@@ -417,8 +448,9 @@ function setupCollapsibleLists() {
     }
 }
 
-function setupCollapsibleGrids() {
-    const collapsibleGridElements = document.querySelectorAll(".cards-grid.collapsible-container");
+function setupCollapsibleGrids(root) {
+    root = root || document;
+    const collapsibleGridElements = root.querySelectorAll(".cards-grid.collapsible-container");
 
     if (collapsibleGridElements.length == 0) {
         return;
@@ -493,8 +525,13 @@ function setupCollapsibleGrids() {
 }
 
 const contentReadyCallbacks = [];
+let isContentReady = false;
 
 function afterContentReady(callback) {
+    if (isContentReady) {
+        callback();
+        return;
+    }
     contentReadyCallbacks.push(callback);
 }
 
@@ -570,8 +607,9 @@ function zoneDiffText(diffInMinutes) {
     return { text: `${sign}${hours}h~`, title: `${hours} hour${hourSuffix} and ${minutes} minutes ${signText}` };
 }
 
-function setupClocks() {
-    const clocks = document.getElementsByClassName('clock');
+function setupClocks(root) {
+    root = root || document;
+    const clocks = root.getElementsByClassName('clock');
 
     if (clocks.length == 0) {
         return;
@@ -631,8 +669,9 @@ function setupClocks() {
     updateClocks();
 }
 
-async function setupCalendars() {
-    const elems = document.getElementsByClassName("calendar");
+async function setupCalendars(root) {
+    root = root || document;
+    const elems = root.getElementsByClassName("calendar");
     if (elems.length == 0) return;
 
     // TODO: implement prefetching, currently loads as a nasty waterfall of requests
@@ -642,8 +681,9 @@ async function setupCalendars() {
         calendar.default(elems[i]);
 }
 
-async function setupTodos() {
-    const elems = Array.from(document.getElementsByClassName("todo"));
+async function setupTodos(root) {
+    root = root || document;
+    const elems = Array.from(root.getElementsByClassName("todo"));
     if (elems.length == 0) return;
 
     const todo = await import ('./todo.js');
@@ -653,8 +693,9 @@ async function setupTodos() {
     }
 }
 
-function setupTruncatedElementTitles() {
-    const elements = document.querySelectorAll(".text-truncate, .single-line-titles .title, .text-truncate-2-lines, .text-truncate-3-lines");
+function setupTruncatedElementTitles(root) {
+    root = root || document;
+    const elements = root.querySelectorAll(".text-truncate, .single-line-titles .title, .text-truncate-2-lines, .text-truncate-3-lines");
 
     if (elements.length == 0) {
         return;
@@ -743,44 +784,115 @@ function initThemePicker() {
     })
 }
 
+async function setupWidgetElement(container) {
+    setupPopovers(container);
+    setupClocks(container);
+    await setupCalendars(container);
+    await setupTodos(container);
+    setupCarousels(container);
+    setupSearchBoxes(container);
+    setupCollapsibleLists(container);
+    setupCollapsibleGrids(container);
+    setupGroups(container);
+    setupMasonries(container);
+    setupDynamicRelativeTime(container);
+    setupLazyImages(container);
+    setupTruncatedElementTitles(container);
+}
+
+async function fetchAndInsertWidget(widgetID) {
+    const placeholder = document.querySelector(`[data-widget-id="${widgetID}"]`);
+    if (!placeholder) return;
+
+    const maxRetries = 3;
+    const baseDelay = 2000;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await fetch(`${pageData.baseURL}/api/widgets/${widgetID}/render`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const html = await response.text();
+
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            const widgetElement = temp.firstElementChild;
+            widgetElement.classList.add('widget-fade-in');
+            placeholder.replaceWith(widgetElement);
+
+            await setupWidgetElement(widgetElement);
+            return;
+        } catch (error) {
+            if (attempt < maxRetries) {
+                const spinner = placeholder.querySelector('.widget-loading-spinner');
+                if (spinner) {
+                    spinner.innerHTML =
+                        '<div class="widget-retry-notice">' +
+                            '<div class="loading-icon"></div>' +
+                            '<span>Retrying (' + attempt + '/' + maxRetries + ')...</span>' +
+                        '</div>';
+                }
+                await new Promise(resolve => setTimeout(resolve, baseDelay * attempt));
+            } else {
+                placeholder.innerHTML =
+                    '<div class="widget-content">' +
+                        '<p class="color-negative">Failed to load after ' + maxRetries + ' attempts</p>' +
+                    '</div>';
+                placeholder.classList.remove('widget-loading');
+            }
+        }
+    }
+}
+
 async function setupPage() {
     initThemePicker();
 
     const pageElement = document.getElementById("page");
     const pageContentElement = document.getElementById("page-content");
     const pageContent = await fetchPageContent(pageData);
-
     pageContentElement.innerHTML = pageContent;
 
-    try {
-        setupPopovers();
-        setupClocks()
-        await setupCalendars();
-        await setupTodos();
-        setupCarousels();
-        setupSearchBoxes();
-        setupCollapsibleLists();
-        setupCollapsibleGrids();
-        setupGroups();
-        setupMasonries();
-        setupDynamicRelativeTime();
-        setupLazyImages();
-    } finally {
+    if (pageData.asyncLoading) {
         pageElement.classList.add("content-ready");
         pageElement.setAttribute("aria-busy", "false");
-
+        isContentReady = true;
         for (let i = 0; i < contentReadyCallbacks.length; i++) {
             contentReadyCallbacks[i]();
         }
 
-        setTimeout(() => {
-            setupTruncatedElementTitles();
-        }, 50);
+        const placeholders = document.querySelectorAll('[data-widget-id]');
+        const promises = Array.from(placeholders).map(el => fetchAndInsertWidget(el.dataset.widgetId));
+        await Promise.allSettled(promises);
+    } else {
+        try {
+            setupPopovers();
+            setupClocks();
+            await setupCalendars();
+            await setupTodos();
+            setupCarousels();
+            setupSearchBoxes();
+            setupCollapsibleLists();
+            setupCollapsibleGrids();
+            setupGroups();
+            setupMasonries();
+            setupDynamicRelativeTime();
+            setupLazyImages();
+        } finally {
+            pageElement.classList.add("content-ready");
+            pageElement.setAttribute("aria-busy", "false");
+            isContentReady = true;
+            for (let i = 0; i < contentReadyCallbacks.length; i++) {
+                contentReadyCallbacks[i]();
+            }
 
-        setTimeout(() => {
-            document.body.classList.add("page-columns-transitioned");
-        }, 300);
+            setTimeout(() => {
+                setupTruncatedElementTitles();
+            }, 50);
+        }
     }
+
+    setTimeout(() => {
+        document.body.classList.add("page-columns-transitioned");
+    }, 300);
 }
 
 setupPage();
