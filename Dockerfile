@@ -1,10 +1,10 @@
-FROM golang:1.24.4-alpine3.21 AS builder
+FROM golang:1.26.1-alpine3.23 AS builder
 
 WORKDIR /app
 COPY . /app
 RUN CGO_ENABLED=0 go build .
 
-FROM alpine:3.21
+FROM alpine:3.23
 
 WORKDIR /app
 COPY --from=builder /app/glance .
