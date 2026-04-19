@@ -137,12 +137,12 @@ Then configure Dynacat with the issuer URL, client ID, and client secret from yo
 2. Set **Redirect URIs** to `https://dashboard.example.com/api/oidc/callback`
 3. Set **Scopes** to include `openid`, `profile`, `email`, and optionally `groups`
 4. Copy the **Client ID** and **Client Secret**
-5. The issuer URL is your Authentik instance URL, e.g. `https://auth.example.com`
+5. Use the provider's OIDC issuer URL, not the bare Authentik instance URL. In Authentik this usually looks like `https://auth.example.com/application/o/<provider-slug>/` and is the URL Dynacat should use for discovery.
 
 ```yaml
 auth:
   oidc:
-    issuer-url: https://auth.example.com
+    issuer-url: https://auth.example.com/application/o/<provider-slug>/
     client-id: <client-id-from-authentik>
     client-secret: ${OIDC_CLIENT_SECRET}
     redirect-url: https://dashboard.example.com/api/oidc/callback
