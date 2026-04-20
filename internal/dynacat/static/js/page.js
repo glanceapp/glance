@@ -774,8 +774,8 @@ function setupCollapsibleGrids() {
 
         let cardsPerRow;
 
-        const resolveCollapsibleItems = () => requestAnimationFrame(() => {
-            const hideItemsAfterIndex = cardsPerRow * collapseAfterRows;
+        const applyCollapsibleItems = (cpr) => {
+            const hideItemsAfterIndex = cpr * collapseAfterRows;
 
             if (hideItemsAfterIndex >= gridElement.children.length) {
                 button.style.display = "none";
@@ -792,7 +792,7 @@ function setupCollapsibleGrids() {
                     child.classList.add("collapsible-item");
                     child.style.animationDelay = (row * 40).toString() + "ms";
 
-                    if (i % cardsPerRow + 1 == cardsPerRow) {
+                    if (i % cpr + 1 == cpr) {
                         row++;
                     }
                 } else {
@@ -800,7 +800,15 @@ function setupCollapsibleGrids() {
                     child.style.removeProperty("animation-delay");
                 }
             }
-        });
+        };
+
+        const resolveCollapsibleItems = () => requestAnimationFrame(() => applyCollapsibleItems(cardsPerRow));
+
+        const syncCardsPerRow = getCardsPerRow();
+        if (!isNaN(syncCardsPerRow) && syncCardsPerRow > 0) {
+            cardsPerRow = syncCardsPerRow;
+            applyCollapsibleItems(cardsPerRow);
+        }
 
         const observer = new ResizeObserver(() => {
             if (!isElementVisible(gridElement)) {
