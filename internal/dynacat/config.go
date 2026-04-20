@@ -38,7 +38,8 @@ type config struct {
 		AssetsPath     string   `yaml:"assets-path"`
 		CacheDir       string   `yaml:"cache-dir"`
 		BaseURL        string   `yaml:"base-url"`
-		DBPath         string   `yaml:"db-path"`
+		DBPath              string   `yaml:"db-path"`
+		AllowedEmbedHosts   []string `yaml:"allowed-embed-hosts"`
 		trustedProxyNets []*net.IPNet `yaml:"-"`
 	} `yaml:"server"`
 

@@ -844,23 +844,30 @@ func (a *application) handleTodoSave(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *application) securityHeadersMiddleware(next http.Handler) http.Handler {
+	frameAncestors := "'self'"
+	xFrameOptions := "SAMEORIGIN"
+	if len(a.Config.Server.AllowedEmbedHosts) > 0 {
+		frameAncestors = "'self' " + strings.Join(a.Config.Server.AllowedEmbedHosts, " ")
+		xFrameOptions = "ALLOW-FROM " + strings.Join(a.Config.Server.AllowedEmbedHosts, " ")
+	}
+	csp := "default-src 'self'; " +
+		"img-src 'self' data: blob: https: http:; " +
+		"media-src 'self' data: blob: https: http:; " +
+		"style-src 'self' 'unsafe-inline'; " +
+		"script-src 'self' 'unsafe-inline'; " +
+		"font-src 'self' data:; " +
+		"connect-src 'self' https: http:; " +
+		"frame-src *; " +
+		"frame-ancestors " + frameAncestors + "; " +
+		"base-uri 'self'; " +
+		"form-action 'self'"
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
 		h.Set("X-Content-Type-Options", "nosniff")
-		h.Set("X-Frame-Options", "SAMEORIGIN")
+		h.Set("X-Frame-Options", xFrameOptions)
 		h.Set("Referrer-Policy", "same-origin")
-		h.Set("Content-Security-Policy",
-			"default-src 'self'; "+
-				"img-src 'self' data: blob: https: http:; "+
-				"media-src 'self' data: blob: https: http:; "+
-				"style-src 'self' 'unsafe-inline'; "+
-				"script-src 'self' 'unsafe-inline'; "+
-				"font-src 'self' data:; "+
-				"connect-src 'self' https: http:; "+
-				"frame-src *; "+
-				"frame-ancestors 'self'; "+
-				"base-uri 'self'; "+
-				"form-action 'self'")
+		h.Set("Content-Security-Policy", csp)
 		if a.Config.Server.HTTPS || a.isRequestHTTPS(r) {
 			h.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 		}

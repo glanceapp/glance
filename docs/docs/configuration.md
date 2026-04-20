@@ -206,6 +206,7 @@ server:
 | assets-path | string | no | /app/assets |
 | cache-dir | string | no | .cache |
 | db-path | string | no | /app/assets/dynacat.db |
+| allowed-embed-hosts | array of strings | no | |
 
 #### `host`
 The address which the server will listen on. Setting it to `localhost` means that only the machine that the server is running on will be able to access the dashboard. By default it will listen on all interfaces.
@@ -267,6 +268,20 @@ If the path is relative, it will be resolved relative to the Dynacat working dir
 
 #### `db-path`
 Path to the SQLite database file used for server-side todo storage. Only required when at least one `to-do` widget has `storage: server` set. If the path is relative, it will be resolved relative to the Dynacat working directory. The file will be created if it does not exist.
+
+#### `allowed-embed-hosts`
+A list of origins that are allowed to embed Dynacat in an `<iframe>`. By default, only the same origin is allowed (`frame-ancestors 'self'`). This is useful when you want to display Dynacat inside another dashboard such as Homepage.
+
+Example:
+
+```yaml
+server:
+  allowed-embed-hosts:
+    - https://homepage.mydomain.com
+    - https://other.mydomain.com
+```
+
+This sets the `Content-Security-Policy: frame-ancestors` directive to include the listed origins in addition to `'self'`.
 
 ## Document
 If you want to insert custom HTML into the `<head>` of the document for all pages, you can do so by using the `document` property. Example:

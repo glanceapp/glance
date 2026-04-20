@@ -175,6 +175,21 @@ The most common cause of this is having a `pages` key in your `dynacat.yml` and 
 
 </details>
 
+<details>
+<summary><strong>Cannot embed Dynacat in an iframe</strong></summary>
+
+By default Dynacat only allows itself to be embedded on the same origin (`frame-ancestors 'self'`). To allow embedding from another host such as Homepage, add the `allowed-embed-hosts` option under `server` in your `dynacat.yml`:
+
+```yaml
+server:
+  allowed-embed-hosts:
+    - https://homepage.mydomain.com
+```
+
+You can list multiple origins. Each entry must be a full origin including the scheme (e.g. `https://`).
+
+</details>
+
 <br>
 
 <div style='text-align: center;'>
