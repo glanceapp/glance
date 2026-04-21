@@ -145,6 +145,7 @@ func (v videoList) sortByNewest() videoList {
 
 func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate string, includeShorts bool) (videoList, error) {
 	requests := make([]*http.Request, 0, len(channelOrPlaylistIDs))
+	uulfIndices := make([]int, 0)
 
 	for i := range channelOrPlaylistIDs {
 		var feedUrl string
@@ -154,6 +155,7 @@ func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate 
 		} else if !includeShorts && strings.HasPrefix(channelOrPlaylistIDs[i], "UC") {
 			playlistId := strings.Replace(channelOrPlaylistIDs[i], "UC", "UULF", 1)
 			feedUrl = "https://www.youtube.com/feeds/videos.xml?playlist_id=" + playlistId
+			uulfIndices = append(uulfIndices, i)
 		} else {
 			feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=" + channelOrPlaylistIDs[i]
 		}
@@ -162,10 +164,35 @@ func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate 
 		requests = append(requests, request)
 	}
 
-	job := newJob(decodeXmlFromRequestTask[youtubeFeedResponseXml](defaultHTTPClient), requests).withWorkers(30)
+	task := decodeXmlFromRequestTask[youtubeFeedResponseXml](defaultHTTPClient)
+	job := newJob(task, requests).withWorkers(30)
 	responses, errs, err := workerPoolDo(job)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errNoContent, err)
+	}
+
+	// UULF playlists don't exist for all channels; fall back to channel_id on 404
+	type fallbackEntry struct {
+		originalIdx int
+		request     *http.Request
+	}
+	var fallbacks []fallbackEntry
+	for _, idx := range uulfIndices {
+		if errs[idx] != nil && strings.Contains(errs[idx].Error(), "status code 404") {
+			req, _ := http.NewRequest("GET", "https://www.youtube.com/feeds/videos.xml?channel_id="+channelOrPlaylistIDs[idx], nil)
+			fallbacks = append(fallbacks, fallbackEntry{originalIdx: idx, request: req})
+		}
+	}
+	if len(fallbacks) > 0 {
+		fbRequests := make([]*http.Request, len(fallbacks))
+		for i, fb := range fallbacks {
+			fbRequests[i] = fb.request
+		}
+		fbResponses, fbErrs, _ := workerPoolDo(newJob(task, fbRequests).withWorkers(len(fallbacks)))
+		for i, fb := range fallbacks {
+			responses[fb.originalIdx] = fbResponses[i]
+			errs[fb.originalIdx] = fbErrs[i]
+		}
 	}
 
 	videos := make(videoList, 0, len(channelOrPlaylistIDs)*15)

@@ -2797,8 +2797,8 @@ The ID of the todo list. If you want to have multiple todo lists, you must speci
 
 Controls where tasks are persisted. Accepted values:
 
-- `local` (default) — tasks are stored in the browser's localStorage, same as before. No server-side setup required.
-- `server` — tasks are stored in a SQLite database on the server. Tasks persist across browsers and server restarts. Requires `server.db-path` to be set (or uses the default `/app/assets/dynacat.db`).
+- `local` (default) - tasks are stored in the browser's localStorage, same as before. No server-side setup required.
+- `server` - tasks are stored in a SQLite database on the server. Tasks persist across browsers and server restarts. Requires `server.db-path` to be set (or uses the default `/app/assets/dynacat.db`).
 
 ##### `collapse-after`
 
@@ -2978,6 +2978,9 @@ Preview of `vertical-list`:
 Preview of `grid-cards`:
 
 ![](images/videos-widget-grid-cards-preview.png)
+
+##### `include-shorts`
+When set to `false` (default), Dynacat attempts to use YouTube's unofficial `UULF` playlist to exclude Shorts from the feed. This playlist does not exist for all channels - if it returns a 404, Dynacat automatically falls back to the standard channel feed (which includes Shorts). Setting this to `true` always uses the channel feed directly.
 
 ##### `video-url-template`
 Used to replace the default link for videos. Useful when you're running your own YouTube front-end. Example:
