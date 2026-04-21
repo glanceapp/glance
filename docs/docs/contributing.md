@@ -38,29 +38,29 @@ If you want to share a custom widget with the community, follow these steps:
 
    Wrong:
 
-    ```yaml
-    - type: custom-api
-      title: Hourly Stats
-      update-interval: 1h # Updates every hour
-      url: https://api.example.com/stats
-      template: |
-        <div>{{ .JSON.String "count" }}</div>
-    ```
+   ```yaml
+   - type: custom-api
+     title: Hourly Stats
+     update-interval: 1h # Updates every hour
+     url: https://api.example.com/stats
+     template: |
+       <div>{{ .JSON.String "count" }}</div>
+   ```
 
    Right:
 
-    ```text
-    <div>{{ .JSON.String "count" }}</div>
-    ```
+   ```text
+   <div>{{ .JSON.String "count" }}</div>
+   ```
 
    **With required section:**
 
-    ```text
-    <div>{{ .JSON.String "count" }}</div>
+   ```text
+   <div>{{ .JSON.String "count" }}</div>
 
-    required: |
-      url: https://api.example.com/stats
-    ```
+   required: |
+     url: https://api.example.com/stats
+   ```
 
 5. Add a `required:` section at the bottom of `template.txt` to specify default configuration values. This is optional but recommended for any API that requires a URL or other configuration. The format is YAML, with supported fields:
    - `url`: The default API endpoint to fetch data from

@@ -676,6 +676,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
 }
 
@@ -1268,6 +1269,29 @@ body {
   font-family: 'Oxygen Mono', monospace;
 }
 
+/* ─── Page loading spinner ───────────────────────────────────────────────── */
+
+.page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 64px;
+}
+
+.page-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: page-spinner-spin 700ms infinite linear;
+}
+
+@keyframes page-spinner-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ─── Markdown content ───────────────────────────────────────────────────── */
 
 .md-content { max-width: var(--content-max); }
@@ -1383,6 +1407,8 @@ body {
   border-radius: 3px;
   padding: 1px 5px;
   color: var(--accent);
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .md-content code::selection,
@@ -1399,7 +1425,6 @@ body {
 
 .md-content li code:last-child {
   display: inline-block;
-  white-space: nowrap;
 }
 
 [data-theme="light"] .md-content code:not(pre code) {
@@ -1413,7 +1438,7 @@ body {
   border: 1px solid var(--code-border);
   border-radius: var(--radius);
   margin: 16px 0 20px;
-  overflow: hidden;
+  overflow: clip;
   position: relative;
 }
 
@@ -1457,6 +1482,7 @@ body {
   font-size: 13px;
   line-height: 1.65;
   overflow-x: auto;
+  white-space: pre;
   background: transparent !important;
   color: #D1D5DB;
 }

@@ -259,6 +259,7 @@ let currentPage = 'home';
 let forceInstantScroll = false;
 let navigationRequestId = 0;
 let isHomeCursorTrackingActive = false;
+let spinnerTimer = null;
 
 const docCache = new Map();
 const pendingDocLoads = new Map();
@@ -585,6 +586,11 @@ function setHomeCursorTracking(enabled) {
 
 async function navigateTo(pageId, hash, skipPushState) {
   const requestId = ++navigationRequestId;
+  clearTimeout(spinnerTimer);
+  spinnerTimer = setTimeout(() => {
+    if (requestId !== navigationRequestId) return;
+    contentEl.innerHTML = '<div class="page-loading"><div class="page-spinner" aria-hidden="true"></div></div>';
+  }, 250);
 
   pageId = pageId || 'home';
   const isNotFound = pageId !== 'home' && !PAGES[pageId];
@@ -1318,6 +1324,7 @@ async function renderDoc(pageId, hash, requestId) {
   highlightCode(wrapper);
   handleContentLinks(wrapper);
 
+  clearTimeout(spinnerTimer);
   destroyToc();
   contentEl.innerHTML = '';
   contentEl.appendChild(wrapper);
@@ -1605,6 +1612,7 @@ async function renderHome() {
     </button>
   `).join('');
 
+  clearTimeout(spinnerTimer);
   contentEl.innerHTML = `
     <div class="home-welcome">
 
