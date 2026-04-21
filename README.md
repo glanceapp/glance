@@ -6,7 +6,7 @@
   <a href="https://www.paypal.com/paypalme/imartur">Sponsor</a> 
 </p>
 <p align="center">
-  <a href="https://github.com/glanceapp/community-widgets">Glance Community widgets</a> •
+  <a href="https://github.com/Panonim/dynawidgets">Dynawidgets repo</a> •
   <a href="https://dynacat.artur.zone/preconfigured-pages">Preconfigured pages</a> •
   <a href="https://dynacat.artur.zone/themes">Themes</a> 
 </p>

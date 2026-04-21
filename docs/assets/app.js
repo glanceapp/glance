@@ -1503,6 +1503,18 @@ async function renderHome() {
   let stargazersCount = 0;
   let pullCount = 0;
 
+  // Helper: check if cache is expired
+  function isCacheExpired(cacheKey, cacheTTL) {
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (!cached) return true;
+      const { timestamp } = JSON.parse(cached);
+      return Date.now() - timestamp >= cacheTTL;
+    } catch (e) {
+      return true;
+    }
+  }
+
   // Try to get cached values
   try {
     const cached = localStorage.getItem('github_stargazers_cache');
@@ -1528,28 +1540,38 @@ async function renderHome() {
     }
   } catch (e) {}
 
-  // Fetch version tag in background
-  getVersionTag().then(tag => {
-    if (tag && tag !== versionTag) {
-      const versionEl = document.querySelector('.home-version');
-      if (versionEl) versionEl.textContent = tag;
-    }
-  }).catch(e => {});
+  // Fetch version tag in background only if cache expired
+  const versionCacheTTL = 1 * 24 * 60 * 60 * 1000;
+  if (isCacheExpired('version_tag_cache', versionCacheTTL)) {
+    getVersionTag().then(tag => {
+      if (tag && tag !== versionTag) {
+        const versionEl = document.querySelector('.home-version');
+        if (versionEl) versionEl.textContent = tag;
+      }
+    }).catch(e => {});
+  }
 
-  // Fetch fresh data in background
-  getGitHubStargazers().then(count => {
-    if (count > 0 && count !== stargazersCount) {
-      const el = document.querySelector('[data-stat="stargazers"]');
-      if (el) el.textContent = count;
-    }
-  }).catch(e => {});
+  // Fetch GitHub stargazers in background only if cache expired
+  const stargazersCacheTTL = 2 * 24 * 60 * 60 * 1000;
+  if (isCacheExpired('github_stargazers_cache', stargazersCacheTTL)) {
+    getGitHubStargazers().then(count => {
+      if (count > 0 && count !== stargazersCount) {
+        const el = document.querySelector('[data-stat="stargazers"]');
+        if (el) el.textContent = count;
+      }
+    }).catch(e => {});
+  }
 
-  getDockerPullCount().then(count => {
-    if (count > 0 && count !== pullCount) {
-      const el = document.querySelector('[data-stat="docker-pulls"]');
-      if (el) el.textContent = count;
-    }
-  }).catch(e => {});
+  // Fetch Docker pull count in background only if cache expired
+  const dockerCacheTTL = 2 * 24 * 60 * 60 * 1000;
+  if (isCacheExpired('docker_pull_count_cache', dockerCacheTTL)) {
+    getDockerPullCount().then(count => {
+      if (count > 0 && count !== pullCount) {
+        const el = document.querySelector('[data-stat="docker-pulls"]');
+        if (el) el.textContent = count;
+      }
+    }).catch(e => {});
+  }
 
   const features = [
     {
