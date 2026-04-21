@@ -173,7 +173,9 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 	if !app.enabled {
 		baseURL = "https://www.reddit.com"
 		headers = http.Header{
-			"User-Agent": []string{getBrowserUserAgentHeader()},
+			"User-Agent":      []string{getBrowserUserAgentHeader()},
+			"Accept":          []string{"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"},
+			"Accept-Language": []string{"en-US,en;q=0.5"},
 		}
 	} else {
 		baseURL = "https://oauth.reddit.com"
