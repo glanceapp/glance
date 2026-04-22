@@ -1333,15 +1333,37 @@ async function renderDoc(pageId, hash, requestId) {
 
   // Scroll to hash if provided
   if (hash) {
-    setTimeout(() => {
-      if (requestId !== navigationRequestId) return;
+    // Show overlay until images finish loading so scroll hits correct Y position
+    const overlayEl = document.createElement('div');
+    overlayEl.className = 'page-loading-overlay';
+    overlayEl.innerHTML = '<div class="page-spinner" aria-hidden="true"></div>';
+    document.body.appendChild(overlayEl);
+
+    if (mainEl) mainEl.scrollTo(0, 0);
+    else window.scrollTo(0, 0);
+
+    const images = Array.from(wrapper.querySelectorAll('img'));
+    const imagesLoaded = images.length
+      ? Promise.all(images.map(img => img.complete
+          ? Promise.resolve()
+          : new Promise(r => {
+              img.addEventListener('load', r, { once: true });
+              img.addEventListener('error', r, { once: true });
+            })
+        ))
+      : Promise.resolve();
+    const timeout = new Promise(r => setTimeout(r, 3000));
+
+    Promise.race([imagesLoaded, timeout]).then(() => {
+      if (requestId !== navigationRequestId) { overlayEl.remove(); return; }
+      overlayEl.remove();
       const target = document.getElementById(hash);
       if (target) {
-        scrollToElementFast(target, { instant: forceInstantScroll });
+        scrollToElementFast(target, { instant: true });
         setFloatingTocActive(hash);
       }
       forceInstantScroll = false;
-    }, 80);
+    });
   } else {
     if (mainEl) {
       mainEl.scrollTo(0, 0);
