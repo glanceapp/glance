@@ -1,8 +1,10 @@
+# Changes for 2.2.2
+- Resolved an issue where Reddit denied requests
+
 # Changes for 2.2.1
 - Fixed `videos` widget collapsing state
 - Updated OIDC documentation
 - Cross iFrame embeding fix
-- Resolved an issue where Reddit denied requests
 
 # Changes for 2.2.0
 - OICD Support
