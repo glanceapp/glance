@@ -162,23 +162,32 @@ func (widget *redditWidget) parseCustomCommentsURL(subreddit, postId, postPath s
 	return template
 }
 
+func buildRedditRequestURL(baseURL, path string, query url.Values) string {
+	encodedQuery := query.Encode()
+
+	if encodedQuery == "" {
+		return baseURL + path
+	}
+
+	return baseURL + path + "?" + encodedQuery
+}
+
 func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 	var client requestDoer = defaultHTTPClient
-	var baseURL string
-	var requestURL string
+	var requestPath string
+	var baseURLs []string
 	var headers http.Header
 	query := url.Values{}
 	app := &widget.AppAuth
 
 	if !app.enabled {
-		baseURL = "https://www.reddit.com"
+		baseURLs = []string{"https://api.reddit.com", "https://www.reddit.com", "https://old.reddit.com"}
 		headers = http.Header{
-			"User-Agent":      []string{getBrowserUserAgentHeader()},
-			"Accept":          []string{"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"},
-			"Accept-Language": []string{"en-US,en;q=0.5"},
+			"User-Agent": []string{dynacatUserAgentString},
+			"Accept":     []string{"application/json"},
 		}
 	} else {
-		baseURL = "https://oauth.reddit.com"
+		baseURLs = []string{"https://oauth.reddit.com"}
 
 		if app.accessToken == "" || time.Now().Add(time.Minute).After(app.tokenExpiresAt) {
 			if err := widget.fetchNewAppAccessToken(); err != nil {
@@ -189,6 +198,7 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 		headers = http.Header{
 			"Authorization": []string{"Bearer " + app.accessToken},
 			"User-Agent":    []string{app.Name + "/1.0"},
+			"Accept":        []string{"application/json"},
 		}
 	}
 
@@ -199,29 +209,46 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 	if widget.Search != "" {
 		query.Set("q", widget.Search+" subreddit:"+widget.Subreddit)
 		query.Set("sort", widget.SortBy)
-		requestURL = fmt.Sprintf("%s/search.json?%s", baseURL, query.Encode())
+		requestPath = "/search.json"
 	} else {
 		if widget.SortBy == "top" {
 			query.Set("t", widget.TopPeriod)
 		}
-		requestURL = fmt.Sprintf("%s/r/%s/%s.json?%s", baseURL, widget.Subreddit, widget.SortBy, query.Encode())
+		requestPath = fmt.Sprintf("/r/%s/%s.json", widget.Subreddit, widget.SortBy)
 	}
 
-	if widget.RequestURLTemplate != "" {
-		requestURL = strings.ReplaceAll(widget.RequestURLTemplate, "{REQUEST-URL}", requestURL)
-	} else if widget.Proxy.client != nil {
+	if widget.RequestURLTemplate == "" && widget.Proxy.client != nil {
 		client = widget.Proxy.client
 	}
 
-	request, err := http.NewRequest("GET", requestURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	request.Header = headers
+	var responseJson subredditResponseJson
+	var lastErr error
 
-	responseJson, err := decodeJsonFromRequest[subredditResponseJson](client, request)
-	if err != nil {
-		return nil, err
+	for _, baseURL := range baseURLs {
+		requestURL := buildRedditRequestURL(baseURL, requestPath, query)
+
+		if widget.RequestURLTemplate != "" {
+			requestURL = strings.ReplaceAll(widget.RequestURLTemplate, "{REQUEST-URL}", requestURL)
+		}
+
+		request, err := http.NewRequest("GET", requestURL, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		request.Header = headers
+
+		responseJson, err = decodeJsonFromRequest[subredditResponseJson](client, request)
+		if err == nil {
+			lastErr = nil
+			break
+		}
+
+		lastErr = err
+	}
+
+	if lastErr != nil {
+		return nil, lastErr
 	}
 
 	if len(responseJson.Data.Children) == 0 {
