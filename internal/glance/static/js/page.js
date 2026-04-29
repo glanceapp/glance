@@ -278,7 +278,12 @@ function setupDynamicRelativeTime(root) {
 
 function setupGroups(root) {
     root = root || document;
-    const groups = root.getElementsByClassName("widget-type-group");
+    const groups = Array.from(root.getElementsByClassName("widget-type-group"));
+    // When async-loaded, root itself is the group widget — getElementsByClassName
+    // only returns descendants, so include the root explicitly.
+    if (root.classList && root.classList.contains("widget-type-group")) {
+        groups.unshift(root);
+    }
 
     if (groups.length == 0) {
         return;
