@@ -161,7 +161,11 @@ var refreshIntervalDisallowedTypes = map[string]struct{}{
 	"bookmarks":       {},
 }
 
-const minRefreshInterval = 30 * time.Second
+// minRefreshInterval is a floor against typos (e.g. accidentally writing 1s).
+// Upstream rate limiting should be handled by the widget's cache duration,
+// not by this floor — refresh-interval ticks below the cache return the same
+// data without re-fetching, so a tight client interval is safe by default.
+const minRefreshInterval = 5 * time.Second
 
 type cacheType int
 
