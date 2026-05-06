@@ -174,7 +174,7 @@ func newApplication(c *config) (*application, error) {
 
 		for i := range page.HeadWidgets {
 			widget := page.HeadWidgets[i]
-			app.widgetByID[widget.GetID()] = widget
+			app.registerWidget(widget)
 			widget.setProviders(providers)
 		}
 
@@ -187,7 +187,7 @@ func newApplication(c *config) (*application, error) {
 
 			for w := range column.Widgets {
 				widget := column.Widgets[w]
-				app.widgetByID[widget.GetID()] = widget
+				app.registerWidget(widget)
 				widget.setProviders(providers)
 			}
 		}
@@ -230,6 +230,19 @@ func newApplication(c *config) (*application, error) {
 	return app, nil
 }
 
+// registerWidget adds a widget (and any contained children, recursively) to
+// app.widgetByID so the per-widget refresh endpoint can resolve them by ID.
+// Without the recursive walk, widgets nested inside group/split-column would
+// 404 when their refresh-interval ticks.
+func (a *application) registerWidget(w widget) {
+	a.widgetByID[w.GetID()] = w
+	if c, ok := w.(interface{ childWidgets() []widget }); ok {
+		for _, child := range c.childWidgets() {
+			a.registerWidget(child)
+		}
+	}
+}
+
 func (p *page) updateOutdatedWidgets() {
 	now := time.Now()
 
@@ -248,6 +261,11 @@ func (p *page) updateOutdatedWidgets() {
 			defer wg.Done()
 			widget.lock()
 			defer widget.unlock()
+			// Re-check inside the lock: a concurrent page render may have
+			// already updated this widget while we were waiting on the mutex.
+			if !widget.requiresUpdate(&now) {
+				return
+			}
 			widget.update(context)
 		}()
 	}
@@ -263,6 +281,11 @@ func (p *page) updateOutdatedWidgets() {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
+				widget.lock()
+				defer widget.unlock()
+				if !widget.requiresUpdate(&now) {
+					return
+				}
 				widget.update(context)
 			}()
 		}

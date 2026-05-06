@@ -47,16 +47,20 @@ function startInterval(id, seconds) {
     intervals.set(id, setInterval(() => refreshWidget(id, false), seconds * 1000));
 }
 
+function stopInterval(id) {
+    const handle = intervals.get(id);
+    if (handle !== undefined) {
+        clearInterval(handle);
+        intervals.delete(id);
+    }
+    intervalSeconds.delete(id);
+    lastRefreshAt.delete(id);
+}
+
 async function refreshWidget(id, force) {
     const widgetEl = document.querySelector(`.widget[data-widget-id="${CSS.escape(id)}"]`);
     if (widgetEl === null) {
-        // Widget was removed (e.g., by an earlier refresh). Drop its interval.
-        const handle = intervals.get(id);
-        if (handle !== undefined) {
-            clearInterval(handle);
-            intervals.delete(id);
-        }
-        intervalSeconds.delete(id);
+        stopInterval(id);
         return;
     }
 
@@ -69,6 +73,10 @@ async function refreshWidget(id, force) {
         const res = await fetch(url, { credentials: "same-origin" });
         if (!res.ok) {
             widgetEl.removeAttribute("aria-busy");
+            // 404 means the widget id is unknown to the server (e.g., after a
+            // config reload that reassigned ids). Don't keep retrying — a full
+            // page reload will repopulate intervals with fresh ids.
+            if (res.status === 404) stopInterval(id);
             return;
         }
         html = await res.text();

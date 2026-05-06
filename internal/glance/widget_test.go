@@ -6,6 +6,32 @@ import (
 	"time"
 )
 
+func TestRegisterWidgetIncludesContainerChildren(t *testing.T) {
+	leaf1 := &clockWidget{}
+	leaf1.setID(101)
+	leaf2 := &clockWidget{}
+	leaf2.setID(102)
+	leaf3 := &clockWidget{}
+	leaf3.setID(103)
+
+	group := &groupWidget{}
+	group.setID(200)
+	group.containerWidgetBase.Widgets = widgets{leaf1, leaf2}
+
+	split := &splitColumnWidget{}
+	split.setID(300)
+	split.containerWidgetBase.Widgets = widgets{group, leaf3}
+
+	app := &application{widgetByID: make(map[uint64]widget)}
+	app.registerWidget(split)
+
+	for _, id := range []uint64{101, 102, 103, 200, 300} {
+		if _, ok := app.widgetByID[id]; !ok {
+			t.Errorf("widget id %d was not registered", id)
+		}
+	}
+}
+
 func TestWidgetValidateRefreshInterval(t *testing.T) {
 	tests := []struct {
 		name        string
