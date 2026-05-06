@@ -161,10 +161,8 @@ var refreshIntervalDisallowedTypes = map[string]struct{}{
 	"bookmarks":       {},
 }
 
-// minRefreshInterval is a floor against typos (e.g. accidentally writing 1s).
-// Upstream rate limiting should be handled by the widget's cache duration,
-// not by this floor — refresh-interval ticks below the cache return the same
-// data without re-fetching, so a tight client interval is safe by default.
+// floor against typos (e.g. 1s). upstream rate limiting is the cache's job,
+// not this floor — ticks below the cache window don't re-fetch.
 const minRefreshInterval = 5 * time.Second
 
 type cacheType int
@@ -251,8 +249,6 @@ func (w *widgetBase) validate() error {
 	return nil
 }
 
-// RefreshIntervalSeconds is exposed for templates to emit data-refresh-interval.
-// Returns 0 when no interval is configured.
 func (w *widgetBase) RefreshIntervalSeconds() int {
 	return int(time.Duration(w.RefreshInterval).Seconds())
 }

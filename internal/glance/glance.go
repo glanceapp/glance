@@ -230,10 +230,8 @@ func newApplication(c *config) (*application, error) {
 	return app, nil
 }
 
-// registerWidget adds a widget (and any contained children, recursively) to
-// app.widgetByID so the per-widget refresh endpoint can resolve them by ID.
-// Without the recursive walk, widgets nested inside group/split-column would
-// 404 when their refresh-interval ticks.
+// recursive so widgets nested inside group/split-column are also reachable
+// by ID — without this their refresh-interval ticks would 404.
 func (a *application) registerWidget(w widget) {
 	a.widgetByID[w.GetID()] = w
 	if c, ok := w.(interface{ childWidgets() []widget }); ok {
