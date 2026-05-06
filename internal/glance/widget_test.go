@@ -115,12 +115,12 @@ func TestWidgetValidateRefreshInterval(t *testing.T) {
 		interval    time.Duration
 		errContains string
 	}{
-		{name: "no interval is allowed on any type", widgetType: "clock", interval: 0},
-		{name: "valid interval on rss", widgetType: "rss", interval: 5 * time.Second},
-		{name: "valid interval on hacker-news", widgetType: "hacker-news", interval: 1 * time.Minute},
+		{name: "interval=0 skips disallow check", widgetType: "clock", interval: 0},
+		{name: "valid interval on allowed type", widgetType: "rss", interval: 5 * time.Second},
 		{name: "below minimum", widgetType: "rss", interval: 4 * time.Second, errContains: "at least 5s"},
 		{name: "disallowed: clock", widgetType: "clock", interval: 1 * time.Minute, errContains: `type "clock"`},
 		{name: "disallowed: calendar", widgetType: "calendar", interval: 1 * time.Minute, errContains: `type "calendar"`},
+		{name: "disallowed: calendar-legacy", widgetType: "calendar-legacy", interval: 1 * time.Minute, errContains: `type "calendar-legacy"`},
 		{name: "disallowed: to-do", widgetType: "to-do", interval: 1 * time.Minute, errContains: `type "to-do"`},
 		{name: "disallowed: iframe", widgetType: "iframe", interval: 1 * time.Minute, errContains: `type "iframe"`},
 		{name: "disallowed: html", widgetType: "html", interval: 1 * time.Minute, errContains: `type "html"`},
