@@ -47,8 +47,8 @@ export function setupMasonries(root = document) {
         const observer = new ResizeObserver(() => requestAnimationFrame(render));
         observer.observe(container);
 
-        const widgetEl = container.closest && container.closest(".widget");
-        if (widgetEl !== null && widgetEl !== undefined) {
+        const widgetEl = container.closest(".widget");
+        if (widgetEl !== null) {
             if (!widgetEl._cleanupCallbacks) widgetEl._cleanupCallbacks = [];
             widgetEl._cleanupCallbacks.push(() => observer.disconnect());
         }
