@@ -246,6 +246,8 @@ func (p *page) updateOutdatedWidgets() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			widget.lock()
+			defer widget.unlock()
 			widget.update(context)
 		}()
 	}
@@ -346,16 +348,10 @@ func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Re
 		Page: page,
 	}
 
-	var err error
 	var responseBytes bytes.Buffer
 
-	func() {
-		page.mu.Lock()
-		defer page.mu.Unlock()
-
-		page.updateOutdatedWidgets()
-		err = pageContentTemplate.Execute(&responseBytes, pageData)
-	}()
+	page.updateOutdatedWidgets()
+	err := pageContentTemplate.Execute(&responseBytes, pageData)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -402,26 +398,55 @@ func (a *application) handleNotFound(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (a *application) handleWidgetRequest(w http.ResponseWriter, r *http.Request) {
-	// TODO: this requires a rework of the widget update logic so that rather
-	// than locking the entire page we lock individual widgets
-	w.WriteHeader(http.StatusNotImplemented)
+	widgetID, err := strconv.ParseUint(r.PathValue("widget"), 10, 64)
+	if err != nil {
+		a.handleNotFound(w, r)
+		return
+	}
 
-	// widgetValue := r.PathValue("widget")
+	widget, exists := a.widgetByID[widgetID]
+	if !exists {
+		a.handleNotFound(w, r)
+		return
+	}
 
-	// widgetID, err := strconv.ParseUint(widgetValue, 10, 64)
-	// if err != nil {
-	// 	a.handleNotFound(w, r)
-	// 	return
-	// }
+	widget.handleRequest(w, r)
+}
 
-	// widget, exists := a.widgetByID[widgetID]
+func (a *application) handleWidgetRefreshRequest(w http.ResponseWriter, r *http.Request) {
+	if a.handleUnauthorizedResponse(w, r, showUnauthorizedJSON) {
+		return
+	}
 
-	// if !exists {
-	// 	a.handleNotFound(w, r)
-	// 	return
-	// }
+	widgetID, err := strconv.ParseUint(r.PathValue("widget"), 10, 64)
+	if err != nil {
+		a.handleNotFound(w, r)
+		return
+	}
 
-	// widget.handleRequest(w, r)
+	widget, exists := a.widgetByID[widgetID]
+	if !exists {
+		a.handleNotFound(w, r)
+		return
+	}
+
+	force := r.URL.Query().Get("force") == "1"
+
+	func() {
+		widget.lock()
+		defer widget.unlock()
+
+		now := time.Now()
+		if force || widget.requiresUpdate(&now) {
+			widget.update(r.Context())
+		}
+	}()
+
+	// Render outside the lock; renderTemplate re-acquires it briefly.
+	// Returning the full widget element (including header) lets the client
+	// replace the widget's outerHTML without needing a separate fragment template.
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(widget.Render()))
 }
 
 func (a *application) StaticAssetPath(asset string) string {
@@ -445,6 +470,7 @@ func (a *application) server() (func() error, func() error) {
 		mux.HandleFunc("POST /api/set-theme/{key}", a.handleThemeChangeRequest)
 	}
 
+	mux.HandleFunc("GET /api/widgets/{widget}/refresh", a.handleWidgetRefreshRequest)
 	mux.HandleFunc("/api/widgets/{widget}/{path...}", a.handleWidgetRequest)
 	mux.HandleFunc("GET /api/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)

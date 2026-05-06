@@ -1,4 +1,4 @@
-<div class="widget widget-type-{{ .GetType }}{{ if .CSSClass }} {{ .CSSClass }}{{ end }}">
+<div class="widget widget-type-{{ .GetType }}{{ if .CSSClass }} {{ .CSSClass }}{{ end }}" data-widget-id="{{ .GetID }}"{{ if gt .RefreshIntervalSeconds 0 }} data-refresh-interval="{{ .RefreshIntervalSeconds }}"{{ end }}>
     {{- if not .HideHeader }}
     <div class="widget-header">
         {{- if ne "" .TitleURL }}

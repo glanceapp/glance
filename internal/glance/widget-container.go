@@ -34,6 +34,8 @@ func (widget *containerWidgetBase) _update(ctx context.Context) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			widget.lock()
+			defer widget.unlock()
 			widget.update(ctx)
 		}()
 	}
