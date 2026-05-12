@@ -156,23 +156,6 @@ pages:
 Choose one of the following methods:
 
 <details>
-<summary><strong>Deploy on Sealos</strong></summary>
-<br>
-
-[![Deploy on Sealos](https://sealos.io/Deploy-on-Sealos.svg)](https://sealos.io/products/app-store/glance)
-
-Glance can be deployed with the maintained Sealos one-click template. The Sealos template defines the application resources, generated defaults, and storage settings in the Sealos templates repository at [`template/glance/index.yaml`](https://github.com/labring-actions/templates/blob/main/template/glance/index.yaml).
-
-Before deploying:
-* Review the generated template defaults and any user-provided inputs in Sealos.
-* Review persistence and storage settings in the Sealos template before storing production data.
-* After deployment, open the generated Sealos app URL and complete the application first-run setup or login flow.
-
-<hr>
-</details>
-
-
-<details>
 <summary><strong>Docker compose using provided directory structure (recommended)</strong></summary>
 <br>
 
@@ -287,6 +270,7 @@ Glance can also be installed through the following 3rd party channels:
 * [Proxmox VE Helper Script](https://community-scripts.github.io/ProxmoxVE/scripts?id=glance)
 * [NixOS package](https://search.nixos.org/packages?channel=unstable&show=glance)
 * [Coolify.io](https://coolify.io/docs/services/glance/)
+* [Sealos](docs/sealos.md)
 
 <hr>
 </details>
