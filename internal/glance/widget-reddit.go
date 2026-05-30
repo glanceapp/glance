@@ -2,17 +2,22 @@ package glance
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"html"
 	"html/template"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	utls "github.com/refraction-networking/utls"
+	"golang.org/x/net/http2"
 )
 
 var (
@@ -160,7 +165,7 @@ func (widget *redditWidget) parseCustomCommentsURL(subreddit, postId, postPath s
 }
 
 func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
-	var client requestDoer = defaultHTTPClient
+	var client requestDoer = redditHTTPClient
 	var baseURL string
 	var requestURL string
 	var headers http.Header
@@ -318,6 +323,34 @@ func (widget *redditWidget) fetchNewAppAccessToken() error {
 	return nil
 }
 
+// On Windows the default HTTP client works fine, but on Linux it seems to
+// get detected and blocked by reddit (or cloudflare) presumably because of TLS fingerprinting,
+// so we use uTLS to mimic a real browser's TLS fingerprint, which seems to work around the issue
+var redditHTTPClient = &http.Client{Transport: &http2.Transport{
+	DialTLSContext: func(ctx context.Context, network, addr string, _ *tls.Config) (net.Conn, error) {
+		host, _, err := net.SplitHostPort(addr)
+		if err != nil {
+			return nil, err
+		}
+
+		tcpConn, err := (&net.Dialer{}).DialContext(ctx, network, addr)
+		if err != nil {
+			return nil, err
+		}
+
+		uconn := utls.UClient(tcpConn, &utls.Config{
+			ServerName: host,
+		}, utls.HelloFirefox_Auto)
+
+		if err := uconn.HandshakeContext(ctx); err != nil {
+			tcpConn.Close()
+			return nil, err
+		}
+
+		return uconn, nil
+	},
+}}
+
 var (
 	redditChallengePattern = regexp.MustCompile(`await\(async \w+\s*=>\s*\w+\s*\+\s*\w+\)\("([^"]+)"\)`)
 	redditTokenPattern     = regexp.MustCompile(`name="token"\s+value="([^"]+)"`)
@@ -361,7 +394,7 @@ func fetchRedditLoidCookie() (string, error) {
 
 	setBrowserUserAgentHeader(request)
 
-	response, err := http.DefaultClient.Do(request)
+	response, err := redditHTTPClient.Do(request)
 	if err != nil {
 		return "", err
 	}
@@ -403,7 +436,7 @@ func fetchRedditLoidCookie() (string, error) {
 
 	setBrowserUserAgentHeader(request)
 
-	response, err = http.DefaultClient.Do(request)
+	response, err = redditHTTPClient.Do(request)
 	if err != nil {
 		return "", err
 	}
