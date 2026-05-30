@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"html"
 	"html/template"
+	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -216,6 +218,13 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 	}
 	request.Header = headers
 
+	loid, err := getRedditLoidCookie()
+	if err != nil {
+		fmt.Printf("Error fetching reddit loid cookie: %v\n", err)
+		return nil, errors.New("could not solve reddit challenge")
+	}
+	request.AddCookie(&http.Cookie{Name: "loid", Value: loid})
+
 	responseJson, err := decodeJsonFromRequest[subredditResponseJson](client, request)
 	if err != nil {
 		return nil, err
@@ -311,4 +320,108 @@ func (widget *redditWidget) fetchNewAppAccessToken() error {
 	app.tokenExpiresAt = time.Now().Add(time.Duration(response.ExpiresIn) * time.Second)
 
 	return nil
+}
+
+var (
+	redditChallengePattern = regexp.MustCompile(`await\(async \w+\s*=>\s*\w+\s*\+\s*\w+\)\("([^"]+)"\)`)
+	redditTokenPattern     = regexp.MustCompile(`name="token"\s+value="([^"]+)"`)
+)
+
+// Allows all widget instances to share a single loid cookie, since we don't want to draw
+// too much attention by making a lot of requests to the flow that allows us to obtain
+// the cookie required to access the .json endpoints
+var getRedditLoidCookie = func() func() (string, error) {
+	var lastUpdate time.Time
+	var cachedLoid string
+
+	return NewSingleflight(func() (string, error) {
+		// Caching for 6 hours is a bit arbitrary, presumably the cookie is valid for 24 hours,
+		// but we want to keep the cache time short in the event that a cookie becomes invalid
+		// for whatever reason, since we don't have a way to force refresh it
+		if time.Since(lastUpdate) < 6*time.Hour && cachedLoid != "" {
+			return cachedLoid, nil
+		}
+
+		loid, err := fetchRedditLoidCookie()
+		if err != nil {
+			if cachedLoid != "" {
+				fmt.Printf("Error fetching new reddit loid cookie, using cached value: %v\n", err)
+				return cachedLoid, nil
+			}
+			return "", err
+		}
+
+		lastUpdate = time.Now()
+		cachedLoid = loid
+		return loid, nil
+	})
+}()
+
+func fetchRedditLoidCookie() (string, error) {
+	request, err := http.NewRequest("GET", "https://www.reddit.com/", nil)
+	if err != nil {
+		return "", err
+	}
+
+	setBrowserUserAgentHeader(request)
+
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected status code %d when requesting challenge page", response.StatusCode)
+	}
+
+	challengeBody, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+
+	challengeMatches := redditChallengePattern.FindSubmatch(challengeBody)
+	tokenMatches := redditTokenPattern.FindSubmatch(challengeBody)
+
+	if challengeMatches == nil {
+		return "", fmt.Errorf("no JS challenge found")
+	}
+
+	if tokenMatches == nil {
+		return "", fmt.Errorf("no token found in challenge page")
+	}
+
+	challengeStr := string(challengeMatches[1])
+	token := string(tokenMatches[1])
+	solution := challengeStr + challengeStr // the JS does: e + e
+
+	params := url.Values{
+		"solution":     {solution},
+		"js_challenge": {"1"},
+		"token":        {token},
+	}
+	request, err = http.NewRequest("GET", "https://www.reddit.com/?"+params.Encode(), nil)
+	if err != nil {
+		return "", err
+	}
+
+	setBrowserUserAgentHeader(request)
+
+	response, err = http.DefaultClient.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected status code %d when submitting challenge solution", response.StatusCode)
+	}
+
+	for _, cookie := range response.Cookies() {
+		if cookie.Name == "loid" {
+			return cookie.Value, nil
+		}
+	}
+
+	return "", fmt.Errorf("no loid cookie found")
 }
