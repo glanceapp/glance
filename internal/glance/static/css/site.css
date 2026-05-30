@@ -325,15 +325,36 @@ kbd:active {
     color: var(--color-text-highlight);
 }
 
-.logout-button {
+.logout-button, .refresh-icon svg, .auto-refresh-toggle svg {
     width: 2rem;
     height: 2rem;
     stroke: var(--color-text-subdue);
     transition: stroke .2s;
+    cursor: pointer;
 }
 
-.logout-button:hover, .logout-button:focus {
+.logout-button:hover, .logout-button:focus,
+.refresh-icon:hover svg, .refresh-icon:focus svg,
+.auto-refresh-toggle:hover svg, .auto-refresh-toggle:focus svg {
     stroke: var(--color-text-highlight);
+}
+
+ .auto-refresh-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+ }
+
+.refresh-button {
+    stroke: var(--color-text-subdue);
+    transition: stroke .2s;
+}
+
+.refresh-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
 }
 
 .theme-choices {
@@ -402,6 +423,7 @@ kbd:active {
     transition: opacity .3s;
 }
 
-.theme-picker.popover-active .current-theme-preview, .theme-picker:hover {
+.theme-picker.popover-active .current-theme-preview, .theme-picker:hover,
+.refresh-container, .refresh-container:hover, .refresh-container.popover-active {
     opacity: 1;
 }
