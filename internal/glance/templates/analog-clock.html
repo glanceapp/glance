@@ -1,0 +1,89 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+{{ $hideAmPmIndicator := .HideAmPmIndicator }}
+{{ $hideDate := .HideDate }}
+{{ $dialMarkers := .DialMarkers }}
+<div class="analog-clock">
+    <ul class="analog-clock-list">
+        <li class="items-center gap-15">
+            <div class="analog-face">
+                <div class="hand hour-hand"></div>
+                <div class="hand minute-hand"></div>
+                <div class="hand second-hand"></div>
+                <div class="center-dot"></div>
+                {{ if not $hideDate }}
+                <div class="date-slot"></div>
+                {{ end }}
+                {{ if not $hideAmPmIndicator }}
+                <div class="text-truncate text-label am-pm-indicator"></div>
+                {{ end }}
+                {{ if eq $dialMarkers "NumericalFull" }}
+                <div class="clock-marking-label-container">
+                    <div class="clock-label label-1">1</div>
+                    <div class="clock-label label-2">2</div>
+                    <div class="clock-label label-3">3</div>
+                    <div class="clock-label label-4">4</div>
+                    <div class="clock-label label-5">5</div>
+                    <div class="clock-label label-6">6</div>
+                    <div class="clock-label label-7">7</div>
+                    <div class="clock-label label-8">8</div>
+                    <div class="clock-label label-9">9</div>
+                    <div class="clock-label label-10">10</div>
+                    <div class="clock-label label-11">11</div>
+                    <div class="clock-label label-12">12</div>
+                </div>
+                {{ else if eq $dialMarkers "NumericalMinimal" }}
+                <div class="clock-marking-label-container">
+                    <div class="clock-label label-3">3</div>
+                    <div class="clock-label label-6">6</div>
+                    <div class="clock-label label-9">9</div>
+                    <div class="clock-label label-12">12</div>
+                </div>
+                {{ end }}
+        </li>
+        {{ if gt (len .Timezones) 0 }}
+        {{ range .Timezones }}
+        <li class="items-center gap-15" data-time-in-zone="{{ .Timezone }}">
+            <div class="analog-face">
+                <div class="hand hour-hand"></div>
+                <div class="hand minute-hand"></div>
+                <div class="hand second-hand"></div>
+                <div class="center-dot"></div>
+                {{ if not $hideDate }}
+                <div class="date-slot"></div>
+                {{ end }}
+                {{ if not $hideAmPmIndicator }}
+                <div class="text-truncate text-label am-pm-indicator"></div>
+                {{ end }}
+                <div class="text-truncate text-label">{{ if ne .Label "" }}{{ .Label }}{{ else }}{{ .Timezone }}{{ end
+                    }}</div>
+                {{ if eq $dialMarkers "NumericalFull" }}
+                <div class="clock-marking-label-container">
+                    <div class="clock-label label-1">1</div>
+                    <div class="clock-label label-2">2</div>
+                    <div class="clock-label label-3">3</div>
+                    <div class="clock-label label-4">4</div>
+                    <div class="clock-label label-5">5</div>
+                    <div class="clock-label label-6">6</div>
+                    <div class="clock-label label-7">7</div>
+                    <div class="clock-label label-8">8</div>
+                    <div class="clock-label label-9">9</div>
+                    <div class="clock-label label-10">10</div>
+                    <div class="clock-label label-11">11</div>
+                    <div class="clock-label label-12">12</div>
+                </div>
+                {{ else if eq $dialMarkers "NumericalMinimal" }}
+                <div class="clock-marking-label-container">
+                    <div class="clock-label label-3">3</div>
+                    <div class="clock-label label-6">6</div>
+                    <div class="clock-label label-9">9</div>
+                    <div class="clock-label label-12">12</div>
+                </div>
+                {{ end }}
+        </li>
+        {{ end }}
+    </ul>
+    {{ end }}
+</div>
+{{ end }}
