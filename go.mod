@@ -5,20 +5,23 @@ go 1.26.3
 require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/mmcdole/gofeed v1.3.0
+	github.com/refraction-networking/utls v1.8.2
 	github.com/shirou/gopsutil/v4 v4.25.5
 	github.com/tidwall/gjson v1.18.0
-	golang.org/x/crypto v0.39.0
-	golang.org/x/net v0.41.0
-	golang.org/x/text v0.26.0
+	golang.org/x/crypto v0.38.0
+	golang.org/x/net v0.40.0
+	golang.org/x/text v0.25.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.3 // indirect
+	github.com/andybalholm/brotli v1.0.6 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/klauspost/compress v1.17.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20250317134145-8bc96cf8fc35 // indirect
 	github.com/mmcdole/goxpp v1.1.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
