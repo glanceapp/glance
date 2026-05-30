@@ -2,6 +2,26 @@ import { setupPopovers } from './popover.js';
 import { setupMasonries } from './masonry.js';
 import { throttledDebounce, isElementVisible, openURLInNewTab } from './utils.js';
 import { elem, find, findAll } from './templating.js';
+import { setupWidgetRefresh } from './widget-refresh.js';
+
+// Cleanup callbacks for things that aren't auto-released when a widget's
+// outerHTML is replaced (window/document listeners, ResizeObservers, intervals).
+// Stored on the widget's root element; run from widget-refresh.js before swap.
+function registerWidgetCleanup(target, cb) {
+    const widgetEl = target instanceof Element ? target.closest(".widget") : null;
+    if (widgetEl === null) return;
+    if (!widgetEl._cleanupCallbacks) widgetEl._cleanupCallbacks = [];
+    widgetEl._cleanupCallbacks.push(cb);
+}
+
+export function runWidgetCleanup(widgetEl) {
+    const callbacks = widgetEl._cleanupCallbacks;
+    if (!callbacks) return;
+    widgetEl._cleanupCallbacks = null;
+    for (let i = 0; i < callbacks.length; i++) {
+        try { callbacks[i](); } catch (e) { console.error(e); }
+    }
+}
 
 async function fetchPageContent(pageData) {
     // TODO: handle non 200 status codes/time outs
@@ -12,8 +32,8 @@ async function fetchPageContent(pageData) {
     return content;
 }
 
-function setupCarousels() {
-    const carouselElements = document.getElementsByClassName("carousel-container");
+function setupCarousels(root = document) {
+    const carouselElements = root.getElementsByClassName("carousel-container");
 
     if (carouselElements.length == 0) {
         return;
@@ -42,6 +62,7 @@ function setupCarousels() {
 
         itemsContainer.addEventListener("scroll", determineSideCutoffsRateLimited);
         window.addEventListener("resize", determineSideCutoffsRateLimited);
+        registerWidgetCleanup(carousel, () => window.removeEventListener("resize", determineSideCutoffsRateLimited));
 
         afterContentReady(determineSideCutoffs);
     }
@@ -206,15 +227,23 @@ function setupSearchBoxes() {
     }
 }
 
-function setupDynamicRelativeTime() {
-    const elements = document.querySelectorAll("[data-dynamic-relative-time]");
+let dynamicRelativeTimeInitialized = false;
+
+function setupDynamicRelativeTime(root = document) {
+    // Always update elements within the given root immediately so refreshed
+    // widgets show correct values right away.
+    updateRelativeTimeForElements(root.querySelectorAll("[data-dynamic-relative-time]"));
+
+    // The repeating timer is global and queries the document fresh each tick
+    // so it picks up elements introduced by widget refreshes automatically.
+    if (dynamicRelativeTimeInitialized) return;
+    dynamicRelativeTimeInitialized = true;
+
     const updateInterval = 60 * 1000;
     let lastUpdateTime = Date.now();
 
-    updateRelativeTimeForElements(elements);
-
     const updateElementsAndTimestamp = () => {
-        updateRelativeTimeForElements(elements);
+        updateRelativeTimeForElements(document.querySelectorAll("[data-dynamic-relative-time]"));
         lastUpdateTime = Date.now();
     };
 
@@ -308,8 +337,8 @@ function setupGroups() {
     }
 }
 
-function setupLazyImages() {
-    const images = document.querySelectorAll("img[loading=lazy]");
+function setupLazyImages(root = document) {
+    const images = root.querySelectorAll("img[loading=lazy]");
 
     if (images.length == 0) {
         return;
@@ -383,8 +412,8 @@ function attachExpandToggleButton(collapsibleContainer) {
 };
 
 
-function setupCollapsibleLists() {
-    const collapsibleLists = document.querySelectorAll(".list.collapsible-container");
+function setupCollapsibleLists(root = document) {
+    const collapsibleLists = root.querySelectorAll(".list.collapsible-container");
 
     if (collapsibleLists.length == 0) {
         return;
@@ -417,8 +446,8 @@ function setupCollapsibleLists() {
     }
 }
 
-function setupCollapsibleGrids() {
-    const collapsibleGridElements = document.querySelectorAll(".cards-grid.collapsible-container");
+function setupCollapsibleGrids(root = document) {
+    const collapsibleGridElements = root.querySelectorAll(".cards-grid.collapsible-container");
 
     if (collapsibleGridElements.length == 0) {
         return;
@@ -489,13 +518,32 @@ function setupCollapsibleGrids() {
         });
 
         afterContentReady(() => observer.observe(gridElement));
+        registerWidgetCleanup(gridElement, () => observer.disconnect());
     }
 }
 
 const contentReadyCallbacks = [];
+let contentReadyFired = false;
 
 function afterContentReady(callback) {
+    if (contentReadyFired) {
+        callback();
+        return;
+    }
     contentReadyCallbacks.push(callback);
+}
+
+// Re-runs the subset of setup functions that apply to widget content. Called
+// after a widget's outerHTML is replaced via the refresh endpoint.
+export function reinitWidget(rootEl) {
+    setupPopovers(rootEl);
+    setupCarousels(rootEl);
+    setupCollapsibleLists(rootEl);
+    setupCollapsibleGrids(rootEl);
+    setupMasonries(rootEl);
+    setupDynamicRelativeTime(rootEl);
+    setupLazyImages(rootEl);
+    setupTruncatedElementTitles(rootEl);
 }
 
 const weekDayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -653,8 +701,8 @@ async function setupTodos() {
     }
 }
 
-function setupTruncatedElementTitles() {
-    const elements = document.querySelectorAll(".text-truncate, .single-line-titles .title, .text-truncate-2-lines, .text-truncate-3-lines");
+function setupTruncatedElementTitles(root = document) {
+    const elements = root.querySelectorAll(".text-truncate, .single-line-titles .title, .text-truncate-2-lines, .text-truncate-3-lines");
 
     if (elements.length == 0) {
         return;
@@ -772,6 +820,9 @@ async function setupPage() {
         for (let i = 0; i < contentReadyCallbacks.length; i++) {
             contentReadyCallbacks[i]();
         }
+        contentReadyFired = true;
+
+        setupWidgetRefresh(pageData.baseURL);
 
         setTimeout(() => {
             setupTruncatedElementTitles();

@@ -10,6 +10,10 @@ type containerWidgetBase struct {
 	Widgets widgets `yaml:"widgets"`
 }
 
+func (widget *containerWidgetBase) childWidgets() []widget {
+	return widget.Widgets
+}
+
 func (widget *containerWidgetBase) _initializeWidgets() error {
 	for i := range widget.Widgets {
 		if err := widget.Widgets[i].initialize(); err != nil {
@@ -34,6 +38,13 @@ func (widget *containerWidgetBase) _update(ctx context.Context) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			widget.lock()
+			defer widget.unlock()
+			// Re-check inside the lock: a concurrent page render may have
+			// already updated this widget while we were waiting on the mutex.
+			if !widget.requiresUpdate(&now) {
+				return
+			}
 			widget.update(ctx)
 		}()
 	}

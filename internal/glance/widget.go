@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -117,6 +118,10 @@ func (w *widgets) UnmarshalYAML(node *yaml.Node) error {
 			return err
 		}
 
+		if err := widget.validate(); err != nil {
+			return fmt.Errorf("line %d: %w", node.Line, err)
+		}
+
 		*w = append(*w, widget)
 	}
 
@@ -136,7 +141,29 @@ type widget interface {
 	setID(uint64)
 	handleRequest(w http.ResponseWriter, r *http.Request)
 	setHideHeader(bool)
+	lock()
+	unlock()
+	validate() error
 }
+
+// Widgets that hold interactive client-side state, are static, or are
+// containers — none of these are valid targets for refresh-interval.
+var refreshIntervalDisallowedTypes = map[string]struct{}{
+	"calendar":        {},
+	"calendar-legacy": {},
+	"to-do":           {},
+	"clock":           {},
+	"iframe":          {},
+	"html":            {},
+	"group":           {},
+	"split-column":    {},
+	"search":          {},
+	"bookmarks":       {},
+}
+
+// floor against typos (e.g. 1s). upstream rate limiting is the cache's job,
+// not this floor — ticks below the cache window don't re-fetch.
+const minRefreshInterval = 5 * time.Second
 
 type cacheType int
 
@@ -155,6 +182,7 @@ type widgetBase struct {
 	HideHeader          bool             `yaml:"hide-header"`
 	CSSClass            string           `yaml:"css-class"`
 	CustomCacheDuration durationField    `yaml:"cache"`
+	RefreshInterval     durationField    `yaml:"refresh-interval"`
 	ContentAvailable    bool             `yaml:"-"`
 	WIP                 bool             `yaml:"-"`
 	Error               error            `yaml:"-"`
@@ -164,6 +192,9 @@ type widgetBase struct {
 	cacheType           cacheType        `yaml:"-"`
 	nextUpdate          time.Time        `yaml:"-"`
 	updateRetriedTimes  int              `yaml:"-"`
+	// mu serializes update() and renderTemplate() for this widget.
+	// Without it, concurrent requests would race on templateBuffer and update state.
+	mu sync.Mutex `yaml:"-"`
 }
 
 type widgetProviders struct {
@@ -202,6 +233,26 @@ func (w *widgetBase) setHideHeader(value bool) {
 	w.HideHeader = value
 }
 
+func (w *widgetBase) lock()   { w.mu.Lock() }
+func (w *widgetBase) unlock() { w.mu.Unlock() }
+
+func (w *widgetBase) validate() error {
+	if w.RefreshInterval == 0 {
+		return nil
+	}
+	if _, ok := refreshIntervalDisallowedTypes[w.Type]; ok {
+		return fmt.Errorf("widget type %q does not support refresh-interval", w.Type)
+	}
+	if time.Duration(w.RefreshInterval) < minRefreshInterval {
+		return fmt.Errorf("refresh-interval must be at least %s", minRefreshInterval)
+	}
+	return nil
+}
+
+func (w *widgetBase) RefreshIntervalSeconds() int {
+	return int(time.Duration(w.RefreshInterval).Seconds())
+}
+
 func (widget *widgetBase) handleRequest(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "not implemented", http.StatusNotImplemented)
 }
@@ -215,6 +266,9 @@ func (w *widgetBase) setProviders(providers *widgetProviders) {
 }
 
 func (w *widgetBase) renderTemplate(data any, t *template.Template) template.HTML {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
 	w.templateBuffer.Reset()
 	err := t.Execute(&w.templateBuffer, data)
 	if err != nil {

@@ -707,6 +707,7 @@ pages:
 | title-url | string | no |
 | hide-header | boolean | no | false |
 | cache | string | no |
+| refresh-interval | string | no |
 | css-class | string | no |
 
 #### `type`
@@ -738,6 +739,21 @@ cache: 1d  # 1 day
 > [!NOTE]
 >
 > Not all widgets can have their cache duration modified. The calendar and weather widgets update on the hour and this cannot be changed.
+
+#### `refresh-interval`
+How often the widget should automatically refresh in the browser without a full page reload. Same syntax as `cache` (a number followed by `s`, `m`, `h`, or `d`). Each tick re-renders the widget; if the widget's cache hasn't expired, the existing data is reused, so a tight refresh interval is safe and won't hammer upstream APIs. Use the manual refresh button to force a fresh fetch. The minimum allowed interval is 5 seconds.
+
+```yaml
+refresh-interval: 1m
+refresh-interval: 5m
+refresh-interval: 1h
+```
+
+When the page is hidden (tab in the background), refresh timers pause and resume on visibility — they don't fire while you're not looking.
+
+> [!NOTE]
+>
+> Not all widget types support `refresh-interval`. The following are excluded because they hold interactive client-side state, embed external content, or have no data to refresh: `calendar`, `to-do`, `clock`, `iframe`, `html`, `search`, `bookmarks`, `group`, `split-column`. Setting `refresh-interval` on any of these will fail at config load.
 
 #### `css-class`
 Set custom CSS classes for the specific widget instance.
