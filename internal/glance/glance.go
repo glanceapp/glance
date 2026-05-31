@@ -42,14 +42,13 @@ type application struct {
 	RequiresAuth           bool
 	authSecretKey          []byte
 	usernameHashToUsername map[string]string
+	usernameHashMu         sync.RWMutex
 	authAttemptsMu         sync.Mutex
 	failedAuthAttempts     map[string]*failedAuthAttempt
 
-	oidcEnabled      bool
-	oidcVerifier     *oidc.IDTokenVerifier
-	oauth2Config     *oauth2.Config
-	oidcUsernames    map[string]struct{}
-	oidcUsernamesMu  sync.RWMutex
+	oidcEnabled  bool
+	oidcVerifier *oidc.IDTokenVerifier
+	oauth2Config *oauth2.Config
 }
 
 func newApplication(c *config) (*application, error) {

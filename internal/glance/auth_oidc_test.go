@@ -106,7 +106,7 @@ func TestUsernameFromOIDCClaims(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			username, err := usernameFromClaimsMap(test.claims, test.usernameClaim)
+			username, err := usernameFromClaims(test.claims, test.usernameClaim)
 			if test.wantErr {
 				if err == nil {
 					t.Fatal("Expected error, got nil")
@@ -140,7 +140,6 @@ func TestRegisterOIDCUserAllowsAuthorization(t *testing.T) {
 		RequiresAuth:           true,
 		authSecretKey:          secretBytes,
 		usernameHashToUsername: make(map[string]string),
-		oidcUsernames:          make(map[string]struct{}),
 		oidcEnabled:            true,
 		Config: config{
 			Auth: struct {
@@ -171,32 +170,6 @@ func TestRegisterOIDCUserAllowsAuthorization(t *testing.T) {
 	}
 }
 
-func usernameFromClaimsMap(claims map[string]any, usernameClaim string) (string, error) {
-	if usernameClaim != "" {
-		username, ok := stringClaim(claims, usernameClaim)
-		if !ok {
-			return "", errMissingClaim
-		}
-		return username, nil
-	}
-
-	for _, claim := range []string{"preferred_username", "email", "sub"} {
-		if username, ok := stringClaim(claims, claim); ok {
-			return username, nil
-		}
-	}
-
-	return "", errMissingClaim
-}
-
-var errMissingClaim = errTestMissingClaim{}
-
-type errTestMissingClaim struct{}
-
-func (errTestMissingClaim) Error() string {
-	return "missing claim"
-}
-
 func TestOIDCRedirectURLUsesRequestHost(t *testing.T) {
 	app := &application{
 		Config: config{
@@ -220,5 +193,31 @@ func TestOIDCRedirectURLUsesRequestHost(t *testing.T) {
 	want := "https://example.com/glance/auth/oidc/callback"
 	if got != want {
 		t.Fatalf("Expected %q, got %q", want, got)
+	}
+}
+
+func TestBeginAuthAttemptRateLimit(t *testing.T) {
+	app := &application{
+		failedAuthAttempts: make(map[string]*failedAuthAttempt),
+	}
+
+	ip := "127.0.0.1"
+	for i := 0; i < AUTH_RATE_LIMIT_MAX_ATTEMPTS; i++ {
+		app.authAttemptsMu.Lock()
+		exceeded, _ := app.beginAuthAttempt(ip)
+		app.authAttemptsMu.Unlock()
+		if exceeded {
+			t.Fatalf("Expected attempt %d not to be rate limited", i+1)
+		}
+	}
+
+	app.authAttemptsMu.Lock()
+	exceeded, retryAfter := app.beginAuthAttempt(ip)
+	app.authAttemptsMu.Unlock()
+	if !exceeded {
+		t.Fatal("Expected rate limit to be exceeded")
+	}
+	if retryAfter <= 0 {
+		t.Fatalf("Expected positive retry-after, got %d", retryAfter)
 	}
 }
