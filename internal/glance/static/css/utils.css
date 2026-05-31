@@ -253,6 +253,14 @@ details[open] .summary::after {
     text-align: left;
 }
 
+.stretch-to-content {
+  min-width: 0;
+  display: flex;
+  flex-grow: 1;
+  flex-basis: 0%;
+  max-width: max-content;
+}
+
 .visited-indicator:not(:visited)::before, .visited-indicator:not(:visited)::after {
     color: var(--color-primary);
 }
