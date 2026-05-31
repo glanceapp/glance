@@ -24,10 +24,7 @@ const (
 	oidcLoginErrorParam      = "oidc"
 )
 
-var (
-	defaultOIDCScopes         = []string{oidc.ScopeOpenID, "profile", "email"}
-	defaultOIDCUsernameClaims = []string{"preferred_username", "email", "sub"}
-)
+var oidcScopes = []string{oidc.ScopeOpenID}
 
 type oidcFlowState struct {
 	State        string `json:"state"`
@@ -50,17 +47,12 @@ func (a *application) initOIDCAuth() error {
 		return fmt.Errorf("initializing oidc provider: %w", err)
 	}
 
-	scopes := oidcConfig.Scopes
-	if len(scopes) == 0 {
-		scopes = defaultOIDCScopes
-	}
-
 	a.oidcVerifier = provider.Verifier(&oidc.Config{ClientID: oidcConfig.ClientID})
 	a.oauth2Config = &oauth2.Config{
 		ClientID:     oidcConfig.ClientID,
 		ClientSecret: oidcConfig.ClientSecret,
 		Endpoint:     provider.Endpoint(),
-		Scopes:       scopes,
+		Scopes:       oidcScopes,
 	}
 	a.oidcEnabled = true
 
@@ -204,9 +196,9 @@ func (a *application) handleOIDCCallback(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	username, err := usernameFromOIDCToken(idToken, a.Config.Auth.OIDC.UsernameClaim)
-	if err != nil {
-		a.failOIDCCallback(w, r, "Could not resolve oidc username from %s: %v", ip, err)
+	username := idToken.Subject
+	if username == "" {
+		a.failOIDCCallback(w, r, "Missing sub claim in oidc id token from %s", ip)
 		return
 	}
 
@@ -248,47 +240,6 @@ func (a *application) registerOIDCUser(username string) error {
 
 	a.usernameHashToUsername[hashKey] = username
 	return nil
-}
-
-func usernameFromOIDCToken(idToken *oidc.IDToken, usernameClaim string) (string, error) {
-	var claims map[string]any
-	if err := idToken.Claims(&claims); err != nil {
-		return "", err
-	}
-
-	return usernameFromClaims(claims, usernameClaim)
-}
-
-func usernameFromClaims(claims map[string]any, usernameClaim string) (string, error) {
-	if usernameClaim != "" {
-		username, ok := stringClaim(claims, usernameClaim)
-		if !ok {
-			return "", fmt.Errorf("username claim %q is missing or empty", usernameClaim)
-		}
-		return username, nil
-	}
-
-	for _, claim := range defaultOIDCUsernameClaims {
-		if username, ok := stringClaim(claims, claim); ok {
-			return username, nil
-		}
-	}
-
-	return "", fmt.Errorf("no usable username claim found in id token")
-}
-
-func stringClaim(claims map[string]any, name string) (string, bool) {
-	value, ok := claims[name]
-	if !ok {
-		return "", false
-	}
-
-	claim, ok := value.(string)
-	if !ok || claim == "" {
-		return "", false
-	}
-
-	return claim, true
 }
 
 func (a *application) failOIDCCallback(w http.ResponseWriter, r *http.Request, format string, args ...any) {

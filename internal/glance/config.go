@@ -76,14 +76,12 @@ type user struct {
 }
 
 type oidcConfig struct {
-	Issuer            string   `yaml:"issuer"`
-	ClientID          string   `yaml:"client-id"`
-	ClientSecret      string   `yaml:"client-secret"`
-	RedirectURL       string   `yaml:"redirect-url"`
-	Scopes            []string `yaml:"scopes"`
-	UsernameClaim     string   `yaml:"username-claim"`
-	AutoLogin         bool     `yaml:"auto-login"`
-	DisableLocalLogin bool     `yaml:"disable-local-login"`
+	Issuer            string `yaml:"issuer"`
+	ClientID          string `yaml:"client-id"`
+	ClientSecret      string `yaml:"client-secret"`
+	RedirectURL       string `yaml:"redirect-url"`
+	AutoLogin         bool   `yaml:"auto-login"`
+	DisableLocalLogin bool   `yaml:"disable-local-login"`
 }
 
 func authConfigured(config *config) bool {

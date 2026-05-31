@@ -296,8 +296,9 @@ auth:
     issuer: https://auth.example.com/realms/home
     client-id: glance
     client-secret: ${secret:oidc-client-secret}
-    username-claim: preferred_username
 ```
+
+Glance requests only the `openid` scope and uses the ID token's `sub` claim as the session identity. No extra scopes or claim mapping is required.
 
 You can use OIDC on its own, together with local users, or keep a local break-glass account alongside SSO.
 
@@ -335,19 +336,17 @@ When `redirect-url` is not set, Glance builds the redirect URI from the incoming
 | client-id | string | yes | |
 | client-secret | string | yes | |
 | redirect-url | string | no | derived from request |
-| scopes | list of strings | no | `openid`, `profile`, `email` |
-| username-claim | string | no | `preferred_username`, then `email`, then `sub` |
 | auto-login | boolean | no | `false` |
 | disable-local-login | boolean | no | `false` |
 
 #### Provider notes
 
-| Provider | Example issuer | Suggested `username-claim` |
-| -------- | ---------------- | -------------------------- |
-| Keycloak | `https://keycloak.example.com/realms/home` | `preferred_username` |
-| PocketID | `https://pocketid.example.com` | `preferred_username` |
-| Authelia | `https://authelia.example.com` | `preferred_username` |
-| Google | `https://accounts.google.com` | `email` |
+| Provider | Example issuer |
+| -------- | ---------------- |
+| Keycloak | `https://keycloak.example.com/realms/home` |
+| PocketID | `https://pocketid.example.com` |
+| Authelia | `https://authelia.example.com` |
+| Google | `https://accounts.google.com` |
 
 When using a reverse proxy, set `server.proxied: true` so Glance can determine the client IP address and whether cookies should be marked secure.
 

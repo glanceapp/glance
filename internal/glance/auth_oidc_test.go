@@ -67,64 +67,6 @@ func TestOIDCStateCookieRoundTrip(t *testing.T) {
 	}
 }
 
-func TestUsernameFromOIDCClaims(t *testing.T) {
-	tests := []struct {
-		name          string
-		claims        map[string]any
-		usernameClaim string
-		want          string
-		wantErr       bool
-	}{
-		{
-			name:          "explicit claim",
-			claims:        map[string]any{"preferred_username": "alice"},
-			usernameClaim: "preferred_username",
-			want:          "alice",
-		},
-		{
-			name:    "fallback to email",
-			claims:  map[string]any{"email": "alice@example.com"},
-			want:    "alice@example.com",
-		},
-		{
-			name:    "fallback to sub",
-			claims:  map[string]any{"sub": "provider-user-id"},
-			want:    "provider-user-id",
-		},
-		{
-			name:          "missing explicit claim",
-			claims:        map[string]any{"email": "alice@example.com"},
-			usernameClaim: "preferred_username",
-			wantErr:       true,
-		},
-		{
-			name:    "no usable claims",
-			claims:  map[string]any{},
-			wantErr: true,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			username, err := usernameFromClaims(test.claims, test.usernameClaim)
-			if test.wantErr {
-				if err == nil {
-					t.Fatal("Expected error, got nil")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("Unexpected error: %v", err)
-			}
-
-			if username != test.want {
-				t.Fatalf("Expected username %q, got %q", test.want, username)
-			}
-		})
-	}
-}
-
 func TestRegisterOIDCUserAllowsAuthorization(t *testing.T) {
 	secret, err := makeAuthSecretKey(AUTH_SECRET_KEY_LENGTH)
 	if err != nil {
