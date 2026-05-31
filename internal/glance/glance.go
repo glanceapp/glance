@@ -344,18 +344,23 @@ func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Re
 
 	pageData := templateData{
 		Page: page,
+		App:  a,
 	}
 
 	var err error
 	var responseBytes bytes.Buffer
 
-	func() {
-		page.mu.Lock()
-		defer page.mu.Unlock()
-
-		page.updateOutdatedWidgets()
+	if a.Config.Server.AsyncLoading {
 		err = pageContentTemplate.Execute(&responseBytes, pageData)
-	}()
+	} else {
+		func() {
+			page.mu.Lock()
+			defer page.mu.Unlock()
+
+			page.updateOutdatedWidgets()
+			err = pageContentTemplate.Execute(&responseBytes, pageData)
+		}()
+	}
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -402,26 +407,42 @@ func (a *application) handleNotFound(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (a *application) handleWidgetRequest(w http.ResponseWriter, r *http.Request) {
-	// TODO: this requires a rework of the widget update logic so that rather
-	// than locking the entire page we lock individual widgets
-	w.WriteHeader(http.StatusNotImplemented)
+	if a.handleUnauthorizedResponse(w, r, showUnauthorizedJSON) {
+		return
+	}
 
-	// widgetValue := r.PathValue("widget")
+	widgetID, err := strconv.ParseUint(r.PathValue("widget"), 10, 64)
+	if err != nil {
+		a.handleNotFound(w, r)
+		return
+	}
 
-	// widgetID, err := strconv.ParseUint(widgetValue, 10, 64)
-	// if err != nil {
-	// 	a.handleNotFound(w, r)
-	// 	return
-	// }
+	wgt, exists := a.widgetByID[widgetID]
+	if !exists {
+		a.handleNotFound(w, r)
+		return
+	}
 
-	// widget, exists := a.widgetByID[widgetID]
+	path := r.PathValue("path")
+	if path == "render" {
+		a.handleWidgetRenderRequest(w, r, wgt)
+		return
+	}
 
-	// if !exists {
-	// 	a.handleNotFound(w, r)
-	// 	return
-	// }
+	wgt.handleRequest(w, r)
+}
 
-	// widget.handleRequest(w, r)
+func (a *application) handleWidgetRenderRequest(w http.ResponseWriter, r *http.Request, wgt widget) {
+	wgt.lock()
+	defer wgt.unlock()
+
+	now := time.Now()
+	if wgt.requiresUpdate(&now) {
+		wgt.update(context.Background())
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(wgt.Render()))
 }
 
 func (a *application) StaticAssetPath(asset string) string {
