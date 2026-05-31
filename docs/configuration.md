@@ -2322,6 +2322,10 @@ Preview:
 ![](images/dns-stats-widget-preview.png)
 
 > [!NOTE]
+> Following statistics are unavailable:\
+> AdGuard Home: Total number of blocked domains\
+> Blocky: Graph and Top blocked domains\
+> Pi-hole: Average latency
 >
 > When using AdGuard Home the 3rd statistic on top will be the average latency and when using Pi-hole or Technitium it will be the total number of blocked domains from all adlists.
 
@@ -2340,13 +2344,13 @@ Preview:
 | hour-format | string | no | 12h |
 
 ##### `service`
-Either `adguard`, `technitium`, or `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
+Either `adguard`, `blocky`, `technitium`, `pihole` (major version 5 and below) or `pihole-v6` (major version 6 and above).
 
 ##### `allow-insecure`
 Whether to allow invalid/self-signed certificates when making the request to the service.
 
 ##### `url`
-The base URL of the service.
+The base URL of the service. When using Blocky, set this to the [prometheus endpoint](https://0xerr0r.github.io/blocky/latest/configuration/#prometheus).
 
 ##### `username`
 Only required when using AdGuard Home. The username used to log into the admin dashboard.
