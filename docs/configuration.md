@@ -2842,12 +2842,14 @@ symbol-link-template: https://www.google.com/search?tbm=nws&q={SYMBOL}
 ```
 
 ###### Properties for each market
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| symbol | string | yes |
-| name | string | no |
-| symbol-link | string | no |
-| chart-link | string | no |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| symbol | string | yes | |
+| name | string | no | |
+| symbol-link | string | no | |
+| chart-link | string | no | |
+| range | string | no | `1mo` |
+| interval | string | no | `1d` |
 
 `symbol`
 
@@ -2864,6 +2866,17 @@ The link to go to when clicking on the symbol.
 `chart-link`
 
 The link to go to when clicking on the chart.
+
+`range`
+
+The time range of historical data shown in the chart. Valid values: `1d` `5d` `1mo` `3mo` `6mo` `1y` `2y` `5y` `10y` `ytd` `max`.
+
+`interval`
+
+The interval between data points in the chart. Valid values: `1m` `2m` `5m` `15m` `30m` `60m` `90m` `1h` `4h` `1d` `5d` `1wk` `1mo` `3mo`.
+
+> [!NOTE]
+> Not all range/interval combinations are supported by Yahoo Finance. Generally, shorter intervals (e.g. `1m`) are only available for shorter ranges (e.g. `1d` or `5d`).
 
 ### Twitch Channels
 Display a list of channels from Twitch.
