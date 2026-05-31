@@ -38,6 +38,7 @@ type rssWidget struct {
 	CollapseAfter    int              `yaml:"collapse-after"`
 	SingleLineTitles bool             `yaml:"single-line-titles"`
 	PreserveOrder    bool             `yaml:"preserve-order"`
+	Http             httpOptionsField `yaml:"http"`
 
 	Items          rssFeedItemList `yaml:"-"`
 	NoItemsMessage string          `yaml:"-"`
@@ -195,6 +196,11 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 		return nil, err
 	}
 
+	client := defaultHTTPClient
+	if widget.Http.client != nil {
+		client = widget.Http.client
+	}
+
 	req.Header.Add("User-Agent", glanceUserAgentString)
 
 	widget.cachedFeedsMutex.Lock()
@@ -213,7 +219,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 		req.Header.Set(key, value)
 	}
 
-	resp, err := defaultHTTPClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
