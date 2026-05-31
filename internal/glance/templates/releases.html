@@ -5,7 +5,7 @@
     {{ range .Releases }}
     <li>
         <div class="flex items-center gap-10">
-            <a class="size-h4 block text-truncate color-primary-if-not-visited" href="{{ .NotesUrl }}" target="_blank" rel="noreferrer">{{ .Name }}</a>
+            <a class="size-h4 block text-truncate color-primary-if-not-visited" href="{{ .NotesUrl }}" target="{{ $.Target }}" rel="noreferrer">{{ .Name }}</a>
             {{ if $.ShowSourceIcon }}
             <img class="flat-icon release-source-icon" src="{{ .SourceIconURL }}" alt="" loading="lazy">
             {{ end }}

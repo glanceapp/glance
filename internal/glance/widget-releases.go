@@ -26,6 +26,7 @@ type releasesWidget struct {
 	Limit          int               `yaml:"limit"`
 	CollapseAfter  int               `yaml:"collapse-after"`
 	ShowSourceIcon bool              `yaml:"show-source-icon"`
+	Target         string            `yaml:"target"`
 }
 
 func (widget *releasesWidget) initialize() error {
@@ -37,6 +38,10 @@ func (widget *releasesWidget) initialize() error {
 
 	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
 		widget.CollapseAfter = 5
+	}
+
+	if widget.Target == "" {
+		widget.Target = "_blank"
 	}
 
 	for i := range widget.Repositories {
