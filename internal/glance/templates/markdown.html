@@ -1,0 +1,7 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<div class="widget-markdown">
+{{ .CompiledHTML }}
+</div>
+{{ end }}

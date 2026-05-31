@@ -1,0 +1,27 @@
+.widget-markdown h1 {
+    font-size: 1.875rem;
+}
+
+.widget-markdown h2 {
+    font-size: 1.5rem;
+}
+
+.widget-markdown h3 {
+    font-size: 1.25rem;
+}
+
+.widget-markdown h4 {
+    font-size: 1.125rem;
+}
+
+.widget-markdown h5 {
+    font-size: 1rem;
+}
+
+.widget-markdown h6 {
+    font-size: 0.875rem;
+}
+
+.widget-markdown a {
+    text-decoration: underline;
+}
