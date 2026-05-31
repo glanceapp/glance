@@ -1264,11 +1264,12 @@ What now? [Bangs](https://duckduckgo.com/bangs). They're shortcuts that allow yo
 ![](images/search-widget-bangs-preview.png)
 
 ##### Properties for each bang
-| Name | Type | Required |
-| ---- | ---- | -------- |
-| title | string | no |
-| shortcut | string | yes |
-| url | string | yes |
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| title | string | no | |
+| shortcut | string | yes | |
+| url | string | yes | |
+| regex | string | no | |
 
 ###### `title`
 Optional title that will appear on the right side of the search bar when the query starts with the associated shortcut.
@@ -1290,6 +1291,41 @@ The URL of the search engine. Use `{QUERY}` to indicate where the query value ge
 url: https://www.reddit.com/search?q={QUERY}
 url: https://store.steampowered.com/search/?term={QUERY}
 url: https://www.amazon.com/s?k={QUERY}
+```
+
+###### `regex`
+Optional regular expression that extracts multiple values from the query. If provided, the regex is applied to the query after removing the bang shortcut.
+
+Example: 
+
+```yaml
+- title: Google Translate
+  shortcut: "!tl"
+  regex: "^(\\w+):(\\w+)\\s+(.+)$"
+  url: "https://translate.google.com/?sl={QUERY}&tl={QUERY}&text={QUERY}&op=translate"
+```
+
+Typing
+
+```
+!tl en:fr hello world
+```
+
+would result in final URL being
+
+```
+https://translate.google.com/?sl=en&tl=fr&text=hello%20world&op=translate
+```
+and 
+
+```
+!tl auto:en bonjour le monde
+```
+
+would result in final URL being
+
+```
+https://translate.google.com/?sl=auto&tl=en&text=bonjour%20le%20monde&op=translate
 ```
 
 ### Group
