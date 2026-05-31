@@ -410,7 +410,7 @@ In some instances, you may need to make two consecutive API calls, where you use
     {{ $something.JSON.String "title" }}
 ```
 
-Here, `$theID` gets retrieved from the result of the first API call and used in the second API call. The `newRequest` function creates a new request, and the `getResponse` function executes it. You can also use `withParameter` and `withHeader` to optionally add parameters and headers to the request.
+Here, `$theID` gets retrieved from the result of the first API call and used in the second API call. The `newRequest` function creates a new request, and the `getResponse` function executes it. You can also use `withParameter` and `withHeader` to optionally add parameters and headers to the request. Note that `Host` header added using `withHeader` has no effect. You can use `withHost` to set the `Host` header. 
 
 If you need to make a request to a URL that requires dynamic parameters, you can omit the `url` property in the YAML and run the request entirely from within the template itself:
 
