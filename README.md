@@ -271,6 +271,7 @@ Glance can also be installed through the following 3rd party channels:
 * [NixOS package](https://search.nixos.org/packages?channel=unstable&show=glance)
 * [Hostinger](https://www.hostinger.com/vps/docker/glance)
 * [Coolify.io](https://coolify.io/docs/services/glance/)
+* [Sealos](docs/sealos.md)
 
 <hr>
 </details>
