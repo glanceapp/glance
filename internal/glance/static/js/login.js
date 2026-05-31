@@ -139,3 +139,10 @@ async function handleLoginAttempt() {
 }
 
 loginButton.disable().on("click", handleLoginAttempt);
+
+usernameInput.on("keydown", function (e) {
+    if (!loginButton.disabled && e.which == 13) handleLoginAttempt();
+});
+passwordInput.on("keydown", function (e) {
+    if (!loginButton.disabled && e.which == 13) handleLoginAttempt();
+});
