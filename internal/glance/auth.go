@@ -268,7 +268,7 @@ func (a *application) isAuthorized(w http.ResponseWriter, r *http.Request) bool 
 	}
 
 	_, exists = a.Config.Auth.Users[username]
-	if !exists {
+	if !exists && !a.isOIDCUser(username) {
 		return false
 	}
 
@@ -326,8 +326,15 @@ func (a *application) handleLoginPageRequest(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	if a.oidcEnabled && a.Config.Auth.OIDC.AutoLogin && !a.showLocalLoginForm() {
+		a.handleOIDCLogin(w, r)
+		return
+	}
+
 	data := &templateData{
-		App: a,
+		App:            a,
+		ShowLocalLogin: a.showLocalLoginForm(),
+		ShowOIDCLogin:  a.oidcEnabled,
 	}
 	a.populateTemplateRequestData(&data.Request, r)
 

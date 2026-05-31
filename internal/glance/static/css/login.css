@@ -97,6 +97,28 @@
     transform: translateX(.5rem);
 }
 
+.login-button-sso {
+    text-decoration: none;
+}
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2.5rem 0 2rem;
+    color: var(--color-text-subdue);
+    text-transform: uppercase;
+    font-size: var(--font-size-small);
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--color-separator);
+}
+
 .animate-entrance {
     animation: fieldReveal 0.7s backwards;
     animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);

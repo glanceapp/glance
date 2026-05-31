@@ -224,7 +224,7 @@ For property descriptions, validation and autocompletion of the config within yo
 
 ## Authentication
 
-To make sure that only you and the people you want to share your dashboard with have access to it, you can set up authentication via username and password. This is done through a top level `auth` property. Example:
+To make sure that only you and the people you want to share your dashboard with have access to it, you can set up authentication via username and password or OpenID Connect (OIDC). This is done through a top level `auth` property. Example:
 
 ```yaml
 auth:
@@ -282,6 +282,74 @@ server:
 ```
 
 When set to `true`, Glance will use the `X-Forwarded-For` header to determine the original IP address of the request, so make sure that your reverse proxy is correctly configured to send that header.
+
+### OpenID Connect (OIDC)
+
+Glance can authenticate users through any OpenID Connect provider, such as Keycloak, PocketID, Authelia, or Google. When configured, users can sign in from the login page with a **Sign in with SSO** button. After the provider authenticates the user, Glance creates the same session cookie used by local authentication.
+
+Example:
+
+```yaml
+auth:
+  secret-key: # this must be set to a random value generated using the secret:make CLI command
+  oidc:
+    issuer: https://auth.example.com/realms/home
+    client-id: glance
+    client-secret: ${secret:oidc-client-secret}
+    username-claim: preferred_username
+```
+
+You can use OIDC on its own, together with local users, or keep a local break-glass account alongside SSO.
+
+Local login requires at least one entry under `auth.users`. Setting `disable-local-login: false` (the default) keeps the username/password form visible when local users are configured. Set `disable-local-login: true` to show only the SSO button.
+
+#### Redirect URI
+
+Register this redirect URI with your OIDC provider:
+
+```
+https://your-glance-host/auth/oidc/callback
+```
+
+If Glance is hosted under a subpath, include the base URL prefix:
+
+```
+https://your-glance-host/glance/auth/oidc/callback
+```
+
+If you need to override the automatically detected redirect URI, set `redirect-url` explicitly:
+
+```yaml
+auth:
+  oidc:
+    redirect-url: https://glance.example.com/auth/oidc/callback
+```
+
+When `redirect-url` is not set, Glance builds the redirect URI from the incoming request host, `X-Forwarded-Proto`, and `server.base-url`.
+
+#### OIDC properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| issuer | string | yes | |
+| client-id | string | yes | |
+| client-secret | string | yes | |
+| redirect-url | string | no | derived from request |
+| scopes | list of strings | no | `openid`, `profile`, `email` |
+| username-claim | string | no | `preferred_username`, then `email`, then `sub` |
+| auto-login | boolean | no | `false` |
+| disable-local-login | boolean | no | `false` |
+
+#### Provider notes
+
+| Provider | Example issuer | Suggested `username-claim` |
+| -------- | ---------------- | -------------------------- |
+| Keycloak | `https://keycloak.example.com/realms/home` | `preferred_username` |
+| PocketID | `https://pocketid.example.com` | `preferred_username` |
+| Authelia | `https://authelia.example.com` | `preferred_username` |
+| Google | `https://accounts.google.com` | `email` |
+
+When using a reverse proxy, set `server.proxied: true` so Glance can determine the client IP address and whether cookies should be marked secure.
 
 ## Server
 Server configuration is done through a top level `server` property. Example:
