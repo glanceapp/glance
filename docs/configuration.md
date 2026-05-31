@@ -290,6 +290,8 @@ Server configuration is done through a top level `server` property. Example:
 server:
   port: 8080
   assets-path: /home/user/glance-assets
+  background-refresh-enabled: true
+  background-refresh-interval: 15m
 ```
 
 ### Properties
@@ -301,6 +303,8 @@ server:
 | proxied | boolean | no | false |
 | base-url | string | no | |
 | assets-path | string | no |  |
+| background-refresh-enabled | boolean | no | false |
+| background-refresh-interval | duration | no | 15m |
 
 #### `host`
 The address which the server will listen on. Setting it to `localhost` means that only the machine that the server is running on will be able to access the dashboard. By default it will listen on all interfaces.
@@ -320,6 +324,12 @@ The base URL that Glance is hosted under. No need to specify this unless you're 
 
 #### `assets-path`
 The path to a directory that will be served by the server under the `/assets/` path. This is handy for widgets like the Monitor where you have to specify an icon URL and you want to self host all the icons rather than pointing to an external source.
+
+#### `background-refresh-enabled`
+Whether to enable automatic background refresh of widget data. When enabled, Glance will periodically update all widgets that have outdated cached data in the background, ensuring that your dashboards always show fresh information even when no one is actively viewing them. This significantly improves page load times since widget data is already current when pages are accessed.
+
+#### `background-refresh-interval`
+How often to run the background refresh process. Accepts duration values like `5m` (5 minutes), `30s` (30 seconds), `1h` (1 hour), etc. Shorter intervals mean more up-to-date data but may increase resource usage and API calls. Longer intervals reduce resource usage but may result in slightly stale data between refresh cycles.
 
 > [!IMPORTANT]
 >
