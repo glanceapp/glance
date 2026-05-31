@@ -104,7 +104,7 @@
 .weather-column-daylight {
     position: absolute;
     inset: 0;
-    background: linear-gradient(0deg, transparent 30px, hsl(50, 50%, 30%, 0.2));
+    background: linear-gradient(0deg, transparent 30px, hsl(var(--ths), calc(var(--scheme) ((var(--scheme) var(--bgl)) + 10%))));
 }
 
 .weather-column-daylight-sunrise {
