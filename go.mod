@@ -3,6 +3,7 @@ module github.com/glanceapp/glance
 go 1.26.3
 
 require (
+	github.com/coreos/go-oidc/v3 v3.18.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/refraction-networking/utls v1.8.2
@@ -10,6 +11,7 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	golang.org/x/crypto v0.38.0
 	golang.org/x/net v0.40.0
+	golang.org/x/oauth2 v0.36.0
 	golang.org/x/text v0.25.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -19,6 +21,7 @@ require (
 	github.com/andybalholm/brotli v1.0.6 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/ebitengine/purego v0.8.4 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect

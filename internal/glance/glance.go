@@ -14,7 +14,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/oauth2"
 )
 
 var (
@@ -25,7 +27,7 @@ var (
 
 const STATIC_ASSETS_CACHE_DURATION = 24 * time.Hour
 
-var reservedPageSlugs = []string{"login", "logout"}
+var reservedPageSlugs = []string{"login", "logout", "auth"}
 
 type application struct {
 	Version   string
@@ -40,8 +42,13 @@ type application struct {
 	RequiresAuth           bool
 	authSecretKey          []byte
 	usernameHashToUsername map[string]string
+	usernameHashMu         sync.RWMutex
 	authAttemptsMu         sync.Mutex
 	failedAuthAttempts     map[string]*failedAuthAttempt
+
+	oidcEnabled  bool
+	oidcVerifier *oidc.IDTokenVerifier
+	oauth2Config *oauth2.Config
 }
 
 func newApplication(c *config) (*application, error) {
@@ -58,7 +65,7 @@ func newApplication(c *config) (*application, error) {
 	// Init auth
 	//
 
-	if len(config.Auth.Users) > 0 {
+	if authConfigured(config) {
 		secretBytes, err := base64.StdEncoding.DecodeString(config.Auth.SecretKey)
 		if err != nil {
 			return nil, fmt.Errorf("decoding secret-key: %v", err)
@@ -71,6 +78,7 @@ func newApplication(c *config) (*application, error) {
 		app.usernameHashToUsername = make(map[string]string)
 		app.failedAuthAttempts = make(map[string]*failedAuthAttempt)
 		app.RequiresAuth = true
+		app.authSecretKey = secretBytes
 
 		for username := range config.Auth.Users {
 			user := config.Auth.Users[username]
@@ -94,7 +102,9 @@ func newApplication(c *config) (*application, error) {
 			}
 		}
 
-		app.authSecretKey = secretBytes
+		if err := app.initOIDCAuth(); err != nil {
+			return nil, err
+		}
 	}
 
 	//
@@ -282,9 +292,11 @@ type templateRequestData struct {
 }
 
 type templateData struct {
-	App     *application
-	Page    *page
-	Request templateRequestData
+	App             *application
+	Page            *page
+	Request         templateRequestData
+	ShowLocalLogin  bool
+	ShowOIDCLogin   bool
 }
 
 func (a *application) populateTemplateRequestData(data *templateRequestData, r *http.Request) {
@@ -453,7 +465,15 @@ func (a *application) server() (func() error, func() error) {
 	if a.RequiresAuth {
 		mux.HandleFunc("GET /login", a.handleLoginPageRequest)
 		mux.HandleFunc("GET /logout", a.handleLogoutRequest)
-		mux.HandleFunc("POST /api/authenticate", a.handleAuthenticationAttempt)
+
+		if a.LocalAuthEnabled() {
+			mux.HandleFunc("POST /api/authenticate", a.handleAuthenticationAttempt)
+		}
+
+		if a.oidcEnabled {
+			mux.HandleFunc("GET /auth/oidc/login", a.handleOIDCLogin)
+			mux.HandleFunc("GET /auth/oidc/callback", a.handleOIDCCallback)
+		}
 	}
 
 	mux.Handle(

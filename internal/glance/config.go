@@ -39,6 +39,7 @@ type config struct {
 	Auth struct {
 		SecretKey string           `yaml:"secret-key"`
 		Users     map[string]*user `yaml:"users"`
+		OIDC      oidcConfig       `yaml:"oidc"`
 	} `yaml:"auth"`
 
 	Document struct {
@@ -72,6 +73,19 @@ type user struct {
 	Password           string `yaml:"password"`
 	PasswordHashString string `yaml:"password-hash"`
 	PasswordHash       []byte `yaml:"-"`
+}
+
+type oidcConfig struct {
+	Issuer            string `yaml:"issuer"`
+	ClientID          string `yaml:"client-id"`
+	ClientSecret      string `yaml:"client-secret"`
+	RedirectURL       string `yaml:"redirect-url"`
+	AutoLogin         bool   `yaml:"auto-login"`
+	DisableLocalLogin bool   `yaml:"disable-local-login"`
+}
+
+func authConfigured(config *config) bool {
+	return len(config.Auth.Users) > 0 || config.Auth.OIDC.Issuer != ""
 }
 
 type page struct {
@@ -453,8 +467,18 @@ func isConfigStateValid(config *config) error {
 		return fmt.Errorf("no pages configured")
 	}
 
-	if len(config.Auth.Users) > 0 && config.Auth.SecretKey == "" {
-		return fmt.Errorf("secret-key must be set when users are configured")
+	if authConfigured(config) && config.Auth.SecretKey == "" {
+		return fmt.Errorf("secret-key must be set when authentication is configured")
+	}
+
+	if config.Auth.OIDC.Issuer != "" {
+		if config.Auth.OIDC.ClientID == "" {
+			return fmt.Errorf("oidc client-id must be set when oidc issuer is configured")
+		}
+
+		if config.Auth.OIDC.ClientSecret == "" {
+			return fmt.Errorf("oidc client-secret must be set when oidc issuer is configured")
+		}
 	}
 
 	for username := range config.Auth.Users {
