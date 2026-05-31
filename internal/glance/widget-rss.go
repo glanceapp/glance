@@ -38,6 +38,8 @@ type rssWidget struct {
 	CollapseAfter    int              `yaml:"collapse-after"`
 	SingleLineTitles bool             `yaml:"single-line-titles"`
 	PreserveOrder    bool             `yaml:"preserve-order"`
+	HideChannelName  bool             `yaml:"hide-channel-name"`
+	HideLinkHost     bool             `yaml:"hide-link-host"`
 
 	Items          rssFeedItemList `yaml:"-"`
 	NoItemsMessage string          `yaml:"-"`
@@ -118,14 +120,17 @@ type cachedRSSFeed struct {
 }
 
 type rssFeedItem struct {
-	ChannelName string
-	ChannelURL  string
-	Title       string
-	Link        string
-	ImageURL    string
-	Categories  []string
-	Description string
-	PublishedAt time.Time
+	ChannelName     string
+	HideChannelName bool
+	HideLinkHost    bool
+	ChannelURL      string
+	Title           string
+	Link            string
+	LinkHost        string
+	ImageURL        string
+	Categories      []string
+	Description     string
+	PublishedAt     time.Time
 }
 
 type rssFeedRequest struct {
@@ -133,6 +138,7 @@ type rssFeedRequest struct {
 	Title           string            `yaml:"title"`
 	HideCategories  bool              `yaml:"hide-categories"`
 	HideDescription bool              `yaml:"hide-description"`
+	HideChannel     bool              `yaml:"hide-channel"`
 	Limit           int               `yaml:"limit"`
 	ItemLinkPrefix  string            `yaml:"item-link-prefix"`
 	Headers         map[string]string `yaml:"headers"`
@@ -248,12 +254,19 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 
 		rssItem := rssFeedItem{
 			ChannelURL: feed.Link,
+			HideChannelName: widget.HideChannelName,
+			HideLinkHost: widget.HideLinkHost,
 		}
+
 
 		if request.ItemLinkPrefix != "" {
 			rssItem.Link = request.ItemLinkPrefix + item.Link
 		} else if strings.HasPrefix(item.Link, "http://") || strings.HasPrefix(item.Link, "https://") {
 			rssItem.Link = item.Link
+			if parsedURL, err := url.Parse(item.Link); err == nil {
+				rssItem.LinkHost = strings.TrimPrefix(parsedURL.Host, "www.")
+			}
+
 		} else {
 			parsedUrl, err := url.Parse(feed.Link)
 			if err != nil {
