@@ -283,6 +283,56 @@ server:
 
 When set to `true`, Glance will use the `X-Forwarded-For` header to determine the original IP address of the request, so make sure that your reverse proxy is correctly configured to send that header.
 
+### Restricting pages to specific users
+
+You can restrict access to specific pages by using the `allowed-users` property on a page. When this property is set, only the listed users will be able to access that page. Users not in the list will receive a 403 Forbidden error when attempting to access the page. Example:
+
+```yaml
+auth:
+  secret-key: # generated secret key
+  users:
+    admin:
+      password: admin123
+    john:
+      password: john123
+    jane:
+      password: jane123
+
+pages:
+  - name: Home
+    # No allowed-users property means all authenticated users can access this page
+    columns:
+      - size: full
+        widgets:
+          - type: rss
+
+  - name: Admin
+    allowed-users:
+      - admin
+    columns:
+      - size: full
+        widgets:
+          - type: monitor
+
+  - name: Work
+    allowed-users:
+      - john
+      - jane
+    columns:
+      - size: full
+        widgets:
+          - type: calendar
+```
+
+In this example:
+- The "Home" page is accessible by all authenticated users (admin, john, and jane)
+- The "Admin" page is only accessible by the `admin` user
+- The "Work" page is accessible by both `john` and `jane`
+
+> [!NOTE]
+>
+> If a page does not have the `allowed-users` property set, all authenticated users will be able to access it. If you want to restrict access to all pages, you must explicitly set the `allowed-users` property on each page.
+
 ## Server
 Server configuration is done through a top level `server` property. Example:
 
@@ -560,6 +610,7 @@ pages:
 | center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
+| allowed-users | array | no | |
 | head-widgets | array | no | |
 | columns | array | yes | |
 
@@ -597,6 +648,9 @@ Whether to show a header displaying the name of the page on mobile. The header p
 Preview:
 
 ![](images/mobile-header-preview.png)
+
+#### `allowed-users`
+A list of usernames that are allowed to access this page. When this property is set, only the listed users will be able to view the page. Users not in the list will receive a 403 Forbidden error. If this property is not added, all authenticated users will be able to access the page. See the [Restricting pages to specific users](#restricting-pages-to-specific-users) section for more details and examples.
 
 #### `head-widgets`
 

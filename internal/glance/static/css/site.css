@@ -325,6 +325,13 @@ kbd:active {
     color: var(--color-text-highlight);
 }
 
+.username-display {
+    margin-right: 1rem;
+    font-size: var(--font-size-h3);
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
 .logout-button {
     width: 2rem;
     height: 2rem;
