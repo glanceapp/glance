@@ -151,14 +151,14 @@ pages:
     columns:
       - size: full
         widgets:
-          $include: rss.yml
+          - $include: rss.yml
   - name: News
     columns:
       - size: full
         widgets:
           - type: group
             widgets:
-              $include: rss.yml
+              - $include: rss.yml
               - type: reddit
                 subreddit: news
 ```
@@ -211,6 +211,12 @@ icon: auto-invert sh:glance-dark # with a selfh.st icon
 ```
 
 This expects the icon to be black and will automatically invert it to white when using a dark theme.
+
+If there is no `.svg` version available for a `selfh.st` or `Dashboard` icon, then you can add the image extension of the format you wish to use.
+```yaml
+icon: sh:glance.png # use the .png version of the icon
+icon: sh:glance.webp # use the .webp version of the icon
+```
 
 ## Config schema
 
