@@ -268,8 +268,9 @@ Download and extract the executable from the [latest release](https://github.com
 <br>
 
 Glance can also be installed through the following 3rd party channels:
-* [Proxmox VE Helper Script](https://community-scripts.github.io/ProxmoxVE/scripts?id=glance)
+* [Proxmox VE Helper Script](https://community-scripts.org/scripts/glance?id=glance)
 * [NixOS package](https://search.nixos.org/packages?channel=unstable&show=glance)
+* [Hostinger](https://www.hostinger.com/vps/docker/glance)
 * [Coolify.io](https://coolify.io/docs/services/glance/)
 
 <hr>
