@@ -1063,6 +1063,7 @@ Example:
 | style | string | no | vertical-list |
 | show-thumbnails | boolean | no | false |
 | show-flairs | boolean | no | false |
+| show-subreddit | boolean | no | false |
 | limit | integer | no | 15 |
 | collapse-after | integer | no | 5 |
 | comments-url-template | string | no | https://www.reddit.com/{POST-PATH} |
@@ -1103,6 +1104,9 @@ Shows or hides thumbnails next to the post. This only works if the `style` is `v
 
 ##### `show-flairs`
 Shows post flairs when set to `true`.
+
+##### `show-subreddit`
+Shows the source subreddit (e.g. `r/selfhosted`) next to each post when set to `true`. This is automatically enabled when `subreddit` is a multireddit (e.g. `selfhosted+homelab+DataHoarder`), since the source of each post would otherwise be ambiguous.
 
 ##### `limit`
 The maximum number of posts to show.

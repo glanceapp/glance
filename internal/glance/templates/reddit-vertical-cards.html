@@ -12,7 +12,9 @@
         </div>
         {{ end }}
         <div class="padding-widget relative">
-            {{ if ne "" .TargetUrl }}
+            {{ if .Subreddit }}
+            <a class="color-highlight size-h5 text-truncate visited-indicator block" href="https://www.reddit.com/r/{{ .Subreddit }}" target="_blank" rel="noreferrer">r/{{ .Subreddit }}</a>
+            {{ else if ne "" .TargetUrl }}
             <a class="color-highlight size-h5 text-truncate visited-indicator block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ .TargetUrlDomain }}</a>
             {{ else }}
             <div class="color-highlight size-h5 text-truncate">/r/{{ $.Subreddit }}</div>
