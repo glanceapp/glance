@@ -33,6 +33,7 @@ type redditWidget struct {
 	Style               string            `yaml:"style"`
 	ShowThumbnails      bool              `yaml:"show-thumbnails"`
 	ShowFlairs          bool              `yaml:"show-flairs"`
+	ShowSubreddit       bool              `yaml:"show-subreddit"`
 	SortBy              string            `yaml:"sort-by"`
 	TopPeriod           string            `yaml:"top-period"`
 	Search              string            `yaml:"search"`
@@ -150,6 +151,7 @@ type subredditResponseJson struct {
 				IsSelf        bool    `json:"is_self"`
 				Thumbnail     string  `json:"thumbnail"`
 				Flair         string  `json:"link_flair_text"`
+				Subreddit     string  `json:"subreddit"`
 				ParentList    []struct {
 					Id        string `json:"id"`
 					Subreddit string `json:"subreddit"`
@@ -275,6 +277,10 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 
 		if widget.ShowFlairs && post.Flair != "" {
 			forumPost.Tags = append(forumPost.Tags, post.Flair)
+		}
+
+		if (widget.ShowSubreddit || strings.Contains(widget.Subreddit, "+")) && post.Subreddit != "" {
+			forumPost.Subreddit = post.Subreddit
 		}
 
 		if len(post.ParentList) > 0 {
