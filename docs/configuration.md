@@ -151,14 +151,14 @@ pages:
     columns:
       - size: full
         widgets:
-          $include: rss.yml
+          - $include: rss.yml
   - name: News
     columns:
       - size: full
         widgets:
           - type: group
             widgets:
-              $include: rss.yml
+              - $include: rss.yml
               - type: reddit
                 subreddit: news
 ```

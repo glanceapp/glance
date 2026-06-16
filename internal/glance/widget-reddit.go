@@ -2,15 +2,22 @@ package glance
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"html"
 	"html/template"
+	"io"
+	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	utls "github.com/refraction-networking/utls"
+	"golang.org/x/net/http2"
 )
 
 var (
@@ -162,7 +169,7 @@ func (widget *redditWidget) parseCustomCommentsURL(subreddit, postId, postPath s
 }
 
 func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
-	var client requestDoer = defaultHTTPClient
+	var client requestDoer = redditHTTPClient
 	var baseURL string
 	var requestURL string
 	var headers http.Header
@@ -215,6 +222,13 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 		return nil, err
 	}
 	request.Header = headers
+
+	loid, err := getRedditLoidCookie()
+	if err != nil {
+		fmt.Printf("Error fetching reddit loid cookie: %v\n", err)
+		return nil, errors.New("could not solve reddit challenge")
+	}
+	request.AddCookie(&http.Cookie{Name: "loid", Value: loid})
 
 	responseJson, err := decodeJsonFromRequest[subredditResponseJson](client, request)
 	if err != nil {
@@ -311,4 +325,136 @@ func (widget *redditWidget) fetchNewAppAccessToken() error {
 	app.tokenExpiresAt = time.Now().Add(time.Duration(response.ExpiresIn) * time.Second)
 
 	return nil
+}
+
+// On Windows the default HTTP client works fine, but on Linux it seems to
+// get detected and blocked by reddit (or cloudflare) presumably because of TLS fingerprinting,
+// so we use uTLS to mimic a real browser's TLS fingerprint, which seems to work around the issue
+var redditHTTPClient = &http.Client{Transport: &http2.Transport{
+	DialTLSContext: func(ctx context.Context, network, addr string, _ *tls.Config) (net.Conn, error) {
+		host, _, err := net.SplitHostPort(addr)
+		if err != nil {
+			return nil, err
+		}
+
+		tcpConn, err := (&net.Dialer{}).DialContext(ctx, network, addr)
+		if err != nil {
+			return nil, err
+		}
+
+		uconn := utls.UClient(tcpConn, &utls.Config{
+			ServerName: host,
+		}, utls.HelloFirefox_Auto)
+
+		if err := uconn.HandshakeContext(ctx); err != nil {
+			tcpConn.Close()
+			return nil, err
+		}
+
+		return uconn, nil
+	},
+}}
+
+var (
+	redditChallengePattern = regexp.MustCompile(`await\(async \w+\s*=>\s*\w+\s*\+\s*\w+\)\("([^"]+)"\)`)
+	redditTokenPattern     = regexp.MustCompile(`name="token"\s+value="([^"]+)"`)
+)
+
+// Allows all widget instances to share a single loid cookie, since we don't want to draw
+// too much attention by making a lot of requests to the flow that allows us to obtain
+// the cookie required to access the .json endpoints
+var getRedditLoidCookie = func() func() (string, error) {
+	var lastUpdate time.Time
+	var cachedLoid string
+
+	return NewSingleflight(func() (string, error) {
+		// Caching for 6 hours is a bit arbitrary, presumably the cookie is valid for 24 hours,
+		// but we want to keep the cache time short in the event that a cookie becomes invalid
+		// for whatever reason, since we don't have a way to force refresh it
+		if time.Since(lastUpdate) < 6*time.Hour && cachedLoid != "" {
+			return cachedLoid, nil
+		}
+
+		loid, err := fetchRedditLoidCookie()
+		if err != nil {
+			if cachedLoid != "" {
+				fmt.Printf("Error fetching new reddit loid cookie, using cached value: %v\n", err)
+				return cachedLoid, nil
+			}
+			return "", err
+		}
+
+		lastUpdate = time.Now()
+		cachedLoid = loid
+		return loid, nil
+	})
+}()
+
+func fetchRedditLoidCookie() (string, error) {
+	request, err := http.NewRequest("GET", "https://www.reddit.com/", nil)
+	if err != nil {
+		return "", err
+	}
+
+	setBrowserUserAgentHeader(request)
+
+	response, err := redditHTTPClient.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected status code %d when requesting challenge page", response.StatusCode)
+	}
+
+	challengeBody, err := io.ReadAll(response.Body)
+	if err != nil {
+		return "", err
+	}
+
+	challengeMatches := redditChallengePattern.FindSubmatch(challengeBody)
+	tokenMatches := redditTokenPattern.FindSubmatch(challengeBody)
+
+	if challengeMatches == nil {
+		return "", fmt.Errorf("no JS challenge found")
+	}
+
+	if tokenMatches == nil {
+		return "", fmt.Errorf("no token found in challenge page")
+	}
+
+	challengeStr := string(challengeMatches[1])
+	token := string(tokenMatches[1])
+	solution := challengeStr + challengeStr // the JS does: e + e
+
+	params := url.Values{
+		"solution":     {solution},
+		"js_challenge": {"1"},
+		"token":        {token},
+	}
+	request, err = http.NewRequest("GET", "https://www.reddit.com/?"+params.Encode(), nil)
+	if err != nil {
+		return "", err
+	}
+
+	setBrowserUserAgentHeader(request)
+
+	response, err = redditHTTPClient.Do(request)
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected status code %d when submitting challenge solution", response.StatusCode)
+	}
+
+	for _, cookie := range response.Cookies() {
+		if cookie.Name == "loid" {
+			return cookie.Value, nil
+		}
+	}
+
+	return "", fmt.Errorf("no loid cookie found")
 }
