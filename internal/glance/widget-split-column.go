@@ -40,6 +40,10 @@ func (widget *splitColumnWidget) requiresUpdate(now *time.Time) bool {
 	return widget.containerWidgetBase._requiresUpdate(now)
 }
 
+func (widget *splitColumnWidget) getNestedWidgets() widgets {
+	return widget.Widgets
+}
+
 func (widget *splitColumnWidget) Render() template.HTML {
 	return widget.renderTemplate(widget, splitColumnWidgetTemplate)
 }
