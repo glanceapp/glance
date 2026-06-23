@@ -38,6 +38,7 @@ var searchEngines = map[string]string{
 	"perplexity": "https://www.perplexity.ai/search?q={QUERY}",
 	"kagi": "https://kagi.com/search?q={QUERY}",
 	"startpage": "https://www.startpage.com/search?q={QUERY}",
+	"brave": "https://search.brave.com/search?q={QUERY}",
 }
 
 func (widget *searchWidget) initialize() error {
