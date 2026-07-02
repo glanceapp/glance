@@ -388,11 +388,20 @@ func (a *application) addressOfRequest(r *http.Request) string {
 	}
 
 	ips := strings.Split(forwardedFor, ",")
-	if len(ips) == 0 || ips[0] == "" {
+	if len(ips) == 0 {
 		return remoteAddrWithoutPort()
 	}
 
-	return ips[0]
+	// Use the last (rightmost) IP in X-Forwarded-For, as this is the
+	// one added by the trusted reverse proxy. The leftmost values can
+	// be spoofed by the client and must not be trusted for rate limiting
+	// or other security-sensitive operations.
+	lastIP := strings.TrimSpace(ips[len(ips)-1])
+	if lastIP == "" {
+		return remoteAddrWithoutPort()
+	}
+
+	return lastIP
 }
 
 func (a *application) handleNotFound(w http.ResponseWriter, _ *http.Request) {
