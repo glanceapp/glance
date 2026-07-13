@@ -53,7 +53,7 @@ func (p forumPostList) calculateEngagement() {
 			continue
 		}
 
-		p[i].Engagement *= 1.0 - (math.Max(elapsed.Hours()-depreciatePostsOlderThanHours, maxDepreciationAfterHours)/maxDepreciationAfterHours)*maxDepreciation
+		p[i].Engagement *= 1.0 - (math.Min(elapsed.Hours()-depreciatePostsOlderThanHours, maxDepreciationAfterHours)/maxDepreciationAfterHours)*maxDepreciation
 	}
 }
 
