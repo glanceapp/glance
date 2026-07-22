@@ -1,0 +1,29 @@
+server:
+  port: 8080
+  live-updates: true
+
+pages:
+  - name: Live Updates Test
+    columns:
+      - size: full
+        widgets:
+          - type: custom-api
+            title: Counter (cache 10s)
+            cache: 10s
+            url: http://localhost:9090/data
+            template: |
+              <p>Count: {{.JSON.count}}</p>
+
+          - type: custom-api
+            title: Counter slow (cache 30m)
+            cache: 30m
+            url: http://localhost:9090/data
+            template: |
+              <p>Count: {{.JSON.count}}</p>
+
+          - type: monitor
+            title: Flaky Service
+            cache: 10s
+            sites:
+              - title: Flaky
+                url: http://localhost:9090/flaky
