@@ -301,6 +301,7 @@ server:
 | proxied | boolean | no | false |
 | base-url | string | no | |
 | assets-path | string | no |  |
+| live-updates | boolean | no | false |
 
 #### `host`
 The address which the server will listen on. Setting it to `localhost` means that only the machine that the server is running on will be able to access the dashboard. By default it will listen on all interfaces.
@@ -340,6 +341,24 @@ The path to a directory that will be served by the server under the `/assets/` p
 > ```
 > assets-path: /app/assets
 > ```
+
+#### `live-updates`
+When set to `true`, Glance pushes widget updates to the browser via [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) (SSE) so the dashboard refreshes without a full page reload. Disabled by default.
+
+How it works:
+
+- A background ticker checks each widget's cache expiry every 10 seconds. A widget is only fetched from its upstream source when its configured `cache` duration has elapsed — the tick interval does **not** override per-widget cache settings.
+- After an update, the rendered HTML of the widget is compared with the previous render. An event is sent to connected browsers only when the content actually changed.
+- The browser opens a persistent SSE connection to `{base-url}/api/events`. On receiving a `widget-updated` event it fetches the new HTML for that widget from `{base-url}/api/widgets/{id}/content/` and replaces the widget in the DOM.
+- Multiple events for the same widget that arrive within 500 ms are coalesced into a single fetch.
+
+**Reverse proxy considerations:** SSE requires a long-lived HTTP connection. Make sure your proxy does not apply a short read or request timeout to this path. For nginx, the `X-Accel-Buffering: no` header (sent automatically by Glance) disables proxy buffering. For other proxies, you may need to disable buffering explicitly or increase idle connection timeouts.
+
+You can monitor the raw event stream for debugging:
+
+```bash
+curl -N http://localhost:8080/api/events
+```
 
 ##### Examples
 
