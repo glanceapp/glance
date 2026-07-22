@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -34,8 +35,12 @@ type application struct {
 
 	parsedManifest []byte
 
-	slugToPage map[string]*page
-	widgetByID map[uint64]widget
+	slugToPage   map[string]*page
+	widgetByID   map[uint64]widget
+	widgetToPage map[uint64]*page
+
+	hub          *eventHub
+	tickerCancel context.CancelFunc
 
 	RequiresAuth           bool
 	authSecretKey          []byte
@@ -46,11 +51,13 @@ type application struct {
 
 func newApplication(c *config) (*application, error) {
 	app := &application{
-		Version:    buildVersion,
-		CreatedAt:  time.Now(),
-		Config:     *c,
-		slugToPage: make(map[string]*page),
-		widgetByID: make(map[uint64]widget),
+		Version:      buildVersion,
+		CreatedAt:    time.Now(),
+		Config:       *c,
+		slugToPage:   make(map[string]*page),
+		widgetByID:   make(map[uint64]widget),
+		widgetToPage: make(map[uint64]*page),
+		hub:          newEventHub(),
 	}
 	config := &app.Config
 
@@ -173,9 +180,8 @@ func newApplication(c *config) (*application, error) {
 		}
 
 		for i := range page.HeadWidgets {
-			widget := page.HeadWidgets[i]
-			app.widgetByID[widget.GetID()] = widget
-			widget.setProviders(providers)
+			registerWidget(app.widgetByID, app.widgetToPage, page.HeadWidgets[i], page)
+			page.HeadWidgets[i].setProviders(providers)
 		}
 
 		for c := range page.Columns {
@@ -186,9 +192,8 @@ func newApplication(c *config) (*application, error) {
 			}
 
 			for w := range column.Widgets {
-				widget := column.Widgets[w]
-				app.widgetByID[widget.GetID()] = widget
-				widget.setProviders(providers)
+				registerWidget(app.widgetByID, app.widgetToPage, column.Widgets[w], page)
+				column.Widgets[w].setProviders(providers)
 			}
 		}
 	}
@@ -228,6 +233,22 @@ func newApplication(c *config) (*application, error) {
 	app.parsedManifest = []byte(manifest)
 
 	return app, nil
+}
+
+// registerWidget adds w (and any container children) to widgetByID and widgetToPage.
+func registerWidget(widgetByID map[uint64]widget, widgetToPage map[uint64]*page, w widget, p *page) {
+	widgetByID[w.GetID()] = w
+	widgetToPage[w.GetID()] = p
+	switch cw := w.(type) {
+	case *groupWidget:
+		for _, child := range cw.Widgets {
+			registerWidget(widgetByID, widgetToPage, child, p)
+		}
+	case *splitColumnWidget:
+		for _, child := range cw.Widgets {
+			registerWidget(widgetByID, widgetToPage, child, p)
+		}
+	}
 }
 
 func (p *page) updateOutdatedWidgets() {
@@ -405,23 +426,77 @@ func (a *application) handleWidgetRequest(w http.ResponseWriter, r *http.Request
 	// TODO: this requires a rework of the widget update logic so that rather
 	// than locking the entire page we lock individual widgets
 	w.WriteHeader(http.StatusNotImplemented)
+}
 
-	// widgetValue := r.PathValue("widget")
+func (a *application) handleSSERequest(w http.ResponseWriter, r *http.Request) {
+	if a.handleUnauthorizedResponse(w, r, showUnauthorizedJSON) {
+		return
+	}
 
-	// widgetID, err := strconv.ParseUint(widgetValue, 10, 64)
-	// if err != nil {
-	// 	a.handleNotFound(w, r)
-	// 	return
-	// }
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	// widget, exists := a.widgetByID[widgetID]
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
 
-	// if !exists {
-	// 	a.handleNotFound(w, r)
-	// 	return
-	// }
+	ch := a.hub.register()
+	defer a.hub.unregister(ch)
 
-	// widget.handleRequest(w, r)
+	pingTicker := time.NewTicker(30 * time.Second)
+	defer pingTicker.Stop()
+
+	for {
+		select {
+		case e, ok := <-ch:
+			if !ok {
+				return
+			}
+			data, err := json.Marshal(e)
+			if err != nil {
+				continue
+			}
+			fmt.Fprintf(w, "event: %s\ndata: %s\n\n", e.Type, data)
+			flusher.Flush()
+		case <-pingTicker.C:
+			fmt.Fprintf(w, ": ping\n\n")
+			flusher.Flush()
+		case <-r.Context().Done():
+			return
+		}
+	}
+}
+
+func (a *application) handleWidgetContentRequest(w http.ResponseWriter, r *http.Request) {
+	if a.handleUnauthorizedResponse(w, r, showUnauthorizedJSON) {
+		return
+	}
+
+	widgetID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+	if err != nil {
+		a.handleNotFound(w, r)
+		return
+	}
+
+	wgt, exists := a.widgetByID[widgetID]
+	if !exists {
+		a.handleNotFound(w, r)
+		return
+	}
+
+	p := a.widgetToPage[widgetID]
+
+	var html string
+	p.mu.Lock()
+	html = string(wgt.Render())
+	p.mu.Unlock()
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(html))
 }
 
 func (a *application) StaticAssetPath(asset string) string {
@@ -443,6 +518,11 @@ func (a *application) server() (func() error, func() error) {
 
 	if !a.Config.Theme.DisablePicker {
 		mux.HandleFunc("POST /api/set-theme/{key}", a.handleThemeChangeRequest)
+	}
+
+	if a.Config.Server.LiveUpdates {
+		mux.HandleFunc("GET /api/events", a.handleSSERequest)
+		mux.HandleFunc("GET /api/widgets/{id}/content/", a.handleWidgetContentRequest)
 	}
 
 	mux.HandleFunc("/api/widgets/{widget}/{path...}", a.handleWidgetRequest)
@@ -508,7 +588,17 @@ func (a *application) server() (func() error, func() error) {
 		return nil
 	}
 
+	if a.Config.Server.LiveUpdates {
+		tickerCtx, cancel := context.WithCancel(context.Background())
+		a.tickerCancel = cancel
+		a.startLiveUpdateTicker(tickerCtx)
+	}
+
 	stop := func() error {
+		a.hub.close()
+		if a.tickerCancel != nil {
+			a.tickerCancel()
+		}
 		return server.Close()
 	}
 
