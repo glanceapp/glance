@@ -1,4 +1,4 @@
-<div class="widget widget-type-{{ .GetType }}{{ if .CSSClass }} {{ .CSSClass }}{{ end }}">
+<div class="widget widget-type-{{ .GetType }}{{ if .CSSClass }} {{ .CSSClass }}{{ end }}" data-widget-id="{{ .GetID }}">
     {{- if not .HideHeader }}
     <div class="widget-header">
         {{- if ne "" .TitleURL }}
