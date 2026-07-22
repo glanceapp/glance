@@ -12,14 +12,14 @@ pages:
             cache: 10s
             url: http://localhost:9090/data
             template: |
-              <p>Count: {{.JSON.count}}</p>
+              <p>Count: {{ .JSON.Int "count" }}</p>
 
           - type: custom-api
             title: Counter slow (cache 30m)
             cache: 30m
             url: http://localhost:9090/data
             template: |
-              <p>Count: {{.JSON.count}}</p>
+              <p>Count: {{ .JSON.Int "count" }}</p>
 
           - type: monitor
             title: Flaky Service
