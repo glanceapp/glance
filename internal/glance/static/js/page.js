@@ -12,8 +12,8 @@ async function fetchPageContent(pageData) {
     return content;
 }
 
-function setupCarousels() {
-    const carouselElements = document.getElementsByClassName("carousel-container");
+function setupCarousels(root = document) {
+    const carouselElements = root.getElementsByClassName("carousel-container");
 
     if (carouselElements.length == 0) {
         return;
@@ -95,8 +95,8 @@ function updateRelativeTimeForElements(elements)
     }
 }
 
-function setupSearchBoxes() {
-    const searchWidgets = document.getElementsByClassName("search");
+function setupSearchBoxes(root = document) {
+    const searchWidgets = root.getElementsByClassName("search");
 
     if (searchWidgets.length == 0) {
         return;
@@ -248,8 +248,8 @@ function setupDynamicRelativeTime() {
     });
 }
 
-function setupGroups() {
-    const groups = document.getElementsByClassName("widget-type-group");
+function setupGroups(root = document) {
+    const groups = root.getElementsByClassName("widget-type-group");
 
     if (groups.length == 0) {
         return;
@@ -308,8 +308,8 @@ function setupGroups() {
     }
 }
 
-function setupLazyImages() {
-    const images = document.querySelectorAll("img[loading=lazy]");
+function setupLazyImages(root = document) {
+    const images = root.querySelectorAll("img[loading=lazy]");
 
     if (images.length == 0) {
         return;
@@ -383,8 +383,8 @@ function attachExpandToggleButton(collapsibleContainer) {
 };
 
 
-function setupCollapsibleLists() {
-    const collapsibleLists = document.querySelectorAll(".list.collapsible-container");
+function setupCollapsibleLists(root = document) {
+    const collapsibleLists = root.querySelectorAll(".list.collapsible-container");
 
     if (collapsibleLists.length == 0) {
         return;
@@ -417,8 +417,8 @@ function setupCollapsibleLists() {
     }
 }
 
-function setupCollapsibleGrids() {
-    const collapsibleGridElements = document.querySelectorAll(".cards-grid.collapsible-container");
+function setupCollapsibleGrids(root = document) {
+    const collapsibleGridElements = root.querySelectorAll(".cards-grid.collapsible-container");
 
     if (collapsibleGridElements.length == 0) {
         return;
@@ -653,8 +653,8 @@ async function setupTodos() {
     }
 }
 
-function setupTruncatedElementTitles() {
-    const elements = document.querySelectorAll(".text-truncate, .single-line-titles .title, .text-truncate-2-lines, .text-truncate-3-lines");
+function setupTruncatedElementTitles(root = document) {
+    const elements = root.querySelectorAll(".text-truncate, .single-line-titles .title, .text-truncate-2-lines, .text-truncate-3-lines");
 
     if (elements.length == 0) {
         return;
@@ -783,4 +783,59 @@ async function setupPage() {
     }
 }
 
+async function setupWidgetBehaviors(root) {
+    setupCarousels(root);
+    setupSearchBoxes(root);
+    setupCollapsibleLists(root);
+    setupCollapsibleGrids(root);
+    setupGroups(root);
+    setupLazyImages(root);
+    setTimeout(() => setupTruncatedElementTitles(root), 50);
+}
+
+function setupLiveUpdates() {
+    if (!pageData.liveUpdates) return;
+
+    const baseURL = pageData.baseURL;
+    const pendingUpdates = new Map();
+
+    const source = new EventSource(`${baseURL}/api/events`);
+
+    source.addEventListener('widget-updated', (e) => {
+        const data = JSON.parse(e.data);
+        const widgetID = data.widgetId;
+
+        if (pendingUpdates.has(widgetID)) {
+            clearTimeout(pendingUpdates.get(widgetID));
+        }
+
+        pendingUpdates.set(widgetID, setTimeout(async () => {
+            pendingUpdates.delete(widgetID);
+
+            const el = document.querySelector(`[data-widget-id="${widgetID}"]`);
+            if (!el) return;
+
+            let response;
+            try {
+                response = await fetch(`${baseURL}/api/widgets/${widgetID}/content/`);
+            } catch (_) {
+                return;
+            }
+            if (!response.ok) return;
+
+            const html = await response.text();
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            const newEl = tmp.firstElementChild;
+            if (!newEl) return;
+
+            el.replaceWith(newEl);
+            setupWidgetBehaviors(newEl);
+        }, 500));
+    });
+
+    source.onerror = () => {};
+}
+
 setupPage();
+setupLiveUpdates();
