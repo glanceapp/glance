@@ -13,6 +13,7 @@ pages:
             url: http://localhost:9090/data
             template: |
               <p>Count: {{ .JSON.Int "count" }}</p>
+              <p>Last refreshed: {{ now | formatTime "15:04:05" }}</p>
 
           - type: custom-api
             title: Counter slow (cache 30m)
@@ -20,6 +21,7 @@ pages:
             url: http://localhost:9090/data
             template: |
               <p>Count: {{ .JSON.Int "count" }}</p>
+              <p>Last refreshed: {{ now | formatTime "15:04:05" }}</p>
 
           - type: monitor
             title: Flaky Service
