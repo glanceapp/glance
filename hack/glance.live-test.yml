@@ -23,9 +23,11 @@ pages:
               <p>Count: {{ .JSON.Int "count" }}</p>
               <p>Last refreshed: {{ now | formatTime "15:04:05" }}</p>
 
-          - type: monitor
+          - type: custom-api
             title: Flaky Service
             cache: 10s
-            sites:
-              - title: Flaky
-                url: http://localhost:9090/flaky
+            url: http://localhost:9090/flaky
+            skip-json-validation: true
+            template: |
+              <p>Status: {{ .Response.StatusCode }}</p>
+              <p>Last refreshed: {{ now | formatTime "15:04:05" }}</p>
