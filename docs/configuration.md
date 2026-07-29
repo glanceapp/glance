@@ -197,6 +197,12 @@ icon: di:immich # di for Dashboard icons https://github.com/homarr-labs/dashboar
 icon: mdi:camera # mdi for Material Design icons https://pictogrammers.com/library/mdi/
 ```
 
+The `sh:` and `di:` prefixes request SVG icons by default. If an icon is only available as a PNG, add the extension to its name:
+
+```yaml
+icon: sh:unmanic.png
+```
+
 > [!NOTE]
 >
 > The icons are loaded externally and are hosted on `cdn.jsdelivr.net`, if you do not wish to depend on a 3rd party you are free to download the icons individually and host them locally.
