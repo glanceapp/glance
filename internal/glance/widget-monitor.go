@@ -27,15 +27,20 @@ type monitorWidget struct {
 		SameTab            bool            `yaml:"same-tab"`
 		StatusText         string          `yaml:"-"`
 		StatusStyle        string          `yaml:"-"`
+		HideDetails        bool            `yaml:"-"`
 		AltStatusCodes     []int           `yaml:"alt-status-codes"`
 	} `yaml:"sites"`
 	Style           string `yaml:"style"`
 	ShowFailingOnly bool   `yaml:"show-failing-only"`
+	HideDetails     bool   `yaml:"hide-details"`
 	HasFailing      bool   `yaml:"-"`
 }
 
 func (widget *monitorWidget) initialize() error {
 	widget.withTitle("Monitor").withCacheDuration(5 * time.Minute)
+	for i := range widget.Sites {
+		widget.Sites[i].HideDetails = widget.HideDetails
+	}
 
 	return nil
 }
