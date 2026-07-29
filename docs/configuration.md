@@ -2873,6 +2873,7 @@ Preview:
 | channels | array | yes | |
 | collapse-after | integer | no | 5 |
 | sort-by | string | no | viewers |
+| same-tab | boolean | no | false |
 
 ##### `channels`
 A list of channels to display.
@@ -2882,6 +2883,9 @@ How many channels are visible before the "SHOW MORE" button appears. Set to `-1`
 
 ##### `sort-by`
 Can be used to specify the order in which the channels are displayed. Possible values are `viewers` and `live`.
+
+##### `same-tab`
+When set to `true`, channel links open in the same tab. The widget title and category links continue to open in a new tab.
 
 ### Twitch top games
 Display a list of games with the most viewers on Twitch.
