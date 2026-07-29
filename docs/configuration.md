@@ -873,6 +873,7 @@ Preview:
 | collapse-after | integer | no | 7 |
 | collapse-after-rows | integer | no | 4 |
 | include-shorts | boolean | no | false |
+| same-tab | boolean | no | false |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
 
 ##### `channels`
@@ -904,6 +905,9 @@ https://www.youtube.com...&list={ID}&...
 
 ##### `limit`
 The maximum number of videos to show.
+
+##### `same-tab`
+When set to `true`, video and channel links open in the same tab.
 
 ##### `collapse-after`
 Specify the number of videos to show when using the `vertical-list` style before the "SHOW MORE" button appears.

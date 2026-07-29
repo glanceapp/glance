@@ -31,6 +31,7 @@ type videosWidget struct {
 	Playlists         []string  `yaml:"playlists"`
 	Limit             int       `yaml:"limit"`
 	IncludeShorts     bool      `yaml:"include-shorts"`
+	SameTab           bool      `yaml:"same-tab"`
 }
 
 func (widget *videosWidget) initialize() error {
@@ -74,6 +75,13 @@ func (widget *videosWidget) update(ctx context.Context) {
 		videos = videos[:widget.Limit]
 	}
 
+	widget.setVideos(videos)
+}
+
+func (widget *videosWidget) setVideos(videos videoList) {
+	for i := range videos {
+		videos[i].SameTab = widget.SameTab
+	}
 	widget.Videos = videos
 }
 
@@ -126,6 +134,7 @@ type video struct {
 	Author       string
 	AuthorUrl    string
 	TimePosted   time.Time
+	SameTab      bool
 }
 
 type videoList []video
