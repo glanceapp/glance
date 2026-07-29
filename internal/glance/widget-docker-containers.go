@@ -137,8 +137,12 @@ func (containers dockerContainerList) sortByStateIconThenTitle() {
 	})
 }
 
-func dockerContainerStateToStateIcon(state string) string {
-	switch state {
+func dockerContainerStateToStateIcon(state, status string) string {
+	if strings.Contains(strings.ToLower(status), "(unhealthy)") {
+		return dockerContainerStateIconWarn
+	}
+
+	switch strings.ToLower(state) {
 	case "running":
 		return dockerContainerStateIconOK
 	case "paused":
@@ -187,7 +191,7 @@ func fetchDockerContainers(
 					dc.Children = append(dc.Children, dockerContainer{
 						Name:      deriveDockerContainerName(child, formatNames),
 						StateText: child.Status,
-						StateIcon: dockerContainerStateToStateIcon(strings.ToLower(child.State)),
+						StateIcon: dockerContainerStateToStateIcon(child.State, child.Status),
 					})
 				}
 			}
@@ -204,7 +208,7 @@ func fetchDockerContainers(
 			}
 		}
 		if !stateIconSupersededByChild {
-			dc.StateIcon = dockerContainerStateToStateIcon(dc.State)
+			dc.StateIcon = dockerContainerStateToStateIcon(dc.State, dc.StateText)
 		}
 
 		dockerContainers = append(dockerContainers, dc)
