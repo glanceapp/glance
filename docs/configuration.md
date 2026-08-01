@@ -1709,7 +1709,7 @@ Currently, the available methods on the `.Options` object are: `StringOr`, `IntO
 </details>
 
 ##### `parameters`
-A list of keys and values that will be sent to the custom-api as query paramters.
+A list of keys and values that will be sent to the custom-api as query parameters.
 
 ##### `subrequests`
 A map of additional requests that will be executed concurrently and then made available in the template via the `.Subrequest` property. Example:
@@ -1799,7 +1799,7 @@ Whether to allow the extension to display HTML.
 > There's a reason this property is scary-sounding. It's intended to be used by developers who are comfortable with developing and using their own extensions. Do not enable it if you have no idea what it means or if you're not **absolutely sure** that the extension URL you're using is safe.
 
 ##### `parameters`
-A list of keys and values that will be sent to the extension as query paramters.
+A list of keys and values that will be sent to the extension as query parameters.
 
 ### Weather
 Display weather information for a specific location. The data is provided by https://open-meteo.com/.
