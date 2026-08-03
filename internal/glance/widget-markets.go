@@ -214,7 +214,6 @@ var currencyToSymbol = map[string]string{
 	"JPY": "¥",
 	"CAD": "C$",
 	"AUD": "A$",
-	"GBP": "£",
 	"CHF": "Fr",
 	"NZD": "N$",
 	"INR": "₹",
