@@ -224,3 +224,86 @@ Pull requests with your page configurations are welcome!
           style: vertical-cards
 ```
 </details>
+
+## Cloud & SaaS status
+
+![](images/cloud-saas-status-page-preview.png)
+
+<details>
+<summary>View config (requires Glance <code>v0.7.0</code> or higher)</summary>
+
+This page uses OutageDeck's keyless public API. Six widgets refreshed every 10 minutes
+use 36 of the anonymous API's 120 requests per hour. Swap any provider slug in both
+the `url` and `title-url` fields to monitor a different dependency.
+
+```yaml
+define:
+  - &provider-status
+    type: custom-api
+    cache: 10m
+    template: |
+      {{ $status := .JSON.String "data.currentStatus.code" }}
+      <div class="flex justify-between items-center">
+        <div class="size-h3 {{ if eq $status "operational" }}color-positive{{ else if or (eq $status "maintenance") (eq $status "unknown") }}color-primary{{ else }}color-negative{{ end }}">
+          {{ .JSON.String "data.currentStatus.label" }}
+        </div>
+        <div class="size-h5 color-subdue">
+          {{ .JSON.Int "data.counts.activeIncidents" }} active incidents
+        </div>
+      </div>
+      <p class="margin-top-10">{{ .JSON.String "data.currentStatus.headline" }}</p>
+      <ul class="list list-gap-4 margin-top-10">
+      {{ range .JSON.Array "data.services" }}
+        {{ $serviceStatus := .String "status" }}
+        <li class="flex justify-between">
+          <span>{{ .String "name" }}</span>
+          <span class="{{ if eq $serviceStatus "operational" }}color-positive{{ else if or (eq $serviceStatus "maintenance") (eq $serviceStatus "unknown") }}color-primary{{ else }}color-negative{{ end }}">
+            {{ if eq $serviceStatus "operational" }}Operational{{ else if eq $serviceStatus "degraded" }}Degraded{{ else if eq $serviceStatus "partial_outage" }}Partial outage{{ else if eq $serviceStatus "major_outage" }}Major outage{{ else if eq $serviceStatus "maintenance" }}Maintenance{{ else }}Unknown{{ end }}
+          </span>
+        </li>
+      {{ end }}
+      </ul>
+      <p class="margin-top-10 size-h5 color-subdue">
+        Source checked <span {{ .JSON.String "data.source.checkedAt" | parseTime "rfc3339" | toRelativeTime }}></span>
+      </p>
+
+pages:
+  - name: Cloud status
+    width: wide
+    columns:
+      - size: full
+        widgets:
+          - type: split-column
+            max-columns: 3
+            widgets:
+              - title: AWS
+                title-url: https://outagedeck.com/providers/aws?utm_source=glance&utm_medium=dashboard&utm_campaign=glance_status_dashboard
+                url: https://outagedeck.com/api/v1/providers/aws
+                <<: *provider-status
+
+              - title: Cloudflare
+                title-url: https://outagedeck.com/providers/cloudflare?utm_source=glance&utm_medium=dashboard&utm_campaign=glance_status_dashboard
+                url: https://outagedeck.com/api/v1/providers/cloudflare
+                <<: *provider-status
+
+              - title: GitHub
+                title-url: https://outagedeck.com/providers/github?utm_source=glance&utm_medium=dashboard&utm_campaign=glance_status_dashboard
+                url: https://outagedeck.com/api/v1/providers/github
+                <<: *provider-status
+
+              - title: OpenAI
+                title-url: https://outagedeck.com/providers/openai?utm_source=glance&utm_medium=dashboard&utm_campaign=glance_status_dashboard
+                url: https://outagedeck.com/api/v1/providers/openai
+                <<: *provider-status
+
+              - title: Anthropic
+                title-url: https://outagedeck.com/providers/anthropic?utm_source=glance&utm_medium=dashboard&utm_campaign=glance_status_dashboard
+                url: https://outagedeck.com/api/v1/providers/anthropic
+                <<: *provider-status
+
+              - title: Google Cloud
+                title-url: https://outagedeck.com/providers/google-cloud?utm_source=glance&utm_medium=dashboard&utm_campaign=glance_status_dashboard
+                url: https://outagedeck.com/api/v1/providers/google-cloud
+                <<: *provider-status
+```
+</details>
