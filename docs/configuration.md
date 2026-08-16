@@ -29,6 +29,8 @@
   - [Weather](#weather)
   - [Todo](#todo)
   - [Monitor](#monitor)
+  - [Tautulli](#tautulli)
+  - [TrueNAS](#truenas)
   - [Releases](#releases)
   - [Docker Containers](#docker-containers)
   - [DNS Stats](#dns-stats)
@@ -2019,6 +2021,71 @@ basic-auth:
   username: your-username
   password: your-password
 ```
+
+### Tautulli
+
+Display active Plex streams reported by a Tautulli instance, including the viewer and playback progress.
+
+Example:
+
+```yaml
+- type: tautulli
+  url: http://tautulli.local:8181
+  api-key: ${TAUTULLI_API_KEY}
+```
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| url | string | yes | |
+| api-key | string | yes | |
+| allow-insecure | boolean | no | false |
+
+##### `url`
+
+The base URL of the Tautulli instance. The widget uses Tautulli's `get_activity` API command and links its title to this URL.
+
+##### `api-key`
+
+The API key configured in Tautulli under `Settings -> Web Interface`. Using an environment variable keeps it out of the configuration file.
+
+##### `allow-insecure`
+
+Whether to allow invalid or self-signed certificates when making the request.
+
+### TrueNAS
+
+Display the one-minute system load average, uptime, pending alert count, and health of each storage pool reported by a TrueNAS instance.
+
+Example:
+
+```yaml
+- type: truenas
+  url: https://truenas.local
+  api-key: ${TRUENAS_API_KEY}
+  allow-insecure: true
+```
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| url | string | yes | |
+| api-key | string | yes | |
+| allow-insecure | boolean | no | false |
+
+##### `url`
+
+The base URL of the TrueNAS instance. The widget requests pool, system information, and alert data from the `/api/v2.0` API.
+
+##### `api-key`
+
+A TrueNAS API key. Using an environment variable keeps it out of the configuration file.
+
+##### `allow-insecure`
+
+Whether to allow invalid or self-signed certificates when making the requests.
 
 ### Releases
 Display a list of latest releases for specific repositories on Github, GitLab, Codeberg or Docker Hub.

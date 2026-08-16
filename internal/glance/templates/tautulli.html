@@ -1,0 +1,21 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+{{ if eq .StreamCount 0 }}
+<p class="color-base">No active streams</p>
+{{ else }}
+<div class="flex items-center gap-10">
+    <span class="size-h3 color-highlight">{{ .StreamCount }}</span>
+    <span class="color-base">active stream{{ if ne .StreamCount 1 }}s{{ end }}</span>
+</div>
+{{ range .Sessions }}
+<div class="margin-top-3">
+    <div class="color-highlight text-truncate">{{ .Title }}</div>
+    <div class="color-base margin-bottom-3">{{ .FriendlyName }} &bull; {{ .ProgressPercent }}%</div>
+    <div class="progress-bar">
+        <div class="progress-value" style="--percent: {{ .ProgressPercent }}"></div>
+    </div>
+</div>
+{{ end }}
+{{ end }}
+{{ end }}

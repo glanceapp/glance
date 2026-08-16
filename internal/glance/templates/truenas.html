@@ -1,0 +1,33 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+<div class="flex justify-between size-h5 margin-bottom-10">
+    <div>
+        <div class="color-highlight size-h3">{{ printf "%.2f" .LoadAverage }}</div>
+        <div class="color-base">LOAD AVG</div>
+    </div>
+    <div>
+        <div class="color-highlight size-h3"><span {{ dynamicRelativeTimeAttrs .BootTime }}></span></div>
+        <div class="color-base">UPTIME</div>
+    </div>
+    <div>
+        <div class="color-highlight size-h3">{{ .PendingAlerts }}</div>
+        <div class="color-base">ALERTS</div>
+    </div>
+</div>
+<hr class="margin-block-8">
+<ul class="list list-gap-10">
+    {{ range .Pools }}
+    <li class="flex items-center justify-between">
+        <span class="color-highlight">{{ .Name }}</span>
+        {{ if .Healthy }}
+        <span class="color-positive">Healthy</span>
+        {{ else }}
+        <span class="color-negative">Unhealthy</span>
+        {{ end }}
+    </li>
+    {{ else }}
+    <li>No pools found</li>
+    {{ end }}
+</ul>
+{{ end }}

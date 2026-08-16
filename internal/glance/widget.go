@@ -79,8 +79,12 @@ func newWidget(widgetType string) (widget, error) {
 		w = &dockerContainersWidget{}
 	case "server-stats":
 		w = &serverStatsWidget{}
+	case "tautulli":
+		w = &tautulliWidget{}
 	case "to-do":
 		w = &todoWidget{}
+	case "truenas":
+		w = &trueNASWidget{}
 	default:
 		return nil, fmt.Errorf("unknown widget type: %s", widgetType)
 	}
