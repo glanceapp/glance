@@ -132,10 +132,9 @@ func decodeXmlFromRequest[T any](client requestDoer, request *http.Request) (T, 
 	return result, nil
 }
 
-func decodeXmlFromRequestTask[T any](client requestDoer) func(*http.Request) (T, error) {
-	return func(request *http.Request) (T, error) {
-		return decodeXmlFromRequest[T](client, request)
-	}
+type cachedEntry[T any] struct {
+	value     T
+	timestamp time.Time
 }
 
 type workerPoolTask[I any, O any] struct {

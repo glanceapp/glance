@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -23,6 +24,7 @@ var (
 type videosWidget struct {
 	widgetBase        `yaml:",inline"`
 	Videos            videoList `yaml:"-"`
+	cachedVideoLists  sync.Map  `yaml:"-"`
 	VideoUrlTemplate  string    `yaml:"video-url-template"`
 	Style             string    `yaml:"style"`
 	CollapseAfter     int       `yaml:"collapse-after"`
@@ -33,54 +35,54 @@ type videosWidget struct {
 	IncludeShorts     bool      `yaml:"include-shorts"`
 }
 
-func (widget *videosWidget) initialize() error {
-	widget.withTitle("Videos").withCacheDuration(time.Hour)
+func (w *videosWidget) initialize() error {
+	w.withTitle("Videos").withCacheDuration(time.Hour)
 
-	if widget.Limit <= 0 {
-		widget.Limit = 25
+	if w.Limit <= 0 {
+		w.Limit = 25
 	}
 
-	if widget.CollapseAfterRows == 0 || widget.CollapseAfterRows < -1 {
-		widget.CollapseAfterRows = 4
+	if w.CollapseAfterRows == 0 || w.CollapseAfterRows < -1 {
+		w.CollapseAfterRows = 4
 	}
 
-	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
-		widget.CollapseAfter = 7
+	if w.CollapseAfter == 0 || w.CollapseAfter < -1 {
+		w.CollapseAfter = 7
 	}
 
 	// A bit cheeky, but from a user's perspective it makes more sense when channels and
 	// playlists are separate things rather than specifying a list of channels and some of
 	// them awkwardly have a "playlist:" prefix
-	if len(widget.Playlists) > 0 {
-		initialLen := len(widget.Channels)
-		widget.Channels = append(widget.Channels, make([]string, len(widget.Playlists))...)
+	if len(w.Playlists) > 0 {
+		initialLen := len(w.Channels)
+		w.Channels = append(w.Channels, make([]string, len(w.Playlists))...)
 
-		for i := range widget.Playlists {
-			widget.Channels[initialLen+i] = videosWidgetPlaylistPrefix + widget.Playlists[i]
+		for i := range w.Playlists {
+			w.Channels[initialLen+i] = videosWidgetPlaylistPrefix + w.Playlists[i]
 		}
 	}
 
 	return nil
 }
 
-func (widget *videosWidget) update(ctx context.Context) {
-	videos, err := fetchYoutubeChannelUploads(widget.Channels, widget.VideoUrlTemplate, widget.IncludeShorts)
+func (w *videosWidget) update(ctx context.Context) {
+	videos, err := w.fetchYoutubeChannelUploads(w.Channels, w.VideoUrlTemplate, w.IncludeShorts)
 
-	if !widget.canContinueUpdateAfterHandlingErr(err) {
+	if !w.canContinueUpdateAfterHandlingErr(err) {
 		return
 	}
 
-	if len(videos) > widget.Limit {
-		videos = videos[:widget.Limit]
+	if len(videos) > w.Limit {
+		videos = videos[:w.Limit]
 	}
 
-	widget.Videos = videos
+	w.Videos = videos
 }
 
-func (widget *videosWidget) Render() template.HTML {
+func (w *videosWidget) Render() template.HTML {
 	var template *template.Template
 
-	switch widget.Style {
+	switch w.Style {
 	case "grid-cards":
 		template = videosWidgetGridTemplate
 	case "vertical-list":
@@ -89,7 +91,7 @@ func (widget *videosWidget) Render() template.HTML {
 		template = videosWidgetTemplate
 	}
 
-	return widget.renderTemplate(widget, template)
+	return w.renderTemplate(w, template)
 }
 
 type youtubeFeedResponseXml struct {
@@ -138,47 +140,42 @@ func (v videoList) sortByNewest() videoList {
 	return v
 }
 
-func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate string, includeShorts bool) (videoList, error) {
-	requests := make([]*http.Request, 0, len(channelOrPlaylistIDs))
+func (w *videosWidget) fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate string, includeShorts bool) (videoList, error) {
+	task := func(id string) (videoList, error) {
+		if cached, ok := w.cachedVideoLists.Load(id); ok {
+			entry := cached.(cachedEntry[videoList])
+			if time.Since(entry.timestamp) < w.cacheDuration {
+				return entry.value, nil
+			}
+		}
 
-	for i := range channelOrPlaylistIDs {
-		var feedUrl string
-		if strings.HasPrefix(channelOrPlaylistIDs[i], videosWidgetPlaylistPrefix) {
-			feedUrl = "https://www.youtube.com/feeds/videos.xml?playlist_id=" +
-				strings.TrimPrefix(channelOrPlaylistIDs[i], videosWidgetPlaylistPrefix)
-		} else if !includeShorts && strings.HasPrefix(channelOrPlaylistIDs[i], "UC") {
-			playlistId := strings.Replace(channelOrPlaylistIDs[i], "UC", "UULF", 1)
-			feedUrl = "https://www.youtube.com/feeds/videos.xml?playlist_id=" + playlistId
+		list := make(videoList, 0, 15)
+
+		var feedURL string
+		if after, ok := strings.CutPrefix(id, videosWidgetPlaylistPrefix); ok {
+			feedURL = "https://www.youtube.com/feeds/videos.xml?playlist_id=" + after
+		} else if !includeShorts && strings.HasPrefix(id, "UC") {
+			playlistId := strings.Replace(id, "UC", "UULF", 1)
+			feedURL = "https://www.youtube.com/feeds/videos.xml?playlist_id=" + playlistId
 		} else {
-			feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=" + channelOrPlaylistIDs[i]
+			feedURL = "https://www.youtube.com/feeds/videos.xml?channel_id=" + id
 		}
 
-		request, _ := http.NewRequest("GET", feedUrl, nil)
-		requests = append(requests, request)
-	}
+		request, _ := http.NewRequest("GET", feedURL, nil)
+		response, err := decodeXmlFromRequest[youtubeFeedResponseXml](defaultHTTPClient, request)
+		if err != nil {
+			cached, ok := w.cachedVideoLists.Load(id)
+			if ok {
+				return cached.(cachedEntry[videoList]).value, err
+			}
 
-	job := newJob(decodeXmlFromRequestTask[youtubeFeedResponseXml](defaultHTTPClient), requests).withWorkers(30)
-	responses, errs, err := workerPoolDo(job)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %v", errNoContent, err)
-	}
-
-	videos := make(videoList, 0, len(channelOrPlaylistIDs)*15)
-	var failed int
-
-	for i := range responses {
-		if errs[i] != nil {
-			failed++
-			slog.Error("Failed to fetch youtube feed", "channel", channelOrPlaylistIDs[i], "error", errs[i])
-			continue
+			return list, err
 		}
-
-		response := responses[i]
 
 		for j := range response.Videos {
 			v := &response.Videos[j]
-			var videoUrl string
 
+			var videoUrl string
 			if videoUrlTemplate == "" {
 				videoUrl = v.Link.Href
 			} else {
@@ -191,7 +188,7 @@ func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate 
 				}
 			}
 
-			videos = append(videos, video{
+			list = append(list, video{
 				ThumbnailUrl: v.Group.Thumbnail.Url,
 				Title:        v.Title,
 				Url:          videoUrl,
@@ -199,7 +196,30 @@ func fetchYoutubeChannelUploads(channelOrPlaylistIDs []string, videoUrlTemplate 
 				AuthorUrl:    response.ChannelLink + "/videos",
 				TimePosted:   parseYoutubeFeedTime(v.Published),
 			})
+
 		}
+
+		w.cachedVideoLists.Store(id, cachedEntry[videoList]{value: list, timestamp: time.Now()})
+		return list, nil
+	}
+
+	job := newJob(task, channelOrPlaylistIDs).withWorkers(30)
+	lists, errs, err := workerPoolDo(job)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", errNoContent, err)
+	}
+
+	videos := make(videoList, 0, len(channelOrPlaylistIDs)*15)
+	var failed int
+
+	for i := range lists {
+		if errs[i] != nil {
+			failed++
+			slog.Error("Failed to fetch youtube feed", "channel", channelOrPlaylistIDs[i], "error", errs[i])
+		}
+
+		// We still append the list even if it failed, because we may have a cached version of the list
+		videos = append(videos, lists[i]...)
 	}
 
 	if len(videos) == 0 {
