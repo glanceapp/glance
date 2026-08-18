@@ -1,0 +1,26 @@
+# Sonarr Series, Missing & Queue Widget
+- type: custom-api
+  refresh-interval: 5s
+  title: Sonarr Stats
+  cache: 2s
+  url: http://<SONARR_IP>:8989/api/v3/series?apikey=${SONARR_API_KEY}
+  subrequests:
+    missing:
+      url: http://<SONARR_IP>:8989/api/v3/wanted/missing?apikey=${SONARR_API_KEY}
+    queue:
+      url: http://<SONARR_IP>:8989/api/v3/queue?apikey=${SONARR_API_KEY}
+  template: |
+    <div class="flex justify-between text-center">
+      <div>
+        <div class="color-highlight size-h3">{{ len (.JSON.Array "") }}</div>
+        <div class="size-h6">SERIES</div>
+      </div>
+      <div>
+        <div class="color-highlight size-h3">{{ (.Subrequest "missing").JSON.Int "totalRecords" }}</div>
+        <div class="size-h6">MISSING</div>
+      </div>
+      <div>
+        <div class="color-highlight size-h3">{{ (.Subrequest "queue").JSON.Int "totalRecords" }}</div>
+        <div class="size-h6">QUEUED</div>
+      </div>
+    </div>

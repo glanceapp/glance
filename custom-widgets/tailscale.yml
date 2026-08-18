@@ -1,0 +1,50 @@
+# Tailscale Machine Live Address, Last Seen & Expiry Widget
+- type: custom-api
+  title: Tailscale
+  refresh-interval: 5s
+  cache: 2s
+  url: https://api.tailscale.com/api/v2/tailnet/${TAILSCALE_TAILNET}/devices
+  headers:
+    Authorization: "Bearer ${TAILSCALE_API_KEY}"
+    Content-Type: application/json
+  template: |
+    {{ $found := false }}
+    {{ range .JSON.Array "devices" }}
+      {{ $ip0 := .String "addresses.0" }}
+      {{ $ip1 := .String "addresses.1" }}
+      {{ if or (eq $ip0 "<TAILSCALE_DEVICE_IP>") (eq $ip1 "<TAILSCALE_DEVICE_IP>") }}
+        {{ $found = true }}
+        <ul class="list list-gap-10">
+          <li class="flex justify-between align-center">
+            <span class="size-h6 color-paragraph">ADDRESS</span>
+            <span class="size-h5 color-highlight"><TAILSCALE_DEVICE_IP></span>
+          </li>
+          <li class="flex justify-between align-center">
+            <span class="size-h6 color-paragraph">LAST SEEN</span>
+            <span class="size-h5 color-highlight">
+              {{ $lastSeen := .String "lastSeen" }}
+              {{ if ne $lastSeen "" }}
+                <span {{ parseRelativeTime "RFC3339" $lastSeen }}></span>
+              {{ else }}
+                Now
+              {{ end }}
+            </span>
+          </li>
+          <li class="flex justify-between align-center">
+            <span class="size-h6 color-paragraph">EXPIRES</span>
+            <span class="size-h5 color-highlight">
+              {{ $expiry := .String "keyExpiry" }}
+              {{ $disabled := .Bool "keyExpiryDisabled" }}
+              {{ if or $disabled (eq $expiry "") (findMatch "^0001" $expiry) }}
+                Never
+              {{ else }}
+                <span {{ parseRelativeTime "RFC3339" $expiry }}></span>
+              {{ end }}
+            </span>
+          </li>
+        </ul>
+      {{ end }}
+    {{ end }}
+    {{ if not $found }}
+      <div class="size-p color-subdue text-center">Device <TAILSCALE_DEVICE_IP> not found in Tailnet</div>
+    {{ end }}

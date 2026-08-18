@@ -1,0 +1,24 @@
+# Immich Photos, Videos & Storage Usage Widget
+- type: custom-api
+  refresh-interval: 5s
+  title: Immich Stats
+  cache: 2s
+  url: http://<IMMICH_IP>:2283/api/server/statistics
+  headers:
+    x-api-key: ${IMMICH_API_KEY}
+    Accept: application/json
+  template: |
+    <div class="flex justify-between text-center">
+      <div>
+          <div class="color-highlight size-h3">{{ .JSON.Int "photos" | formatNumber }}</div>
+          <div class="size-h6">PHOTOS</div>
+      </div>
+      <div>
+          <div class="color-highlight size-h3">{{ .JSON.Int "videos" | formatNumber }}</div>
+          <div class="size-h6">VIDEOS</div>
+      </div>
+      <div>
+          <div class="color-highlight size-h3">{{ div (.JSON.Int "usage" | toFloat) 1073741824 | toInt | formatNumber }}GB</div>
+          <div class="size-h6">STORAGE</div>
+      </div>
+    </div>
