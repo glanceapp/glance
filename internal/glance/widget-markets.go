@@ -78,6 +78,7 @@ type market struct {
 	marketRequest
 	Name           string
 	Currency       string
+	CurrencySymbol string
 	Price          float64
 	PriceHint      int
 	PercentChange  float64
@@ -169,16 +170,12 @@ func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, erro
 
 		points := svgPolylineCoordsFromYValues(100, 50, maybeCopySliceWithoutZeroValues(prices))
 
-		currency, exists := currencyToSymbol[strings.ToUpper(result.Meta.Currency)]
-		if !exists {
-			currency = result.Meta.Currency
-		}
-
 		markets = append(markets, market{
-			marketRequest: marketRequests[i],
-			Price:         result.Meta.RegularMarketPrice,
-			Currency:      currency,
-			PriceHint:     result.Meta.PriceHint,
+			marketRequest:  marketRequests[i],
+			Price:          result.Meta.RegularMarketPrice,
+			CurrencySymbol: currencyToSymbol[result.Meta.Currency],
+			Currency:       result.Meta.Currency,
+			PriceHint:      result.Meta.PriceHint,
 			Name: ternary(marketRequests[i].CustomName == "",
 				result.Meta.ShortName,
 				marketRequests[i].CustomName,
