@@ -1582,6 +1582,7 @@ Examples:
 | options | map | no | |
 | parameters | key (string) & value (string|array) | no | |
 | subrequests | map of requests | no | |
+| timeout | duration string | no | 5s |
 
 ##### `url`
 The URL to fetch the data from. It must be accessible from the server that Glance is running on.
@@ -1769,6 +1770,11 @@ parameters:
     - item1
     - item2
 ```
+
+#### `timeout`
+The maximum time to wait for the API response. The value is a string and must be a number followed by one of s, m, h, d. Example: 10s for 10 seconds, 1m for 1 minute, etc.
+
+Defaults to `5s`
 
 ### Extension
 Display a widget provided by an external source (3rd party). If you want to learn more about developing extensions, checkout the [extensions documentation](extensions.md) (WIP).
