@@ -1,0 +1,26 @@
+.docker-container-icon {
+    display: block;
+    filter: grayscale(0.4);
+    object-fit: contain;
+    aspect-ratio: 1 / 1;
+    width: 2.7rem;
+    opacity: 0.8;
+    transition: filter 0.3s, opacity 0.3s;
+}
+
+.docker-container-icon.flat-icon {
+    opacity: 0.7;
+}
+
+.docker-container:hover .docker-container-icon {
+    opacity: 1;
+}
+
+.docker-container:hover .docker-container-icon:not(.flat-icon) {
+    filter: grayscale(0);
+}
+
+.docker-container-status-icon {
+    width: 2rem;
+    height: 2rem;
+}

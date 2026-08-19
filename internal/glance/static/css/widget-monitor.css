@@ -1,0 +1,36 @@
+.monitor-site-icon {
+    display: block;
+    opacity: 0.8;
+    filter: grayscale(0.4);
+    object-fit: contain;
+    aspect-ratio: 1 / 1;
+    width: 3.2rem;
+    position: relative;
+    top: -0.1rem;
+    transition: filter 0.3s, opacity 0.3s;
+}
+
+.monitor-site-icon.flat-icon {
+    opacity: 0.7;
+}
+
+.monitor-site:hover .monitor-site-icon {
+    opacity: 1;
+}
+
+.monitor-site:hover .monitor-site-icon:not(.flat-icon) {
+    filter: grayscale(0);
+}
+
+.monitor-site-status-icon {
+    flex-shrink: 0;
+    margin-left: auto;
+    width: 2rem;
+    height: 2rem;
+}
+
+.monitor-site-status-icon-compact {
+    width: 1.8rem;
+    height: 1.8rem;
+    flex-shrink: 0;
+}

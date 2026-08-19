@@ -27,21 +27,6 @@ type forumPost struct {
 
 type forumPostList []forumPost
 
-func (p forumPost) filterableField(field string) any {
-	switch field {
-	case "title":
-		return p.Title
-	case "comments":
-		return p.CommentCount
-	case "points":
-		return p.Score
-	case "posted":
-		return p.TimePosted
-	default:
-		return nil
-	}
-}
-
 const depreciatePostsOlderThanHours = 7
 const maxDepreciation = 0.9
 const maxDepreciationAfterHours = 24
@@ -68,7 +53,7 @@ func (p forumPostList) calculateEngagement() {
 			continue
 		}
 
-		p[i].Engagement *= 1.0 - (math.Min(elapsed.Hours()-depreciatePostsOlderThanHours, maxDepreciationAfterHours)/maxDepreciationAfterHours)*maxDepreciation
+		p[i].Engagement *= 1.0 - (math.Max(elapsed.Hours()-depreciatePostsOlderThanHours, maxDepreciationAfterHours)/maxDepreciationAfterHours)*maxDepreciation
 	}
 }
 
