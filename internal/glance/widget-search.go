@@ -35,9 +35,10 @@ var searchEngines = map[string]string{
 	"duckduckgo": "https://duckduckgo.com/?q={QUERY}",
 	"google":     "https://www.google.com/search?q={QUERY}",
 	"bing":       "https://www.bing.com/search?q={QUERY}",
+	"brave":      "https://search.brave.com/search?q={QUERY}",
 	"perplexity": "https://www.perplexity.ai/search?q={QUERY}",
-	"kagi": "https://kagi.com/search?q={QUERY}",
-	"startpage": "https://www.startpage.com/search?q={QUERY}",
+	"kagi":       "https://kagi.com/search?q={QUERY}",
+	"startpage":  "https://www.startpage.com/search?q={QUERY}",
 }
 
 func (widget *searchWidget) initialize() error {

@@ -6,6 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -105,7 +108,13 @@ func serveApp(configPath string) error {
 
 		config, err := newConfigFromYAML(newContents)
 		if err != nil {
-			log.Printf("Config has errors: %v", err)
+			errStr := strings.ReplaceAll(err.Error(), "\n", "")
+			errStr = sequentialWhitespacePattern.ReplaceAllString(errStr, " ")
+			errStr = strings.ReplaceAll(errStr, "!!seq", "array")
+			errStr = strings.ReplaceAll(errStr, "!!str", "string")
+
+			log.Printf("Config has errors: %v", errStr)
+			printConfigLinesNearErrorIfAvailable(err, newContents)
 
 			if !hadValidConfigOnStartup {
 				close(exitChannel)
@@ -178,6 +187,41 @@ func serveApp(configPath string) error {
 
 	<-exitChannel
 	return nil
+}
+
+var errorLinePattern = regexp.MustCompile(`line (\d+)`)
+
+func printConfigLinesNearErrorIfAvailable(err error, configContents []byte) {
+	if err == nil {
+		return
+	}
+
+	matches := errorLinePattern.FindStringSubmatch(err.Error())
+	if len(matches) < 2 {
+		return
+	}
+
+	errorAtLine, err := strconv.Atoi(matches[1])
+	if err != nil {
+		return
+	}
+
+	contents := strings.ReplaceAll(string(configContents), "\r\n", "\n")
+	lines := strings.Split(contents, "\n")
+
+	if errorAtLine < 1 || errorAtLine > len(lines) {
+		return
+	}
+
+	contextLength := 3
+
+	for i := max(0, errorAtLine-contextLength-1); i < min(len(lines), errorAtLine+contextLength); i++ {
+		if i == errorAtLine-1 {
+			fmt.Printf("-> %s\n", lines[i])
+		} else {
+			fmt.Printf("|  %s\n", lines[i])
+		}
+	}
 }
 
 func serveUpdateNoticeIfConfigLocationNotMigrated(configPath string) bool {
