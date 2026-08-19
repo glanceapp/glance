@@ -1,11 +1,8 @@
 {{ template "widget-base.html" . }}
 
-{{ define "widget-content-classes" }}{{ if not .Filters.AllFiltered }}widget-content-frameless{{ end }}{{ end }}
+{{ define "widget-content-classes" }}widget-content-frameless{{ end }}
 
 {{ define "widget-content" }}
-{{ if .Filters.AllFiltered }}
-<p>No videos match the specified filters ({{ .Filters.FilteredCount }} filtered)</p>
-{{ else }}
 <div class="cards-grid collapsible-container" data-collapse-after-rows="{{ .CollapseAfterRows }}">
     {{ range .Videos }}
     <div class="card widget-content-frame thumbnail-parent">
@@ -13,5 +10,4 @@
     </div>
     {{ end }}
 </div>
-{{ end }}
 {{ end }}

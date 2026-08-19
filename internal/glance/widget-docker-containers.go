@@ -49,7 +49,7 @@ func (widget *dockerContainersWidget) update(ctx context.Context) {
 		return
 	}
 
-	containers.sortByStateIconThenName()
+	containers.sortByStateIconThenTitle()
 	widget.Containers = containers
 }
 
@@ -125,7 +125,7 @@ type dockerContainer struct {
 
 type dockerContainerList []dockerContainer
 
-func (containers dockerContainerList) sortByStateIconThenName() {
+func (containers dockerContainerList) sortByStateIconThenTitle() {
 	p := &dockerContainerStateIconPriorities
 
 	sort.SliceStable(containers, func(a, b int) bool {
@@ -137,17 +137,13 @@ func (containers dockerContainerList) sortByStateIconThenName() {
 	})
 }
 
-func dockerContainerStateToStateIcon(container *dockerContainerJsonResponse) string {
-	if strings.Contains(strings.ToLower(container.Status), "(unhealthy)") {
-		return dockerContainerStateIconWarn
-	}
-
-	switch strings.ToLower(container.State) {
+func dockerContainerStateToStateIcon(state string) string {
+	switch state {
 	case "running":
 		return dockerContainerStateIconOK
 	case "paused":
 		return dockerContainerStateIconPaused
-	case "exited", "dead":
+	case "exited", "unhealthy", "dead":
 		return dockerContainerStateIconWarn
 	default:
 		return dockerContainerStateIconOther
@@ -191,13 +187,13 @@ func fetchDockerContainers(
 					dc.Children = append(dc.Children, dockerContainer{
 						Name:      deriveDockerContainerName(child, formatNames),
 						StateText: child.Status,
-						StateIcon: dockerContainerStateToStateIcon(child),
+						StateIcon: dockerContainerStateToStateIcon(strings.ToLower(child.State)),
 					})
 				}
 			}
 		}
 
-		dc.Children.sortByStateIconThenName()
+		dc.Children.sortByStateIconThenTitle()
 
 		stateIconSupersededByChild := false
 		for i := range dc.Children {
@@ -208,7 +204,7 @@ func fetchDockerContainers(
 			}
 		}
 		if !stateIconSupersededByChild {
-			dc.StateIcon = dockerContainerStateToStateIcon(container)
+			dc.StateIcon = dockerContainerStateToStateIcon(dc.State)
 		}
 
 		dockerContainers = append(dockerContainers, dc)
@@ -282,6 +278,7 @@ func isDockerContainerHidden(container *dockerContainerJsonResponse, hideByDefau
 	return hideByDefault
 }
 
+
 func fetchDockerContainersFromSource(
 	source string,
 	category string,
@@ -314,6 +311,7 @@ func fetchDockerContainersFromSource(
 			},
 		}
 	}
+
 
 	fetchAll := ternary(runningOnly, "false", "true")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

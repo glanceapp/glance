@@ -10,7 +10,7 @@ type htmlWidget struct {
 }
 
 func (widget *htmlWidget) initialize() error {
-	widget.withTitle("HTML").withError(nil)
+	widget.withTitle("").withError(nil)
 
 	return nil
 }
