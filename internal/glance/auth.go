@@ -49,6 +49,65 @@ type failedAuthAttempt struct {
 	first    time.Time
 }
 
+func requestIsHTTPS(r *http.Request) bool {
+	return strings.ToLower(r.Header.Get("X-Forwarded-Proto")) == "https"
+}
+
+func (a *application) newAuthCookie(r *http.Request, name, value string, expires time.Time) *http.Cookie {
+	return &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Expires:  expires,
+		Secure:   requestIsHTTPS(r),
+		Path:     a.Config.Server.BaseURL + "/",
+		SameSite: http.SameSiteLaxMode,
+		HttpOnly: true,
+	}
+}
+
+func (a *application) cleanupStaleAuthAttempts() {
+	for ip := range a.failedAuthAttempts {
+		if time.Since(a.failedAuthAttempts[ip].first) > AUTH_RATE_LIMIT_WINDOW {
+			delete(a.failedAuthAttempts, ip)
+		}
+	}
+}
+
+func (a *application) beginAuthAttempt(ip string) (exceeded bool, retryAfter int) {
+	attempt, exists := a.failedAuthAttempts[ip]
+	if !exists {
+		a.failedAuthAttempts[ip] = &failedAuthAttempt{
+			attempts: 1,
+			first:    time.Now(),
+		}
+		a.cleanupStaleAuthAttempts()
+		return false, 0
+	}
+
+	elapsed := time.Since(attempt.first)
+	if elapsed < AUTH_RATE_LIMIT_WINDOW && attempt.attempts >= AUTH_RATE_LIMIT_MAX_ATTEMPTS {
+		return true, max(1, int(AUTH_RATE_LIMIT_WINDOW.Seconds()-elapsed.Seconds()))
+	}
+
+	attempt.attempts++
+	a.cleanupStaleAuthAttempts()
+	return false, 0
+}
+
+func (a *application) clearAuthAttempts(ip string) {
+	a.authAttemptsMu.Lock()
+	delete(a.failedAuthAttempts, ip)
+	a.authAttemptsMu.Unlock()
+}
+
+func (a *application) usernameForHash(hash string) (string, bool) {
+	a.usernameHashMu.RLock()
+	defer a.usernameHashMu.RUnlock()
+
+	username, ok := a.usernameHashToUsername[hash]
+	return username, ok
+}
+
 func generateSessionToken(username string, secret []byte, now time.Time) (string, error) {
 	if len(secret) != AUTH_SECRET_KEY_LENGTH {
 		return "", fmt.Errorf("secret key length is not %d bytes", AUTH_SECRET_KEY_LENGTH)
@@ -142,40 +201,14 @@ func (a *application) handleAuthenticationAttempt(w http.ResponseWriter, r *http
 	ip := a.addressOfRequest(r)
 
 	a.authAttemptsMu.Lock()
-	exceededRateLimit, retryAfter := func() (bool, int) {
-		attempt, exists := a.failedAuthAttempts[ip]
-		if !exists {
-			a.failedAuthAttempts[ip] = &failedAuthAttempt{
-				attempts: 1,
-				first:    time.Now(),
-			}
-
-			return false, 0
-		}
-
-		elapsed := time.Since(attempt.first)
-		if elapsed < AUTH_RATE_LIMIT_WINDOW && attempt.attempts >= AUTH_RATE_LIMIT_MAX_ATTEMPTS {
-			return true, max(1, int(AUTH_RATE_LIMIT_WINDOW.Seconds()-elapsed.Seconds()))
-		}
-
-		attempt.attempts++
-		return false, 0
-	}()
+	exceededRateLimit, retryAfter := a.beginAuthAttempt(ip)
+	a.authAttemptsMu.Unlock()
 
 	if exceededRateLimit {
-		a.authAttemptsMu.Unlock()
 		time.Sleep(waitOnFailure)
 		w.Header().Set("Retry-After", strconv.Itoa(retryAfter))
 		w.WriteHeader(http.StatusTooManyRequests)
 		return
-	} else {
-		// Clean up old failed attempts
-		for ipOfAttempt := range a.failedAuthAttempts {
-			if time.Since(a.failedAuthAttempts[ipOfAttempt].first) > AUTH_RATE_LIMIT_WINDOW {
-				delete(a.failedAuthAttempts, ipOfAttempt)
-			}
-		}
-		a.authAttemptsMu.Unlock()
 	}
 
 	body, err := io.ReadAll(r.Body)
@@ -240,9 +273,7 @@ func (a *application) handleAuthenticationAttempt(w http.ResponseWriter, r *http
 
 	a.setAuthSessionCookie(w, r, token, time.Now().Add(AUTH_TOKEN_VALID_PERIOD))
 
-	a.authAttemptsMu.Lock()
-	delete(a.failedAuthAttempts, ip)
-	a.authAttemptsMu.Unlock()
+	a.clearAuthAttempts(ip)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -262,13 +293,12 @@ func (a *application) isAuthorized(w http.ResponseWriter, r *http.Request) bool 
 		return false
 	}
 
-	username, exists := a.usernameHashToUsername[string(usernameHash)]
+	username, exists := a.usernameForHash(string(usernameHash))
 	if !exists {
 		return false
 	}
 
-	_, exists = a.Config.Auth.Users[username]
-	if !exists {
+	if _, localUser := a.Config.Auth.Users[username]; !localUser && !a.oidcEnabled {
 		return false
 	}
 
@@ -309,15 +339,7 @@ func (a *application) handleLogoutRequest(w http.ResponseWriter, r *http.Request
 }
 
 func (a *application) setAuthSessionCookie(w http.ResponseWriter, r *http.Request, token string, expires time.Time) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     AUTH_SESSION_COOKIE_NAME,
-		Value:    token,
-		Expires:  expires,
-		Secure:   strings.ToLower(r.Header.Get("X-Forwarded-Proto")) == "https",
-		Path:     a.Config.Server.BaseURL + "/",
-		SameSite: http.SameSiteLaxMode,
-		HttpOnly: true,
-	})
+	http.SetCookie(w, a.newAuthCookie(r, AUTH_SESSION_COOKIE_NAME, token, expires))
 }
 
 func (a *application) handleLoginPageRequest(w http.ResponseWriter, r *http.Request) {
@@ -326,8 +348,16 @@ func (a *application) handleLoginPageRequest(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	showLocalLogin := a.showLocalLoginForm()
+	if a.oidcEnabled && a.Config.Auth.OIDC.AutoLogin && !showLocalLogin {
+		a.handleOIDCLogin(w, r)
+		return
+	}
+
 	data := &templateData{
-		App: a,
+		App:            a,
+		ShowLocalLogin: showLocalLogin,
+		ShowOIDCLogin:  a.oidcEnabled,
 	}
 	a.populateTemplateRequestData(&data.Request, r)
 

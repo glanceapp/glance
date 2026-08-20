@@ -1,0 +1,165 @@
+package glance
+
+import (
+	"encoding/base64"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+)
+
+func TestOIDCStateCookieRoundTrip(t *testing.T) {
+	secret, err := makeAuthSecretKey(AUTH_SECRET_KEY_LENGTH)
+	if err != nil {
+		t.Fatalf("Failed to generate secret key: %v", err)
+	}
+
+	secretBytes, err := base64.StdEncoding.DecodeString(secret)
+	if err != nil {
+		t.Fatalf("Failed to decode secret key: %v", err)
+	}
+
+	app := &application{
+		authSecretKey: secretBytes,
+		Config: config{
+			Server: struct {
+				Host       string `yaml:"host"`
+				Port       uint16 `yaml:"port"`
+				Proxied    bool   `yaml:"proxied"`
+				AssetsPath string `yaml:"assets-path"`
+				BaseURL    string `yaml:"base-url"`
+			}{
+				BaseURL: "",
+			},
+		},
+	}
+
+	flowState := oidcFlowState{
+		State:        "state-value",
+		Nonce:        "nonce-value",
+		CodeVerifier: "verifier-value",
+		RedirectURL:  "https://glance.example.com/auth/oidc/callback",
+	}
+
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.Header.Set("X-Forwarded-Proto", "https")
+	recorder := httptest.NewRecorder()
+
+	if err := app.setOIDCStateCookie(recorder, request, flowState); err != nil {
+		t.Fatalf("Failed to set oidc state cookie: %v", err)
+	}
+
+	response := recorder.Result()
+	if len(response.Cookies()) != 1 {
+		t.Fatalf("Expected 1 cookie, got %d", len(response.Cookies()))
+	}
+
+	callbackRequest := httptest.NewRequest(http.MethodGet, "/", nil)
+	callbackRequest.AddCookie(response.Cookies()[0])
+
+	readState, err := app.readOIDCStateCookie(callbackRequest)
+	if err != nil {
+		t.Fatalf("Failed to read oidc state cookie: %v", err)
+	}
+
+	if readState != flowState {
+		t.Fatalf("Expected %+v, got %+v", flowState, readState)
+	}
+}
+
+func TestRegisterOIDCUserAllowsAuthorization(t *testing.T) {
+	secret, err := makeAuthSecretKey(AUTH_SECRET_KEY_LENGTH)
+	if err != nil {
+		t.Fatalf("Failed to generate secret key: %v", err)
+	}
+
+	secretBytes, err := base64.StdEncoding.DecodeString(secret)
+	if err != nil {
+		t.Fatalf("Failed to decode secret key: %v", err)
+	}
+
+	app := &application{
+		RequiresAuth:           true,
+		authSecretKey:          secretBytes,
+		usernameHashToUsername: make(map[string]string),
+		oidcEnabled:            true,
+		Config: config{
+			Auth: struct {
+				SecretKey string           `yaml:"secret-key"`
+				Users     map[string]*user `yaml:"users"`
+				OIDC      oidcConfig       `yaml:"oidc"`
+			}{
+				Users: map[string]*user{},
+			},
+		},
+	}
+
+	if err := app.registerOIDCUser("oidc-user"); err != nil {
+		t.Fatalf("Failed to register oidc user: %v", err)
+	}
+
+	token, err := generateSessionToken("oidc-user", secretBytes, time.Now())
+	if err != nil {
+		t.Fatalf("Failed to generate session token: %v", err)
+	}
+
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.AddCookie(&http.Cookie{Name: AUTH_SESSION_COOKIE_NAME, Value: token})
+	recorder := httptest.NewRecorder()
+
+	if !app.isAuthorized(recorder, request) {
+		t.Fatal("Expected oidc user to be authorized")
+	}
+}
+
+func TestOIDCRedirectURLUsesRequestHost(t *testing.T) {
+	app := &application{
+		Config: config{
+			Server: struct {
+				Host       string `yaml:"host"`
+				Port       uint16 `yaml:"port"`
+				Proxied    bool   `yaml:"proxied"`
+				AssetsPath string `yaml:"assets-path"`
+				BaseURL    string `yaml:"base-url"`
+			}{
+				BaseURL: "/glance",
+			},
+		},
+	}
+
+	request := httptest.NewRequest(http.MethodGet, "http://example.com/glance/login", nil)
+	request.Header.Set("X-Forwarded-Proto", "https")
+	request.Host = "example.com"
+
+	got := app.oidcRedirectURL(request)
+	want := "https://example.com/glance/auth/oidc/callback"
+	if got != want {
+		t.Fatalf("Expected %q, got %q", want, got)
+	}
+}
+
+func TestBeginAuthAttemptRateLimit(t *testing.T) {
+	app := &application{
+		failedAuthAttempts: make(map[string]*failedAuthAttempt),
+	}
+
+	ip := "127.0.0.1"
+	for i := 0; i < AUTH_RATE_LIMIT_MAX_ATTEMPTS; i++ {
+		app.authAttemptsMu.Lock()
+		exceeded, _ := app.beginAuthAttempt(ip)
+		app.authAttemptsMu.Unlock()
+		if exceeded {
+			t.Fatalf("Expected attempt %d not to be rate limited", i+1)
+		}
+	}
+
+	app.authAttemptsMu.Lock()
+	exceeded, retryAfter := app.beginAuthAttempt(ip)
+	app.authAttemptsMu.Unlock()
+	if !exceeded {
+		t.Fatal("Expected rate limit to be exceeded")
+	}
+	if retryAfter <= 0 {
+		t.Fatalf("Expected positive retry-after, got %d", retryAfter)
+	}
+}
