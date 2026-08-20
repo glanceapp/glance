@@ -301,6 +301,7 @@ server:
 | proxied | boolean | no | false |
 | base-url | string | no | |
 | assets-path | string | no |  |
+| async-loading | boolean | no | false |
 
 #### `host`
 The address which the server will listen on. Setting it to `localhost` means that only the machine that the server is running on will be able to access the dashboard. By default it will listen on all interfaces.
@@ -353,6 +354,16 @@ To be able to point to an asset from your assets path, use the `/assets/` path l
 
 ```yaml
 icon: /assets/gitea-icon.png
+```
+
+#### `async-loading`
+When set to `true`, the page skeleton with loading placeholders is rendered immediately and each widget fetches its content independently. Fast widgets appear instantly while slow ones show a loading spinner without blocking the rest. If a widget fails to load, it will automatically retry up to 3 times with visual feedback.
+
+When set to `false` (default), the server waits for all widgets to finish loading before returning the page content.
+
+```yaml
+server:
+  async-loading: true
 ```
 
 ## Document

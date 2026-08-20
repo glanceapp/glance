@@ -29,11 +29,12 @@ const (
 
 type config struct {
 	Server struct {
-		Host       string `yaml:"host"`
-		Port       uint16 `yaml:"port"`
-		Proxied    bool   `yaml:"proxied"`
-		AssetsPath string `yaml:"assets-path"`
-		BaseURL    string `yaml:"base-url"`
+		Host         string `yaml:"host"`
+		Port         uint16 `yaml:"port"`
+		Proxied      bool   `yaml:"proxied"`
+		AssetsPath   string `yaml:"assets-path"`
+		BaseURL      string `yaml:"base-url"`
+		AsyncLoading bool   `yaml:"async-loading"`
 	} `yaml:"server"`
 
 	Auth struct {
