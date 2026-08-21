@@ -59,6 +59,16 @@
         background-color: var(--color-widget-background-highlight);
     }
 
+    .mobile-username-container {
+        cursor: default;
+        pointer-events: none;
+    }
+
+    .mobile-username {
+        font-weight: 600;
+        color: var(--color-primary);
+    }
+
     .mobile-navigation:has(.mobile-navigation-page-links-input:checked) .hamburger-icon {
         --spacing: 7px;
         color: var(--color-primary);
