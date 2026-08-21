@@ -61,6 +61,10 @@ button {
     width: 10px;
 }
 
+*:active {
+    -webkit-tap-highlight-color: transparent;
+}
+
 *:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 0.1rem;
@@ -275,15 +279,20 @@ kbd:active {
     max-height: 2.7rem;
 }
 
-.nav {
+.desktop-navigation {
     overflow-x: auto;
     min-width: 0;
     height: 100%;
     gap: var(--header-items-gap);
 }
 
-.nav .nav-item {
-    line-height: var(--header-height);
+.desktop-navigation .nav-item {
+    display: flex;
+    align-items: center;
+}
+
+.desktop-navigation .nav-item-text {
+    margin-top: 3px;
 }
 
 .footer {

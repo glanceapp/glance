@@ -245,3 +245,22 @@ func hslToHex(h, s, l float64) string {
 
 	return fmt.Sprintf("#%02x%02x%02x", ir, ig, ib)
 }
+
+func numCompare[T int | uint64 | float64](a, b T) int {
+	if a < b {
+		return -1
+	} else if a > b {
+		return 1
+	}
+	return 0
+}
+
+func boolCompare(a, b bool) int {
+	if a == b {
+		return 0
+	} else if !a && b {
+		return -1
+	} else {
+		return 1
+	}
+}

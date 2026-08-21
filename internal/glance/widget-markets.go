@@ -107,6 +107,7 @@ type marketResponseJson struct {
 				Symbol             string  `json:"symbol"`
 				RegularMarketPrice float64 `json:"regularMarketPrice"`
 				ChartPreviousClose float64 `json:"chartPreviousClose"`
+				ExchangeName       string  `json:"exchangeName"`
 				ShortName          string  `json:"shortName"`
 				PriceHint          int     `json:"priceHint"`
 			} `json:"meta"`
