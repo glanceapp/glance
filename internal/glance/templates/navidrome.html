@@ -1,0 +1,27 @@
+{{ template "widget-base.html" . }}
+
+{{ define "widget-content" }}
+{{ with .NowPlaying }}
+    {{ if not .IsPlaying }}
+    <div>last active {{ .MinutesAgo }}m ago</div>
+    {{ else }}
+    <div class="flex items-center gap-20">
+        {{ if .CoverArtURL }}
+        <img class="navidrome-cover-art" src="{{ .CoverArtURL | safeURL }}" loading="lazy" width="64" height="64" alt="">
+        {{ end }}
+        <div class="min-width-0 grow">
+            <div class="text-truncate">{{ .Title }}</div>
+            {{ with $.MetadataLine }}
+            <div class="color-subdue text-truncate">{{ . }}</div>
+            {{ end }}
+            <div class="navidrome-progress margin-top-10">
+                <div class="navidrome-progress-bar" style="width: {{ .ProgressPercent }}%;"></div>
+            </div>
+        </div>
+    </div>
+    {{ end }}
+{{ else }}
+    <div>nothing in queue!</div>
+{{ end }}
+{{ end }}
+

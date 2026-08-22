@@ -71,6 +71,8 @@ func newWidget(widgetType string) (widget, error) {
 		w = &groupWidget{}
 	case "dns-stats":
 		w = &dnsStatsWidget{}
+	case "navidrome":
+		w = &navidromeWidget{}
 	case "split-column":
 		w = &splitColumnWidget{}
 	case "custom-api":
