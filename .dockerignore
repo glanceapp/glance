@@ -9,3 +9,4 @@
 !/go.mod
 !/go.sum
 !main.go
+!/config/
