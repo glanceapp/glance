@@ -288,35 +288,18 @@ func fetchDockerContainersFromSource(
 	runningOnly bool,
 	labelOverrides map[string]map[string]string,
 ) ([]dockerContainerJsonResponse, error) {
-	var hostname string
-	var scheme string
+	var requestBaseURL string
 
 	var client *http.Client
 	if strings.HasPrefix(source, "tcp://") || strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
 		client = &http.Client{}
-		parsed, err := url.Parse(source)
+		var err error
+		requestBaseURL, err = dockerContainersRemoteSourceURL(source)
 		if err != nil {
-			return nil, fmt.Errorf("parsing URL: %w", err)
+			return nil, err
 		}
-
-		scheme = parsed.Scheme
-		if scheme == "tcp" {
-			scheme = "http"
-		}
-
-		port := parsed.Port()
-		if port == "" {
-			if scheme == "https" {
-				port = "443"
-			} else {
-				port = "80"
-			}
-		}
-
-		hostname = parsed.Hostname() + ":" + port
 	} else {
-		scheme = "http"
-		hostname = "docker"
+		requestBaseURL = "http://docker"
 		client = &http.Client{
 			Transport: &http.Transport{
 				DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
@@ -330,7 +313,7 @@ func fetchDockerContainersFromSource(
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	request, err := http.NewRequestWithContext(ctx, "GET", scheme+"://"+hostname+"/containers/json?all="+fetchAll, nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", requestBaseURL+"/containers/json?all="+fetchAll, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
@@ -389,4 +372,27 @@ func fetchDockerContainersFromSource(
 	}
 
 	return containers, nil
+}
+
+func dockerContainersRemoteSourceURL(source string) (string, error) {
+	parsed, err := url.Parse(source)
+	if err != nil {
+		return "", fmt.Errorf("parsing URL: %w", err)
+	}
+
+	scheme := parsed.Scheme
+	if scheme == "tcp" {
+		scheme = "http"
+	}
+
+	port := parsed.Port()
+	if port == "" {
+		if scheme == "https" {
+			port = "443"
+		} else {
+			port = "80"
+		}
+	}
+
+	return scheme + "://" + net.JoinHostPort(parsed.Hostname(), port), nil
 }
