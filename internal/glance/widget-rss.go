@@ -38,6 +38,7 @@ type rssWidget struct {
 	CollapseAfter    int              `yaml:"collapse-after"`
 	SingleLineTitles bool             `yaml:"single-line-titles"`
 	PreserveOrder    bool             `yaml:"preserve-order"`
+	Target           string           `yaml:"target"`
 
 	Items          rssFeedItemList `yaml:"-"`
 	NoItemsMessage string          `yaml:"-"`
@@ -71,6 +72,10 @@ func (widget *rssWidget) initialize() error {
 		for i := range widget.FeedRequests {
 			widget.FeedRequests[i].IsDetailed = true
 		}
+	}
+
+	if widget.Target == "" {
+		widget.Target = "_blank"
 	}
 
 	widget.cachedFeeds = make(map[string]*cachedRSSFeed)

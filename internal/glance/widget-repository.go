@@ -21,6 +21,7 @@ type repositoryWidget struct {
 	CommitsLimit        int        `yaml:"commits-limit"`
 	ExcludeDraftPRs     bool       `yaml:"exclude-draft-pull-requests"`
 	Repository          repository `yaml:"-"`
+	Target              string     `yaml:"target"`
 }
 
 func (widget *repositoryWidget) initialize() error {
@@ -36,6 +37,10 @@ func (widget *repositoryWidget) initialize() error {
 
 	if widget.CommitsLimit == 0 || widget.CommitsLimit < -1 {
 		widget.CommitsLimit = -1
+	}
+
+	if widget.Target == "" {
+		widget.Target = "_blank"
 	}
 
 	return nil

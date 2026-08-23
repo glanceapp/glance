@@ -41,6 +41,7 @@ type redditWidget struct {
 	Limit               int               `yaml:"limit"`
 	CollapseAfter       int               `yaml:"collapse-after"`
 	RequestURLTemplate  string            `yaml:"request-url-template"`
+	Target              string            `yaml:"target"`
 
 	Filters filterableFields[forumPost] `yaml:"filters"`
 
@@ -92,9 +93,14 @@ func (widget *redditWidget) initialize() error {
 		a.enabled = true
 	}
 
+	if widget.Target == "" {
+		widget.Target = "_blank"
+	}
+
 	widget.
 		withTitle("r/" + widget.Subreddit).
 		withTitleURL("https://www.reddit.com/r/" + widget.Subreddit + "/").
+		withTitleTarget("_blank").
 		withCacheDuration(30 * time.Minute)
 
 	return nil

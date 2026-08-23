@@ -271,7 +271,7 @@ function setupGroups() {
                         return;
                     }
 
-                    openURLInNewTab(title.dataset.titleUrl, false);
+                    openURLInNewTab(title.dataset.titleUrl, false, title.dataset.titleTarget);
                     event.preventDefault();
                 });
             }
@@ -279,7 +279,7 @@ function setupGroups() {
             title.addEventListener("click", () => {
                 if (t == current) {
                     if (title.dataset.titleUrl !== undefined) {
-                        openURLInNewTab(title.dataset.titleUrl);
+                        openURLInNewTab(title.dataset.titleUrl, undefined, title.dataset.titleTarget);
                     }
 
                     return;
