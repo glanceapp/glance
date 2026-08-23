@@ -12,6 +12,7 @@ type SearchBang struct {
 	Title    string
 	Shortcut string
 	URL      string
+	Regex    string
 }
 
 type searchWidget struct {
