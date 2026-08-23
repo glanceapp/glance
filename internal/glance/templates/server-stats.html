@@ -125,10 +125,10 @@
                 </div>
                 {{- end }}
                 <div class="progress-bar progress-bar-combined">
-                    {{- if .Info.Mountpoints }}
-                    <div class="progress-value{{ if ge ((index .Info.Mountpoints 0).UsedPercent) 85 }} progress-value-notice{{ end }}" style="--percent: {{ (index .Info.Mountpoints 0).UsedPercent }}"></div>
-                    {{- if ge (len .Info.Mountpoints) 2 }}
-                    <div class="progress-value{{ if ge ((index .Info.Mountpoints 1).UsedPercent) 85 }} progress-value-notice{{ end }}" style="--percent: {{ (index .Info.Mountpoints 1).UsedPercent }}"></div>
+                    {{$limit := .MountBarLimit}}
+                    {{- range $i,$mount := .Info.Mountpoints }}
+                    {{if lt $i $limit }}
+                    <div class="progress-value{{ if ge .UsedPercent 85 }} progress-value-notice{{ end }}" style="--percent: {{ .UsedPercent }}"></div>
                     {{- end }}
                     {{- end }}
                 </div>
