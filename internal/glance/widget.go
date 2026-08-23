@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -140,6 +141,8 @@ type widget interface {
 	setID(uint64)
 	handleRequest(w http.ResponseWriter, r *http.Request)
 	setHideHeader(bool)
+	lock()
+	unlock()
 }
 
 type cacheType int
@@ -168,6 +171,7 @@ type widgetBase struct {
 	cacheType           cacheType        `yaml:"-"`
 	nextUpdate          time.Time        `yaml:"-"`
 	updateRetriedTimes  int              `yaml:"-"`
+	mu                  sync.Mutex       `yaml:"-"`
 }
 
 type widgetProviders struct {
@@ -205,6 +209,9 @@ func (w *widgetBase) setID(id uint64) {
 func (w *widgetBase) setHideHeader(value bool) {
 	w.HideHeader = value
 }
+
+func (w *widgetBase) lock()   { w.mu.Lock() }
+func (w *widgetBase) unlock() { w.mu.Unlock() }
 
 func (widget *widgetBase) handleRequest(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "not implemented", http.StatusNotImplemented)
