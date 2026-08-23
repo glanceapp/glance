@@ -24,6 +24,7 @@ type monitorWidget struct {
 		ErrorURL           string          `yaml:"error-url"`
 		Title              string          `yaml:"title"`
 		Icon               customIconField `yaml:"icon"`
+		Target             string          `yaml:"target"`
 		SameTab            bool            `yaml:"same-tab"`
 		StatusText         string          `yaml:"-"`
 		StatusStyle        string          `yaml:"-"`
@@ -36,6 +37,18 @@ type monitorWidget struct {
 
 func (widget *monitorWidget) initialize() error {
 	widget.withTitle("Monitor").withCacheDuration(5 * time.Minute)
+
+	for s := range widget.Sites {
+		site := &widget.Sites[s]
+
+		if site.Target == "" {
+			if site.SameTab {
+				site.Target = ""
+			} else {
+				site.Target = "_blank"
+			}
+		}
+	}
 
 	return nil
 }
