@@ -4,6 +4,7 @@
 <ul class="list list-gap-24 collapsible-container" data-collapse-after="{{ .CollapseAfter }}">
     {{ range .Items }}
     <li class="flex gap-15 items-start row-reverse-on-mobile thumbnail-parent">
+        {{ if eq false .HideThumbnail }}
         <div class="thumbnail-container rss-detailed-thumbnail">
             {{ if ne "" .ImageURL }}
             <img class="thumbnail" loading="lazy" src="{{ .ImageURL }}" alt="">
@@ -13,6 +14,7 @@
             </svg>
             {{ end }}
         </div>
+        {{ end }}
         <div class="grow min-width-0">
             <a class="size-h3 color-primary-if-not-visited" href="{{ .Link }}" target="_blank" rel="noreferrer">{{ .Title }}</a>
             <ul class="list-horizontal-text flex-nowrap">
