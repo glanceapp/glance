@@ -86,11 +86,7 @@ func parseCliOptions() (*cliOptions, error) {
 	} else if len(args) == 2 {
 		if args[0] == "password:hash" {
 			intent = cliIntentPasswordHash
-		} else {
-			return nil, unknownCommandErr
-		}
-	} else if len(args) == 2 {
-		if args[0] == "mountpoint:info" {
+		} else if args[0] == "mountpoint:info" {
 			intent = cliIntentMountpointInfo
 		} else {
 			return nil, unknownCommandErr
