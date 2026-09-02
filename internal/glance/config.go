@@ -485,6 +485,17 @@ func isConfigStateValid(config *config) error {
 		}
 	}
 
+	hasNonLinkPage := false
+	for i := range config.Pages {
+		if config.Pages[i].Link == "" {
+			hasNonLinkPage = true
+			break
+		}
+	}
+	if !hasNonLinkPage {
+		return fmt.Errorf("at least one page must not use link -- it's needed to serve as the home page")
+	}
+
 	for i := range config.Pages {
 		page := &config.Pages[i]
 
@@ -493,10 +504,6 @@ func isConfigStateValid(config *config) error {
 		}
 
 		if page.Link != "" {
-			if i == 0 {
-				return fmt.Errorf("page 1 is used as the home page and cannot use link")
-			}
-
 			if len(page.Columns) > 0 || len(page.HeadWidgets) > 0 {
 				return fmt.Errorf("page %d: link cannot be combined with columns or head-widgets", i+1)
 			}

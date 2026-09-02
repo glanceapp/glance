@@ -144,7 +144,16 @@ func newApplication(c *config) (*application, error) {
 	// Init pages
 	//
 
-	app.slugToPage[""] = &config.Pages[0]
+	// The home page ("/") is the first page in the list that isn't a link page -- link
+	// pages have no content to serve as the root, so they're skipped over here rather than
+	// forcing whichever page happens to have real content to also be first in the nav order.
+	// isConfigStateValid guarantees at least one such page exists.
+	for i := range config.Pages {
+		if config.Pages[i].Link == "" {
+			app.slugToPage[""] = &config.Pages[i]
+			break
+		}
+	}
 
 	providers := &widgetProviders{
 		assetResolver: app.StaticAssetPath,
