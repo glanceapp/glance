@@ -154,6 +154,12 @@ func newApplication(c *config) (*application, error) {
 		page := &config.Pages[p]
 		page.PrimaryColumnIndex = -1
 
+		if page.Link != "" {
+			// link pages contribute a nav entry only (see templates/page.html) and are
+			// deliberately never added to slugToPage -- there's no local content to route to
+			continue
+		}
+
 		if page.Slug == "" {
 			page.Slug = titleToSlug(page.Title)
 		}

@@ -561,19 +561,39 @@ pages:
 | ---- | ---- | -------- | ------- |
 | name | string | yes | |
 | slug | string | no | |
+| link | string | no | |
+| same-tab | boolean | no | false |
 | width | string | no | |
 | desktop-navigation-width | string | no | |
 | center-vertically | boolean | no | false |
 | hide-desktop-navigation | boolean | no | false |
 | show-mobile-header | boolean | no | false |
 | head-widgets | array | no | |
-| columns | array | yes | |
+| columns | array | yes, unless `link` is set | |
 
 #### `name`
 The name of the page which gets shown in the navigation bar.
 
 #### `slug`
 The URL friendly version of the title which is used to access the page. For example if the title of the page is "RSS Feeds" you can make the page accessible via `localhost:8080/feeds` by setting the slug to `feeds`. If not defined, it will automatically be generated from the title.
+
+#### `link`
+Makes this page entry a plain external link in the navigation bar instead of a local page: clicking it navigates the browser straight to the given URL, nothing is rendered by Glance for it, and no `/{slug}` route is registered. Useful for linking out to another Glance instance (or any other page) from the nav bar without embedding it. A page using `link` cannot also define `columns` or `head-widgets`, and cannot be the first page in the list (the first page is always used as the home page). Opens in a new tab by default, same as monitor/docker-containers widget links -- see `same-tab` below. Example:
+
+```yaml
+pages:
+  - name: Home
+    columns: ...
+
+  - name: Homelab
+    columns: ...
+
+  - name: Grafana
+    link: https://grafana.example.com/
+```
+
+#### `same-tab`
+Only applies to pages using `link`. When `false` (default), the link opens in a new tab, matching the same-tab behavior of the monitor and docker-containers widgets elsewhere in Glance. Set to `true` to navigate in the current tab instead.
 
 #### `width`
 The maximum width of the page on desktop. Possible values are `default`, `slim` and `wide`.

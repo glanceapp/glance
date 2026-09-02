@@ -77,6 +77,8 @@ type user struct {
 type page struct {
 	Title                  string  `yaml:"name"`
 	Slug                   string  `yaml:"slug"`
+	Link                   string  `yaml:"link"`
+	SameTab                bool    `yaml:"same-tab"`
 	Width                  string  `yaml:"width"`
 	DesktopNavigationWidth string  `yaml:"desktop-navigation-width"`
 	ShowMobileHeader       bool    `yaml:"show-mobile-header"`
@@ -488,6 +490,18 @@ func isConfigStateValid(config *config) error {
 
 		if page.Title == "" {
 			return fmt.Errorf("page %d has no name", i+1)
+		}
+
+		if page.Link != "" {
+			if i == 0 {
+				return fmt.Errorf("page 1 is used as the home page and cannot use link")
+			}
+
+			if len(page.Columns) > 0 || len(page.HeadWidgets) > 0 {
+				return fmt.Errorf("page %d: link cannot be combined with columns or head-widgets", i+1)
+			}
+
+			continue
 		}
 
 		if page.Width != "" && (page.Width != "wide" && page.Width != "slim" && page.Width != "default") {

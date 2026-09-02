@@ -8,7 +8,12 @@
 
 {{ define "navigation-links" }}
 {{ range .App.Config.Pages }}
+{{ if .Link }}
+<a href="{{ .Link | safeURL }}" class="nav-item" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer"><div class="nav-item-text">{{ .Title }}</div></a>
+{{ else }}
 <a href="{{ $.App.Config.Server.BaseURL }}/{{ .Slug }}" class="nav-item{{ if eq .Slug $.Page.Slug }} nav-item-current{{ end }}"{{ if eq .Slug $.Page.Slug }} aria-current="page"{{ end }}><div class="nav-item-text">{{ .Title }}</div></a>
+{{ end }}
+{{ end }}
 {{ end }}
 {{ end }}
 
