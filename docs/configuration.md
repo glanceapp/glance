@@ -1963,9 +1963,13 @@ You can hover over the "ERROR" text to view more information.
 | sites | array | yes | |
 | style | string | no | |
 | show-failing-only | boolean | no | false |
+| hide-details | boolean | no | false |
 
 ##### `show-failing-only`
 Shows only a list of failing sites when set to `true`.
+
+##### `hide-details`
+Hides status text and response times, leaving only each site title and status icon.
 
 ##### `style`
 Used to change the appearance of the widget. Possible values are `compact`.
