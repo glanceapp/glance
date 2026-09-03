@@ -1,4 +1,4 @@
-FROM alpine:3.25
+FROM alpine:3.24.1
 
 WORKDIR /app
 COPY glance .
