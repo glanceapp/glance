@@ -1,0 +1,105 @@
+server:
+  host: 0.0.0.0
+  port: 8080
+
+branding:
+  app-name: Glance
+
+pages:
+  - name: Home
+    columns:
+      - size: small
+        widgets:
+          - type: calendar
+            first-day-of-week: monday
+
+          - type: clock
+            hour-format: 24h
+            timezones:
+              - timezone: America/New_York
+                label: New York
+              - timezone: Europe/London
+                label: London
+              - timezone: Asia/Tokyo
+                label: Tokyo
+
+          - type: markets
+            markets:
+              - symbol: SPY
+                name: S&P 500
+              - symbol: BTC-USD
+                name: Bitcoin
+              - symbol: NVDA
+                name: NVIDIA
+              - symbol: AAPL
+                name: Apple
+
+      - size: full
+        widgets:
+          - type: search
+            search-engine: duckduckgo
+            bangs:
+              - title: YouTube
+                shortcut: "!yt"
+                url: https://www.youtube.com/results?search_query={QUERY}
+              - title: GitHub
+                shortcut: "!gh"
+                url: https://github.com/search?q={QUERY}
+
+          - type: group
+            widgets:
+              - type: hacker-news
+                limit: 15
+                collapse-after: 5
+              - type: lobsters
+                limit: 15
+                collapse-after: 5
+
+          - type: rss
+            title: Tech Blogs
+            style: horizontal-cards
+            limit: 6
+            cache: 2h
+            feeds:
+              - url: https://ciechanow.ski/atom.xml
+                title: Bartosz Ciechanowski
+              - url: https://samwho.dev/rss.xml
+                title: samwho
+              - url: https://jvns.ca/atom.xml
+                title: Julia Evans
+
+          - type: bookmarks
+            groups:
+              - title: General
+                links:
+                  - title: Gmail
+                    url: https://mail.google.com
+                  - title: GitHub
+                    url: https://github.com
+                  - title: Wikipedia
+                    url: https://www.wikipedia.org
+              - title: Dev
+                color: 200 50 50
+                links:
+                  - title: StackOverflow
+                    url: https://stackoverflow.com
+                  - title: MDN
+                    url: https://developer.mozilla.org
+                  - title: Go Docs
+                    url: https://pkg.go.dev
+
+      - size: small
+        widgets:
+          - type: server-stats
+            servers:
+              - type: local
+                name: This Server
+
+          - type: releases
+            cache: 6h
+            repositories:
+              - glanceapp/glance
+              - golang/go
+              - nodejs/node
+
+          - type: to-do
