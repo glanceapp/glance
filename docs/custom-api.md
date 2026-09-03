@@ -378,7 +378,7 @@ In some instances, you may need to make two consecutive API calls, where you use
     {{ $something.JSON.String "title" }}
 ```
 
-Here, `$theID` gets retrieved from the result of the first API call and used in the second API call. The `newRequest` function creates a new request, and the `getResponse` function executes it. You can also use `withParameter` and `withHeader` to optionally add parameters and headers to the request, or `withAllowInsecure` to skip TLS certificate verification, e.g. `newRequest "https://self-signed.example.com" | withAllowInsecure true | getResponse`.
+Here, `$theID` gets retrieved from the result of the first API call and used in the second API call. The `newRequest` function creates a new request, and the `getResponse` function executes it. You can also use `withParameter` and `withHeader` to optionally add parameters and headers to the request, `withBasicAuth` to add HTTP basic authentication credentials, e.g. `newRequest "https://api.example.com" | withBasicAuth "username" "password" | getResponse`, or `withAllowInsecure` to skip TLS certificate verification, e.g. `newRequest "https://self-signed.example.com" | withAllowInsecure true | getResponse`.
 
 If you need to make a request to a URL that requires dynamic parameters, you can omit the `url` property in the YAML and run the request entirely from within the template itself:
 
@@ -458,6 +458,18 @@ The following helper functions provided by Glance are available:
 - `percentChange(current float, previous float) float`: Calculates the percentage change between two numbers.
 - `startOfDay(t time.Time) time.Time`: Returns the start of the day for a given time.
 - `endOfDay(t time.Time) time.Time`: Returns the end of the day for a given time.
+
+The following functions are available for making additional requests from within a template:
+
+| Function | Description |
+| -------- | ----------- |
+| `newRequest url` | Creates a new request for the given URL. |
+| `withHeader key value` | Adds a header to the request. |
+| `withParameter key value` | Adds a query parameter to the request. |
+| `withStringBody body` | Sets the request body to the given string and its method to `POST`. |
+| `withBasicAuth username password` | Sets the username and password to be used for HTTP basic authentication. |
+| `withAllowInsecure bool` | Whether to ignore invalid/self-signed certificates. |
+| `getResponse` | Executes the request and returns the response. |
 
 The following helper functions provided by Go's `text/template` are available:
 

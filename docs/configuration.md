@@ -1574,6 +1574,7 @@ Examples:
 | method | string | no | GET |
 | body-type | string | no | json |
 | body | any | no | |
+| basic-auth | map | no | |
 | frameless | boolean | no | false |
 | allow-insecure | boolean | no | false |
 | skip-json-validation | boolean | no | false |
@@ -1617,6 +1618,15 @@ body:
 body-type: string
 body: |
   key1=value1&key2=value2
+```
+
+##### `basic-auth`
+Optionally specify credentials to be sent with the request using HTTP basic authentication. Example:
+
+```yaml
+basic-auth:
+  username: your-username
+  password: your-password
 ```
 
 ##### `frameless`
