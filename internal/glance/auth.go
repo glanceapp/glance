@@ -178,7 +178,7 @@ func (a *application) handleAuthenticationAttempt(w http.ResponseWriter, r *http
 		a.authAttemptsMu.Unlock()
 	}
 
-	body, err := io.ReadAll(r.Body)
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 512*1024))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
