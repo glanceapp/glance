@@ -889,6 +889,7 @@ Preview:
 | collapse-after-rows | integer | no | 4 |
 | include-shorts | boolean | no | false |
 | video-url-template | string | no | https://www.youtube.com/watch?v={VIDEO-ID} |
+| youtube-api-key | string | no | |
 
 ##### `channels`
 A list of channels IDs.
@@ -951,6 +952,15 @@ video-url-template: https://invidious.your-domain.com/watch?v={VIDEO-ID}
 Placeholders:
 
 `{VIDEO-ID}` - the ID of the video
+
+##### `youtube-api-key`
+A [YouTube Data API v3](https://developers.google.com/youtube/v3/getting-started) key. When set, videos are fetched through the API instead of YouTube's public RSS feeds, which have been returning 404 errors since October 2026. Each channel or playlist costs 1 unit of the default 10,000 units/day quota per refresh. Example:
+
+```yaml
+youtube-api-key: ${YOUTUBE_API_KEY}
+```
+
+To create a key, enable the YouTube Data API v3 in a Google Cloud project, then go to APIs & Services > Credentials > Create credentials > API key, and restrict it to the YouTube Data API v3.
 
 ### Hacker News
 Display a list of posts from [Hacker News](https://news.ycombinator.com/).
