@@ -173,7 +173,9 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 	app := &widget.AppAuth
 
 	if !app.enabled {
-		baseURL = "https://www.reddit.com"
+		// www.reddit.com no longer serves the .json endpoints to signed-out clients, but the guest
+		// token handed out by its challenge flow works on oauth.reddit.com, which returns the same listings
+		baseURL = "https://oauth.reddit.com"
 		headers = http.Header{
 			"User-Agent": []string{getBrowserUserAgentHeader()},
 		}
@@ -219,12 +221,14 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 	}
 	request.Header = headers
 
-	loid, err := getRedditLoidCookie()
-	if err != nil {
-		fmt.Printf("Error fetching reddit loid cookie: %v\n", err)
-		return nil, errors.New("could not solve reddit challenge")
+	if !app.enabled {
+		token, err := getRedditGuestToken()
+		if err != nil {
+			fmt.Printf("Error fetching reddit guest token: %v\n", err)
+			return nil, errors.New("could not solve reddit challenge")
+		}
+		request.Header.Set("Authorization", "Bearer "+token)
 	}
-	request.AddCookie(&http.Cookie{Name: "loid", Value: loid})
 
 	responseJson, err := decodeJsonFromRequest[subredditResponseJson](client, request)
 	if err != nil {
@@ -356,37 +360,37 @@ var (
 	redditTokenPattern     = regexp.MustCompile(`name="jsc_token"\s+value="([^"]+)"`)
 )
 
-// Allows all widget instances to share a single loid cookie, since we don't want to draw
+// Allows all widget instances to share a single guest token, since we don't want to draw
 // too much attention by making a lot of requests to the flow that allows us to obtain
-// the cookie required to access the .json endpoints
-var getRedditLoidCookie = func() func() (string, error) {
+// the token required to access the API endpoints
+var getRedditGuestToken = func() func() (string, error) {
 	var lastUpdate time.Time
-	var cachedLoid string
+	var cachedToken string
 
 	return NewSingleflight(func() (string, error) {
-		// Caching for 6 hours is a bit arbitrary, presumably the cookie is valid for 24 hours,
-		// but we want to keep the cache time short in the event that a cookie becomes invalid
+		// Caching for 6 hours is a bit arbitrary, the token is valid for 24 hours,
+		// but we want to keep the cache time short in the event that a token becomes invalid
 		// for whatever reason, since we don't have a way to force refresh it
-		if time.Since(lastUpdate) < 6*time.Hour && cachedLoid != "" {
-			return cachedLoid, nil
+		if time.Since(lastUpdate) < 6*time.Hour && cachedToken != "" {
+			return cachedToken, nil
 		}
 
-		loid, err := fetchRedditLoidCookie()
+		token, err := fetchRedditGuestToken()
 		if err != nil {
-			if cachedLoid != "" {
-				fmt.Printf("Error fetching new reddit loid cookie, using cached value: %v\n", err)
-				return cachedLoid, nil
+			if cachedToken != "" {
+				fmt.Printf("Error fetching new reddit guest token, using cached value: %v\n", err)
+				return cachedToken, nil
 			}
 			return "", err
 		}
 
 		lastUpdate = time.Now()
-		cachedLoid = loid
-		return loid, nil
+		cachedToken = token
+		return token, nil
 	})
 }()
 
-func fetchRedditLoidCookie() (string, error) {
+func fetchRedditGuestToken() (string, error) {
 	request, err := http.NewRequest("GET", "https://www.reddit.com/", nil)
 	if err != nil {
 		return "", err
@@ -447,10 +451,10 @@ func fetchRedditLoidCookie() (string, error) {
 	}
 
 	for _, cookie := range response.Cookies() {
-		if cookie.Name == "loid" {
+		if cookie.Name == "token_v2" {
 			return cookie.Value, nil
 		}
 	}
 
-	return "", fmt.Errorf("no loid cookie found")
+	return "", fmt.Errorf("no token_v2 cookie found")
 }
