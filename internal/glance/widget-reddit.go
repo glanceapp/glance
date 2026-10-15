@@ -90,6 +90,10 @@ func (widget *redditWidget) initialize() error {
 		a.enabled = true
 	}
 
+	if !a.enabled && widget.Search != "" {
+		return errors.New("due to changes in Reddit's API, the search property works only when app-auth is configured")
+	}
+
 	widget.
 		withTitle("r/" + widget.Subreddit).
 		withTitleURL("https://www.reddit.com/r/" + widget.Subreddit + "/").
@@ -166,22 +170,20 @@ func (widget *redditWidget) parseCustomCommentsURL(subreddit, postId, postPath s
 
 func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 	var client requestDoer = redditHTTPClient
-	var baseURL string
 	var requestURL string
 	var headers http.Header
+
+	baseURL := "https://oauth.reddit.com"
 	query := url.Values{}
 	app := &widget.AppAuth
 
 	if !app.enabled {
 		// www.reddit.com no longer serves the .json endpoints to signed-out clients, but the guest
 		// token handed out by its challenge flow works on oauth.reddit.com, which returns the same listings
-		baseURL = "https://oauth.reddit.com"
 		headers = http.Header{
 			"User-Agent": []string{getBrowserUserAgentHeader()},
 		}
 	} else {
-		baseURL = "https://oauth.reddit.com"
-
 		if app.accessToken == "" || time.Now().Add(time.Minute).After(app.tokenExpiresAt) {
 			if err := widget.fetchNewAppAccessToken(); err != nil {
 				return nil, fmt.Errorf("fetching new app access token: %v", err)
@@ -199,9 +201,10 @@ func (widget *redditWidget) fetchSubredditPosts() (forumPostList, error) {
 	}
 
 	if widget.Search != "" {
-		query.Set("q", widget.Search+" subreddit:"+widget.Subreddit)
+		query.Set("q", widget.Search)
 		query.Set("sort", widget.SortBy)
-		requestURL = fmt.Sprintf("%s/search.json?%s", baseURL, query.Encode())
+		query.Set("restrict_sr", "true")
+		requestURL = fmt.Sprintf("%s/r/%s/search?%s", baseURL, widget.Subreddit, query.Encode())
 	} else {
 		if widget.SortBy == "top" {
 			query.Set("t", widget.TopPeriod)

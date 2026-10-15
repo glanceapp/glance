@@ -1170,6 +1170,8 @@ Can be used to specify the order in which the posts should get returned. Possibl
 Available only when `sort-by` is set to `top`. Possible values are `hour`, `day`, `week`, `month`, `year` and `all`.
 
 ##### `search`
+**Due to changes in Reddit's API, the search property works only when app-auth is configured.**
+
 Keywords to search for. Searching within specific fields is also possible, **though keep in mind that Reddit may remove the ability to use any of these at any time**:
 
 ![](images/reddit-field-search.png)
