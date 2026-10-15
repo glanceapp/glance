@@ -23,6 +23,8 @@ type searchWidget struct {
 	Target       string        `yaml:"target"`
 	Autofocus    bool          `yaml:"autofocus"`
 	Placeholder  string        `yaml:"placeholder"`
+	// Bool to detect urls from search
+	DetectURL    bool          `yaml:"detect-url"`
 }
 
 func convertSearchUrl(url string) string {

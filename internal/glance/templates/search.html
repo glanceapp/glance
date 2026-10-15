@@ -21,4 +21,49 @@
     <div class="search-bang"></div>
     <kbd class="hide-on-mobile" title="Press [S] to focus the search input">S</kbd>
 </div>
+
+<script>
+(function() {
+    const searchWidget = document.currentScript.previousElementSibling;
+    const input = searchWidget.querySelector('.search-input');
+    
+    const detectUrlEnabled = searchWidget.getAttribute('data-detect-url') === 'true';
+    const defaultNewTab = searchWidget.getAttribute('data-new-tab') === 'true';
+    const targetAttr = searchWidget.getAttribute('data-target') || '_self';
+
+    function isUrl(str) {
+        if (str.includes(' ')) return false;
+        return str.includes('.') || str.startsWith('localhost');
+    }
+
+    input.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+
+        const val = input.value.trim();
+
+        if (detectUrlEnabled && isUrl(val)) {
+            
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            let url = val;
+            if (!/^https?:\/\//i.test(url)) {
+                url = 'https://' + url;
+            }
+
+            let shouldOpenNewTab = defaultNewTab;
+            
+            if (e.ctrlKey || e.metaKey) {
+                shouldOpenNewTab = !defaultNewTab;
+            }
+
+            if (shouldOpenNewTab) {
+                window.open(url, '_blank');
+            } else {
+                window.location.href = url;
+            }
+        }
+    });
+});
+</script>
 {{ end }}
