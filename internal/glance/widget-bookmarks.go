@@ -78,11 +78,6 @@ func (widget *bookmarksWidget) initialize() error {
 	}
 
 	if widget.Style == "grid" {
-		if len(widget.Groups) != 1 {
-			return errors.New("grid style can only be used with a single group")
-		}
-
-		widget.Links = &widget.Groups[0].Links
 		widget.cachedHTML = widget.renderTemplate(widget, bookmarksGridWidgetTemplate)
 	} else {
 		widget.cachedHTML = widget.renderTemplate(widget, bookmarksWidgetTemplate)
