@@ -184,8 +184,9 @@ function handleHidePopoverOnEscape(event) {
     }
 }
 
-export function setupPopovers() {
-    const targets = document.querySelectorAll("[data-popover-type]");
+export function setupPopovers(root) {
+    root = root || document;
+    const targets = root.querySelectorAll("[data-popover-type]");
 
     for (let i = 0; i < targets.length; i++) {
         const target = targets[i];

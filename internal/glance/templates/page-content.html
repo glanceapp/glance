@@ -5,7 +5,13 @@
 {{ if .Page.HeadWidgets }}
 <div class="head-widgets">
     {{- range .Page.HeadWidgets }}
+    {{- if $.App.Config.Server.AsyncLoading }}
+    <div class="widget widget-loading" data-widget-id="{{ .GetID }}">
+        <div class="widget-loading-spinner"><div class="loading-icon"></div></div>
+    </div>
+    {{- else }}
     {{- .Render }}
+    {{- end }}
     {{- end }}
 </div>
 {{ end }}
@@ -14,7 +20,13 @@
 {{- range .Page.Columns }}
     <div class="page-column page-column-{{ .Size }}">
         {{- range .Widgets }}
+        {{- if $.App.Config.Server.AsyncLoading }}
+        <div class="widget widget-loading" data-widget-id="{{ .GetID }}">
+            <div class="widget-loading-spinner"><div class="loading-icon"></div></div>
+        </div>
+        {{- else }}
         {{- .Render }}
+        {{- end }}
         {{- end }}
     </div>
 {{- end }}
