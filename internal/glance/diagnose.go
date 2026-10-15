@@ -73,14 +73,6 @@ var diagnosticSteps = []diagnosticStep{
 		},
 	},
 	{
-		name: "fetch data from Reddit API",
-		fn: func() (string, error) {
-			return testHttpRequestWithHeaders("GET", "https://www.reddit.com/search.json", map[string]string{
-				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:137.0) Gecko/20100101 Firefox/137.0",
-			}, 200)
-		},
-	},
-	{
 		name: "fetch data from Yahoo finance API",
 		fn: func() (string, error) {
 			return testHttpRequestWithHeaders("GET", "https://query1.finance.yahoo.com/v8/finance/chart/NVDA", map[string]string{
