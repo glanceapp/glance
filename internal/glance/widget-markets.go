@@ -163,11 +163,7 @@ func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, erro
 			prices = prices[len(prices)-marketChartDays:]
 		}
 
-		previous := result.Meta.RegularMarketPrice
-
-		if len(prices) >= 2 && prices[len(prices)-2] != 0 {
-			previous = prices[len(prices)-2]
-		}
+		previous := previousMarketClose(prices, result.Meta.RegularMarketPrice)
 
 		points := svgPolylineCoordsFromYValues(100, 50, maybeCopySliceWithoutZeroValues(prices))
 
@@ -198,6 +194,18 @@ func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, erro
 	}
 
 	return markets, nil
+}
+
+func previousMarketClose(prices []float64, fallback float64) float64 {
+	// Yahoo sometimes returns null (decoded as 0) for a day's close, so use
+	// the most recent non-zero close before the current one
+	for i := len(prices) - 2; i >= 0; i-- {
+		if prices[i] != 0 {
+			return prices[i]
+		}
+	}
+
+	return fallback
 }
 
 var currencyToSymbol = map[string]string{
