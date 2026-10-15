@@ -167,6 +167,11 @@ func executeTemplateToString(t *template.Template, data any) (string, error) {
 	return b.String(), nil
 }
 
+func stringToBoolCaseInsensitive(s string) bool {
+	v := strings.ToLower(strings.TrimSpace(s))
+	return v == "true" || v == "yes"
+}
+
 func stringToBool(s string) bool {
 	return s == "true" || s == "yes"
 }

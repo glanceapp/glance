@@ -276,7 +276,7 @@ func groupDockerContainerChildren(
 
 func isDockerContainerHidden(container *dockerContainerJsonResponse, hideByDefault bool) bool {
 	if v := container.Labels.getOrDefault(dockerContainerLabelHide, ""); v != "" {
-		return stringToBool(v)
+		return stringToBoolCaseInsensitive(v)
 	}
 
 	return hideByDefault
