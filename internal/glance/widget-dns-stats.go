@@ -131,7 +131,7 @@ type dnsStats struct {
 	TotalQueries      int
 	BlockedQueries    int // we don't actually use this anywhere in templates, maybe remove it later?
 	BlockedPercent    int
-	ResponseTime      float64 // milliseconds
+	ResponseTime      int
 	DomainsBlocked    int
 	Series            [dnsStatsBars]dnsStatsSeries
 	TopBlockedDomains []dnsStatsBlockedDomain
@@ -179,7 +179,7 @@ func fetchAdguardStats(instanceURL string, allowInsecure bool, username, passwor
 	stats := &dnsStats{
 		TotalQueries:      responseJson.TotalQueries,
 		BlockedQueries:    responseJson.BlockedQueries,
-		ResponseTime:      responseJson.ResponseTime * 1000,
+		ResponseTime:      int(responseJson.ResponseTime * 1000),
 		TopBlockedDomains: make([]dnsStatsBlockedDomain, 0, topBlockedDomainsCount),
 	}
 

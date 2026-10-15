@@ -13,7 +13,7 @@
         </div>
         {{ if eq .Service "adguard" }}
         <div>
-            <div class="color-highlight size-h3">{{ if lt .Stats.ResponseTime 10.0 }}{{ printf "%.1f" .Stats.ResponseTime }}{{ else }}{{ printf "%.0f" .Stats.ResponseTime }}{{ end }}ms</div>
+            <div class="color-highlight size-h3">{{ .Stats.ResponseTime | formatNumber }}ms</div>
             <div class="size-h6">LATENCY</div>
         </div>
         {{ else }}
