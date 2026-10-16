@@ -608,6 +608,7 @@ details[open] .summary::after {
 .inline-block { display: inline-block; }
 .overflow-hidden { overflow: hidden; }
 .relative { position: relative; }
+.display-none { display: none !important; }
 .flex { display: flex; }
 .flex-1 { flex: 1; }
 .flex-wrap { flex-wrap: wrap; }
