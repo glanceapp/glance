@@ -260,9 +260,22 @@ func Collect(req *SystemInfoRequest) (*SystemInfo, []error) {
 	}
 
 	if !req.HideMountpointsByDefault {
-		filesystems, err := disk.Partitions(false)
+		// disk.Partitions(false) asks gopsutil for "physical" filesystems only, but its
+		// notion of physical excludes "overlay" -- the storage driver Docker uses for a
+		// container's own root filesystem by default. In a plain container with no extra
+		// host mounts, that leaves auto-detection with nothing to report except whatever
+		// tiny /etc/* config-file bind mounts Docker injects (which get hidden by callers
+		// like glanceapp/agent's default container mountpoint list anyway), so the net
+		// result is an empty mountpoints list even though there's a real, meaningful disk
+		// behind the overlay root worth reporting on. disk.Partitions(true) plus an
+		// allowlist of genuinely disk-backed filesystem types (keeping "overlay") reports
+		// that root correctly while still excluding proc/sysfs/tmpfs/etc noise.
+		filesystems, err := disk.Partitions(true)
 		if err == nil {
 			for _, fs := range filesystems {
+				if !isPhysicalFilesystemType(fs.Fstype) {
+					continue
+				}
 				addMountpointInfo(fs.Mountpoint, req.Mountpoints[fs.Mountpoint])
 			}
 		} else {
@@ -279,6 +292,38 @@ func Collect(req *SystemInfoRequest) (*SystemInfo, []error) {
 	})
 
 	return info, errs
+}
+
+// physicalFilesystemTypes lists the filesystem types treated as real, disk-backed storage
+// worth reporting usage for by default -- an allowlist rather than a denylist of virtual
+// types (proc, sysfs, tmpfs, devpts, mqueue, cgroup, cgroup2, ...) since the set of virtual
+// filesystem types grows over time while real disk filesystem types are comparatively stable.
+// "overlay" is deliberately included: it's technically a union filesystem rather than a disk
+// filesystem, but it's what Docker uses for a container's own root by default, and reports
+// accurate usage of the underlying host disk -- excluding it is what left auto-detection
+// finding nothing to report in a plain container with no extra host mounts.
+var physicalFilesystemTypes = map[string]bool{
+	"overlay":  true,
+	"ext2":     true,
+	"ext3":     true,
+	"ext4":     true,
+	"xfs":      true,
+	"btrfs":    true,
+	"zfs":      true,
+	"ntfs":     true,
+	"vfat":     true,
+	"exfat":    true,
+	"hfs":      true,
+	"hfsplus":  true,
+	"apfs":     true,
+	"f2fs":     true,
+	"jfs":      true,
+	"reiserfs": true,
+	"udf":      true,
+}
+
+func isPhysicalFilesystemType(fstype string) bool {
+	return physicalFilesystemTypes[fstype]
 }
 
 func inferCPUTempSensor(sensors []sensors.TemperatureStat) *sensors.TemperatureStat {
