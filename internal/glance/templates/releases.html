@@ -16,6 +16,9 @@
             {{ if gt .Downvotes 3 }}
             <li>{{ .Downvotes | formatNumber }} ⚠</li>
             {{ end }}
+            {{ if .CurrentVersion }}
+            <li>({{ .CurrentVersion }})</li>
+            {{ end }}
         </ul>
     </li>
     {{ end }}
