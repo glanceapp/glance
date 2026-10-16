@@ -278,25 +278,8 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 
 		if request.ItemLinkPrefix != "" {
 			rssItem.Link = request.ItemLinkPrefix + item.Link
-		} else if strings.HasPrefix(item.Link, "http://") || strings.HasPrefix(item.Link, "https://") {
-			rssItem.Link = item.Link
 		} else {
-			parsedUrl, err := url.Parse(feed.Link)
-			if err != nil {
-				parsedUrl, err = url.Parse(request.URL)
-			}
-
-			if err == nil {
-				var link string
-
-				if len(item.Link) > 0 && item.Link[0] == '/' {
-					link = item.Link
-				} else {
-					link = "/" + item.Link
-				}
-
-				rssItem.Link = parsedUrl.Scheme + "://" + parsedUrl.Host + link
-			}
+			rssItem.Link = resolveItemLink(item.Link, feed.Link, request.URL)
 		}
 
 		if item.Title != "" {
@@ -418,6 +401,31 @@ func recursiveFindThumbnailInExtensions(extensions map[string][]gofeedext.Extens
 }
 
 var htmlTagsWithAttributesPattern = regexp.MustCompile(`<\/?[a-zA-Z0-9-]+ *(?:[a-zA-Z-]+=(?:"|').*?(?:"|') ?)* *\/?>`)
+
+// Item links are often relative, and making them absolute needs a base that has
+// a scheme and a host. A feed's own <link> frequently has neither: url.Parse
+// accepts "/" without an error and leaves both empty, so the item link came out
+// as ":///path", which html/template refuses to render and replaces with
+// #ZgotmplZ. The URL the feed was fetched from is always absolute, so it is the
+// base whenever the feed's own link cannot be one.
+func resolveItemLink(itemLink, feedLink, feedURL string) string {
+	if strings.HasPrefix(itemLink, "http://") || strings.HasPrefix(itemLink, "https://") {
+		return itemLink
+	}
+
+	base, err := url.Parse(feedLink)
+	if err != nil || base.Scheme == "" || base.Host == "" {
+		if base, err = url.Parse(feedURL); err != nil || base.Scheme == "" || base.Host == "" {
+			return ""
+		}
+	}
+
+	if !strings.HasPrefix(itemLink, "/") {
+		itemLink = "/" + itemLink
+	}
+
+	return base.Scheme + "://" + base.Host + itemLink
+}
 
 func sanitizeFeedDescription(description string) string {
 	if description == "" {
