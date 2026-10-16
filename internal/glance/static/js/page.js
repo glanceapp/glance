@@ -583,6 +583,7 @@ function setupClocks() {
     for (var i = 0; i < clocks.length; i++) {
         const clock = clocks[i];
         const hourFormat = clock.dataset.hourFormat;
+        const primaryTimezone = clock.dataset.timezone;
         const localTimeContainer = clock.querySelector('[data-local-time]');
         const localDateElement = localTimeContainer.querySelector('[data-date]');
         const localWeekdayElement = localTimeContainer.querySelector('[data-weekday]');
@@ -595,10 +596,11 @@ function setupClocks() {
         );
 
         updateCallbacks.push((now) => {
-            setLocalTime(now);
-            localDateElement.textContent = now.getDate() + ' ' + monthNames[now.getMonth()];
-            localWeekdayElement.textContent = weekDayNames[now.getDay()];
-            localYearElement.textContent = now.getFullYear();
+            const primary = primaryTimezone ? timeInZone(now, primaryTimezone).time : now;
+            setLocalTime(primary);
+            localDateElement.textContent = primary.getDate() + ' ' + monthNames[primary.getMonth()];
+            localWeekdayElement.textContent = weekDayNames[primary.getDay()];
+            localYearElement.textContent = primary.getFullYear();
         });
 
         for (var z = 0; z < timeZoneContainers.length; z++) {

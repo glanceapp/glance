@@ -1,7 +1,7 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
-<div class="clock" data-hour-format="{{ .HourFormat }}">
+<div class="clock" data-hour-format="{{ .HourFormat }}"{{ if ne .Timezone "" }} data-timezone="{{ .Timezone }}"{{ end }}>
     <div class="flex justify-between items-center" data-local-time>
         <div>
             <div class="color-highlight size-h1" data-date></div>

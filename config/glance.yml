@@ -1,0 +1,100 @@
+# Ops Centre — personal ops dashboard (Glance fork)
+# Secrets and personal tokens: use env vars via Glance's ${} syntax (see .env.example).
+# Do not commit real API keys.
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  assets-path: ./assets
+
+theme:
+  background-color: 120 20 5
+  primary-color: 120 100 50
+  positive-color: 120 100 45
+  negative-color: 0 90 60
+  contrast-multiplier: 1.3
+  custom-css-file: /assets/terminal.css
+
+branding:
+  logo-text: OPS
+  app-name: Ops Centre
+  custom-footer: |
+    <p>Ops Centre · powered by <a href="https://github.com/glanceapp/glance">Glance</a></p>
+
+pages:
+  - name: OPS
+    columns:
+      - size: small
+        widgets:
+          - type: clock
+            hour-format: 24h
+            timezone: Australia/Brisbane
+            timezones:
+              - timezone: Etc/UTC
+                label: UTC
+              - timezone: America/Los_Angeles
+                label: PT
+          - type: calendar
+            first-day-of-week: monday
+          - type: to-do
+            title: TASKS
+          - type: bookmarks
+            groups:
+              - title: OPS
+                links:
+                  - title: GitHub
+                    url: https://github.com
+                  - title: Hacker News
+                    url: https://news.ycombinator.com
+
+      - size: full
+        widgets:
+          - type: server-stats
+            servers:
+              - type: local
+                name: box
+          - type: monitor
+            title: SERVICES
+            cache: 1m
+            sites:
+              - title: GitHub
+                url: https://github.com
+              - title: Cloudflare
+                url: https://www.cloudflare.com
+              - title: Hacker News
+                url: https://news.ycombinator.com
+              # Add your own services here (use env vars for private URLs; see .env.example)
+          - type: group
+            widgets:
+              - type: hacker-news
+              - type: lobsters
+          - type: rss
+            title: FEEDS
+            limit: 10
+            collapse-after: 4
+            cache: 3h
+            feeds:
+              - url: https://selfh.st/rss/
+                title: selfh.st
+              - url: https://samwho.dev/rss.xml
+
+      - size: small
+        widgets:
+          - type: weather
+            location: Brisbane, Australia
+            units: metric
+            hour-format: 24h
+          - type: markets
+            markets:
+              - symbol: BTC-USD
+                name: Bitcoin
+              - symbol: ^AXJO
+                name: ASX 200
+              - symbol: NVDA
+                name: NVIDIA
+          - type: releases
+            cache: 1d
+            repositories:
+              - glanceapp/glance
+              - gethomepage/homepage
+              - nasa/openmct

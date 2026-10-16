@@ -1,0 +1,14 @@
+services:
+  ops-centre:
+    build: .
+    container_name: ops-centre
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/app/config
+      - ./assets:/app/assets
+    # Optional: pass secrets / personal URLs without committing them
+    env_file:
+      - path: .env
+        required: false
