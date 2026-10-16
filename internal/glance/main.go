@@ -94,7 +94,7 @@ func serveApp(configPath string) error {
 	// TODO: refactor if this gets any more complex, the current implementation is
 	// difficult to reason about due to all of the callbacks and simultaneous operations,
 	// use a single goroutine and a channel to initiate synchronous changes to the server
-	exitChannel := make(chan struct{})
+	exitChannel := make(chan error, 1)
 	hadValidConfigOnStartup := false
 	var stopServer func() error
 
@@ -108,7 +108,7 @@ func serveApp(configPath string) error {
 			log.Printf("Config has errors: %v", err)
 
 			if !hadValidConfigOnStartup {
-				close(exitChannel)
+				reportExitError(exitChannel, fmt.Errorf("validating config file: %w", err))
 			}
 
 			return
@@ -119,7 +119,7 @@ func serveApp(configPath string) error {
 			log.Printf("Failed to create application: %v", err)
 
 			if !hadValidConfigOnStartup {
-				close(exitChannel)
+				reportExitError(exitChannel, fmt.Errorf("creating application: %w", err))
 			}
 
 			return
@@ -135,14 +135,9 @@ func serveApp(configPath string) error {
 			}
 		}
 
-		go func() {
-			var startServer func() error
-			startServer, stopServer = app.server()
-
-			if err := startServer(); err != nil {
-				log.Printf("Failed to start server: %v", err)
-			}
-		}()
+		var startServer func() error
+		startServer, stopServer = app.server()
+		go startServerAndReport(startServer, exitChannel)
 	}
 
 	onErr := func(err error) {
@@ -176,8 +171,21 @@ func serveApp(configPath string) error {
 		}
 	}
 
-	<-exitChannel
-	return nil
+	return <-exitChannel
+}
+
+func startServerAndReport(startServer func() error, exitChannel chan<- error) {
+	if err := startServer(); err != nil {
+		log.Printf("Failed to start server: %v", err)
+		reportExitError(exitChannel, fmt.Errorf("starting server: %w", err))
+	}
+}
+
+func reportExitError(exitChannel chan<- error, err error) {
+	select {
+	case exitChannel <- err:
+	default:
+	}
 }
 
 func serveUpdateNoticeIfConfigLocationNotMigrated(configPath string) bool {
