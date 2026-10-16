@@ -683,6 +683,10 @@ var customAPITemplateFuncs = func() template.FuncMap {
 				URL: url,
 			}
 		},
+		"withMethod": func(method string, req *CustomAPIRequest) *CustomAPIRequest {
+			req.Method = method
+			return req
+		},
 		"withHeader": func(key, value string, req *CustomAPIRequest) *CustomAPIRequest {
 			if req.Headers == nil {
 				req.Headers = make(map[string]string)
