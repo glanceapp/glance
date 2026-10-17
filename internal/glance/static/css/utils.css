@@ -320,6 +320,7 @@ details[open] .summary::after {
 
 .expand-toggle-button-icon::before {
     content: '' / "";
+    font-family: 'JetBrains Mono';
     font-size: 0.8rem;
     transform: rotate(90deg);
     line-height: 1;
