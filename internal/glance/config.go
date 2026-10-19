@@ -137,53 +137,76 @@ var configVariablePattern = regexp.MustCompile(`(^|.)\$\{(?:([a-zA-Z]+):)?([a-zA
 // ${secret:api_key} 			        - value gets loaded from /run/secrets/api_key
 // ${readFileFromEnv:PATH_TO_SECRET}    - value gets loaded from the file path specified in the environment variable PATH_TO_SECRET
 //
-// TODO: don't match against commented out sections, not sure exactly how since
-// variables can be placed anywhere and used to modify the YAML structure itself
+// Variables on a fully commented-out line (the first non-whitespace character of
+// the line is '#') are left untouched, so an unset environment variable that is
+// referenced only by a commented-out option does not abort startup. Inline
+// comments and variables that modify the YAML structure itself are intentionally
+// still processed, since detecting those reliably is not possible before parsing.
 func parseConfigVariables(contents []byte) ([]byte, error) {
-	var err error
+	var buf bytes.Buffer
+	lastEnd := 0
 
-	replaced := configVariablePattern.ReplaceAllFunc(contents, func(match []byte) []byte {
-		if err != nil {
-			return nil
+	for _, m := range configVariablePattern.FindAllSubmatchIndex(contents, -1) {
+		matchStart, matchEnd := m[0], m[1]
+		buf.Write(contents[lastEnd:matchStart])
+		lastEnd = matchEnd
+
+		match := contents[matchStart:matchEnd]
+		prefix := contents[m[2]:m[3]]
+
+		if lineIsCommentedOut(contents, matchStart) {
+			buf.Write(match)
+			continue
 		}
 
-		groups := configVariablePattern.FindSubmatch(match)
-		if len(groups) != 4 {
-			// we can't handle this match, this shouldn't happen unless the number of groups
-			// in the regex has been changed without updating the below code
-			return match
+		if string(prefix) == `\` {
+			buf.Write(match[len(prefix):])
+			continue
 		}
 
-		prefix := string(groups[1])
-		if prefix == `\` {
-			if len(match) >= 2 {
-				return match[1:]
-			} else {
-				return nil
-			}
+		typeAsString := ""
+		if m[4] != -1 {
+			typeAsString = string(contents[m[4]:m[5]])
 		}
-
-		typeAsString, variableName := string(groups[2]), string(groups[3])
+		variableName := string(contents[m[6]:m[7]])
 		variableType := ternary(typeAsString == "", configVarTypeEnv, typeAsString)
 
-		parsedValue, returnOriginal, localErr := parseConfigVariableOfType(variableType, variableName)
-		if localErr != nil {
-			err = fmt.Errorf("parsing variable: %v", localErr)
-			return nil
+		parsedValue, returnOriginal, err := parseConfigVariableOfType(variableType, variableName)
+		if err != nil {
+			return nil, fmt.Errorf("parsing variable: %v", err)
 		}
 
 		if returnOriginal {
-			return match
+			buf.Write(match)
+			continue
 		}
 
-		return []byte(prefix + parsedValue)
-	})
-
-	if err != nil {
-		return nil, err
+		buf.Write(prefix)
+		buf.WriteString(parsedValue)
 	}
 
-	return replaced, nil
+	buf.Write(contents[lastEnd:])
+
+	return buf.Bytes(), nil
+}
+
+// lineIsCommentedOut reports whether the line containing pos is a YAML comment
+// line, i.e. its first non-whitespace character is '#'.
+func lineIsCommentedOut(contents []byte, pos int) bool {
+	lineStart := bytes.LastIndexByte(contents[:pos], '\n') + 1
+
+	for i := lineStart; i < len(contents); i++ {
+		switch contents[i] {
+		case ' ', '\t':
+			continue
+		case '\n':
+			return false
+		default:
+			return contents[i] == '#'
+		}
+	}
+
+	return false
 }
 
 // When the bool return value is true, it indicates that the caller should use the original value
