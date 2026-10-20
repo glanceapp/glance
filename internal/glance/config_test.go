@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestParseConfigVariablesSkipsCommentedOutLines(t *testing.T) {
+func TestParseConfigVariablesLeavesUnsetVariableOnCommentedOutLine(t *testing.T) {
 	os.Unsetenv("GLANCE_TEST_UNSET")
 
 	// The variable is only referenced on a commented-out line, so an unset env
@@ -19,6 +19,22 @@ func TestParseConfigVariablesSkipsCommentedOutLines(t *testing.T) {
 	}
 	if !bytes.Equal(output, input) {
 		t.Fatalf("commented-out line was modified:\nwant %q\ngot  %q", input, output)
+	}
+}
+
+func TestParseConfigVariablesSubstitutesSetVariableOnCommentLikeLine(t *testing.T) {
+	// A leading '#' is not always a comment: inside a block scalar it can be a
+	// CSS id selector, where a set variable must still be substituted so a valid
+	// config isn't broken. Only unresolvable variables are left as-is. See #474.
+	os.Setenv("GLANCE_TEST_SET", "ff0000")
+	defer os.Unsetenv("GLANCE_TEST_SET")
+
+	output, err := parseConfigVariables([]byte("#widget { color: ${GLANCE_TEST_SET}; }\n"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !bytes.Contains(output, []byte("color: ff0000;")) {
+		t.Fatalf("set variable on a '#' line was not substituted, got: %q", output)
 	}
 }
 

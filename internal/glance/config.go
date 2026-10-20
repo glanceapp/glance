@@ -137,11 +137,14 @@ var configVariablePattern = regexp.MustCompile(`(^|.)\$\{(?:([a-zA-Z]+):)?([a-zA
 // ${secret:api_key} 			        - value gets loaded from /run/secrets/api_key
 // ${readFileFromEnv:PATH_TO_SECRET}    - value gets loaded from the file path specified in the environment variable PATH_TO_SECRET
 //
-// Variables on a fully commented-out line (the first non-whitespace character of
-// the line is '#') are left untouched, so an unset environment variable that is
-// referenced only by a commented-out option does not abort startup. Inline
-// comments and variables that modify the YAML structure itself are intentionally
-// still processed, since detecting those reliably is not possible before parsing.
+// Variables are substituted everywhere, including on commented-out lines,
+// because a leading '#' can also be part of a block scalar (e.g. a CSS id
+// selector) where the value is genuinely needed, and the two can't be told
+// apart before the YAML is parsed. The one concession for commented-out lines
+// (first non-whitespace character '#') is that a variable which fails to
+// resolve there is left untouched instead of aborting startup, so a
+// commented-out option referencing an unset variable does not prevent Glance
+// from starting (see #474).
 func parseConfigVariables(contents []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	lastEnd := 0
@@ -153,11 +156,6 @@ func parseConfigVariables(contents []byte) ([]byte, error) {
 
 		match := contents[matchStart:matchEnd]
 		prefix := contents[m[2]:m[3]]
-
-		if lineIsCommentedOut(contents, matchStart) {
-			buf.Write(match)
-			continue
-		}
 
 		if string(prefix) == `\` {
 			buf.Write(match[len(prefix):])
@@ -173,6 +171,12 @@ func parseConfigVariables(contents []byte) ([]byte, error) {
 
 		parsedValue, returnOriginal, err := parseConfigVariableOfType(variableType, variableName)
 		if err != nil {
+			// A variable that only appears on a commented-out line must not
+			// prevent startup; leave it untouched instead of aborting (#474).
+			if lineIsCommentedOut(contents, matchStart) {
+				buf.Write(match)
+				continue
+			}
 			return nil, fmt.Errorf("parsing variable: %v", err)
 		}
 
