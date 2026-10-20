@@ -2422,6 +2422,8 @@ In the event that the CPU temperature goes over 80°C, a flame icon will appear 
 
 ![](images/server-stats-flame-icon.png)
 
+The CPU value is calculated from the system's load average (1 minute, with the 15 minute average shown in the popover) relative to the number of logical CPU cores. On Linux, the load average also includes processes that are waiting for disk I/O, so on servers with a lot of disk activity, such as a NAS with spinning hard drives, the value can be noticeably higher than the actual CPU utilization.
+
 #### Properties
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
