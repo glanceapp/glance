@@ -106,6 +106,7 @@ func (r appReleaseList) sortByNewest() appReleaseList {
 type releaseRequest struct {
 	IncludePreleases bool   `yaml:"include-prereleases"`
 	Repository       string `yaml:"repository"`
+	Url              string `yaml:url`
 
 	source releaseSource
 	token  *string
@@ -130,19 +131,30 @@ func (r *releaseRequest) UnmarshalYAML(node *yaml.Node) error {
 		}
 	}
 
-	parts := strings.SplitN(repository, ":", 2)
+	parts := strings.SplitN(r.Repository, ":", 2)
 	if len(parts) == 1 {
 		r.source = releaseSourceGithub
+		if r.Url != "" {
+			return errors.New("the github source does not support specifying urls")
+		}
 	} else if len(parts) == 2 {
 		r.Repository = parts[1]
 
 		switch parts[0] {
 		case string(releaseSourceGithub):
 			r.source = releaseSourceGithub
+
+			if r.Url != "" {
+				return errors.New("the github source does not support specifying urls")
+			}
 		case string(releaseSourceGitlab):
 			r.source = releaseSourceGitlab
 		case string(releaseSourceDockerHub):
 			r.source = releaseSourceDockerHub
+
+			if r.Url != "" {
+				return errors.New("the dockerhub source does not support specifying urls")
+			}
 		case string(releaseSourceCodeberg):
 			r.source = releaseSourceCodeberg
 		default:
@@ -357,12 +369,26 @@ type gitlabReleaseResponseJson struct {
 }
 
 func fetchLatestGitLabRelease(request *releaseRequest) (*appRelease, error) {
+	var requestURI string
+
+	if request.Url != "" {
+		requestURI =
+			fmt.Sprintf(
+				"https://%s/api/v4/projects/%s/releases/permalink/latest",
+				request.Url,
+				url.QueryEscape(request.Repository),
+			)
+	} else {
+		requestURI =
+			fmt.Sprintf(
+				"https://gitlab.com/api/v4/projects/%s/releases/permalink/latest",
+				url.QueryEscape(request.Repository),
+			)
+	}
+
 	httpRequest, err := http.NewRequest(
 		"GET",
-		fmt.Sprintf(
-			"https://gitlab.com/api/v4/projects/%s/releases/permalink/latest",
-			url.QueryEscape(request.Repository),
-		),
+		requestURI,
 		nil,
 	)
 	if err != nil {
@@ -394,12 +420,24 @@ type codebergReleaseResponseJson struct {
 }
 
 func fetchLatestCodebergRelease(request *releaseRequest) (*appRelease, error) {
-	httpRequest, err := http.NewRequest(
-		"GET",
-		fmt.Sprintf(
+	var requestURI string
+
+	if request.Url != "" {
+		requestURI = fmt.Sprintf(
+			"https://%s/api/v1/repos/%s/releases/latest",
+			request.Url,
+			request.Repository,
+		)
+	} else {
+		requestURI = fmt.Sprintf(
 			"https://codeberg.org/api/v1/repos/%s/releases/latest",
 			request.Repository,
-		),
+		)
+	}
+
+	httpRequest, err := http.NewRequest(
+		"GET",
+		requestURI,
 		nil,
 	)
 	if err != nil {
