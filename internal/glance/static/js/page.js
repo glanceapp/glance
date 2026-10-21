@@ -134,6 +134,14 @@ function setupSearchBoxes() {
                 if (currentBang != null) {
                     query = input.slice(currentBang.dataset.shortcut.length + 1);
                     searchUrlTemplate = currentBang.dataset.url;
+                    const regexString = currentBang.dataset.regex;
+                    const match = regexString && query.match(new RegExp(regexString));
+                    if (match) {
+                      query = match.at(-1);
+                      match.slice(1, -1).forEach((m) => {
+                        searchUrlTemplate = searchUrlTemplate.replace("!QUERY!", encodeURIComponent(m));
+                      });
+                    }
                 } else {
                     query = input;
                     searchUrlTemplate = defaultSearchUrl;
