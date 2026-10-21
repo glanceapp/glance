@@ -135,6 +135,7 @@ type widget interface {
 
 	initialize() error
 	requiresUpdate(*time.Time) bool
+	requiresUpdateWithin(*time.Time, time.Duration) bool
 	setProviders(*widgetProviders)
 	update(context.Context)
 	setID(uint64)
@@ -184,6 +185,21 @@ func (w *widgetBase) requiresUpdate(now *time.Time) bool {
 	}
 
 	return now.After(w.nextUpdate)
+}
+
+// requiresUpdateWithin checks if the widget will require an update within the given duration
+func (w *widgetBase) requiresUpdateWithin(now *time.Time, duration time.Duration) bool {
+	if w.cacheType == cacheTypeInfinite {
+		return false
+	}
+
+	if w.nextUpdate.IsZero() {
+		return true
+	}
+
+	// Check if the widget will be outdated before now + duration
+	futureTime := now.Add(duration)
+	return futureTime.After(w.nextUpdate) || now.After(w.nextUpdate)
 }
 
 func (w *widgetBase) IsWIP() bool {
