@@ -28,6 +28,7 @@ func (widget *hackerNewsWidget) initialize() error {
 	widget.
 		withTitle("Hacker News").
 		withTitleURL("https://news.ycombinator.com/").
+		withTitleTarget("_blank").
 		withCacheDuration(30 * time.Minute)
 
 	if widget.Limit <= 0 {

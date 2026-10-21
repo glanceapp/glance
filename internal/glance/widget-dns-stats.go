@@ -70,6 +70,7 @@ func (widget *dnsStatsWidget) initialize() error {
 	widget.
 		withTitle("DNS Stats").
 		withTitleURL(titleURL).
+		withTitleTarget("_blank").
 		withCacheDuration(10 * time.Minute)
 
 	switch widget.Service {

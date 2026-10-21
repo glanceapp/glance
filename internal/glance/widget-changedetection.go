@@ -21,6 +21,7 @@ type changeDetectionWidget struct {
 	Token            string                   `yaml:"token"`
 	Limit            int                      `yaml:"limit"`
 	CollapseAfter    int                      `yaml:"collapse-after"`
+	Target           string                   `yaml:"target"`
 }
 
 func (widget *changeDetectionWidget) initialize() error {
@@ -36,6 +37,10 @@ func (widget *changeDetectionWidget) initialize() error {
 
 	if widget.InstanceURL == "" {
 		widget.InstanceURL = "https://www.changedetection.io"
+	}
+
+	if widget.Target == "" {
+		widget.Target = "_blank"
 	}
 
 	return nil

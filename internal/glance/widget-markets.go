@@ -21,6 +21,7 @@ type marketsWidget struct {
 	ChartLinkTemplate  string          `yaml:"chart-link-template"`
 	SymbolLinkTemplate string          `yaml:"symbol-link-template"`
 	Sort               string          `yaml:"sort-by"`
+	Target             string          `yaml:"target"`
 	Markets            marketList      `yaml:"-"`
 }
 
@@ -30,6 +31,10 @@ func (widget *marketsWidget) initialize() error {
 	// legacy support, remove in v0.10.0
 	if len(widget.MarketRequests) == 0 {
 		widget.MarketRequests = widget.StocksRequests
+	}
+
+	if widget.Target == "" {
+		widget.Target = "_blank"
 	}
 
 	for i := range widget.MarketRequests {

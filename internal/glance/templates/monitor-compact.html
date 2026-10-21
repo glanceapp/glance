@@ -24,7 +24,7 @@
 {{ if .Icon.URL }}
 {{ .Icon.ElemWithClass "square-20" }}
 {{ end }}
-<a class="size-title-dynamic color-highlight text-truncate block grow" href="{{ .URL | safeURL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
+<a class="size-title-dynamic color-highlight text-truncate block grow" href="{{ .URL | safeURL }}" target="{{ .Target }}" rel="noreferrer">{{ .Title }}</a>
 {{ if not .Status.TimedOut }}<div>{{ .Status.ResponseTime.Milliseconds | formatNumber }}ms</div>{{ end }}
 {{ if eq .StatusStyle "ok" }}
 <div class="square-18 shrink-0" title="{{ .Status.Code }}">

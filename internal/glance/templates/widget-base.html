@@ -2,7 +2,7 @@
     {{- if not .HideHeader }}
     <div class="widget-header">
         {{- if ne "" .TitleURL }}
-        <h2><a href="{{ .TitleURL | safeURL }}" target="_blank" rel="noreferrer" class="uppercase">{{ .Title }}</a></h2>
+        <h2><a href="{{ .TitleURL | safeURL }}" target="{{ if ne .TitleTarget "" }}{{ .TitleTarget }}{{ else }}_blank{{ end }}" rel="noreferrer" class="uppercase">{{ .Title }}</a></h2>
         {{- else }}
         <h2 class="uppercase">{{ .Title }}</h2>
         {{- end }}

@@ -26,7 +26,7 @@
             {{- end }}
             {{- end }}
             <div class="grow min-width-0">
-                <a href="{{ .DiscussionUrl | safeURL }}" class="size-title-dynamic color-primary-if-not-visited" target="_blank" rel="noreferrer">{{ .Title }}</a>
+                <a href="{{ .DiscussionUrl | safeURL }}" class="size-title-dynamic color-primary-if-not-visited" target="{{ $.Target }}" rel="noreferrer">{{ .Title }}</a>
                 {{- if .Tags }}
                 <div class="inline-block forum-post-tags-container">
                     <ul class="attachments">
@@ -41,7 +41,7 @@
                     <li class="shrink-0">{{ .Score | formatApproxNumber }} points</li>
                     <li class="shrink-0{{ if .TargetUrl | safeURL }} forum-post-autohide{{ end }}">{{ .CommentCount | formatApproxNumber }} comments</li>
                     {{- if .TargetUrl }}
-                    <li class="min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ .TargetUrlDomain }}</a></li>
+                    <li class="min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="{{ $.Target }}" rel="noreferrer">{{ .TargetUrlDomain }}</a></li>
                     {{- end }}
                 </ul>
             </div>
