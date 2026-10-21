@@ -40,6 +40,9 @@
                     <li {{ dynamicRelativeTimeAttrs .TimePosted }}></li>
                     <li class="shrink-0">{{ .Score | formatApproxNumber }} points</li>
                     <li class="shrink-0{{ if .TargetUrl | safeURL }} forum-post-autohide{{ end }}">{{ .CommentCount | formatApproxNumber }} comments</li>
+                    {{- if .Subreddit }}
+                    <li class="shrink-0"><a class="visited-indicator" href="https://www.reddit.com/r/{{ .Subreddit }}" target="_blank" rel="noreferrer">r/{{ .Subreddit }}</a></li>
+                    {{- end }}
                     {{- if .TargetUrl }}
                     <li class="min-width-0"><a class="visited-indicator text-truncate block" href="{{ .TargetUrl }}" target="_blank" rel="noreferrer">{{ .TargetUrlDomain }}</a></li>
                     {{- end }}

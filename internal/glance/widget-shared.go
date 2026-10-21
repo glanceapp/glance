@@ -22,6 +22,7 @@ type forumPost struct {
 	Engagement      float64
 	TimePosted      time.Time
 	Tags            []string
+	Subreddit       string
 	IsCrosspost     bool
 }
 
