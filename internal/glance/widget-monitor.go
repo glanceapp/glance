@@ -23,6 +23,7 @@ type monitorWidget struct {
 		URL                string          `yaml:"-"`
 		ErrorURL           string          `yaml:"error-url"`
 		Title              string          `yaml:"title"`
+		Description        string          `yaml:"description"`
 		Icon               customIconField `yaml:"icon"`
 		SameTab            bool            `yaml:"same-tab"`
 		StatusText         string          `yaml:"-"`

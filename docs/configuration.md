@@ -1987,6 +1987,7 @@ Properties for each site:
 | check-url | string | no | |
 | error-url | string | no | |
 | icon | string | no | |
+| description | string | no | |
 | timeout | string | no | 3s |
 | allow-insecure | boolean | no | false |
 | same-tab | boolean | no | false |
@@ -2012,6 +2013,10 @@ If the monitored service returns an error, the user will be redirected here. If 
 `icon`
 
 See [Icons](#icons) for more information on how to specify icons.
+
+`description`
+
+A short description displayed below the title. Unset by default.
 
 `timeout`
 
