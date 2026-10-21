@@ -1,0 +1,29 @@
+/* Retro phosphor-green CRT terminal vibe for Ops Centre */
+
+* {
+  font-family: "JetBrains Mono", "Fira Code", "DejaVu Sans Mono", monospace !important;
+}
+
+.widget-header {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.widget-content {
+  border: 1px solid hsl(120 60% 25%);
+  border-radius: 0 !important;
+}
+
+/* CRT scanline overlay */
+body::after {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.1) 0 1px,
+    transparent 1px 3px
+  );
+  z-index: 9999;
+}

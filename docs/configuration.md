@@ -2707,6 +2707,7 @@ Example:
 ```yaml
 - type: clock
   hour-format: 24h
+  timezone: Australia/Brisbane
   timezones:
     - timezone: Europe/Paris
       label: Paris
@@ -2725,10 +2726,14 @@ Preview:
 | Name | Type | Required | Default |
 | ---- | ---- | -------- | ------- |
 | hour-format | string | no | 24h |
+| timezone | string | no | (viewer's local timezone) |
 | timezones | array | no |  |
 
 ##### `hour-format`
 Whether to show the time in 12 or 24 hour format. Possible values are `12h` and `24h`.
+
+##### `timezone`
+Optionally set the primary clock (large time and date) to a fixed timezone instead of the viewer's local timezone. Use an identifier such as `Australia/Brisbane`. Secondary rows are still configured via `timezones`.
 
 #### Properties for each timezone
 

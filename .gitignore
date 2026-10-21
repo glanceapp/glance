@@ -1,5 +1,6 @@
-/assets
 /build
 /playground
 /.idea
-/glance*.yml
+.env
+# Accidental local root config; the committed template lives in config/
+/glance.yml
