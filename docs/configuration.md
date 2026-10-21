@@ -2509,6 +2509,51 @@ The authentication token to use when fetching the statistics.
 ###### `timeout`
 The maximum time to wait for a response from the server. The value is a string and must be a number followed by one of s, m, h, d. Example: `10s` for 10 seconds, `1m` for 1 minute, etc
 
+### Navidrome
+Display the current song playing through [Subsonic's REST API](https://www.navidrome.org/docs/developers/subsonic-api/). Shows the first active player entry returned by `getNowPlaying`.
+
+Example:
+
+```yaml
+- type: navidrome
+  url: http://192.168.0.69:4533
+  user: ${NAVI_USER} # loaded from .env
+  pass: ${NAVI_PASS} # loaded from .env
+  album: false
+  track: true
+```
+
+Preview:
+
+![](images/navidrome-preview.png)
+
+#### Properties
+
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| url | string | yes | |
+| user | string | yes | |
+| pass | string | yes | |
+| allow-insecure | bool | no | false |
+| artist | bool | no | true |
+| album | bool | no | true |
+| track | bool | no | false |
+
+##### `url`
+The URL to your Navidrome instance
+
+##### `user` & `pass`
+Self explanatory, your credentials used for Subsonic API authentication.
+
+##### `allow-insecure`
+Only matters for HTTPS with a self signed or otherwise invalid cert. Has no effect on plain HTTP.
+
+##### `artist`, `album`, `track`
+Whether to show each field in the metadata line below the song title. Set to `true` to show, `false` to hide. The song title itself is always shown.
+
+##### `cache`
+Uses adaptive polling when omitted: 10 seconds while playing, 1 minute when paused/idle, 5 minutes when nothing is in the queue. Set `cache` to a fixed duration (e.g. `30s`) to override this behavior.
+
 ### Repository
 Display general information about a repository as well as a list of the latest open pull requests and issues.
 
