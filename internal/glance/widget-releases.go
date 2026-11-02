@@ -130,7 +130,7 @@ func (r *releaseRequest) UnmarshalYAML(node *yaml.Node) error {
 		}
 	}
 
-	parts := strings.SplitN(repository, ":", 2)
+	parts := strings.SplitN(r.Repository, ":", 2)
 	if len(parts) == 1 {
 		r.source = releaseSourceGithub
 	} else if len(parts) == 2 {
