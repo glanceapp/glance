@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -126,5 +127,81 @@ func TestRSSConditionalCacheKeepsUndatedItems(t *testing.T) {
 				t.Errorf("304 changed undated items: first = %+v, second = %+v, 304 responses = %d", first, second, notModified)
 			}
 		})
+	}
+}
+
+func TestRSSConditionalCacheSeparatesRequestHeaders(t *testing.T) {
+	const modified = "Mon, 02 Nov 2026 12:00:00 GMT"
+	for _, header := range []string{"Authorization", "Accept-Language"} {
+		t.Run(header, func(t *testing.T) {
+			notModified := 0
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Vary", header)
+				w.Header().Set("Last-Modified", modified)
+				if r.Header.Get("If-Modified-Since") == modified {
+					notModified++
+					w.WriteHeader(http.StatusNotModified)
+					return
+				}
+				fmt.Fprintf(w, `<rss version="2.0"><channel><title>Feed</title>
+<link>https://example.com</link><description>Feed</description>
+<item><title>%s</title><link>https://example.com/item</link></item>
+</channel></rss>`, r.Header.Get(header))
+			}))
+			defer server.Close()
+			widget := &rssWidget{}
+			if err := widget.initialize(); err != nil {
+				t.Fatal(err)
+			}
+			for index, variant := range []string{"first", "second", "first", "second"} {
+				name := header
+				if index >= 2 {
+					name = strings.ToLower(header)
+				}
+				items, err := widget.fetchItemsFromFeedTask(rssFeedRequest{
+					URL: server.URL, Headers: map[string]string{name: variant, "X-Feed": "fixture"},
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(items) != 1 || items[0].Title != variant {
+					t.Errorf("header %s=%s returned %+v", header, variant, items)
+				}
+			}
+			if notModified != 2 {
+				t.Errorf("304 responses = %d, want 2 (one repeat per representation)", notModified)
+			}
+		})
+	}
+}
+
+func TestRSSConditionalCacheKeepsExplicitValidators(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for header, want := range map[string]string{
+			"If-None-Match": `"configured"`, "If-Modified-Since": "Mon, 02 Nov 2026 12:00:00 GMT",
+		} {
+			if got := r.Header.Values(header); !reflect.DeepEqual(got, []string{want}) {
+				t.Errorf("%s = %v, want only %q", header, got, want)
+			}
+		}
+		w.Header().Set("ETag", `"server"`)
+		w.Header().Set("Last-Modified", "Tue, 03 Nov 2026 12:00:00 GMT")
+		fmt.Fprint(w, `<rss version="2.0"><channel><title>Feed</title>
+<link>https://example.com</link><description>Feed</description></channel></rss>`)
+	}))
+	defer server.Close()
+	widget := &rssWidget{}
+	if err := widget.initialize(); err != nil {
+		t.Fatal(err)
+	}
+	for range 2 {
+		_, err := widget.fetchItemsFromFeedTask(rssFeedRequest{
+			URL: server.URL, Headers: map[string]string{
+				"if-none-match": `"configured"`, "if-modified-since": "Mon, 02 Nov 2026 12:00:00 GMT",
+			},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 }

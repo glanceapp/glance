@@ -2,6 +2,7 @@ package glance
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"html"
 	"html/template"
@@ -223,22 +224,29 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 	}
 
 	req.Header.Add("User-Agent", glanceUserAgentString)
+	for key, value := range request.Headers {
+		req.Header.Set(key, value)
+	}
+	key, err := json.Marshal(struct {
+		URL     string
+		Headers http.Header
+	}{request.URL, req.Header})
+	if err != nil {
+		return nil, err
+	}
+	cacheKey := string(key)
 
 	widget.cachedFeedsMutex.Lock()
-	cache, isCached := widget.cachedFeeds[request.URL]
+	cache, isCached := widget.cachedFeeds[cacheKey]
 	if isCached {
-		if cache.etag != "" {
+		if _, configured := req.Header["If-None-Match"]; !configured && cache.etag != "" {
 			req.Header.Add("If-None-Match", cache.etag)
 		}
-		if cache.lastModified != "" {
+		if _, configured := req.Header["If-Modified-Since"]; !configured && cache.lastModified != "" {
 			req.Header.Add("If-Modified-Since", cache.lastModified)
 		}
 	}
 	widget.cachedFeedsMutex.Unlock()
-
-	for key, value := range request.Headers {
-		req.Header.Set(key, value)
-	}
 
 	resp, err := defaultHTTPClient.Do(req)
 	if err != nil {
@@ -268,7 +276,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 
 		if resp.Header.Get("ETag") != "" || resp.Header.Get("Last-Modified") != "" {
 			widget.cachedFeedsMutex.Lock()
-			widget.cachedFeeds[request.URL] = &cachedRSSFeed{
+			widget.cachedFeeds[cacheKey] = &cachedRSSFeed{
 				etag:         resp.Header.Get("ETag"),
 				lastModified: resp.Header.Get("Last-Modified"),
 				feed:         feed,
