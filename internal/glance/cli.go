@@ -70,17 +70,19 @@ func parseCliOptions() (*cliOptions, error) {
 	if len(args) == 0 {
 		intent = cliIntentServe
 	} else if len(args) == 1 {
-		if args[0] == "config:validate" {
+
+		switch args[0] {
+		case "config:validate":
 			intent = cliIntentConfigValidate
-		} else if args[0] == "config:print" {
+		case "config:print":
 			intent = cliIntentConfigPrint
-		} else if args[0] == "sensors:print" {
+		case "sensors:print":
 			intent = cliIntentSensorsPrint
-		} else if args[0] == "diagnose" {
+		case "diagnose":
 			intent = cliIntentDiagnose
-		} else if args[0] == "secret:make" {
+		case "secret:make":
 			intent = cliIntentSecretMake
-		} else {
+		default:
 			return nil, unknownCommandErr
 		}
 	} else if len(args) == 2 {
