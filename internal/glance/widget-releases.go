@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -12,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tidwall/gjson"
 	"gopkg.in/yaml.v3"
 )
 
@@ -84,13 +86,14 @@ const (
 )
 
 type appRelease struct {
-	Source        releaseSource
-	SourceIconURL string
-	Name          string
-	Version       string
-	NotesUrl      string
-	TimeReleased  time.Time
-	Downvotes     int
+	Source         releaseSource
+	SourceIconURL  string
+	Name           string
+	Version        string
+	CurrentVersion string
+	NotesUrl       string
+	TimeReleased   time.Time
+	Downvotes      int
 }
 
 type appReleaseList []appRelease
@@ -106,7 +109,8 @@ func (r appReleaseList) sortByNewest() appReleaseList {
 type releaseRequest struct {
 	IncludePreleases bool   `yaml:"include-prereleases"`
 	Repository       string `yaml:"repository"`
-
+	VersionEndpoint  string `yaml:"version-endpoint"`
+	VersionPath      string `yaml:"version-path"`
 	source releaseSource
 	token  *string
 }
@@ -188,18 +192,31 @@ func fetchLatestReleases(requests []*releaseRequest) (appReleaseList, error) {
 }
 
 func fetchLatestReleaseTask(request *releaseRequest) (*appRelease, error) {
+	var appRelease *appRelease
+	var err error
+
 	switch request.source {
 	case releaseSourceCodeberg:
-		return fetchLatestCodebergRelease(request)
+		appRelease, err = fetchLatestCodebergRelease(request)
 	case releaseSourceGithub:
-		return fetchLatestGithubRelease(request)
+		appRelease, err = fetchLatestGithubRelease(request)
 	case releaseSourceGitlab:
-		return fetchLatestGitLabRelease(request)
+		appRelease, err = fetchLatestGitLabRelease(request)
 	case releaseSourceDockerHub:
-		return fetchLatestDockerHubRelease(request)
+		appRelease, err = fetchLatestDockerHubRelease(request)
+	default:
+		return nil, errors.New("unsupported source")
 	}
 
-	return nil, errors.New("unsupported source")
+	if err != nil {
+		return nil, err
+	}
+
+	if request.VersionEndpoint != "" && request.VersionPath != "" {
+		return fetchCurrentVersion(request, appRelease)
+	}
+
+	return appRelease, nil
 }
 
 type githubReleaseResponseJson struct {
@@ -209,6 +226,51 @@ type githubReleaseResponseJson struct {
 	Reactions   struct {
 		Downvotes int `json:"-1"`
 	} `json:"reactions"`
+}
+
+func fetchCurrentVersion(request *releaseRequest, appRelease *appRelease) (*appRelease, error) {
+	httpRequest, err := http.NewRequest("GET", request.VersionEndpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := defaultHTTPClient.Do(httpRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	body := strings.TrimSpace(string(bodyBytes))
+
+	if body != "" && !gjson.Valid(body) {
+		if 200 <= resp.StatusCode && resp.StatusCode < 300 {
+			truncatedBody, isTruncated := limitStringLength(body, 100)
+			if isTruncated {
+				truncatedBody += "... <truncated>"
+			}
+
+			slog.Error("Invalid response JSON in custom API widget", "url", httpRequest.URL.String(), "body", truncatedBody)
+			return nil, errors.New("invalid response JSON")
+		}
+
+		return nil, fmt.Errorf("%d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
+	}
+
+	version := gjson.Get(body, request.VersionPath).String()
+
+	if version == "" {
+		return nil, errors.New("current version not found in response")
+	}
+
+	appRelease.CurrentVersion = version
+	return appRelease, nil
+
 }
 
 func fetchLatestGithubRelease(request *releaseRequest) (*appRelease, error) {
