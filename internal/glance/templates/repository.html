@@ -1,7 +1,7 @@
 {{ template "widget-base.html" . }}
 
 {{ define "widget-content" }}
-<a class="size-h4 color-highlight" href="https://github.com/{{ $.Repository.Name }}" target="_blank" rel="noreferrer">{{ .Repository.Name }}</a>
+<a class="size-h4 color-highlight" href="https://github.com/{{ $.Repository.Name }}" target="{{ $.Target }}" rel="noreferrer">{{ .Repository.Name }}</a>
 <ul class="list-horizontal-text">
     <li>{{ .Repository.Stars | formatNumber }} stars</li>
     <li>{{ .Repository.Forks | formatNumber }} forks</li>
@@ -9,7 +9,7 @@
 
 {{ if gt (len .Repository.Commits) 0 }}
 <hr class="margin-block-8">
-<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/commits" target="_blank" rel="noreferrer">Last {{ .CommitsLimit }} commits</a>
+<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/commits" target="{{ $.Target }}" rel="noreferrer">Last {{ .CommitsLimit }} commits</a>
 <div class="flex gap-7 size-h5 size-base-on-mobile margin-top-3">
     <ul class="list list-gap-2">
         {{ range .Repository.Commits }}
@@ -18,7 +18,7 @@
     </ul>
     <ul class="list list-gap-2 min-width-0">
         {{ range .Repository.Commits }}
-        <li><a class="color-primary-if-not-visited text-truncate block" title="{{ .Author }}" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/commit/{{ .Sha }}">{{ .Message }}</a></li>
+        <li><a class="color-primary-if-not-visited text-truncate block" title="{{ .Author }}" target="{{ $.Target }}" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/commit/{{ .Sha }}">{{ .Message }}</a></li>
         {{ end }}
     </ul>
 </div>
@@ -26,7 +26,7 @@
 
 {{ if gt (len .Repository.PullRequests) 0 }}
 <hr class="margin-block-8">
-<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/pulls" target="_blank" rel="noreferrer">Open pull requests ({{ .Repository.OpenPullRequests | formatNumber }} total)</a>
+<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/pulls" target="{{ $.Target }}" rel="noreferrer">Open pull requests ({{ .Repository.OpenPullRequests | formatNumber }} total)</a>
 <div class="flex gap-7 size-h5 size-base-on-mobile margin-top-3">
     <ul class="list list-gap-2">
         {{ range .Repository.PullRequests }}
@@ -35,7 +35,7 @@
     </ul>
     <ul class="list list-gap-2 min-width-0">
         {{ range .Repository.PullRequests }}
-        <li><a class="color-primary-if-not-visited text-truncate block" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/pull/{{ .Number }}">{{ .Title }}</a></li>
+        <li><a class="color-primary-if-not-visited text-truncate block" target="{{ $.Target }}" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/pull/{{ .Number }}">{{ .Title }}</a></li>
         {{ end }}
     </ul>
 </div>
@@ -43,7 +43,7 @@
 
 {{ if gt (len .Repository.Issues) 0 }}
 <hr class="margin-block-10">
-<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/issues" target="_blank" rel="noreferrer">Open issues ({{ .Repository.OpenIssues | formatNumber }} total)</a>
+<a class="text-compact" href="https://github.com/{{ $.Repository.Name }}/issues" target="{{ $.Target }}" rel="noreferrer">Open issues ({{ .Repository.OpenIssues | formatNumber }} total)</a>
 <div class="flex gap-7 size-h5 size-base-on-mobile margin-top-3">
     <ul class="list list-gap-2">
         {{ range .Repository.Issues }}
@@ -52,7 +52,7 @@
     </ul>
     <ul class="list list-gap-2 min-width-0">
         {{ range .Repository.Issues }}
-        <li><a class="color-primary-if-not-visited text-truncate block" target="_blank" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/issues/{{ .Number }}">{{ .Title }}</a></li>
+        <li><a class="color-primary-if-not-visited text-truncate block" target="{{ $.Target }}" rel="noreferrer" href="https://github.com/{{ $.Repository.Name }}/issues/{{ .Number }}">{{ .Title }}</a></li>
         {{ end }}
     </ul>
 </div>

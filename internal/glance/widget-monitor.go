@@ -24,18 +24,23 @@ type monitorWidget struct {
 		ErrorURL           string          `yaml:"error-url"`
 		Title              string          `yaml:"title"`
 		Icon               customIconField `yaml:"icon"`
-		SameTab            bool            `yaml:"same-tab"`
+		Target             string          `yaml:"target"`
 		StatusText         string          `yaml:"-"`
 		StatusStyle        string          `yaml:"-"`
 		AltStatusCodes     []int           `yaml:"alt-status-codes"`
 	} `yaml:"sites"`
 	Style           string `yaml:"style"`
 	ShowFailingOnly bool   `yaml:"show-failing-only"`
+	Target          string `yaml:"target"`
 	HasFailing      bool   `yaml:"-"`
 }
 
 func (widget *monitorWidget) initialize() error {
 	widget.withTitle("Monitor").withCacheDuration(5 * time.Minute)
+
+	if widget.Target == "" {
+		widget.Target = "_blank"
+	}
 
 	return nil
 }
@@ -72,6 +77,7 @@ func (widget *monitorWidget) update(ctx context.Context) {
 
 		site.StatusText = statusCodeToText(status.Code, site.AltStatusCodes)
 		site.StatusStyle = statusCodeToStyle(status.Code, site.AltStatusCodes)
+		site.Target = ternary(site.Target != "", site.Target, widget.Target)
 	}
 }
 

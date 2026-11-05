@@ -5,11 +5,11 @@
     {{ range .Markets }}
     <div class="flex items-center gap-15">
         <div class="min-width-0">
-            <a{{ if ne "" .SymbolLink }} href="{{ .SymbolLink }}" target="_blank" rel="noreferrer"{{ end }} class="color-highlight size-h3 block text-truncate">{{ .Symbol }}</a>
+            <a{{ if ne "" .SymbolLink }} href="{{ .SymbolLink }}" target="{{ $.Target }}" rel="noreferrer"{{ end }} class="color-highlight size-h3 block text-truncate">{{ .Symbol }}</a>
             <div class="text-truncate">{{ .Name }}</div>
         </div>
 
-        <a class="market-chart" {{ if ne "" .ChartLink }} href="{{ .ChartLink }}" target="_blank" rel="noreferrer"{{ end }}>
+        <a class="market-chart" {{ if ne "" .ChartLink }} href="{{ .ChartLink }}" target="{{ $.Target }}" rel="noreferrer"{{ end }}>
             <svg class="market-chart shrink-0" viewBox="0 0 100 50">
                 <polyline fill="none" stroke="var(--color-text-subdue)" stroke-linejoin="round" stroke-width="1.5px" points="{{ .SvgChartPoints }}" vector-effect="non-scaling-stroke"></polyline>
             </svg>

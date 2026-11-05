@@ -34,6 +34,7 @@ type videosWidget struct {
 	Limit             int       `yaml:"limit"`
 	IncludeShorts     bool      `yaml:"include-shorts"`
 	SortBy            string    `yaml:"sort-by"`
+	Target            string    `yaml:"target"`
 
 	Filters filterableFields[video] `yaml:"filters"`
 }
@@ -51,6 +52,10 @@ func (w *videosWidget) initialize() error {
 
 	if w.CollapseAfter == 0 || w.CollapseAfter < -1 {
 		w.CollapseAfter = 7
+	}
+
+	if widget.Target == "" {
+		widget.Target = "_blank"
 	}
 
 	// A bit cheeky, but from a user's perspective it makes more sense when channels and

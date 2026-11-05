@@ -20,12 +20,14 @@ type twitchChannelsWidget struct {
 	Channels        []twitchChannel `yaml:"-"`
 	CollapseAfter   int             `yaml:"collapse-after"`
 	SortBy          string          `yaml:"sort-by"`
+	Target          string          `yaml:"target"`
 }
 
 func (widget *twitchChannelsWidget) initialize() error {
 	widget.
 		withTitle("Twitch Channels").
 		withTitleURL("https://www.twitch.tv/directory/following").
+		withTitleTarget("_blank").
 		withCacheDuration(time.Minute * 10)
 
 	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
@@ -34,6 +36,10 @@ func (widget *twitchChannelsWidget) initialize() error {
 
 	if widget.SortBy != "viewers" && widget.SortBy != "live" {
 		widget.SortBy = "viewers"
+	}
+
+	if widget.Target == "" {
+		widget.Target = "_blank"
 	}
 
 	return nil

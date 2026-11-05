@@ -19,12 +19,14 @@ type twitchGamesWidget struct {
 	Exclude       []string         `yaml:"exclude"`
 	Limit         int              `yaml:"limit"`
 	CollapseAfter int              `yaml:"collapse-after"`
+	Target        string           `yaml:"target"`
 }
 
 func (widget *twitchGamesWidget) initialize() error {
 	widget.
 		withTitle("Top games on Twitch").
 		withTitleURL("https://www.twitch.tv/directory?sort=VIEWER_COUNT").
+		withTitleTarget("_blank").
 		withCacheDuration(time.Minute * 10)
 
 	if widget.Limit <= 0 {
@@ -33,6 +35,10 @@ func (widget *twitchGamesWidget) initialize() error {
 
 	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
 		widget.CollapseAfter = 5
+	}
+
+	if widget.Target == "" {
+		widget.Target = "_blank"
 	}
 
 	return nil

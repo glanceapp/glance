@@ -156,6 +156,7 @@ type widgetBase struct {
 	Type                string           `yaml:"type"`
 	Title               string           `yaml:"title"`
 	TitleURL            string           `yaml:"title-url"`
+	TitleTarget         string           `yaml:"title-target"`
 	HideHeader          bool             `yaml:"hide-header"`
 	CSSClass            string           `yaml:"css-class"`
 	CustomCacheDuration durationField    `yaml:"cache"`
@@ -255,6 +256,14 @@ func (w *widgetBase) withTitle(title string) *widgetBase {
 func (w *widgetBase) withTitleURL(titleURL string) *widgetBase {
 	if w.TitleURL == "" {
 		w.TitleURL = titleURL
+	}
+
+	return w
+}
+
+func (w *widgetBase) withTitleTarget(titleTarget string) *widgetBase {
+	if w.TitleTarget == "" {
+		w.TitleTarget = titleTarget
 	}
 
 	return w

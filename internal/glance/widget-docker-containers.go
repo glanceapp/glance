@@ -24,6 +24,7 @@ type dockerContainersWidget struct {
 	FormatContainerNames bool                         `yaml:"format-container-names"`
 	Containers           dockerContainerList          `yaml:"-"`
 	LabelOverrides       map[string]map[string]string `yaml:"containers"`
+	Target               string                       `yaml:"target"`
 }
 
 func (widget *dockerContainersWidget) initialize() error {
@@ -31,6 +32,10 @@ func (widget *dockerContainersWidget) initialize() error {
 
 	if widget.SockPath == "" {
 		widget.SockPath = "/var/run/docker.sock"
+	}
+
+	if widget.Target == "" {
+		widget.Target = "_blank"
 	}
 
 	return nil
@@ -50,6 +55,13 @@ func (widget *dockerContainersWidget) update(ctx context.Context) {
 	}
 
 	containers.sortByStateIconThenName()
+	for i := range containers {
+		container := &containers[i]
+
+		if container.Target == "" {
+			container.Target = widget.Target
+		}
+	}
 	widget.Containers = containers
 }
 
@@ -63,6 +75,7 @@ const (
 	dockerContainerLabelURL         = "glance.url"
 	dockerContainerLabelDescription = "glance.description"
 	dockerContainerLabelSameTab     = "glance.same-tab"
+	dockerContainerLabelTarget      = "glance.target"
 	dockerContainerLabelIcon        = "glance.icon"
 	dockerContainerLabelID          = "glance.id"
 	dockerContainerLabelParent      = "glance.parent"
@@ -113,7 +126,7 @@ func (l *dockerContainerLabels) getOrDefault(label, def string) string {
 type dockerContainer struct {
 	Name        string
 	URL         string
-	SameTab     bool
+	Target      string
 	Image       string
 	State       string
 	StateText   string
@@ -173,11 +186,24 @@ func fetchDockerContainers(
 	for i := range containers {
 		container := &containers[i]
 
+		// Backward compatibility, literal string is used in sameTab to
+		// capture if it was set by the user explicitly
+		target := container.Labels.getOrDefault(dockerContainerLabelTarget, "")
+		sameTab := container.Labels.getOrDefault(dockerContainerLabelSameTab, "")
+		if target == "" {
+			switch sameTab {
+			case "true":
+				target = "_self"
+			case "false":
+				target = "_blank"
+			}
+		}
+
 		dc := dockerContainer{
 			Name:        deriveDockerContainerName(container, formatNames),
 			URL:         container.Labels.getOrDefault(dockerContainerLabelURL, ""),
 			Description: container.Labels.getOrDefault(dockerContainerLabelDescription, ""),
-			SameTab:     stringToBool(container.Labels.getOrDefault(dockerContainerLabelSameTab, "false")),
+			Target:      target,
 			Image:       container.Image,
 			State:       strings.ToLower(container.State),
 			StateText:   strings.ToLower(container.Status),

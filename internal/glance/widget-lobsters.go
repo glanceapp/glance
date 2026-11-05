@@ -18,6 +18,7 @@ type lobstersWidget struct {
 	SortBy         string        `yaml:"sort-by"`
 	Tags           []string      `yaml:"tags"`
 	ShowThumbnails bool          `yaml:"-"`
+	Target         string        `yaml:"target"`
 
 	Filters filterableFields[forumPost] `yaml:"filters"`
 }
@@ -41,6 +42,10 @@ func (widget *lobstersWidget) initialize() error {
 
 	if widget.CollapseAfter == 0 || widget.CollapseAfter < -1 {
 		widget.CollapseAfter = 5
+	}
+
+	if widget.Target == "" {
+		widget.Target = "_blank"
 	}
 
 	return nil
