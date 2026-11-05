@@ -89,7 +89,7 @@ func (r changeDetectionWatchList) sortByNewest() changeDetectionWatchList {
 
 type changeDetectionResponseJson struct {
 	Title        string `json:"title"`
-	URL          string `json:"url"`
+	URL          string `json:"open_link"`
 	LastChanged  int64  `json:"last_changed"`
 	DateCreated  int64  `json:"date_created"`
 	PreviousHash string `json:"previous_md5"`
