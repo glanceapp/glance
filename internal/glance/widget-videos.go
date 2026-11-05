@@ -34,6 +34,7 @@ type videosWidget struct {
 	Limit             int       `yaml:"limit"`
 	IncludeShorts     bool      `yaml:"include-shorts"`
 	SortBy            string    `yaml:"sort-by"`
+	YoutubeAPIKey     string    `yaml:"youtube-api-key"`
 
 	Filters filterableFields[video] `yaml:"filters"`
 }
@@ -177,20 +178,14 @@ func (w *videosWidget) fetchYoutubeChannelUploads(channelOrPlaylistIDs []string,
 			}
 		}
 
-		list := make(videoList, 0, 15)
-
-		var feedURL string
-		if after, ok := strings.CutPrefix(id, videosWidgetPlaylistPrefix); ok {
-			feedURL = "https://www.youtube.com/feeds/videos.xml?playlist_id=" + after
-		} else if !includeShorts && strings.HasPrefix(id, "UC") {
-			playlistId := strings.Replace(id, "UC", "UULF", 1)
-			feedURL = "https://www.youtube.com/feeds/videos.xml?playlist_id=" + playlistId
+		var list videoList
+		var err error
+		if w.YoutubeAPIKey != "" {
+			list, err = fetchYoutubePlaylistItems(youtubeWidgetPlaylistID(id, includeShorts), w.YoutubeAPIKey, videoUrlTemplate)
 		} else {
-			feedURL = "https://www.youtube.com/feeds/videos.xml?channel_id=" + id
+			list, err = fetchYoutubeFeed(id, includeShorts, videoUrlTemplate)
 		}
 
-		request, _ := http.NewRequest("GET", feedURL, nil)
-		response, err := decodeXmlFromRequest[youtubeFeedResponseXml](defaultHTTPClient, request)
 		if err != nil {
 			cached, ok := w.cachedVideoLists.Load(id)
 			if ok {
@@ -198,34 +193,6 @@ func (w *videosWidget) fetchYoutubeChannelUploads(channelOrPlaylistIDs []string,
 			}
 
 			return list, err
-		}
-
-		for j := range response.Videos {
-			v := &response.Videos[j]
-
-			var videoUrl string
-			if videoUrlTemplate == "" {
-				videoUrl = v.Link.Href
-			} else {
-				parsedUrl, err := url.Parse(v.Link.Href)
-
-				if err == nil {
-					videoUrl = strings.ReplaceAll(videoUrlTemplate, "{VIDEO-ID}", parsedUrl.Query().Get("v"))
-				} else {
-					videoUrl = "#"
-				}
-			}
-
-			list = append(list, video{
-				ThumbnailUrl: v.Group.Thumbnail.Url,
-				Title:        v.Title,
-				Url:          videoUrl,
-				Author:       response.Channel,
-				AuthorUrl:    response.ChannelLink + "/videos",
-				TimePosted:   parseYoutubeFeedTime(v.Published),
-				TimeUpdated:  parseYoutubeFeedTime(v.Updated),
-			})
-
 		}
 
 		w.cachedVideoLists.Store(id, cachedEntry[videoList]{value: list, timestamp: time.Now()})
@@ -270,4 +237,143 @@ func (w *videosWidget) fetchYoutubeChannelUploads(channelOrPlaylistIDs []string,
 	}
 
 	return videos, nil
+}
+
+func fetchYoutubeFeed(id string, includeShorts bool, videoUrlTemplate string) (videoList, error) {
+	list := make(videoList, 0, 15)
+
+	var feedURL string
+	if after, ok := strings.CutPrefix(id, videosWidgetPlaylistPrefix); ok {
+		feedURL = "https://www.youtube.com/feeds/videos.xml?playlist_id=" + after
+	} else if !includeShorts && strings.HasPrefix(id, "UC") {
+		playlistId := strings.Replace(id, "UC", "UULF", 1)
+		feedURL = "https://www.youtube.com/feeds/videos.xml?playlist_id=" + playlistId
+	} else {
+		feedURL = "https://www.youtube.com/feeds/videos.xml?channel_id=" + id
+	}
+
+	request, _ := http.NewRequest("GET", feedURL, nil)
+	response, err := decodeXmlFromRequest[youtubeFeedResponseXml](defaultHTTPClient, request)
+	if err != nil {
+		return list, err
+	}
+
+	for j := range response.Videos {
+		v := &response.Videos[j]
+
+		var videoUrl string
+		if videoUrlTemplate == "" {
+			videoUrl = v.Link.Href
+		} else {
+			parsedUrl, err := url.Parse(v.Link.Href)
+
+			if err == nil {
+				videoUrl = strings.ReplaceAll(videoUrlTemplate, "{VIDEO-ID}", parsedUrl.Query().Get("v"))
+			} else {
+				videoUrl = "#"
+			}
+		}
+
+		list = append(list, video{
+			ThumbnailUrl: v.Group.Thumbnail.Url,
+			Title:        v.Title,
+			Url:          videoUrl,
+			Author:       response.Channel,
+			AuthorUrl:    response.ChannelLink + "/videos",
+			TimePosted:   parseYoutubeFeedTime(v.Published),
+			TimeUpdated:  parseYoutubeFeedTime(v.Updated),
+		})
+	}
+
+	return list, nil
+}
+
+// youtubeWidgetPlaylistID maps a widget entry to the playlist the Data API reads:
+// the playlist itself, or the channel's uploads (UU) / long-form uploads (UULF) playlist.
+func youtubeWidgetPlaylistID(id string, includeShorts bool) string {
+	if after, ok := strings.CutPrefix(id, videosWidgetPlaylistPrefix); ok {
+		return after
+	}
+
+	if !includeShorts {
+		return strings.Replace(id, "UC", "UULF", 1)
+	}
+
+	return strings.Replace(id, "UC", "UU", 1)
+}
+
+type youtubePlaylistItemsResponseJson struct {
+	Items []struct {
+		Snippet struct {
+			Title                  string `json:"title"`
+			VideoOwnerChannelTitle string `json:"videoOwnerChannelTitle"`
+			VideoOwnerChannelId    string `json:"videoOwnerChannelId"`
+			Thumbnails             map[string]struct {
+				Url string `json:"url"`
+			} `json:"thumbnails"`
+		} `json:"snippet"`
+		ContentDetails struct {
+			VideoId          string `json:"videoId"`
+			VideoPublishedAt string `json:"videoPublishedAt"`
+		} `json:"contentDetails"`
+	} `json:"items"`
+}
+
+// fetchYoutubePlaylistItems reads a playlist through the YouTube Data API (1 quota unit
+// per call), for when the public RSS feeds are unavailable.
+func fetchYoutubePlaylistItems(playlistId string, apiKey string, videoUrlTemplate string) (videoList, error) {
+	query := url.Values{}
+	query.Set("part", "snippet,contentDetails")
+	query.Set("maxResults", "15")
+	query.Set("playlistId", playlistId)
+
+	request, _ := http.NewRequest("GET", "https://www.googleapis.com/youtube/v3/playlistItems?"+query.Encode(), nil)
+	// Sent as a header rather than a query parameter so the key never ends up in error logs
+	request.Header.Set("X-Goog-Api-Key", apiKey)
+
+	response, err := decodeJsonFromRequest[youtubePlaylistItemsResponseJson](defaultHTTPClient, request)
+	if err != nil {
+		return nil, err
+	}
+
+	list := make(videoList, 0, len(response.Items))
+	for i := range response.Items {
+		item := &response.Items[i]
+
+		// Private and deleted videos stay in playlists but have no publish date
+		if item.ContentDetails.VideoPublishedAt == "" {
+			continue
+		}
+
+		videoId := item.ContentDetails.VideoId
+		videoUrl := "https://www.youtube.com/watch?v=" + videoId
+		if videoUrlTemplate != "" {
+			videoUrl = strings.ReplaceAll(videoUrlTemplate, "{VIDEO-ID}", videoId)
+		}
+
+		var thumbnailUrl string
+		for _, size := range []string{"high", "medium", "default"} {
+			if thumbnail, ok := item.Snippet.Thumbnails[size]; ok {
+				thumbnailUrl = thumbnail.Url
+				break
+			}
+		}
+
+		posted, err := time.Parse(time.RFC3339, item.ContentDetails.VideoPublishedAt)
+		if err != nil {
+			posted = time.Now()
+		}
+
+		list = append(list, video{
+			ThumbnailUrl: thumbnailUrl,
+			Title:        item.Snippet.Title,
+			Url:          videoUrl,
+			Author:       item.Snippet.VideoOwnerChannelTitle,
+			AuthorUrl:    "https://www.youtube.com/channel/" + item.Snippet.VideoOwnerChannelId + "/videos",
+			TimePosted:   posted,
+			TimeUpdated:  posted,
+		})
+	}
+
+	return list, nil
 }
