@@ -142,7 +142,10 @@ function setupSearchBoxes() {
                     return;
                 }
 
-                const url = searchUrlTemplate.replace("!QUERY!", encodeURIComponent(query));
+                const url = currentBang.dataset.raw === "true"
+                    ? searchUrlTemplate.replace("!QUERY!", query)
+                    : searchUrlTemplate.replace("!QUERY!", encodeURIComponent(query));
+
 
                 if (newTab && !event.ctrlKey || !newTab && event.ctrlKey) {
                     window.open(url, target).focus();
