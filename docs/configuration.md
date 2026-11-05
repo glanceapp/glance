@@ -783,6 +783,9 @@ Example:
 | card-height | float | no | 27 |
 | limit | integer | no | 25 |
 | preserve-order | bool | no | false |
+| sort | string | no | chronological |
+| rarity-base | float | no | 72 |
+| rarity-exponent | float | no | 2.5 |
 | single-line-titles | boolean | no | false |
 | collapse-after | integer | no | 5 |
 
@@ -794,6 +797,19 @@ How many articles are visible before the "SHOW MORE" button appears. Set to `-1`
 
 ##### `preserve-order`
 When set to `true`, the order of the articles will be preserved as they are in the feeds. Useful if a feed uses its own sorting order which denotes the importance of the articles. If you use this property while having a lot of feeds, it's recommended to set a `limit` to each individual feed since if the first defined feed has 15 articles, the articles from the second feed will start after the 15th article in the list.
+
+##### `sort`
+How articles are ordered. Ignored when `preserve-order` is `true`. Possible values:
+
+* `chronological` - newest first
+* `rarity` - articles from feeds that post infrequently rank higher than their age alone would suggest, so a busy feed doesn't drown out a quiet one. Each feed's posting interval is the median gap between the articles it returned, so a feed with a single article is assumed to post once a day
+* `tier` - ordered by the `tier` of each feed (lower first), then newest first. Feeds without a `tier` come last
+
+##### `rarity-base`
+Only for `sort: rarity`. Posting interval in hours at which a feed's articles are neither boosted nor penalised. Feeds posting less often than this are boosted.
+
+##### `rarity-exponent`
+Only for `sort: rarity`. How strongly the posting interval affects ranking. Higher values favour rare feeds more aggressively.
 
 ##### `single-line-titles`
 When set to `true`, truncates the title of each post if it exceeds one line. Only applies when the style is set to `vertical-list`.
@@ -841,6 +857,7 @@ An array of RSS/atom feeds. The title can optionally be changed.
 | hide-categories | boolean | no | false | Only applicable for `detailed-list` style |
 | hide-description | boolean | no | false | Only applicable for `detailed-list` style |
 | limit | integer | no | | |
+| tier | integer | no | | Only used with `sort: tier` |
 | item-link-prefix | string | no | | |
 | headers | key (string) & value (string) | no | | |
 
