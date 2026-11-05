@@ -300,7 +300,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 		}
 
 		if item.Title != "" {
-			rssItem.Title = html.UnescapeString(item.Title)
+			rssItem.Title = sanitizeFeedTitle(item.Title)
 		} else {
 			rssItem.Title = shortenFeedDescriptionLen(item.Description, 100)
 		}
@@ -335,17 +335,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 			rssItem.ChannelName = feed.Title
 		}
 
-		if item.Image != nil {
-			rssItem.ImageURL = item.Image.URL
-		} else if url := findThumbnailInItemExtensions(item); url != "" {
-			rssItem.ImageURL = url
-		} else if feed.Image != nil {
-			if len(feed.Image.URL) > 0 && feed.Image.URL[0] == '/' {
-				rssItem.ImageURL = strings.TrimRight(feed.Link, "/") + feed.Image.URL
-			} else {
-				rssItem.ImageURL = feed.Image.URL
-			}
-		}
+		rssItem.ImageURL = feedItemImageURL(item, feed, rssItem.Link, request.URL)
 
 		// For some reason gofeed sometimes converts absolute URLs to relative ones, so we need to fix
 		// that here and provide the user with an option to override the prefix in case we get it wrong
@@ -385,6 +375,51 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 	}
 
 	return items, nil
+}
+
+var feedItemImagePattern = regexp.MustCompile(`<img[^>]*?\ssrc=["']([^"']+)["']`)
+
+func feedItemImageURL(item *gofeed.Item, feed *gofeed.Feed, itemLink, requestURL string) string {
+	var image string
+
+	if custom := item.Custom["image"]; custom != "" {
+		image = custom
+	} else if item.Image != nil && item.Image.URL != "" {
+		image = item.Image.URL
+	} else if url := findThumbnailInItemExtensions(item); url != "" {
+		image = url
+	} else if match := feedItemImagePattern.FindStringSubmatch(item.Content); match != nil {
+		image = match[1]
+	} else if feed.Image != nil {
+		image = feed.Image.URL
+	}
+
+	return resolveFeedURL(image, itemLink, feed.Link, requestURL)
+}
+
+func resolveFeedURL(reference string, bases ...string) string {
+	if reference == "" {
+		return ""
+	}
+
+	parsed, err := url.Parse(reference)
+	if err != nil {
+		return ""
+	} else if parsed.IsAbs() {
+		if parsed.Scheme != "http" && parsed.Scheme != "https" {
+			return ""
+		}
+
+		return reference
+	}
+
+	for _, b := range bases {
+		if base, err := url.Parse(b); err == nil && base.IsAbs() {
+			return base.ResolveReference(parsed).String()
+		}
+	}
+
+	return ""
 }
 
 func findThumbnailInItemExtensions(item *gofeed.Item) string {
@@ -431,6 +466,35 @@ func sanitizeFeedDescription(description string) string {
 	description = html.UnescapeString(description)
 
 	return description
+}
+
+var htmlTagPattern = regexp.MustCompile(`</?([a-zA-Z][a-zA-Z0-9-]*)[^>]*>`)
+
+func sanitizeFeedTitle(title string) string {
+	if title == "" {
+		return ""
+	}
+
+	title = html.UnescapeString(title)
+
+	closing := make(map[string]bool)
+	for _, match := range htmlTagPattern.FindAllStringSubmatch(title, -1) {
+		if strings.HasPrefix(match[0], "</") {
+			closing[strings.ToLower(match[1])] = true
+		}
+	}
+
+	if len(closing) > 0 {
+		title = htmlTagPattern.ReplaceAllStringFunc(title, func(tag string) string {
+			if closing[strings.ToLower(htmlTagPattern.FindStringSubmatch(tag)[1])] {
+				return ""
+			}
+			return tag
+		})
+	}
+
+	title = sequentialWhitespacePattern.ReplaceAllString(title, " ")
+	return strings.TrimSpace(title)
 }
 
 func shortenFeedDescriptionLen(description string, maxLen int) string {
