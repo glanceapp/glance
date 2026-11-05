@@ -27,6 +27,11 @@
 <div class="grow min-width-0">
     <a class="size-h3 color-highlight text-truncate block" href="{{ .URL | safeURL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
     <ul class="list-horizontal-text">
+        {{ if .Description }}
+        <div class="stretch-to-content">
+          <li class="text-truncate">{{ .Description }}</li>
+        </div>
+        {{ end }}
         {{ if not .Status.Error }}
         <li title="{{ .Status.Code }}">{{ .StatusText }}</li>
         <li>{{ .Status.ResponseTime.Milliseconds | formatNumber }}ms</li>
