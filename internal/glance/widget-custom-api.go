@@ -42,6 +42,7 @@ type CustomAPIRequest struct {
 	} `yaml:"basic-auth"`
 	bodyReader  io.ReadSeeker `yaml:"-"`
 	httpRequest *http.Request `yaml:"-"`
+	Timeout     durationField `yaml:"timeout"`
 }
 
 type customAPIWidget struct {
@@ -261,6 +262,8 @@ func fetchCustomAPIResponse(ctx context.Context, req *CustomAPIRequest) (*custom
 	}
 
 	client := ternary(req.AllowInsecure, defaultInsecureHTTPClient, defaultHTTPClient)
+	client.Timeout = ternary(req.Timeout > 0, time.Duration(req.Timeout), client.Timeout)
+
 	resp, err := client.Do(req.httpRequest.WithContext(ctx))
 	if err != nil {
 		return nil, err
