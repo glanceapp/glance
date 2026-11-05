@@ -1,0 +1,19 @@
+.navidrome-cover-art {
+  border-radius: 0.7rem;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.navidrome-progress {
+  background: var(--color-widget-background-highlight, #333);
+  border-radius: 4px;
+  height: 6px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.navidrome-progress-bar {
+  background: var(--color-primary, #888);
+  height: 100%;
+}
+
