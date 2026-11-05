@@ -75,15 +75,16 @@ type user struct {
 }
 
 type page struct {
-	Title                  string  `yaml:"name"`
-	Slug                   string  `yaml:"slug"`
-	Width                  string  `yaml:"width"`
-	DesktopNavigationWidth string  `yaml:"desktop-navigation-width"`
-	ShowMobileHeader       bool    `yaml:"show-mobile-header"`
-	HideDesktopNavigation  bool    `yaml:"hide-desktop-navigation"`
-	CenterVertically       bool    `yaml:"center-vertically"`
-	HeadWidgets            widgets `yaml:"head-widgets"`
-	Columns                []struct {
+	Title                  	string  `yaml:"name"`
+	Slug                   	string  `yaml:"slug"`
+	Width                  	string  `yaml:"width"`
+	DesktopNavigationWidth 	string  `yaml:"desktop-navigation-width"`
+	ShowMobileHeader        bool    `yaml:"show-mobile-header"`
+	HideDesktopNavigation   bool    `yaml:"hide-desktop-navigation"`
+	StickyDesktopNavigation	bool    `yaml:"sticky-desktop-navigation"`
+	CenterVertically      	bool    `yaml:"center-vertically"`
+	HeadWidgets           	widgets `yaml:"head-widgets"`
+	Columns                 []struct {
 		Size    string  `yaml:"size"`
 		Widgets widgets `yaml:"widgets"`
 	} `yaml:"columns"`
