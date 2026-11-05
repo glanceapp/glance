@@ -13,6 +13,7 @@ import (
 	"log"
 	mathrand "math/rand/v2"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -285,6 +286,46 @@ func (a *application) isAuthorized(w http.ResponseWriter, r *http.Request) bool 
 	return true
 }
 
+func (a *application) getUsernameFromRequest(r *http.Request) string {
+	if !a.RequiresAuth {
+		return ""
+	}
+
+	token, err := r.Cookie(AUTH_SESSION_COOKIE_NAME)
+	if err != nil || token.Value == "" {
+		return ""
+	}
+
+	usernameHash, _, err := verifySessionToken(token.Value, a.authSecretKey, time.Now())
+	if err != nil {
+		return ""
+	}
+
+	username, exists := a.usernameHashToUsername[string(usernameHash)]
+	if !exists {
+		return ""
+	}
+
+	_, exists = a.Config.Auth.Users[username]
+	if !exists {
+		return ""
+	}
+
+	return username
+}
+
+func (a *application) userHasPageAccess(username string, page *page) bool {
+	if !a.RequiresAuth {
+		return true
+	}
+
+	if len(page.AllowedUsers) == 0 {
+		return true
+	}
+
+	return slices.Contains(page.AllowedUsers, username)
+}
+
 // Handles sending the appropriate response for an unauthorized request and returns true if the request was unauthorized
 func (a *application) handleUnauthorizedResponse(w http.ResponseWriter, r *http.Request, fallback doWhenUnauthorized) bool {
 	if a.isAuthorized(w, r) {
@@ -327,7 +368,8 @@ func (a *application) handleLoginPageRequest(w http.ResponseWriter, r *http.Requ
 	}
 
 	data := &templateData{
-		App: a,
+		App:             a,
+		AccessiblePages: nil,
 	}
 	a.populateTemplateRequestData(&data.Request, r)
 
