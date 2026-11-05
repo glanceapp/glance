@@ -23,6 +23,7 @@ type searchWidget struct {
 	Target       string        `yaml:"target"`
 	Autofocus    bool          `yaml:"autofocus"`
 	Placeholder  string        `yaml:"placeholder"`
+	OpenDomains  bool          `yaml:"open-domains"`
 }
 
 func convertSearchUrl(url string) string {
