@@ -107,6 +107,7 @@ function setupSearchBoxes() {
         const defaultSearchUrl = widget.dataset.defaultSearchUrl;
         const target = widget.dataset.target || "_blank";
         const newTab = widget.dataset.newTab === "true";
+        const useLayout = widget.dataset.useLayout === "true";
         const inputElement = widget.getElementsByClassName("search-input")[0];
         const bangElement = widget.getElementsByClassName("search-bang")[0];
         const bangs = widget.querySelectorAll(".search-bangs > input");
@@ -195,7 +196,8 @@ function setupSearchBoxes() {
 
         document.addEventListener("keydown", (event) => {
             if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-            if (event.code != "KeyS") return;
+            if (useLayout && event.key.toLowerCase() != "s") return;
+            if (!useLayout && event.code != "KeyS") return;
 
             inputElement.focus();
             event.preventDefault();
