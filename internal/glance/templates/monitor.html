@@ -26,7 +26,7 @@
 {{ end }}
 <div class="grow min-width-0">
     <a class="size-h3 color-highlight text-truncate block" href="{{ .URL | safeURL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
-    <ul class="list-horizontal-text">
+    {{ if not .HideDetails }}<ul class="list-horizontal-text">
         {{ if not .Status.Error }}
         <li title="{{ .Status.Code }}">{{ .StatusText }}</li>
         <li>{{ .Status.ResponseTime.Milliseconds | formatNumber }}ms</li>
@@ -35,7 +35,7 @@
         {{ else }}
         <li class="color-negative" title="{{ .Status.Error }}">ERROR</li>
         {{ end }}
-    </ul>
+    </ul>{{ end }}
 </div>
 {{ if eq .StatusStyle "ok" }}
 <div class="monitor-site-status-icon">
