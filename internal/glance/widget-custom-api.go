@@ -255,7 +255,7 @@ func fetchCustomAPIResponse(ctx context.Context, req *CustomAPIRequest) (*custom
 	}
 	defer resp.Body.Close()
 
-	bodyBytes, err := io.ReadAll(resp.Body)
+	bodyBytes, err := readAllLimited(resp.Body, defaultMaxResponseBodyLength)
 	if err != nil {
 		return nil, err
 	}

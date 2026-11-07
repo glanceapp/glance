@@ -59,6 +59,19 @@ func setBrowserUserAgentHeader(request *http.Request) {
 	request.Header.Set("User-Agent", getBrowserUserAgentHeader())
 }
 
+const defaultMaxResponseBodyLength = 1024 * 1024 * 10 // 10 MB
+
+func readAllLimited(r io.Reader, max int64) ([]byte, error) {
+	b, err := io.ReadAll(io.LimitReader(r, max+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(b)) > max {
+		return nil, errors.New("response body exceeds size limit")
+	}
+	return b, nil
+}
+
 func decodeJsonFromRequest[T any](client requestDoer, request *http.Request) (T, error) {
 	var result T
 
@@ -68,7 +81,7 @@ func decodeJsonFromRequest[T any](client requestDoer, request *http.Request) (T,
 	}
 	defer response.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
+	body, err := readAllLimited(response.Body, defaultMaxResponseBodyLength)
 	if err != nil {
 		return result, err
 	}
@@ -108,7 +121,7 @@ func decodeXmlFromRequest[T any](client requestDoer, request *http.Request) (T, 
 	}
 	defer response.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
+	body, err := readAllLimited(response.Body, defaultMaxResponseBodyLength)
 	if err != nil {
 		return result, err
 	}

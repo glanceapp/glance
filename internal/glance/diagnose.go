@@ -3,7 +3,6 @@ package glance
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"runtime"
@@ -165,7 +164,7 @@ func testHttpRequestWithHeaders(method, url string, headers map[string]string, e
 	}
 	defer response.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
+	body, err := readAllLimited(response.Body, defaultMaxResponseBodyLength)
 	if err != nil {
 		return "", err
 	}

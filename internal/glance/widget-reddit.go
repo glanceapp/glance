@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"html"
 	"html/template"
-	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -411,7 +410,7 @@ func fetchRedditGuestToken() (string, error) {
 		return "", fmt.Errorf("unexpected status code %d when requesting challenge page", response.StatusCode)
 	}
 
-	challengeBody, err := io.ReadAll(response.Body)
+	challengeBody, err := readAllLimited(response.Body, defaultMaxResponseBodyLength)
 	if err != nil {
 		return "", err
 	}

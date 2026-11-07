@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html"
 	"html/template"
-	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -228,7 +227,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 		return nil, fmt.Errorf("unexpected status code %d from %s", resp.StatusCode, request.URL)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := readAllLimited(resp.Body, defaultMaxResponseBodyLength)
 	if err != nil {
 		return nil, err
 	}

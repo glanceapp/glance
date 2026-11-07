@@ -304,13 +304,13 @@ func (a *application) populateTemplateRequestData(data *templateRequestData, r *
 }
 
 func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) {
-	page, exists := a.slugToPage[r.PathValue("page")]
-	if !exists {
-		a.handleNotFound(w, r)
+	if a.handleUnauthorizedResponse(w, r, redirectToLogin) {
 		return
 	}
 
-	if a.handleUnauthorizedResponse(w, r, redirectToLogin) {
+	page, exists := a.slugToPage[r.PathValue("page")]
+	if !exists {
+		a.handleNotFound(w, r)
 		return
 	}
 
@@ -332,13 +332,13 @@ func (a *application) handlePageRequest(w http.ResponseWriter, r *http.Request) 
 }
 
 func (a *application) handlePageContentRequest(w http.ResponseWriter, r *http.Request) {
-	page, exists := a.slugToPage[r.PathValue("page")]
-	if !exists {
-		a.handleNotFound(w, r)
+	if a.handleUnauthorizedResponse(w, r, showUnauthorizedJSON) {
 		return
 	}
 
-	if a.handleUnauthorizedResponse(w, r, showUnauthorizedJSON) {
+	page, exists := a.slugToPage[r.PathValue("page")]
+	if !exists {
+		a.handleNotFound(w, r)
 		return
 	}
 

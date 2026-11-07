@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html"
 	"html/template"
-	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -134,7 +133,7 @@ func fetchExtension(options extensionRequestOptions) (extension, error) {
 
 	defer response.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
+	body, err := readAllLimited(response.Body, defaultMaxResponseBodyLength)
 	if err != nil {
 		slog.Error("Failed reading response body of extension", "url", options.URL, "error", err)
 		return extension{}, fmt.Errorf("%w: could not read body: %w", errNoContent, err)

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"io"
 	"log/slog"
 	"net/http"
 	"sort"
@@ -632,7 +631,7 @@ func fetchPiholeSessionID(instanceURL string, client *http.Client, password stri
 	}
 	defer response.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
+	body, err := readAllLimited(response.Body, defaultMaxResponseBodyLength)
 	if err != nil {
 		return "", fmt.Errorf("reading authentication response: %v", err)
 	}
