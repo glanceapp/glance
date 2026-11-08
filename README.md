@@ -12,6 +12,8 @@
   <a href="docs/themes.md">Themes</a>
 </p>
 
+<p align="center"><a href="README.md">English</a> | <a href="README.zh-CN.md">简体中文</a></p>
+
 <p align="center">A lightweight, highly customizable dashboard that displays<br> your feeds in a beautiful, streamlined interface</p>
 
 ![](docs/images/readme-main-image.png)
