@@ -22,7 +22,7 @@
 
 {{ define "site" }}
 <a class="size-title-dynamic color-highlight text-truncate block grow" href="{{ .URL | safeURL }}" {{ if not .SameTab }}target="_blank"{{ end }} rel="noreferrer">{{ .Title }}</a>
-{{ if not .Status.TimedOut }}<div>{{ .Status.ResponseTime.Milliseconds | formatNumber }}ms</div>{{ end }}
+{{ if and (not .HideDetails) (not .Status.TimedOut) }}<div>{{ .Status.ResponseTime.Milliseconds | formatNumber }}ms</div>{{ end }}
 {{ if eq .StatusStyle "ok" }}
 <div class="monitor-site-status-icon-compact" title="{{ .Status.Code }}">
     <svg fill="var(--color-positive)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
