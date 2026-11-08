@@ -20,6 +20,7 @@ type twitchChannelsWidget struct {
 	Channels        []twitchChannel `yaml:"-"`
 	CollapseAfter   int             `yaml:"collapse-after"`
 	SortBy          string          `yaml:"sort-by"`
+	SameTab         bool            `yaml:"same-tab"`
 }
 
 func (widget *twitchChannelsWidget) initialize() error {
@@ -52,6 +53,13 @@ func (widget *twitchChannelsWidget) update(ctx context.Context) {
 		channels.sortByLive()
 	}
 
+	widget.setChannels(channels)
+}
+
+func (widget *twitchChannelsWidget) setChannels(channels twitchChannelList) {
+	for i := range channels {
+		channels[i].SameTab = widget.SameTab
+	}
 	widget.Channels = channels
 }
 
@@ -70,6 +78,7 @@ type twitchChannel struct {
 	Category     string
 	CategorySlug string
 	ViewersCount int
+	SameTab      bool
 }
 
 type twitchChannelList []twitchChannel
