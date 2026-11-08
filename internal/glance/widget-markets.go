@@ -2,12 +2,18 @@ package glance
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"log/slog"
 	"math"
+	"math/rand/v2"
 	"net/http"
+	"net/url"
+	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -122,16 +128,172 @@ type marketResponseJson struct {
 // TODO: allow changing chart time frame
 const marketChartDays = 21
 
+// ===== Yahoo Finance API rate limit & timeout config (defaults, overridable via env vars) =====
+// YAHOO_MARKETS_CONCURRENCY: max concurrent requests, default 3, valid range [1, 10]
+const yahooFinanceDefaultConcurrency = 3
+
+// YAHOO_MARKETS_JITTER_MS: max random jitter delay before each request in ms, default 400, set to 0 to disable
+const yahooFinanceDefaultJitterMs = 400
+
+// YAHOO_MARKETS_TIMEOUT_MS: per-request timeout in ms, default 15000, valid range [3000, 120000]
+const yahooFinanceDefaultTimeoutMs = 15000
+
+// yahooFinanceMaxRetries retry count for transient network errors only (EOF / reset / pipe)
+// total attempts = 1 (initial) + this value; timeout / 429 / HTTP status errors are NEVER retried
+const yahooFinanceMaxRetries = 2
+
+// yahooFinanceRetryBaseDelayMs base backoff delay, multiplied by 2^(retryIndex) for exponential step
+const yahooFinanceRetryBaseDelayMs = 600
+
+// yahooFinanceHTTPClient dedicated HTTP client for Yahoo Finance API,
+// independent timeout settings to avoid polluting shared defaultHTTPClient
+var yahooFinanceHTTPClient = &http.Client{
+	Timeout: time.Duration(yahooFinanceDefaultTimeoutMs) * time.Millisecond,
+	Transport: &http.Transport{
+		MaxIdleConnsPerHost: 10,
+		Proxy:               http.ProxyFromEnvironment,
+	},
+}
+
+// yahooFinanceConcurrency effective concurrency at runtime, read once from env at startup
+var yahooFinanceConcurrency = yahooFinanceReadConcurrency()
+
+// yahooFinanceJitter effective jitter delay at runtime, read once from env at startup
+var yahooFinanceJitter = yahooFinanceReadJitter()
+
+// yahooFinanceReadTimeout executed as init side-effect, must be declared after yahooFinanceHTTPClient
+var _ = yahooFinanceReadTimeout()
+
+func yahooFinanceReadConcurrency() int {
+	raw := os.Getenv("YAHOO_MARKETS_CONCURRENCY")
+	if raw == "" {
+		return yahooFinanceDefaultConcurrency
+	}
+	v, err := strconv.Atoi(raw)
+	if err != nil || v < 1 || v > 10 {
+		slog.Warn("Invalid YAHOO_MARKETS_CONCURRENCY, fallback to default", "raw", raw, "default", yahooFinanceDefaultConcurrency)
+		return yahooFinanceDefaultConcurrency
+	}
+	return v
+}
+
+func yahooFinanceReadJitter() time.Duration {
+	raw := os.Getenv("YAHOO_MARKETS_JITTER_MS")
+	if raw == "" {
+		return time.Duration(yahooFinanceDefaultJitterMs) * time.Millisecond
+	}
+	v, err := strconv.Atoi(raw)
+	if err != nil || v < 0 {
+		slog.Warn("Invalid YAHOO_MARKETS_JITTER_MS, fallback to default", "raw", raw, "default", yahooFinanceDefaultJitterMs)
+		return time.Duration(yahooFinanceDefaultJitterMs) * time.Millisecond
+	}
+	return time.Duration(v) * time.Millisecond
+}
+
+// yahooFinanceReadTimeout applies timeout env override to yahooFinanceHTTPClient,
+// must be called after yahooFinanceHTTPClient is declared (package var init order)
+func yahooFinanceReadTimeout() bool {
+	raw := os.Getenv("YAHOO_MARKETS_TIMEOUT_MS")
+	if raw == "" {
+		return false
+	}
+	v, err := strconv.Atoi(raw)
+	if err != nil || v < 3000 || v > 120000 {
+		slog.Warn("Invalid YAHOO_MARKETS_TIMEOUT_MS, fallback to default", "raw", raw, "default", yahooFinanceDefaultTimeoutMs)
+		return false
+	}
+	yahooFinanceHTTPClient.Timeout = time.Duration(v) * time.Millisecond
+	return true
+}
+
+// setYahooFinanceRequestHeaders sets browser-like headers for Yahoo Finance API
+func setYahooFinanceRequestHeaders(request *http.Request) {
+	request.Header.Set("User-Agent", getBrowserUserAgentHeader())
+	request.Header.Set("Accept", "application/json,text/javascript,*/*;q=0.01")
+	request.Header.Set("Accept-Language", "en-US,en;q=0.9")
+	request.Header.Set("Referer", "https://finance.yahoo.com/")
+	request.Header.Set("Origin", "https://finance.yahoo.com")
+	request.Header.Set("Connection", "keep-alive")
+	request.Header.Set("Sec-Fetch-Dest", "empty")
+	request.Header.Set("Sec-Fetch-Mode", "cors")
+	request.Header.Set("Sec-Fetch-Site", "same-site")
+}
+
+// isTransientYahooFinanceError reports whether err is a transient network error worth retrying.
+// Scope: only EOF / connection reset / broken pipe / TLS handshake glitches.
+// Excluded (intentionally no retry): context deadline (timeout), HTTP 429 / 4xx / 5xx status codes,
+// JSON unmarshal errors, symbol / auth errors (400/401/403/404).
+func isTransientYahooFinanceError(err error) bool {
+	if err == nil {
+		return false
+	}
+	// context deadline / cancellation -> never retry (decision 1-A)
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		return false
+	}
+	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+		return true
+	}
+	errStr := err.Error()
+	return strings.Contains(errStr, "connection reset") ||
+		strings.Contains(errStr, "broken pipe") ||
+		strings.Contains(errStr, "connection refused") ||
+		strings.Contains(errStr, "tls: handshake failure") ||
+		strings.Contains(errStr, "tls: bad record MAC") ||
+		strings.Contains(errStr, "remote error: tls: handshake failure")
+}
+
+// symbolFromRequest extracts the chart symbol from Yahoo Finance request URL path segment for logging.
+// Yahoo chart API pattern: /v8/finance/chart/{SYMBOL}; symbol is NOT in query string.
+func symbolFromRequest(req *http.Request) string {
+	if req == nil || req.URL == nil {
+		return ""
+	}
+	parts := strings.Split(strings.Trim(req.URL.Path, "/"), "/")
+	for i, part := range parts {
+		if part == "chart" && i+1 < len(parts) {
+			sym, _ := url.PathUnescape(parts[i+1])
+			return sym
+		}
+	}
+	return ""
+}
+
 func fetchMarketsDataFromYahoo(marketRequests []marketRequest) (marketList, error) {
 	requests := make([]*http.Request, 0, len(marketRequests))
 
 	for i := range marketRequests {
 		request, _ := http.NewRequest("GET", fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=1mo&interval=1d", marketRequests[i].Symbol), nil)
-		setBrowserUserAgentHeader(request)
+		setYahooFinanceRequestHeaders(request)
 		requests = append(requests, request)
 	}
 
-	job := newJob(decodeJsonFromRequestTask[marketResponseJson](defaultHTTPClient), requests)
+	// wrap decode task: initial jitter + retry transient-only errors with exponential backoff (2 retries, decision 2-A)
+	wrappedTask := func(req *http.Request) (resp marketResponseJson, err error) {
+		for attempt := 0; attempt <= yahooFinanceMaxRetries; attempt++ {
+			if attempt == 0 {
+				if yahooFinanceJitter > 0 {
+					time.Sleep(time.Duration(rand.Int64N(int64(yahooFinanceJitter))))
+				}
+			} else {
+				backoff := time.Duration(yahooFinanceRetryBaseDelayMs*(1<<uint(attempt-1))) * time.Millisecond
+				backoff += time.Duration(rand.Int64N(int64(backoff/2) + 1))
+				time.Sleep(backoff)
+				slog.Debug("Retrying Yahoo Finance request after transient error", "symbol", symbolFromRequest(req), "attempt", attempt+1, "prev", err)
+			}
+
+			resp, err = decodeJsonFromRequest[marketResponseJson](yahooFinanceHTTPClient, req)
+			if err == nil {
+				return resp, nil
+			}
+			if !isTransientYahooFinanceError(err) {
+				return resp, err
+			}
+		}
+		return resp, err
+	}
+
+	job := newJob(wrappedTask, requests).withWorkers(yahooFinanceConcurrency)
 	responses, errs, err := workerPoolDo(job)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errNoContent, err)
