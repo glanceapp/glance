@@ -78,8 +78,12 @@ const twitchDirectoriesOperationRequestBody = `[
 {"operationName": "BrowsePage_AllDirectories","variables": {"limit": %d,"options": {"sort": "VIEWER_COUNT","tags": []}},"extensions": {"persistedQuery": {"version": 1,"sha256Hash": "2f67f71ba89f3c0ed26a141ec00da1defecb2303595f5cda4298169549783d9e"}}}
 ]`
 
+// Twitch rejects requests for more than this many categories at once
+const twitchMaxCategoriesPerRequest = 100
+
 func fetchTopGamesFromTwitch(exclude []string, limit int) ([]twitchCategory, error) {
-	reader := strings.NewReader(fmt.Sprintf(twitchDirectoriesOperationRequestBody, len(exclude)+limit))
+	requestLimit := min(len(exclude)+limit, twitchMaxCategoriesPerRequest)
+	reader := strings.NewReader(fmt.Sprintf(twitchDirectoriesOperationRequestBody, requestLimit))
 	request, _ := http.NewRequest("POST", twitchGqlEndpoint, reader)
 	request.Header.Add("Client-ID", twitchGqlClientId)
 	response, err := decodeJsonFromRequest[[]twitchDirectoriesOperationResponse](defaultHTTPClient, request)
