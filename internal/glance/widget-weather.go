@@ -256,7 +256,7 @@ func fetchWeatherForOpenMeteoPlace(place *openMeteoPlaceResponseJson, units stri
 
 		for i := 0; i < 24; i += 2 {
 			if i/2 == currentBar {
-				temperatures[i/2] = int(responseJson.Current.Temperature)
+				temperatures[i/2] = int(math.Round(responseJson.Current.Temperature))
 			} else {
 				temperatures[i/2] = int(math.Round((t[i] + t[i+1]) / 2))
 			}
@@ -284,8 +284,8 @@ func fetchWeatherForOpenMeteoPlace(place *openMeteoPlaceResponseJson, units stri
 	}
 
 	return &weather{
-		Temperature:         int(responseJson.Current.Temperature),
-		ApparentTemperature: int(responseJson.Current.ApparentTemperature),
+		Temperature:         int(math.Round(responseJson.Current.Temperature)),
+		ApparentTemperature: int(math.Round(responseJson.Current.ApparentTemperature)),
 		WeatherCode:         responseJson.Current.WeatherCode,
 		CurrentColumn:       currentBar,
 		SunriseColumn:       sunriseBar,
