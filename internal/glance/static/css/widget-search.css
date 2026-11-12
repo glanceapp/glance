@@ -77,3 +77,34 @@
 .search-bang:empty {
     display: none;
 }
+
+.search-bang-list {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    display: grid;
+    gap: 0.8rem 2rem;
+    margin: 0;
+    padding: 1.2rem 1.5rem;
+    list-style: none;
+    background: var(--color-popover-background);
+    border: 1px solid var(--color-popover-border);
+    border-radius: var(--border-radius);
+    color: var(--color-text-base);
+}
+
+.search-bang-list[hidden] {
+    display: none;
+}
+
+.search-bang-list > li {
+    white-space: nowrap;
+}
+
+.search-bang-list kbd {
+    margin-right: 0.8rem;
+    color: var(--color-text-highlight);
+    pointer-events: none;
+}

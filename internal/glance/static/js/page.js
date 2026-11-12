@@ -112,6 +112,7 @@ function setupSearchBoxes() {
         const bangs = widget.querySelectorAll(".search-bangs > input");
         const bangsMap = {};
         const kbdElement = widget.getElementsByTagName("kbd")[0];
+        const bangList = widget.getElementsByClassName("search-bang-list")[0];
         let currentBang = null;
         let lastQuery = "";
 
@@ -119,6 +120,33 @@ function setupSearchBoxes() {
             const bang = bangs[j];
             bangsMap[bang.dataset.shortcut] = bang;
         }
+
+        const updateBangList = (value) => {
+            if (bangList === undefined) return;
+
+            const items = Array.from(bangList.children);
+            const matching = value.length > 0 && !/\s/.test(value)
+                ? items.filter((item) => item.dataset.shortcut.startsWith(value))
+                : [];
+
+            // nothing to suggest, or the only match is already typed out in full
+            if (matching.length == 0 || matching.length == 1 && matching[0].dataset.shortcut == value) {
+                bangList.hidden = true;
+                return;
+            }
+
+            // size the columns once to the widest entry so they don't change while filtering
+            if (bangList.style.gridTemplateColumns == "") {
+                items.forEach((item) => { item.hidden = false; });
+                bangList.hidden = false;
+                bangList.style.gridTemplateColumns = "max-content";
+                const width = Math.ceil(items[0].getBoundingClientRect().width);
+                bangList.style.gridTemplateColumns = `repeat(auto-fill, minmax(${width}px, 1fr))`;
+            }
+
+            items.forEach((item) => { item.hidden = !matching.includes(item); });
+            bangList.hidden = false;
+        };
 
         const handleKeyDown = (event) => {
             if (event.key == "Escape") {
@@ -153,6 +181,7 @@ function setupSearchBoxes() {
                 lastQuery = query;
                 inputElement.value = "";
                 changeCurrentBang(null);
+                updateBangList("");
 
                 return;
             }
@@ -169,6 +198,8 @@ function setupSearchBoxes() {
         }
 
         const handleInput = (event) => {
+            updateBangList(event.target.value);
+
             const value = event.target.value.trim();
             if (value in bangsMap) {
                 changeCurrentBang(bangsMap[value]);
@@ -187,10 +218,12 @@ function setupSearchBoxes() {
         inputElement.addEventListener("focus", () => {
             document.addEventListener("keydown", handleKeyDown);
             document.addEventListener("input", handleInput);
+            updateBangList(inputElement.value);
         });
         inputElement.addEventListener("blur", () => {
             document.removeEventListener("keydown", handleKeyDown);
             document.removeEventListener("input", handleInput);
+            updateBangList("");
         });
 
         document.addEventListener("keydown", (event) => {

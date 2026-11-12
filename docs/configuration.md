@@ -1239,6 +1239,7 @@ Preview:
 | target | string | no | _blank |
 | placeholder | string | no | Type here to search… |
 | bangs | array | no | |
+| suggest-bangs | boolean | no | false |
 
 ##### `search-engine`
 Either a value from the table below or a URL to a custom search engine. Use `{QUERY}` to indicate where the query value gets placed.
@@ -1297,6 +1298,9 @@ url: https://www.reddit.com/search?q={QUERY}
 url: https://store.steampowered.com/search/?term={QUERY}
 url: https://www.amazon.com/s?k={QUERY}
 ```
+
+##### `suggest-bangs`
+When set to `true`, shows a list of the bangs whose shortcut starts with what you've typed so far, below the search bar. The list disappears once you type a space, or once a shortcut is typed out in full and no other one matches. It works best when all shortcuts share a common prefix such as `!`, then typing `!` lists all of them and ordinary searches don't trigger it.
 
 ### Group
 Group multiple widgets into one using tabs. Widgets are defined using a `widgets` property exactly as you would on a page column. The only limitation is that you cannot place a group widget or a split column widget within a group widget.
