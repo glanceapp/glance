@@ -19,6 +19,7 @@ type searchWidget struct {
 	cachedHTML   template.HTML `yaml:"-"`
 	SearchEngine string        `yaml:"search-engine"`
 	Bangs        []SearchBang  `yaml:"bangs"`
+	SuggestBangs bool          `yaml:"suggest-bangs"`
 	NewTab       bool          `yaml:"new-tab"`
 	Target       string        `yaml:"target"`
 	Autofocus    bool          `yaml:"autofocus"`

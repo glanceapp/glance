@@ -20,5 +20,13 @@
 
     <div class="search-bang"></div>
     <kbd class="hide-on-mobile" title="Press [S] to focus the search input">S</kbd>
+
+    {{ if .SuggestBangs }}
+    <ul class="search-bang-list" hidden>
+        {{ range .Bangs }}
+        <li data-shortcut="{{ .Shortcut }}"><kbd>{{ .Shortcut }}</kbd>{{ .Title }}</li>
+        {{ end }}
+    </ul>
+    {{ end }}
 </div>
 {{ end }}
