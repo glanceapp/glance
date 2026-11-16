@@ -365,11 +365,7 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 			rssItem.ImageURL = strings.TrimRight(prefix, "/") + rssItem.ImageURL
 		}
 
-		if item.PublishedParsed != nil {
-			rssItem.PublishedAt = *item.PublishedParsed
-		} else {
-			rssItem.PublishedAt = time.Now()
-		}
+		rssItem.PublishedAt = rssItemPublishedAt(item)
 
 		items = append(items, rssItem)
 	}
@@ -385,6 +381,56 @@ func (widget *rssWidget) fetchItemsFromFeedTask(request rssFeedRequest) ([]rssFe
 	}
 
 	return items, nil
+}
+
+// Feeds occasionally spell midnight at the end of a day as hour 24, e.g.
+// "Sun, 07 Dec 2025 24:00:00 GMT". ISO 8601 allows it and treats it as the
+// start of the next day, but it is out of range for every layout gofeed tries,
+// so gofeed gives up and the item arrives with no parsed date at all. The hour
+// is only recognized where it starts the time, so that a minute or second of 24
+// in a date we cannot parse for some other reason is left alone.
+var rssEndOfDayHourPattern = regexp.MustCompile(`(^|[^\d:])24(:[0-5]\d)`)
+
+// Only layouts whose zone is unambiguous, because time.Parse resolves a named
+// zone it does not know to a zero offset, which would silently shift the date.
+var rssEndOfDayDateFormats = []string{
+	time.RFC1123Z,
+	time.RFC3339,
+	"Mon, 02 Jan 2006 15:04:05 GMT",
+	"Mon, 02 Jan 2006 15:04:05 UTC",
+	"Mon, 02 Jan 2006 15:04:05 UT",
+	"Mon, 02 Jan 2006 15:04:05",
+	"2006-01-02T15:04:05",
+	"2006-01-02 15:04:05",
+}
+
+// parseRSSEndOfDayTime parses a feed date whose hour is 24, returning the
+// equivalent time at the start of the following day.
+func parseRSSEndOfDayTime(date string) (time.Time, bool) {
+	normalized := rssEndOfDayHourPattern.ReplaceAllString(date, "${1}00${2}")
+	if normalized == date {
+		return time.Time{}, false
+	}
+
+	for _, layout := range rssEndOfDayDateFormats {
+		if parsed, err := time.Parse(layout, normalized); err == nil {
+			return parsed.AddDate(0, 0, 1), true
+		}
+	}
+
+	return time.Time{}, false
+}
+
+func rssItemPublishedAt(item *gofeed.Item) time.Time {
+	if item.PublishedParsed != nil {
+		return *item.PublishedParsed
+	}
+
+	if parsed, ok := parseRSSEndOfDayTime(item.Published); ok {
+		return parsed
+	}
+
+	return time.Now()
 }
 
 func findThumbnailInItemExtensions(item *gofeed.Item) string {
