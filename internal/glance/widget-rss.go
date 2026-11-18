@@ -418,12 +418,14 @@ func recursiveFindThumbnailInExtensions(extensions map[string][]gofeedext.Extens
 }
 
 var htmlTagsWithAttributesPattern = regexp.MustCompile(`<\/?[a-zA-Z0-9-]+ *(?:[a-zA-Z-]+=(?:"|').*?(?:"|') ?)* *\/?>`)
+var htmlCommentsPattern = regexp.MustCompile(`(?s)<!--.*?-->`)
 
 func sanitizeFeedDescription(description string) string {
 	if description == "" {
 		return ""
 	}
 
+	description = htmlCommentsPattern.ReplaceAllString(description, "")
 	description = strings.ReplaceAll(description, "\n", " ")
 	description = htmlTagsWithAttributesPattern.ReplaceAllString(description, "")
 	description = sequentialWhitespacePattern.ReplaceAllString(description, " ")
