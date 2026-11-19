@@ -2115,6 +2115,18 @@ repositories:
   - codeberg:redict/redict
 ```
 
+Some projects don't publish releases and only push tags. To show the most recent tag instead of the latest release, use the `use-tags` property:
+
+**Note: This feature is currently only available for GitHub and GitLab repositories. `include-prereleases` has no effect when `use-tags` is enabled.**
+
+```yaml
+repositories:
+  - repository: apache/cordova-android
+    use-tags: true
+  - repository: gitlab:inkscape/inkscape
+    use-tags: true
+```
+
 ##### `show-source-icon`
 Shows an icon of the source (GitHub/GitLab/Codeberg/Docker Hub) next to the repository name when set to `true`.
 
