@@ -105,6 +105,7 @@ func (r appReleaseList) sortByNewest() appReleaseList {
 
 type releaseRequest struct {
 	IncludePreleases bool   `yaml:"include-prereleases"`
+	UseTags          bool   `yaml:"use-tags"`
 	Repository       string `yaml:"repository"`
 
 	source releaseSource
@@ -150,6 +151,10 @@ func (r *releaseRequest) UnmarshalYAML(node *yaml.Node) error {
 		}
 	}
 
+	if r.UseTags && r.source != releaseSourceGithub && r.source != releaseSourceGitlab {
+		return fmt.Errorf("use-tags is only supported for GitHub and GitLab repositories, not %s", r.source)
+	}
+
 	return nil
 }
 
@@ -192,8 +197,14 @@ func fetchLatestReleaseTask(request *releaseRequest) (*appRelease, error) {
 	case releaseSourceCodeberg:
 		return fetchLatestCodebergRelease(request)
 	case releaseSourceGithub:
+		if request.UseTags {
+			return fetchLatestGithubTag(request)
+		}
 		return fetchLatestGithubRelease(request)
 	case releaseSourceGitlab:
+		if request.UseTags {
+			return fetchLatestGitLabTag(request)
+		}
 		return fetchLatestGitLabRelease(request)
 	case releaseSourceDockerHub:
 		return fetchLatestDockerHubRelease(request)
@@ -255,6 +266,48 @@ func fetchLatestGithubRelease(request *releaseRequest) (*appRelease, error) {
 		NotesUrl:     response.HtmlUrl,
 		TimeReleased: parseRFC3339Time(response.PublishedAt),
 		Downvotes:    response.Reactions.Downvotes,
+	}, nil
+}
+
+type githubTagsFeed struct {
+	Entries []struct {
+		Title   string `xml:"title"`
+		Updated string `xml:"updated"`
+		Link    struct {
+			Href string `xml:"href,attr"`
+		} `xml:"link"`
+	} `xml:"entry"`
+}
+
+// GitHub's REST API returns tags in no particular date order and without dates,
+// whereas the tags feed is sorted by date and doesn't count towards API rate limits.
+func fetchLatestGithubTag(request *releaseRequest) (*appRelease, error) {
+	httpRequest, err := http.NewRequest("GET", fmt.Sprintf("https://github.com/%s/tags.atom", request.Repository), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	feed, err := decodeXmlFromRequest[githubTagsFeed](defaultHTTPClient, httpRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	return githubTagToRelease(request.Repository, feed)
+}
+
+func githubTagToRelease(repository string, feed githubTagsFeed) (*appRelease, error) {
+	if len(feed.Entries) == 0 {
+		return nil, fmt.Errorf("no tags found for repository %s", repository)
+	}
+
+	entry := feed.Entries[0]
+
+	return &appRelease{
+		Source:       releaseSourceGithub,
+		Name:         repository,
+		Version:      normalizeVersionFormat(entry.Title),
+		NotesUrl:     entry.Link.Href,
+		TimeReleased: parseRFC3339Time(entry.Updated),
 	}, nil
 }
 
@@ -417,5 +470,53 @@ func fetchLatestCodebergRelease(request *releaseRequest) (*appRelease, error) {
 		Version:      normalizeVersionFormat(response.TagName),
 		NotesUrl:     response.HtmlUrl,
 		TimeReleased: parseRFC3339Time(response.PublishedAt),
+	}, nil
+}
+
+type gitlabTagResponseJson struct {
+	Name   string `json:"name"`
+	Commit struct {
+		CreatedAt string `json:"created_at"`
+	} `json:"commit"`
+}
+
+func fetchLatestGitLabTag(request *releaseRequest) (*appRelease, error) {
+	httpRequest, err := http.NewRequest(
+		"GET",
+		fmt.Sprintf(
+			"https://gitlab.com/api/v4/projects/%s/repository/tags?order_by=updated&sort=desc&per_page=1",
+			url.QueryEscape(request.Repository),
+		),
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if request.token != nil {
+		httpRequest.Header.Add("PRIVATE-TOKEN", *request.token)
+	}
+
+	response, err := decodeJsonFromRequest[[]gitlabTagResponseJson](defaultHTTPClient, httpRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	return gitlabTagToRelease(request.Repository, response)
+}
+
+func gitlabTagToRelease(repository string, tags []gitlabTagResponseJson) (*appRelease, error) {
+	if len(tags) == 0 {
+		return nil, fmt.Errorf("no tags found for repository %s", repository)
+	}
+
+	tag := tags[0]
+
+	return &appRelease{
+		Source:       releaseSourceGitlab,
+		Name:         repository,
+		Version:      normalizeVersionFormat(tag.Name),
+		NotesUrl:     fmt.Sprintf("https://gitlab.com/%s/-/tags/%s", repository, url.PathEscape(tag.Name)),
+		TimeReleased: parseRFC3339Time(tag.Commit.CreatedAt),
 	}, nil
 }
