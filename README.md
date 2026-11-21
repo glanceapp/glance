@@ -272,6 +272,7 @@ Glance can also be installed through the following 3rd party channels:
 * [Hostinger](https://www.hostinger.com/vps/docker/glance)
 * [Coolify.io](https://coolify.io/docs/services/glance/)
 * [Podway](https://podway.io/start?app=glance&ref=docs-glance)
+* [Simafri](https://www.simafri.com/en/guides/self-host-glance/)
 
 <hr>
 </details>
