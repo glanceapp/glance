@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -115,10 +116,11 @@ func statusCodeToStyle(status int, altStatusCodes []int) string {
 }
 
 type SiteStatusRequest struct {
-	DefaultURL    string        `yaml:"url"`
-	CheckURL      string        `yaml:"check-url"`
-	AllowInsecure bool          `yaml:"allow-insecure"`
-	Timeout       durationField `yaml:"timeout"`
+	DefaultURL    string            `yaml:"url"`
+	CheckURL      string            `yaml:"check-url"`
+	AllowInsecure bool              `yaml:"allow-insecure"`
+	Timeout       durationField     `yaml:"timeout"`
+	Headers       map[string]string `yaml:"headers"`
 	BasicAuth     struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
@@ -149,6 +151,14 @@ func fetchSiteStatusTask(statusRequest *SiteStatusRequest) (siteStatus, error) {
 		return siteStatus{
 			Error: err,
 		}, nil
+	}
+
+	for key, value := range statusRequest.Headers {
+		if strings.EqualFold(key, "Host") {
+			request.Host = value
+		} else {
+			request.Header.Set(key, value)
+		}
 	}
 
 	if statusRequest.BasicAuth.Username != "" || statusRequest.BasicAuth.Password != "" {
